@@ -38,6 +38,7 @@ export class GameScene5 extends BaseScene {
     }
 
     hitEnemyWithBullet(bullet, enemySprite) {
+        this.hitSound.play(); // Play hit sound
         bullet.destroy();
         
         if (this.boss && this.boss.sprite === enemySprite) {

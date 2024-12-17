@@ -7,6 +7,7 @@ import { GameScene3 } from './scenes/GameScene3';
 import { GameScene4 } from './scenes/GameScene4';
 import { GameScene5 } from './scenes/GameScene5';
 import { MissionComplete } from './scenes/MissionComplete';
+import Settings from './scenes/Settings';
 
 const config = {
     type: Phaser.AUTO,
@@ -38,6 +39,7 @@ const config = {
     scene: [
         Preloader,
         MainMenu,
+        Settings,
         GameScene1,
         GameScene2,
         GameScene3,

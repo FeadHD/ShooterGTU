@@ -108,7 +108,7 @@ export class MainMenu extends Scene {
         // Add click handlers
         startButton.on('pointerdown', () => this.scene.start('GameScene1'));
         settingsButton.on('pointerdown', () => {
-            // Add settings functionality here
+            this.scene.start('Settings');
         });
         rulesButton.on('pointerdown', () => {
             // Add rules functionality here

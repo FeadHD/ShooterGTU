@@ -41,6 +41,7 @@ export class GameScene1 extends BaseScene {
     }
 
     hitEnemyWithBullet(bullet, enemySprite) {
+        this.hitSound.play(); // Play hit sound
         bullet.destroy();
         
         // Find the enemy object that owns this sprite

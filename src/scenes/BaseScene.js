@@ -9,6 +9,7 @@ export class BaseScene extends Scene {
 
         // Create sound effects
         this.laserSound = this.sound.add('laser', { volume: 0.05 });
+        this.hitSound = this.sound.add('hit', { volume: 0.1 });
 
         // Get screen dimensions
         const width = this.scale.width;
@@ -66,6 +67,36 @@ export class BaseScene extends Scene {
                 this.shoot();
             }
         });
+
+        // Add settings button in top right
+        const settingsButton = this.add.text(width - 100, 20, '⚙️ Music', {
+            fontSize: '20px',
+            fill: '#fff',
+            backgroundColor: '#000',
+            padding: { x: 10, y: 5 }
+        }).setOrigin(1, 0);
+
+        settingsButton.setInteractive({ useHandCursor: true })
+            .on('pointerover', () => settingsButton.setStyle({ fill: '#ff0' }))
+            .on('pointerout', () => settingsButton.setStyle({ fill: '#fff' }))
+            .on('pointerdown', () => {
+                const bgMusic = this.sound.get('bgMusic');
+                if (bgMusic) {
+                    if (bgMusic.isPlaying) {
+                        bgMusic.pause();
+                        settingsButton.setText('⚙️ Music: OFF');
+                    } else {
+                        bgMusic.resume();
+                        settingsButton.setText('⚙️ Music: ON');
+                    }
+                }
+            });
+
+        // Update button text based on current music state
+        const bgMusic = this.sound.get('bgMusic');
+        if (bgMusic && !bgMusic.isPlaying) {
+            settingsButton.setText('⚙️ Music: OFF');
+        }
     }
 
     updateScoreText() {
@@ -116,6 +147,7 @@ export class BaseScene extends Scene {
     }
 
     hitEnemyWithBullet(bullet, enemy) {
+        this.hitSound.play(); // Play hit sound when bullet hits enemy
         this.destroyBullet(bullet);
         enemy.destroy(); // Destroy the enemy when hit by bullet
         this.addPoints(10);
