@@ -8,6 +8,10 @@ export class MissionComplete extends Scene {
     preload() {
         // Load particle image
         this.load.image('particle', 'assets/particle.png');
+        // Load victory music
+        this.load.audio('victoryMusic', 'assets/sounds/congratulations.mp3');
+        // Load background music for restart
+        this.load.audio('bgMusic', 'assets/sounds/background_music.mp3');
     }
 
     createFirework(x, y) {
@@ -44,6 +48,20 @@ export class MissionComplete extends Scene {
     }
 
     create() {
+        // Stop any existing music
+        this.sound.stopAll();
+
+        // Stop any existing background music first
+        const existingMusic = this.sound.get('bgMusic');
+        if (existingMusic) {
+            existingMusic.stop();
+        }
+
+        // Create and play victory music
+        this.victoryMusic = this.sound.add('victoryMusic', { volume: 0.3, loop: true });
+        this.victoryMusic.play();
+        console.log('Playing victory music in mission complete scene'); // Debug log
+
         this.cameras.main.setBackgroundColor('#000000');
         
         const width = this.scale.width;
@@ -76,8 +94,18 @@ export class MissionComplete extends Scene {
             fill: '#fff'
         }).setOrigin(0.5);
 
-        // Add keyboard input
+        // Add space key listener
         this.input.keyboard.on('keydown-SPACE', () => {
+            // Stop victory music before restarting
+            this.victoryMusic.stop();
+            
+            // Create new background music for the next game loop
+            const bgMusic = this.sound.add('bgMusic', { 
+                volume: 0.3,
+                loop: true 
+            });
+            bgMusic.play();
+            
             this.scene.start('MainMenu');
         });
 

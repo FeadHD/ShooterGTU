@@ -16,11 +16,11 @@ export class BaseScene extends Scene {
         const height = this.scale.height;
 
         // Set world gravity
-        this.physics.world.gravity.y = 200;
+        this.physics.world.gravity.y = 800; // Decreased from 1000 to 800 for slightly lighter gravity
 
         // Add ground as a rectangle instead of an image - scaled to screen width
         this.platforms = this.physics.add.staticGroup();
-        const ground = this.add.rectangle(width/2, height - 50, width, 60, 0x00ff00);
+        const ground = this.add.rectangle(width/2, height - 32, width, 64, 0x00ff00);
         this.physics.add.existing(ground, true);
         this.platforms.add(ground);
 

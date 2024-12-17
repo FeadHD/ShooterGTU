@@ -6,6 +6,13 @@ export class GameScene1 extends BaseScene {
         super({ key: 'GameScene1' });
     }
 
+    preload() {
+        // Load all audio files
+        this.load.audio('laser', 'assets/sounds/laser.wav');
+        this.load.audio('hit', 'assets/sounds/hit.wav');
+        this.load.audio('victoryMusic', 'assets/sounds/congratulations');
+    }
+
     create() {
         this.cameras.main.setBackgroundColor('#5A5A5A');
         super.create();
@@ -26,18 +33,24 @@ export class GameScene1 extends BaseScene {
         // Create enemies group
         this.enemies = this.physics.add.group();
 
-        // Create two weak enemies at different positions
-        this.enemy1 = new WeakEnemy(this, width * 0.5, height - 130);  // Middle of screen
-        this.enemy2 = new WeakEnemy(this, width * 0.8, height - 130);  // Right side
+        // Wait a short moment for platforms to be fully set up
+        this.time.delayedCall(100, () => {
+            // Calculate exact spawn height
+            const enemyY = height - 90; // Spawn higher up for faster fall
 
-        // Add enemies to the group
-        this.enemies.add(this.enemy1.sprite);
-        this.enemies.add(this.enemy2.sprite);
+            // Create two weak enemies at different positions
+            this.enemy1 = new WeakEnemy(this, width * 0.5, enemyY);  // Middle of screen
+            this.enemy2 = new WeakEnemy(this, width * 0.8, enemyY);  // Right side
 
-        // Set up collisions
-        this.physics.add.collider(this.enemies, this.platforms);
-        this.physics.add.collider(this.player, this.enemies, this.hitEnemy, null, this);
-        this.physics.add.collider(this.bullets, this.enemies, this.hitEnemyWithBullet, null, this);
+            // Add enemies to the group
+            this.enemies.add(this.enemy1.sprite);
+            this.enemies.add(this.enemy2.sprite);
+
+            // Set up collisions
+            this.physics.add.collider(this.enemies, this.platforms);
+            this.physics.add.collider(this.player, this.enemies, this.hitEnemy, null, this);
+            this.physics.add.collider(this.bullets, this.enemies, this.hitEnemyWithBullet, null, this);
+        });
     }
 
     hitEnemyWithBullet(bullet, enemySprite) {

@@ -12,6 +12,12 @@ export class Enemy {
         this.sprite.body.setCollideWorldBounds(true);
         this.sprite.body.setBounce(0);
         this.sprite.body.setFriction(1);
+        this.sprite.body.setGravityY(800); // Match world gravity
+        this.sprite.body.setDragX(50); // Add some drag for smoother movement
+        
+        // Adjust physics body size and offset
+        this.sprite.body.setSize(32, 46); // Slightly smaller height
+        this.sprite.body.setOffset(0, 1); // Move collision box up slightly
 
         // Enemy behavior properties
         this.aggroRange = 300; // Distance at which enemy starts chasing player
@@ -66,22 +72,14 @@ export class Enemy {
 
         // If player is within aggro range, chase them
         if (distanceToPlayer < this.aggroRange) {
-            // Calculate direction to player
-            const angle = Phaser.Math.Angle.Between(
-                this.sprite.x,
-                this.sprite.y,
-                player.x,
-                player.y
-            );
-
-            // Set velocity based on direction
-            this.sprite.body.setVelocity(
-                Math.cos(angle) * this.moveSpeed,
-                Math.sin(angle) * this.moveSpeed
-            );
+            // Move towards player on X axis only
+            if (this.sprite.x < player.x) {
+                this.setVelocityX(this.moveSpeed);
+            } else {
+                this.setVelocityX(-this.moveSpeed);
+            }
         } else {
             // Normal patrol behavior when player is out of range
-            this.setVelocityY(0);
             if (this.getX() >= this.rightBound) {
                 this.setVelocityX(-this.patrolSpeed);
             } else if (this.getX() <= this.leftBound) {
