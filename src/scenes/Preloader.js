@@ -41,6 +41,10 @@ export class Preloader extends Scene {
         // Load bullet sprite
         this.load.image('bullet', './assets/bullet.png');
         
+        // Load sound effects
+        this.load.audio('laser', './assets/sounds/laser.wav');
+        this.load.audio('bgMusic', './assets/sounds/background_music.mp3');
+        
         // Load the font file directly
         this.load.binary('retronoid', './assets/fonts/retronoid/Retronoid.ttf');
     }

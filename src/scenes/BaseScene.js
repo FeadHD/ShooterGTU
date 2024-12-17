@@ -7,9 +7,15 @@ export class BaseScene extends Scene {
             this.registry.set('score', 0);
         }
 
+        // Create sound effects
+        this.laserSound = this.sound.add('laser', { volume: 0.05 });
+
         // Get screen dimensions
         const width = this.scale.width;
         const height = this.scale.height;
+
+        // Set world gravity
+        this.physics.world.gravity.y = 200;
 
         // Add ground as a rectangle instead of an image - scaled to screen width
         this.platforms = this.physics.add.staticGroup();
@@ -21,6 +27,13 @@ export class BaseScene extends Scene {
         this.player = this.add.rectangle(100, height - 100, 32, 48, 0x00ffff);
         this.physics.add.existing(this.player);
         this.player.body.setCollideWorldBounds(true);
+
+        // Set player's physics properties
+        this.player.body.setGravityY(200);
+        this.player.body.setBounce(0);
+
+        // Initialize jump tracking
+        this.wasInAir = false;
 
         // Create bullet group
         this.bullets = this.physics.add.group({
@@ -72,6 +85,9 @@ export class BaseScene extends Scene {
         this.bullets.add(bullet);
         
         if (bullet) {
+            // Play laser sound
+            this.laserSound.play();
+            
             bullet.setActive(true);
             bullet.setVisible(true);
             
@@ -119,8 +135,9 @@ export class BaseScene extends Scene {
             this.player.body.setVelocityX(0);
         }
 
+        // Jump when touching ground
         if (this.keys.up.isDown && this.player.body.touching.down) {
-            this.player.body.setVelocityY(-moveSpeed * 1.2);
+            this.player.body.setVelocityY(-250);
         }
 
         // Clean up bullets that are out of bounds

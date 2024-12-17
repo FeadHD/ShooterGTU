@@ -6,6 +6,14 @@ export class MainMenu extends Scene {
     }
 
     create() {
+        // Start background music
+        if (!this.sound.get('bgMusic')) {
+            this.sound.add('bgMusic', {
+                volume: 0.15,
+                loop: true
+            }).play();
+        }
+
         // Debug background color to see canvas size
         this.cameras.main.setBackgroundColor('#000000');
 
