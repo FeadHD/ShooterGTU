@@ -13,16 +13,25 @@ export class Enemy {
         this.sprite.body.setBounce(0);
         this.sprite.body.setFriction(1);
 
+        // Enemy behavior properties
+        this.aggroRange = 300; // Distance at which enemy starts chasing player
+        this.moveSpeed = 150;  // Movement speed when chasing
+        this.patrolSpeed = 100; // Movement speed when patrolling
+        
         // Set up patrol boundaries
         this.leftBound = 20;  // Just enough space to not trigger scene change
         this.rightBound = scene.scale.width - 20;  // Just enough space to not trigger scene change
         
-        // Set initial velocity
-        this.setVelocityX(100);
+        // Set initial velocity for patrol
+        this.setVelocityX(this.patrolSpeed);
     }
 
     setVelocityX(velocity) {
         this.sprite.body.setVelocityX(velocity);
+    }
+
+    setVelocityY(velocity) {
+        this.sprite.body.setVelocityY(velocity);
     }
 
     getX() {
@@ -42,11 +51,41 @@ export class Enemy {
     }
 
     update() {
-        if (this.sprite && this.sprite.active) {
+        if (!this.sprite || !this.sprite.active) return;
+
+        const player = this.scene.player;
+        if (!player) return;
+
+        // Calculate distance to player
+        const distanceToPlayer = Phaser.Math.Distance.Between(
+            this.sprite.x,
+            this.sprite.y,
+            player.x,
+            player.y
+        );
+
+        // If player is within aggro range, chase them
+        if (distanceToPlayer < this.aggroRange) {
+            // Calculate direction to player
+            const angle = Phaser.Math.Angle.Between(
+                this.sprite.x,
+                this.sprite.y,
+                player.x,
+                player.y
+            );
+
+            // Set velocity based on direction
+            this.sprite.body.setVelocity(
+                Math.cos(angle) * this.moveSpeed,
+                Math.sin(angle) * this.moveSpeed
+            );
+        } else {
+            // Normal patrol behavior when player is out of range
+            this.setVelocityY(0);
             if (this.getX() >= this.rightBound) {
-                this.setVelocityX(-100);
+                this.setVelocityX(-this.patrolSpeed);
             } else if (this.getX() <= this.leftBound) {
-                this.setVelocityX(100);
+                this.setVelocityX(this.patrolSpeed);
             }
         }
     }
@@ -55,18 +94,24 @@ export class Enemy {
 export class WeakEnemy extends Enemy {
     constructor(scene, x, y) {
         super(scene, x, y, 'player', 1, 0x00FFFF); // Light blue/cyan color, 1 HP
+        this.aggroRange = 250; // Shorter range
+        this.moveSpeed = 160;  // Faster but weaker
     }
 }
 
 export class MediumEnemy extends Enemy {
     constructor(scene, x, y) {
         super(scene, x, y, 'player', 2, 0xFFD700); // Yellow/gold color, 2 HP
+        this.aggroRange = 300; // Medium range
+        this.moveSpeed = 140;  // Medium speed
     }
 }
 
 export class StrongEnemy extends Enemy {
     constructor(scene, x, y) {
         super(scene, x, y, 'player', 4, 0x8A2BE2); // Purple/violet color, 4 HP
+        this.aggroRange = 350; // Longer range
+        this.moveSpeed = 120;  // Slower but stronger
     }
 }
 
@@ -74,35 +119,8 @@ export class BossEnemy extends Enemy {
     constructor(scene, x, y) {
         super(scene, x, y, 'player', 10, 0xFF0000); // Bright red color, 10 HP
         this.sprite.setScale(2); // Boss is bigger
-        
-        // Make boss move slower but more menacing
-        this.setVelocityX(75);
-    }
-
-    update() {
-        if (this.sprite && this.sprite.active) {
-            if (this.getX() >= this.rightBound) {
-                this.setVelocityX(-75);
-            } else if (this.getX() <= this.leftBound) {
-                this.setVelocityX(75);
-            }
-        }
+        this.aggroRange = 400; // Longest range
+        this.moveSpeed = 100;  // Slowest but strongest
+        this.patrolSpeed = 75;
     }
 }
-
-// Example usage:
-/*
-    // Create enemies
-    const weakEnemy = new WeakEnemy(this, 200, 300);    // Dies in 1 hit
-    const mediumEnemy = new MediumEnemy(this, 400, 300); // Dies in 2 hits
-    const strongEnemy = new StrongEnemy(this, 600, 300); // Dies in 4 hits
-
-    // Handle bullet collision
-    this.physics.add.collider(bullet, enemy.sprite, () => {
-        if (enemy.damage(1)) {
-            // Enemy is dead
-            enemy.destroy();
-            // Add score or other effects
-        }
-    });
-*/
