@@ -16,7 +16,9 @@ export default class Settings extends Phaser.Scene {
         }).setOrigin(0.5);
 
         // Create music toggle button
-        const musicText = this.add.text(canvasWidth / 2, canvasHeight * 0.4, 'Music: ON', {
+        const bgMusic = this.sound.get('bgMusic');
+        const musicText = this.add.text(canvasWidth / 2, canvasHeight * 0.4, 
+            bgMusic && bgMusic.isPlaying ? 'Music: ON' : 'Music: OFF', {
             fontSize: '24px',
             fill: '#fff'
         }).setOrigin(0.5);
@@ -25,15 +27,14 @@ export default class Settings extends Phaser.Scene {
             .on('pointerover', () => musicText.setStyle({ fill: '#ff0' }))
             .on('pointerout', () => musicText.setStyle({ fill: '#fff' }))
             .on('pointerdown', () => {
-                const bgMusic = this.sound.get('bgMusic');
                 if (bgMusic) {
                     if (bgMusic.isPlaying) {
                         bgMusic.pause();
-                        this.isMusicOn = false;
+                        this.registry.set('musicEnabled', false);
                         musicText.setText('Music: OFF');
                     } else {
                         bgMusic.resume();
-                        this.isMusicOn = true;
+                        this.registry.set('musicEnabled', true);
                         musicText.setText('Music: ON');
                     }
                 }

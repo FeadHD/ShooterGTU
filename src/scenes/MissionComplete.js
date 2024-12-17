@@ -57,15 +57,48 @@ export class MissionComplete extends Scene {
             existingMusic.stop();
         }
 
-        // Create and play victory music
+        // Get music state
+        const musicEnabled = this.registry.get('musicEnabled');
+
+        // Create and play victory music only if music is enabled
         this.victoryMusic = this.sound.add('victoryMusic', { volume: 0.3, loop: true });
-        this.victoryMusic.play();
+        if (musicEnabled !== false) {
+            this.victoryMusic.play();
+        }
         console.log('Playing victory music in mission complete scene'); // Debug log
 
         this.cameras.main.setBackgroundColor('#000000');
         
         const width = this.scale.width;
         const height = this.scale.height;
+
+        // Add music control button
+        const musicButton = this.add.text(width - 100, 20, '⚙️ Music: ON', {
+            fontSize: '20px',
+            fill: '#fff',
+            backgroundColor: '#000',
+            padding: { x: 10, y: 5 }
+        }).setOrigin(1, 0);
+
+        // Update initial button state
+        if (musicEnabled === false) {
+            musicButton.setText('⚙️ Music: OFF');
+        }
+
+        musicButton.setInteractive({ useHandCursor: true })
+            .on('pointerover', () => musicButton.setStyle({ fill: '#ff0' }))
+            .on('pointerout', () => musicButton.setStyle({ fill: '#fff' }))
+            .on('pointerdown', () => {
+                if (this.victoryMusic.isPlaying) {
+                    this.victoryMusic.pause();
+                    this.registry.set('musicEnabled', false);
+                    musicButton.setText('⚙️ Music: OFF');
+                } else {
+                    this.victoryMusic.resume();
+                    this.registry.set('musicEnabled', true);
+                    musicButton.setText('⚙️ Music: ON');
+                }
+            });
 
         // Add congratulations text
         this.add.text(width/2, height * 0.3, 'Congratulations!', {
@@ -96,15 +129,12 @@ export class MissionComplete extends Scene {
 
         // Add space key listener
         this.input.keyboard.on('keydown-SPACE', () => {
-            // Stop victory music before restarting
-            this.victoryMusic.stop();
-            
-            // Create new background music for the next game loop
-            const bgMusic = this.sound.add('bgMusic', { 
-                volume: 0.3,
-                loop: true 
-            });
-            bgMusic.play();
+            // Stop and cleanup all music
+            this.sound.stopAll();
+            const victoryMusic = this.sound.get('victoryMusic');
+            const bgMusic = this.sound.get('bgMusic');
+            if (victoryMusic) victoryMusic.destroy();
+            if (bgMusic) bgMusic.destroy();
             
             this.scene.start('MainMenu');
         });

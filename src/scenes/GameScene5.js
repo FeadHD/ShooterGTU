@@ -30,6 +30,12 @@ export class GameScene5 extends BaseScene {
             fill: '#fff'
         }).setOrigin(0.5);
 
+        // Clean up any existing boss
+        if (this.boss) {
+            this.boss.destroy();
+            this.boss = null;
+        }
+
         // Create enemies group
         this.enemies = this.physics.add.group();
 
@@ -47,6 +53,15 @@ export class GameScene5 extends BaseScene {
         this.physics.add.existing(wall, true);
         this.physics.add.collider(this.player, wall);
         console.log('Scene 5 created successfully'); // Debug log
+    }
+
+    shutdown() {
+        // Clean up when leaving the scene
+        if (this.boss) {
+            this.boss.destroy();
+            this.boss = null;
+        }
+        super.shutdown();
     }
 
     hitEnemyWithBullet(bullet, enemySprite) {
@@ -67,30 +82,25 @@ export class GameScene5 extends BaseScene {
     update() {
         super.update();
 
-        if (this.boss) {
+        // Update boss patrol if it exists
+        if (this.boss && this.boss.sprite && this.boss.sprite.active) {
             this.boss.update();
         }
 
         // Check if boss is defeated
-        if (!this.bossDefeated && !this.boss) {
+        if (!this.bossDefeated && this.boss && (!this.boss.sprite || !this.boss.sprite.active)) {
             this.bossDefeated = true;
-            console.log('Boss defeated in Scene 5!'); // Debug log
+            console.log('Boss defeated!'); // Debug log
             
-            // Show victory message
-            const width = this.scale.width;
-            const height = this.scale.height;
-            this.add.text(width/2, height/2, 'Final Boss Defeated!', {
-                fontFamily: 'Retronoid',
-                fontSize: '64px',
-                fill: '#fff'
-            }).setOrigin(0.5);
-
-            // Add instruction text
-            this.add.text(width/2, height/2 + 80, 'Move right to continue', {
-                fontFamily: 'Retronoid',
-                fontSize: '32px',
-                fill: '#fff'
-            }).setOrigin(0.5);
+            // Play victory music when boss is defeated
+            if (this.victoryMusic && !this.victoryMusic.isPlaying) {
+                this.victoryMusic.play();
+            }
+            
+            // Transition to mission complete after a delay
+            this.time.delayedCall(2000, () => {
+                this.scene.start('MissionComplete');
+            });
         }
 
         // Check for scene transition

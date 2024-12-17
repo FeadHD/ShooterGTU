@@ -73,8 +73,18 @@ export class GameScene2 extends BaseScene {
         if (this.enemy3) this.enemy3.update();
 
         if (this.player.x > this.scale.width - 20) {
+            // Store the current music state before transitioning
+            const bgMusic = this.sound.get('bgMusic');
+            const isMusicPlaying = bgMusic ? bgMusic.isPlaying : false;
+            this.registry.set('musicEnabled', isMusicPlaying);
+            
             this.scene.start('GameScene3');
         } else if (this.player.x < 20) {
+            // Store the current music state before transitioning
+            const bgMusic = this.sound.get('bgMusic');
+            const isMusicPlaying = bgMusic ? bgMusic.isPlaying : false;
+            this.registry.set('musicEnabled', isMusicPlaying);
+            
             this.scene.start('GameScene1');
         }
     }

@@ -30,6 +30,43 @@ export class Enemy {
         
         // Set initial velocity for patrol
         this.setVelocityX(this.patrolSpeed);
+        
+        // Create health bar after all setup is complete (except for BossEnemy)
+        if (!(this instanceof BossEnemy)) {
+            this.createHealthBar();
+        }
+    }
+
+    createHealthBar() {
+        // Calculate actual display size (accounting for scale)
+        const displayWidth = this.sprite.width * this.sprite.scaleX;
+        const displayHeight = this.sprite.height * this.sprite.scaleY;
+        
+        // Make health bar wider than the enemy
+        const healthBarWidth = displayWidth * 1.5; // 50% wider than enemy
+        
+        // Health bar height scales with enemy size
+        const healthBarHeight = Math.max(6, Math.floor(displayHeight * 0.08));
+        
+        // Position above enemy's head with padding
+        const yOffset = displayHeight / 2 + healthBarHeight * 2;
+        
+        // Create the bars
+        this.healthBarBackground = this.scene.add.rectangle(
+            this.sprite.x,
+            this.sprite.y - yOffset,
+            healthBarWidth,
+            healthBarHeight,
+            0xff0000
+        );
+        
+        this.healthBar = this.scene.add.rectangle(
+            this.sprite.x,
+            this.sprite.y - yOffset,
+            healthBarWidth,
+            healthBarHeight,
+            0x00ff00
+        );
     }
 
     setVelocityX(velocity) {
@@ -46,14 +83,42 @@ export class Enemy {
 
     damage(amount) {
         this.currentHealth -= amount;
-        // Flash the enemy when hit
-        this.sprite.setAlpha(0.5);
-        setTimeout(() => this.sprite.setAlpha(1), 100);
+        
+        // Update health bar width based on current health percentage
+        const healthPercent = this.currentHealth / this.maxHealth;
+        const baseWidth = this.healthBarBackground.width; // Use background width as reference
+        this.healthBar.width = baseWidth * healthPercent;
+        
+        // Keep bars centered on enemy
+        this.healthBar.x = this.sprite.x;
+        this.healthBarBackground.x = this.sprite.x;
+        
+        // Flash the enemy when hit only if sprite exists
+        if (this.sprite && this.sprite.active) {
+            this.sprite.setAlpha(0.5);
+            setTimeout(() => {
+                if (this.sprite && this.sprite.active) {
+                    this.sprite.setAlpha(1);
+                }
+            }, 100);
+        }
+        
         return this.currentHealth <= 0;
     }
 
     destroy() {
-        this.sprite.destroy();
+        if (this.healthBar) {
+            this.healthBar.destroy();
+            this.healthBar = null;
+        }
+        if (this.healthBarBackground) {
+            this.healthBarBackground.destroy();
+            this.healthBarBackground = null;
+        }
+        if (this.sprite) {
+            this.sprite.destroy();
+            this.sprite = null;
+        }
     }
 
     update() {
@@ -61,6 +126,15 @@ export class Enemy {
 
         const player = this.scene.player;
         if (!player) return;
+
+        // Update health bar position to follow enemy
+        const enemyHeight = this.sprite.height * this.sprite.scaleY;
+        const healthBarHeight = Math.max(6, Math.floor(enemyHeight * 0.08));
+        const yOffset = enemyHeight / 2 + healthBarHeight * 2;
+        this.healthBarBackground.y = this.sprite.y - yOffset;
+        this.healthBar.y = this.sprite.y - yOffset;
+        this.healthBarBackground.x = this.sprite.x;
+        this.healthBar.x = this.sprite.x;
 
         // Calculate distance to player
         const distanceToPlayer = Phaser.Math.Distance.Between(
@@ -117,6 +191,14 @@ export class BossEnemy extends Enemy {
     constructor(scene, x, y) {
         super(scene, x, y, 'player', 10, 0xFF0000); // Bright red color, 10 HP
         this.sprite.setScale(2); // Boss is bigger
+        
+        // Update physics body for the new scale
+        this.sprite.body.setSize(32, 46);
+        this.sprite.body.setOffset(0, 1);
+        
+        // Create health bar only after setting scale
+        this.createHealthBar();
+        
         this.aggroRange = 400; // Longest range
         this.moveSpeed = 100;  // Slowest but strongest
         this.patrolSpeed = 75;

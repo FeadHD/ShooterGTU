@@ -91,7 +91,8 @@ export class GameScene4 extends BaseScene {
 
         // Check if all enemies are defeated
         if (!this.allEnemiesDefeated) {
-            this.allEnemiesDefeated = ![this.enemy1, this.enemy2, this.enemy3, this.enemy4, this.enemy5].some(enemy => enemy && enemy.sprite.active);
+            this.allEnemiesDefeated = ![this.enemy1, this.enemy2, this.enemy3, this.enemy4, this.enemy5]
+                .some(enemy => enemy && enemy.sprite && enemy.sprite.active);
             
             if (this.allEnemiesDefeated) {
                 console.log('All enemies defeated in Scene 4!'); // Debug log

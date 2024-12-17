@@ -61,12 +61,23 @@ export class BaseScene extends Scene {
             right: 'D'
         });
 
-        // Add mouse input for shooting
+        // Add mouse input for shooting in the direction of movement
         this.input.on('pointerdown', (pointer) => {
             if (pointer.leftButtonDown()) {
-                this.shoot();
+                // Shoot in the direction the player is moving/facing
+                if (this.keys.left.isDown) {
+                    this.shoot('left');
+                } else if (this.keys.right.isDown) {
+                    this.shoot('right');
+                } else {
+                    // If not moving, shoot in the last direction faced
+                    this.shoot(this.lastDirection || 'right');
+                }
             }
         });
+
+        // Initialize last direction
+        this.lastDirection = 'right';
 
         // Add settings button in top right
         const settingsButton = this.add.text(width - 100, 20, '⚙️ Music', {
@@ -84,9 +95,11 @@ export class BaseScene extends Scene {
                 if (bgMusic) {
                     if (bgMusic.isPlaying) {
                         bgMusic.pause();
+                        this.registry.set('musicEnabled', false);
                         settingsButton.setText('⚙️ Music: OFF');
                     } else {
                         bgMusic.resume();
+                        this.registry.set('musicEnabled', true);
                         settingsButton.setText('⚙️ Music: ON');
                     }
                 }
@@ -94,8 +107,12 @@ export class BaseScene extends Scene {
 
         // Update button text based on current music state
         const bgMusic = this.sound.get('bgMusic');
-        if (bgMusic && !bgMusic.isPlaying) {
+        const musicEnabled = this.registry.get('musicEnabled');
+        if (bgMusic && (!bgMusic.isPlaying || musicEnabled === false)) {
             settingsButton.setText('⚙️ Music: OFF');
+            if (bgMusic.isPlaying) {
+                bgMusic.pause();
+            }
         }
     }
 
@@ -110,7 +127,7 @@ export class BaseScene extends Scene {
         this.updateScoreText();
     }
 
-    shoot() {
+    shoot(direction = 'right') {
         // Create bullet as a rectangle
         const bullet = this.add.rectangle(this.player.x, this.player.y, 10, 5, 0xFFFF00);
         this.bullets.add(bullet);
@@ -125,8 +142,9 @@ export class BaseScene extends Scene {
             // Add physics to the bullet
             this.physics.add.existing(bullet);
             
-            // Set bullet properties
-            bullet.body.setVelocityX(800);
+            // Set bullet properties based on direction
+            const bulletSpeed = 800;
+            bullet.body.setVelocityX(direction === 'left' ? -bulletSpeed : bulletSpeed);
             bullet.body.setAllowGravity(false);
             bullet.body.setCollideWorldBounds(true);
             bullet.body.onWorldBounds = true;
@@ -159,9 +177,11 @@ export class BaseScene extends Scene {
         
         if (this.keys.left.isDown) {
             this.player.body.setVelocityX(-moveSpeed);
+            this.lastDirection = 'left';
         }
         else if (this.keys.right.isDown) {
             this.player.body.setVelocityX(moveSpeed);
+            this.lastDirection = 'right';
         }
         else {
             this.player.body.setVelocityX(0);

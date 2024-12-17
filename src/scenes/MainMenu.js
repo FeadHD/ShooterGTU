@@ -6,23 +6,60 @@ export class MainMenu extends Scene {
     }
 
     create() {
-        // Start background music
-        if (!this.sound.get('bgMusic')) {
-            this.sound.add('bgMusic', {
-                volume: 0.15,
-                loop: true
-            }).play();
-        }
-
         // Debug background color to see canvas size
         this.cameras.main.setBackgroundColor('#000000');
+
+        // Handle music
+        let bgMusic = this.sound.get('bgMusic');
+        const musicEnabled = this.registry.get('musicEnabled');
+
+        // Only create new music if it doesn't exist
+        if (!bgMusic) {
+            bgMusic = this.sound.add('bgMusic', {
+                volume: 0.15,
+                loop: true
+            });
+            
+            // Only play if music was enabled
+            if (musicEnabled !== false) {
+                bgMusic.play();
+            }
+        }
+
+        // Add music control button
+        const canvasWidth = this.cameras.main.width;
+        const musicButton = this.add.text(canvasWidth - 100, 20, '⚙️ Music: ON', {
+            fontSize: '20px',
+            fill: '#fff',
+            backgroundColor: '#000',
+            padding: { x: 10, y: 5 }
+        }).setOrigin(1, 0);
+
+        // Update initial button state
+        if (!bgMusic.isPlaying || musicEnabled === false) {
+            musicButton.setText('⚙️ Music: OFF');
+        }
+
+        musicButton.setInteractive({ useHandCursor: true })
+            .on('pointerover', () => musicButton.setStyle({ fill: '#ff0' }))
+            .on('pointerout', () => musicButton.setStyle({ fill: '#fff' }))
+            .on('pointerdown', () => {
+                if (bgMusic.isPlaying) {
+                    bgMusic.pause();
+                    this.registry.set('musicEnabled', false);
+                    musicButton.setText('⚙️ Music: OFF');
+                } else {
+                    bgMusic.resume();
+                    this.registry.set('musicEnabled', true);
+                    musicButton.setText('⚙️ Music: ON');
+                }
+            });
 
         // Add and center the background image
         const bg = this.add.image(0, 0, 'mainbg');
         bg.setOrigin(0, 0);
         
         // Get the canvas dimensions
-        const canvasWidth = this.cameras.main.width;
         const canvasHeight = this.cameras.main.height;
         
         // Scale background to fit screen
