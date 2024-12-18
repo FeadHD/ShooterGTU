@@ -7,6 +7,7 @@ import { GameScene3 } from './scenes/GameScene3';
 import { GameScene4 } from './scenes/GameScene4';
 import { GameScene5 } from './scenes/GameScene5';
 import { MissionComplete } from './scenes/MissionComplete';
+import { GameOver } from './scenes/GameOver';
 import Settings from './scenes/Settings';
 
 const config = {
@@ -45,7 +46,8 @@ const config = {
         GameScene3,
         GameScene4,
         GameScene5,
-        MissionComplete
+        MissionComplete,
+        GameOver
     ]
 };
 

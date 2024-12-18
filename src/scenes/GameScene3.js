@@ -10,8 +10,7 @@ export class GameScene3 extends BaseScene {
         this.cameras.main.setBackgroundColor('#3A3A3A');
         super.create();
 
-        const width = this.scale.width;
-        const height = this.scale.height;
+        const { width, height } = this.scale;
 
         // Set player to left side
         this.player.x = width * 0.1;
@@ -23,35 +22,42 @@ export class GameScene3 extends BaseScene {
             fill: '#fff'
         }).setOrigin(0.5);
 
-        // Create enemies group
+        // Set next scene
+        this.nextSceneName = 'GameScene4';
+        
+        // Create enemy group
         this.enemies = this.physics.add.group();
 
-        // Calculate exact spawn height
-        const enemyY = height - 90; // Spawn higher up for faster fall
+        // Wait a short moment for platforms to be fully set up
+        this.time.delayedCall(100, () => {
+            // Use helper method to get correct spawn height
+            const enemyY = this.getSpawnHeight();
 
-        // Create four strong enemies at different positions
-        this.enemy1 = new StrongEnemy(this, width * 0.3, enemyY);  // Left
-        this.enemy2 = new StrongEnemy(this, width * 0.5, enemyY);  // Middle-left
-        this.enemy3 = new StrongEnemy(this, width * 0.7, enemyY);  // Middle-right
-        this.enemy4 = new StrongEnemy(this, width * 0.9, enemyY);  // Right
+            // Create four strong enemies at different positions
+            this.enemy1 = new StrongEnemy(this, width * 0.3, enemyY);  // Left
+            this.enemy2 = new StrongEnemy(this, width * 0.5, enemyY);  // Middle-left
+            this.enemy3 = new StrongEnemy(this, width * 0.7, enemyY);  // Middle-right
+            this.enemy4 = new StrongEnemy(this, width * 0.9, enemyY);  // Right
 
-        // Add enemies to the group
-        this.enemies.add(this.enemy1.sprite);
-        this.enemies.add(this.enemy2.sprite);
-        this.enemies.add(this.enemy3.sprite);
-        this.enemies.add(this.enemy4.sprite);
+            // Add enemies to the group
+            this.enemies.add(this.enemy1.sprite);
+            this.enemies.add(this.enemy2.sprite);
+            this.enemies.add(this.enemy3.sprite);
+            this.enemies.add(this.enemy4.sprite);
 
-        // Set up collisions
-        this.physics.add.collider(this.enemies, this.platforms);
-        this.physics.add.collider(this.player, this.enemies, this.hitEnemy, null, this);
-        this.physics.add.collider(this.bullets, this.enemies, this.hitEnemyWithBullet, null, this);
+            // Set up collisions
+            this.physics.add.collider(this.enemies, this.platforms);
+            this.physics.add.collider(this.player, this.enemies, this.hitEnemy, null, this);
+            this.physics.add.collider(this.bullets, this.enemies, this.hitEnemyWithBullet, null, this);
 
-        // Add invisible wall on the left to prevent going back
-        const wall = this.add.rectangle(0, height/2, 20, height, 0x000000, 0);
-        this.physics.add.existing(wall, true);
-        this.physics.add.collider(this.player, wall);
+            // Add invisible wall on the left to prevent going back
+            const wall = this.add.rectangle(0, height/2, 20, height, 0x000000, 0);
+            this.physics.add.existing(wall, true);
+            this.physics.add.collider(this.player, wall);
 
-        if (this.player.x < 20) this.scene.start('GameScene2');
+            // Set number of enemies
+            this.remainingEnemies = 4;
+        });
     }
 
     hitEnemyWithBullet(bullet, enemySprite) {

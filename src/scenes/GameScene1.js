@@ -14,12 +14,13 @@ export class GameScene1 extends BaseScene {
     }
 
     create() {
-        this.cameras.main.setBackgroundColor('#5A5A5A');
         super.create();
-
-        const width = this.scale.width;
-        const height = this.scale.height;
-
+        
+        const { width, height } = this.scale;
+        
+        // Set next scene
+        this.nextSceneName = 'GameScene2';
+        
         // Set player to left side
         this.player.x = width * 0.1;
 
@@ -30,17 +31,24 @@ export class GameScene1 extends BaseScene {
             fill: '#fff'
         }).setOrigin(0.5);
 
-        // Create enemies group
+        // Add instruction text
+        this.instructionText = this.add.text(width/2, height * 0.2, 'Defeat all enemies to proceed!', {
+            fontFamily: 'Retronoid',
+            fontSize: '24px',
+            fill: '#ff0'
+        }).setOrigin(0.5);
+
+        // Create enemy group
         this.enemies = this.physics.add.group();
 
         // Wait a short moment for platforms to be fully set up
         this.time.delayedCall(100, () => {
-            // Calculate exact spawn height
-            const enemyY = height - 90; // Spawn higher up for faster fall
+            // Use helper method to get correct spawn height
+            const enemyY = this.getSpawnHeight();
 
             // Create two weak enemies at different positions
-            this.enemy1 = new WeakEnemy(this, width * 0.5, enemyY);  // Middle of screen
-            this.enemy2 = new WeakEnemy(this, width * 0.8, enemyY);  // Right side
+            this.enemy1 = new WeakEnemy(this, width * 0.3, enemyY);  // Left side
+            this.enemy2 = new WeakEnemy(this, width * 0.7, enemyY);  // Right side
 
             // Add enemies to the group
             this.enemies.add(this.enemy1.sprite);
@@ -48,8 +56,13 @@ export class GameScene1 extends BaseScene {
 
             // Set up collisions
             this.physics.add.collider(this.enemies, this.platforms);
+
+            // Add collision between player and enemies
             this.physics.add.collider(this.player, this.enemies, this.hitEnemy, null, this);
             this.physics.add.collider(this.bullets, this.enemies, this.hitEnemyWithBullet, null, this);
+            
+            // Set number of enemies
+            this.remainingEnemies = 2;
         });
     }
 
@@ -63,6 +76,7 @@ export class GameScene1 extends BaseScene {
             // Enemy is dead
             enemy.destroy();
             this.addPoints(10);
+            this.remainingEnemies--;
         }
     }
 
@@ -73,7 +87,9 @@ export class GameScene1 extends BaseScene {
         if (this.enemy1) this.enemy1.update();
         if (this.enemy2) this.enemy2.update();
 
-        if (this.player.x > this.scale.width - 20) {
+        // Check if player has reached the right side and all enemies are defeated
+        const allEnemiesDefeated = !this.enemy1?.sprite?.active && !this.enemy2?.sprite?.active;
+        if (this.player.x > this.scale.width - 20 && allEnemiesDefeated) {
             this.scene.start('GameScene2');
         }
     }

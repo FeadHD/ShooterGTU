@@ -136,6 +136,9 @@ export class MissionComplete extends Scene {
             if (victoryMusic) victoryMusic.destroy();
             if (bgMusic) bgMusic.destroy();
             
+            // Reset the score to 0
+            this.registry.set('score', 0);
+            
             this.scene.start('MainMenu');
         });
 

@@ -10,8 +10,7 @@ export class GameScene2 extends BaseScene {
         this.cameras.main.setBackgroundColor('#4A4A4A');
         super.create();
 
-        const width = this.scale.width;
-        const height = this.scale.height;
+        const { width, height } = this.scale;
 
         // Set player to left side
         this.player.x = width * 0.1;
@@ -23,32 +22,43 @@ export class GameScene2 extends BaseScene {
             fill: '#fff'
         }).setOrigin(0.5);
 
-        // Create enemies group
+        // Set next scene (can be modified if you add more scenes)
+        this.nextSceneName = 'GameScene1';
+
+        // Create enemy group
         this.enemies = this.physics.add.group();
 
-        // Calculate exact spawn height
-        const enemyY = height - 90; // Spawn higher up for faster fall
+        // Wait a short moment for platforms to be fully set up
+        this.time.delayedCall(100, () => {
+            // Use helper method to get correct spawn height
+            const enemyY = this.getSpawnHeight();
 
-        // Create three medium enemies at different positions
-        this.enemy1 = new MediumEnemy(this, width * 0.4, enemyY);  // Left side
-        this.enemy2 = new MediumEnemy(this, width * 0.6, enemyY);  // Middle
-        this.enemy3 = new MediumEnemy(this, width * 0.8, enemyY);  // Right side
+            // Create three medium enemies at different positions
+            this.enemy1 = new MediumEnemy(this, width * 0.25, enemyY);
+            this.enemy2 = new MediumEnemy(this, width * 0.5, enemyY);
+            this.enemy3 = new MediumEnemy(this, width * 0.75, enemyY);
 
-        // Add enemies to the group
-        this.enemies.add(this.enemy1.sprite);
-        this.enemies.add(this.enemy2.sprite);
-        this.enemies.add(this.enemy3.sprite);
+            // Add enemies to the group
+            this.enemies.add(this.enemy1.sprite);
+            this.enemies.add(this.enemy2.sprite);
+            this.enemies.add(this.enemy3.sprite);
 
-        // Set up collisions
-        this.physics.add.collider(this.enemies, this.platforms);
-        this.physics.add.collider(this.player, this.enemies, this.hitEnemy, null, this);
-        this.physics.add.collider(this.bullets, this.enemies, this.hitEnemyWithBullet, null, this);
-        this.physics.add.collider(this.bullets, this.platforms);
+            // Set up collisions
+            this.physics.add.collider(this.enemies, this.platforms);
 
-        // Add invisible wall on the left to prevent going back
-        const wall = this.add.rectangle(0, height/2, 20, height, 0x000000, 0);
-        this.physics.add.existing(wall, true);
-        this.physics.add.collider(this.player, wall);
+            // Add collision between player and enemies
+            this.physics.add.collider(this.player, this.enemies, this.hitEnemy, null, this);
+            this.physics.add.collider(this.bullets, this.enemies, this.hitEnemyWithBullet, null, this);
+            this.physics.add.collider(this.bullets, this.platforms);
+
+            // Add invisible wall on the left to prevent going back
+            const wall = this.add.rectangle(0, height/2, 20, height, 0x000000, 0);
+            this.physics.add.existing(wall, true);
+            this.physics.add.collider(this.player, wall);
+
+            // Set number of enemies
+            this.remainingEnemies = 3;
+        });
     }
 
     hitEnemyWithBullet(bullet, enemySprite) {

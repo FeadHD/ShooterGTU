@@ -1,7 +1,12 @@
 // Enemy class definitions with different health points
-export class Enemy {
+class Enemy {
     constructor(scene, x, y, sprite, health, tint = 0xff0000) {
         this.scene = scene;
+        
+        // Calculate proper spawn height based on ground position
+        const groundTop = scene.groundTop || (scene.scale.height - 100);
+        y = groundTop - 24; // Ensure enemy spawns above ground
+        
         this.sprite = scene.add.rectangle(x, y, 32, 48, tint);
         scene.physics.add.existing(this.sprite);
         this.sprite.setScale(1);  // All enemies have same scale
@@ -163,15 +168,15 @@ export class Enemy {
     }
 }
 
-export class WeakEnemy extends Enemy {
+class WeakEnemy extends Enemy {
     constructor(scene, x, y) {
-        super(scene, x, y, 'player', 1, 0x00FFFF); // Light blue/cyan color, 1 HP
-        this.aggroRange = 250; // Shorter range
-        this.moveSpeed = 160;  // Faster but weaker
+        super(scene, x, y, 'weak_enemy', 1);
+        this.moveSpeed = 100;
+        this.patrolSpeed = 75;
     }
 }
 
-export class MediumEnemy extends Enemy {
+class MediumEnemy extends Enemy {
     constructor(scene, x, y) {
         super(scene, x, y, 'player', 2, 0xFFD700); // Yellow/gold color, 2 HP
         this.aggroRange = 300; // Medium range
@@ -179,28 +184,38 @@ export class MediumEnemy extends Enemy {
     }
 }
 
-export class StrongEnemy extends Enemy {
+class StrongEnemy extends Enemy {
     constructor(scene, x, y) {
-        super(scene, x, y, 'player', 4, 0x8A2BE2); // Purple/violet color, 4 HP
-        this.aggroRange = 350; // Longer range
-        this.moveSpeed = 120;  // Slower but stronger
+        super(scene, x, y, 'strong_enemy', 3);
+        this.moveSpeed = 150;
+        this.patrolSpeed = 100;
     }
 }
 
-export class BossEnemy extends Enemy {
+class BossEnemy extends Enemy {
     constructor(scene, x, y) {
-        super(scene, x, y, 'player', 10, 0xFF0000); // Bright red color, 10 HP
-        this.sprite.setScale(2); // Boss is bigger
+        super(scene, x, y, 'boss_enemy', 5, 0xff0000);
         
-        // Update physics body for the new scale
+        // Boss is bigger
+        this.sprite.setScale(2);
+        
+        // Adjust physics body for larger size and ensure it stays on ground
         this.sprite.body.setSize(32, 46);
         this.sprite.body.setOffset(0, 1);
+        this.sprite.body.setGravityY(2000); // Stronger gravity to stay grounded
+        this.sprite.body.setMass(2); // Heavier mass
         
         // Create health bar only after setting scale
         this.createHealthBar();
         
         this.aggroRange = 400; // Longest range
-        this.moveSpeed = 100;  // Slowest but strongest
+        this.moveSpeed = 200;
         this.patrolSpeed = 75;
+        
+        // Force position above ground
+        const groundTop = scene.groundTop || (scene.scale.height - 100);
+        this.sprite.y = groundTop - (46 * this.sprite.scale); // Account for scaled size
     }
 }
+
+export { Enemy, WeakEnemy, MediumEnemy, StrongEnemy, BossEnemy };

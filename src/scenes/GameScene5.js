@@ -17,8 +17,7 @@ export class GameScene5 extends BaseScene {
         this.cameras.main.setBackgroundColor('#2A2A2A');
         super.create();
 
-        const width = this.scale.width;
-        const height = this.scale.height;
+        const { width, height } = this.scale;
 
         this.player.x = width * 0.1;
         this.bossDefeated = false;
@@ -36,22 +35,43 @@ export class GameScene5 extends BaseScene {
             this.boss = null;
         }
 
-        // Create enemies group
-        this.enemies = this.physics.add.group();
+        // Create enemies group with physics
+        this.enemies = this.physics.add.group({
+            bounceX: 0,
+            bounceY: 0,
+            collideWorldBounds: true,
+            dragX: 100
+        });
 
-        // Create the boss at the right side
-        this.boss = new BossEnemy(this, width * 0.8, height - 130);
-        this.enemies.add(this.boss.sprite);
+        // Wait a short moment for platforms to be fully set up
+        this.time.delayedCall(100, () => {
+            // Create the boss at the right side
+            this.boss = new BossEnemy(this, width * 0.8, this.groundTop - 92); // Account for boss's larger size
+            
+            if (this.boss && this.boss.sprite) {
+                this.enemies.add(this.boss.sprite);
+                
+                // Set up multiple collision handlers for redundancy
+                this.physics.add.collider(this.boss.sprite, this.platforms);
+                this.physics.add.collider(this.enemies, this.platforms);
+                
+                // Set up player and bullet collisions
+                this.physics.add.collider(this.player, this.enemies, this.hitEnemy, null, this);
+                this.physics.add.collider(this.bullets, this.enemies, this.hitEnemyWithBullet, null, this);
+                
+                // Extra physics settings for boss sprite
+                this.boss.sprite.body.setCollideWorldBounds(true);
+                this.boss.sprite.body.setBounce(0);
+                this.boss.sprite.body.setFriction(1);
+                this.boss.sprite.body.setDragX(100);
+            }
 
-        // Set up collisions
-        this.physics.add.collider(this.enemies, this.platforms);
-        this.physics.add.collider(this.player, this.enemies, this.hitEnemy, null, this);
-        this.physics.add.collider(this.bullets, this.enemies, this.hitEnemyWithBullet, null, this);
+            // Add invisible wall on the left to prevent going back
+            const wall = this.add.rectangle(0, height/2, 20, height, 0x000000, 0);
+            this.physics.add.existing(wall, true);
+            this.physics.add.collider(this.player, wall);
+        });
 
-        // Add invisible wall on the left to prevent going back
-        const wall = this.add.rectangle(0, height/2, 20, height, 0x000000, 0);
-        this.physics.add.existing(wall, true);
-        this.physics.add.collider(this.player, wall);
         console.log('Scene 5 created successfully'); // Debug log
     }
 
@@ -82,9 +102,15 @@ export class GameScene5 extends BaseScene {
     update() {
         super.update();
 
-        // Update boss patrol if it exists
+        // Update boss patrol if it exists and ensure it stays above ground
         if (this.boss && this.boss.sprite && this.boss.sprite.active) {
             this.boss.update();
+            
+            // Extra check to keep boss above ground
+            if (this.boss.sprite.y > this.groundTop - 46) {
+                this.boss.sprite.y = this.groundTop - 46;
+                this.boss.sprite.body.setVelocityY(0);
+            }
         }
 
         // Check if boss is defeated

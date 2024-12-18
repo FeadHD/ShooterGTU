@@ -32,11 +32,54 @@ export class Preloader extends Scene {
     }
 
     preload() {
+        // Debug logging for asset loading
+        this.load.on('filecomplete', (key, type, data) => {
+            console.log('Loaded:', key, type);
+            if (type === 'spritesheet') {
+                const texture = this.textures.get(key);
+                console.log(`Spritesheet ${key} dimensions:`, texture.source[0].width, 'x', texture.source[0].height);
+                console.log(`Frame config:`, this.textures.get(key).customData);
+            }
+        });
+
+        this.load.on('loaderror', (file) => {
+            console.error('Error loading:', file.key, file.src);
+            console.error('Error details:', file.data);
+        });
+
         // Load styles
         this.load.css('style', './assets/css/style.css');
         
         // Load main menu background
         this.load.image('mainbg', './assets/mainbg.png');
+        
+        // Load character sprites with correct paths and frame sizes
+        this.load.spritesheet('character_idle', './assets/character/character_Idle.png', {
+            frameWidth: 48,
+            frameHeight: 48,
+            startFrame: 0,
+            endFrame: 4,
+            spacing: 0,
+            margin: 0
+        });
+        
+        this.load.spritesheet('character_run', './assets/character/character_Run.png', {
+            frameWidth: 48,
+            frameHeight: 48,
+            startFrame: 0,
+            endFrame: 6,
+            spacing: 0,
+            margin: 0
+        });
+        
+        this.load.spritesheet('character_jump', './assets/character/character_Jump.png', {
+            frameWidth: 48,
+            frameHeight: 48,
+            startFrame: 0,
+            endFrame: 2,
+            spacing: 0,
+            margin: 0
+        });
         
         // Load bullet sprite
         this.load.image('bullet', './assets/bullet.png');
@@ -62,6 +105,19 @@ export class Preloader extends Scene {
             console.log('Font loaded successfully');
         }).catch(error => {
             console.error('Font loading error:', error);
+        });
+
+        // Debug logging for texture loading
+        const textureKeys = ['character_idle', 'character_run', 'character_jump'];
+        textureKeys.forEach(key => {
+            if (this.textures.exists(key)) {
+                console.log(`${key} texture loaded successfully`);
+                const texture = this.textures.get(key);
+                console.log(`${key} dimensions:`, texture.source[0].width, 'x', texture.source[0].height);
+                console.log(`${key} frames:`, texture.frameTotal);
+            } else {
+                console.error(`${key} texture failed to load`);
+            }
         });
 
         console.log('All assets loaded, starting MainMenu');

@@ -143,7 +143,10 @@ export class MainMenu extends Scene {
         const rulesButton = createButton('RULES', canvasHeight * 0.7);
 
         // Add click handlers
-        startButton.on('pointerdown', () => this.scene.start('GameScene1'));
+        startButton.on('pointerdown', () => {
+            this.registry.set('lives', 3);
+            this.scene.start('GameScene1');
+        });
         settingsButton.on('pointerdown', () => {
             this.scene.start('Settings');
         });
