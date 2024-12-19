@@ -74,6 +74,26 @@ export class GameScene4 extends BaseScene {
     }
 
     hitEnemyWithBullet(bullet, enemySprite) {
+        // Create particles at hit location
+        for(let i = 0; i < 10; i++) {
+            const particle = this.add.circle(bullet.x, bullet.y, 3, 0xffff00);
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 100 + Math.random() * 100;
+            const vx = Math.cos(angle) * speed;
+            const vy = Math.sin(angle) * speed;
+            
+            this.tweens.add({
+                targets: particle,
+                x: particle.x + (vx * 0.3), // Move in direction over 300ms
+                y: particle.y + (vy * 0.3),
+                alpha: 0,
+                scale: 0.1,
+                duration: 300,
+                ease: 'Power2',
+                onComplete: () => particle.destroy()
+            });
+        }
+
         this.hitSound.play(); // Play hit sound
         bullet.destroy();
         

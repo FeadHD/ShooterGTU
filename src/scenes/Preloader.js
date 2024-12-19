@@ -47,6 +47,22 @@ export class Preloader extends Scene {
             console.error('Error details:', file.data);
         });
 
+        // Create a white circle texture for particles programmatically
+        const particleTexture = this.make.graphics({ x: 0, y: 0, add: false });
+        particleTexture.lineStyle(1, 0xFFFFFF);
+        particleTexture.fillStyle(0xFFFFFF);
+        particleTexture.beginPath();
+        particleTexture.arc(4, 4, 4, 0, Math.PI * 2);
+        particleTexture.closePath();
+        particleTexture.fillPath();
+        particleTexture.strokePath();
+        particleTexture.generateTexture('particle', 8, 8);
+
+        // Debug log when particle texture is loaded
+        this.load.on('filecomplete-image-particle', () => {
+            console.log('Particle texture loaded successfully');
+        });
+
         // Load styles
         this.load.css('style', './assets/css/style.css');
         
@@ -62,7 +78,8 @@ export class Preloader extends Scene {
             spacing: 0,
             margin: 0
         });
-        
+        console.log('Loading character_idle sprite');
+
         this.load.spritesheet('character_run', './assets/character/character_Run.png', {
             frameWidth: 48,
             frameHeight: 48,
@@ -71,7 +88,18 @@ export class Preloader extends Scene {
             spacing: 0,
             margin: 0
         });
-        
+        console.log('Loading character_run sprite');
+
+        this.load.spritesheet('character_walk', './assets/character/character_Walking.png', {
+            frameWidth: 48,
+            frameHeight: 48,
+            startFrame: 0,
+            endFrame: 6,
+            spacing: 0,
+            margin: 0
+        });
+        console.log('Loading character_walk sprite');
+
         this.load.spritesheet('character_jump', './assets/character/character_Jump.png', {
             frameWidth: 48,
             frameHeight: 48,
@@ -80,7 +108,18 @@ export class Preloader extends Scene {
             spacing: 0,
             margin: 0
         });
-        
+        console.log('Loading character_jump sprite');
+
+        this.load.spritesheet('character_death', './assets/character/character_Death.png', {
+            frameWidth: 48,
+            frameHeight: 48,
+            startFrame: 0,
+            endFrame: 6,
+            spacing: 0,
+            margin: 0
+        });
+        console.log('Loading character_death sprite');
+
         // Load bullet sprite
         this.load.image('bullet', './assets/bullet.png');
         
@@ -91,6 +130,21 @@ export class Preloader extends Scene {
         
         // Load the font file directly
         this.load.binary('retronoid', './assets/fonts/retronoid/Retronoid.ttf');
+
+        // Add load complete event
+        this.load.on('complete', () => {
+            console.log('All assets loaded');
+            console.log('Available textures:', Object.keys(this.textures.list));
+            
+            // Log frame counts for each sprite
+            ['character_idle', 'character_run', 'character_walk', 'character_jump', 'character_death'].forEach(key => {
+                if (this.textures.exists(key)) {
+                    console.log(`${key} frames:`, this.textures.get(key).frameTotal);
+                } else {
+                    console.error(`Missing texture: ${key}`);
+                }
+            });
+        });
     }
 
     create() {
@@ -108,7 +162,7 @@ export class Preloader extends Scene {
         });
 
         // Debug logging for texture loading
-        const textureKeys = ['character_idle', 'character_run', 'character_jump'];
+        const textureKeys = ['character_idle', 'character_run', 'character_walk', 'character_jump', 'character_death'];
         textureKeys.forEach(key => {
             if (this.textures.exists(key)) {
                 console.log(`${key} texture loaded successfully`);

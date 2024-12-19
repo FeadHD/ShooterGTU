@@ -14,6 +14,20 @@ export class BaseScene extends Scene {
             this.registry.set('lives', 3);
         }
 
+        // Initialize player HP and dying state
+        this.playerHP = 100;
+        this.isDying = false;
+
+        // Set movement speeds
+        this.movementSpeed = 300;  
+        this.jumpSpeed = -450;     
+
+        // Enable keyboard input
+        this.input.keyboard.enabled = true;
+
+        // Initialize player HP
+        // this.playerHP = 100;
+
         // Create sound effects
         this.laserSound = this.sound.add('laser', { volume: 0.05 });
         this.hitSound = this.sound.add('hit', { volume: 0.1 });
@@ -41,6 +55,23 @@ export class BaseScene extends Scene {
             return this.groundTop - 24; // Adjust based on entity height
         };
 
+        // Create particle manager for hit effects
+        this.hitParticles = this.add.particles({
+            key: 'particle',
+            config: {
+                x: 0,
+                y: 0,
+                speed: { min: 100, max: 200 },
+                gravityY: 0,
+                scale: { start: 1, end: 0 },
+                tint: 0xffff00,  // Yellow color
+                blendMode: 'ADD',
+                lifespan: 300,
+                quantity: 10,
+                emitZone: { type: 'random', source: new Phaser.Geom.Circle(0, 0, 20) }
+            }
+        });
+
         // Create animations first
         this.createAnimations();
 
@@ -56,7 +87,7 @@ export class BaseScene extends Scene {
         }
 
         // Verify animations exist before creating player
-        if (!this.anims.exists('idle')) {
+        if (!this.anims.exists('character_idle')) {
             console.error('Required animations not created. Using fallback sprite.');
             // Create a simple rectangle as fallback
             this.player = this.add.rectangle(
@@ -88,9 +119,9 @@ export class BaseScene extends Scene {
 
             try {
                 // Play idle animation by default
-                if (this.anims.exists('idle')) {
+                if (this.anims.exists('character_idle')) {
                     console.log('Playing idle animation...');
-                    this.player.play('idle');
+                    this.player.play('character_idle');
                 }
             } catch (error) {
                 console.error('Error playing idle animation:', error);
@@ -106,14 +137,12 @@ export class BaseScene extends Scene {
         // Debug info
         console.log('Player created at:', this.player.x, this.player.y);
         console.log('Player texture:', this.player.texture ? this.player.texture.key : 'No texture');
-        console.log('Available animations:', this.anims.names);
+        console.log('Available animations:', this.anims.anims.entries);
 
         // Add colliders
         this.physics.add.collider(this.player, this.platforms);
 
         // Set up keyboard controls
-        this.cursors = this.input.keyboard.createCursorKeys();
-        // Add WASD keys for movement
         this.wasd = this.input.keyboard.addKeys({
             up: Phaser.Input.Keyboard.KeyCodes.W,
             down: Phaser.Input.Keyboard.KeyCodes.S,
@@ -145,20 +174,28 @@ export class BaseScene extends Scene {
         });
 
         // Create score text
-        this.scoreText = this.add.text(16, 16, 'Score: 0', {
+        this.scoreText = this.add.text(16, 16, 'Score: ' + this.registry.get('score'), {
             fontSize: '24px',
             fill: '#fff',
             fontFamily: 'Retronoid'
         });
         this.scoreText.setScrollFactor(0);
 
-        // Create lives display
+        // Create lives text
         this.livesText = this.add.text(16, 56, 'Lives: ' + this.registry.get('lives'), {
             fontSize: '24px',
             fill: '#ff0000',
             fontFamily: 'Retronoid'
         });
         this.livesText.setScrollFactor(0);
+
+        // Create HP text
+        this.hpText = this.add.text(16, 96, 'HP: ' + this.playerHP, {
+            fontSize: '24px',
+            fill: '#00ff00',
+            fontFamily: 'Retronoid'
+        });
+        this.hpText.setScrollFactor(0);
 
         // Update score display
         const score = this.registry.get('score');
@@ -208,55 +245,61 @@ export class BaseScene extends Scene {
     createAnimations() {
         console.log('Creating animations...');
         
-        // Check if textures exist before creating animations
-        const textureKeys = ['character_idle', 'character_run', 'character_jump'];
-        textureKeys.forEach(key => {
-            if (!this.textures.exists(key)) {
-                console.error(`Missing texture: ${key}`);
-                return;
-            }
-            console.log(`Found texture: ${key} with ${this.textures.get(key).frameTotal} frames`);
-        });
-
         try {
             // Create idle animation
             this.anims.create({
-                key: 'idle',
+                key: 'character_idle',
                 frames: this.anims.generateFrameNumbers('character_idle', { 
                     start: 0, 
-                    end: 4  
+                    end: 3  // Adjust based on your sprite sheet
                 }),
                 frameRate: 8,
                 repeat: -1
             });
             console.log('Created idle animation');
 
-            // Create run animation
+            // Create walk animation
             this.anims.create({
-                key: 'run',
-                frames: this.anims.generateFrameNumbers('character_run', { 
+                key: 'character_walk',
+                frames: this.anims.generateFrameNumbers('character_walk', { 
                     start: 0, 
-                    end: 6  
+                    end: 7  // Adjust based on your sprite sheet
                 }),
                 frameRate: 10,
                 repeat: -1
             });
-            console.log('Created run animation');
+            console.log('Created walk animation');
 
             // Create jump animation
             this.anims.create({
-                key: 'jump',
+                key: 'character_jump',
                 frames: this.anims.generateFrameNumbers('character_jump', { 
                     start: 0, 
-                    end: 2  
+                    end: 3  // Adjust based on your sprite sheet
                 }),
                 frameRate: 10,
                 repeat: 0
             });
             console.log('Created jump animation');
+
+            // Create death animation
+            this.anims.create({
+                key: 'character_death',
+                frames: this.anims.generateFrameNumbers('character_death', { 
+                    start: 0, 
+                    end: 5  // Adjust based on your sprite sheet
+                }),
+                frameRate: 10,
+                repeat: 0
+            });
+            console.log('Created death animation');
+
+            console.log('All animations created');
+            console.log('Available animations:', Object.keys(this.anims.anims.entries));
             
         } catch (error) {
             console.error('Error creating animations:', error);
+            console.error('Error details:', error.message);
         }
     }
 
@@ -309,6 +352,32 @@ export class BaseScene extends Scene {
     }
 
     hitEnemyWithBullet(bullet, enemySprite) {
+        // Create simple particles at hit location
+        for(let i = 0; i < 10; i++) {
+            const particle = this.add.circle(bullet.x, bullet.y, 3, 0xffff00);
+            this.physics.add.existing(particle);
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 100 + Math.random() * 100;
+            particle.body.setVelocity(
+                Math.cos(angle) * speed,
+                Math.sin(angle) * speed
+            );
+            particle.body.setAllowGravity(false);
+            
+            // Fade out and destroy
+            this.tweens.add({
+                targets: particle,
+                alpha: 0,
+                scale: 0.1,
+                duration: 300,
+                ease: 'Power2',
+                onComplete: () => particle.destroy()
+            });
+        }
+
+        // Play hit sound
+        this.hitSound.play();
+        
         bullet.destroy();
         
         // Find the enemy object that owns this sprite
@@ -336,94 +405,136 @@ export class BaseScene extends Scene {
         }
     }
 
+    hitEnemy(player, enemy) {
+        // Prevent multiple hits while invulnerable or if already dead
+        if (player.alpha < 1 || this.isDying) {
+            return;
+        }
+
+        // Take damage
+        this.playerHP -= 25; // Each hit takes 25 HP
+        this.hpText.setText('HP: ' + this.playerHP);
+
+        // Check if player died
+        if (this.playerHP <= 0) {
+            this.isDying = true;
+            
+            // Stop player movement and disable physics
+            player.setVelocity(0, 0);
+            player.body.moves = false;
+            
+            // Disable player input during death
+            this.input.keyboard.enabled = false;
+            this.wasd.up.reset();
+            this.wasd.down.reset();
+            this.wasd.left.reset();
+            this.wasd.right.reset();
+            
+            // Reduce lives
+            let lives = this.registry.get('lives');
+            lives--;
+            this.registry.set('lives', lives);
+            this.livesText.setText('Lives: ' + lives);
+
+            // Play death animation
+            player.play('character_death');
+            
+            // Wait for death animation to complete
+            player.once('animationcomplete', () => {
+                // Wait a short moment after animation
+                this.time.delayedCall(500, () => {
+                    if (lives <= 0) {
+                        // Reset lives for next game
+                        this.registry.set('lives', 3);
+                        this.scene.start('GameOver');
+                    } else {
+                        // Store current scene key
+                        const currentScene = this.scene.key;
+                        
+                        // Stop current scene
+                        this.scene.stop(currentScene);
+                        
+                        // Start fresh instance of current scene
+                        this.scene.start(currentScene);
+                    }
+                });
+            });
+        } else {
+            // Make player briefly invulnerable and flash
+            player.alpha = 0.5;
+            this.time.delayedCall(1000, () => {
+                if (!this.isDying) {
+                    player.alpha = 1;
+                }
+            });
+
+            // Play hit sound
+            this.hitSound.play();
+        }
+    }
+
     update() {
-        if (!this.player) return;
-
-        // Update lives display
-        if (this.livesText) {
-            this.livesText.setText('Lives: ' + this.registry.get('lives'));
+        if (!this.player || this.isDying) {
+            return;
         }
 
-        // Update score display
-        if (this.scoreText) {
-            this.scoreText.setText('Score: ' + this.registry.get('score'));
-        }
-
-        // Only handle animations if player is a sprite (not a rectangle fallback)
-        const isSprite = this.player.hasOwnProperty('play');
-        
         // Handle horizontal movement
         if (this.wasd.left.isDown) {
-            this.player.setVelocityX(-300);
-            if (isSprite) {
-                this.player.flipX = true;
-                if (this.player.body.onFloor() && this.anims.exists('run')) {
-                    try {
-                        this.player.play('run', true);
-                    } catch (error) {
-                        console.error('Error playing run animation:', error);
-                    }
-                }
+            this.player.setVelocityX(-this.movementSpeed);
+            this.player.flipX = true;
+            if (this.player.body.onFloor()) {
+                this.player.play('character_walk', true);
             }
         } else if (this.wasd.right.isDown) {
-            this.player.setVelocityX(300);
-            if (isSprite) {
-                this.player.flipX = false;
-                if (this.player.body.onFloor() && this.anims.exists('run')) {
-                    try {
-                        this.player.play('run', true);
-                    } catch (error) {
-                        console.error('Error playing run animation:', error);
-                    }
-                }
+            this.player.setVelocityX(this.movementSpeed);
+            this.player.flipX = false;
+            if (this.player.body.onFloor()) {
+                this.player.play('character_walk', true);
             }
         } else {
             this.player.setVelocityX(0);
-            if (isSprite && this.player.body.onFloor() && this.anims.exists('idle')) {
-                try {
-                    this.player.play('idle', true);
-                } catch (error) {
-                    console.error('Error playing idle animation:', error);
-                }
+            if (this.player.body.onFloor()) {
+                this.player.play('character_idle', true);
             }
         }
 
         // Handle jumping
         if (this.wasd.up.isDown && this.player.body.onFloor()) {
-            this.player.setVelocityY(-500);
-            if (isSprite && this.anims.exists('jump')) {
-                try {
-                    this.player.play('jump', true);
-                } catch (error) {
-                    console.error('Error playing jump animation:', error);
-                }
-            }
+            this.player.setVelocityY(this.jumpSpeed);
+            this.player.play('character_jump', true);
         }
 
-        // Clean up bullets that are out of bounds
-        this.bullets.children.each((bullet) => {
-            if (bullet.active && (bullet.x < 0 || bullet.x > this.scale.width)) {
-                this.destroyBullet(bullet);
-            }
-        });
-    }
-
-    hitEnemy(player, enemy) {
-        this.handlePlayerDeath();
+        // Update displays
+        if (this.scoreText) {
+            this.scoreText.setText('Score: ' + this.registry.get('score'));
+        }
+        if (this.hpText) {
+            this.hpText.setText('HP: ' + this.playerHP);
+        }
     }
 
     handlePlayerDeath() {
-        // Decrease lives
+        // Get current lives
         let lives = this.registry.get('lives');
         lives--;
         this.registry.set('lives', lives);
+        this.livesText.setText('Lives: ' + lives);
 
-        if (lives <= 0) {
-            // Game Over - Transition to GameOver scene
-            this.scene.start('GameOver');
-        } else {
-            // Restart current scene
-            this.scene.restart();
-        }
+        // Wait for death animation to complete
+        this.player.once('animationcomplete-death', () => {
+            if (lives <= 0) {
+                // Reset lives and HP for next game
+                this.registry.set('lives', 3);
+                this.playerHP = 100;
+                this.isDying = false;
+                this.scene.start('GameOver');
+            } else {
+                // Reset HP and re-enable controls before restarting
+                this.playerHP = 100;
+                this.isDying = false;
+                this.input.keyboard.enabled = true;
+                this.scene.restart();
+            }
+        });
     }
 }
