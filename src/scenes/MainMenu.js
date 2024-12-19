@@ -75,7 +75,7 @@ export class MainMenu extends Scene {
                 const layerColor = i === 0 ? '#4400ff' : '#ff00ff';
                 this.add.text(canvasWidth/2 + (i * shadowOffset), canvasHeight * 0.25 + (i * shadowOffset), 'GOOD TIME UNIVERSE', {
                     fontFamily: 'Retronoid, Arial',
-                    fontSize: '100px',
+                    fontSize: '64px',
                     color: layerColor,
                     align: 'center',
                 }).setOrigin(0.5);
@@ -84,7 +84,7 @@ export class MainMenu extends Scene {
             // Add main title text with glow effect
             const mainTitle = this.add.text(canvasWidth/2, canvasHeight * 0.25, 'GOOD TIME UNIVERSE', {
                 fontFamily: 'Retronoid, Arial',
-                fontSize: '100px',
+                fontSize: '32px',
                 color: '#00ffff',
                 align: 'center',
                 stroke: '#ffffff',
@@ -105,13 +105,13 @@ export class MainMenu extends Scene {
         // Create retro-style buttons
         const buttonStyle = {
             fontFamily: 'Retronoid, Arial',
-            fontSize: '72px',
+            fontSize: '48px',
             color: '#00ffff',
             stroke: '#ffffff',
-            strokeThickness: 4,
+            strokeThickness: 2,
             shadow: {
-                offsetX: 3,
-                offsetY: 3,
+                offsetX: 2,
+                offsetY: 2,
                 color: '#ff00ff',
                 blur: 5,
                 fill: true
@@ -125,7 +125,7 @@ export class MainMenu extends Scene {
                 .setInteractive({ useHandCursor: true });
 
             button.on('pointerover', () => {
-                button.setScale(1.2);
+                button.setScale(1.1);
                 button.setColor('#ff00ff');
             });
 
@@ -139,13 +139,18 @@ export class MainMenu extends Scene {
 
         // Create menu buttons - moved up for better spacing
         const startButton = createButton('START', canvasHeight * 0.5);
-        const settingsButton = createButton('SETTINGS', canvasHeight * 0.6);
-        const rulesButton = createButton('RULES', canvasHeight * 0.7);
+        const startg1s1Button = createButton('START G1S1', canvasHeight * 0.6);
+        const settingsButton = createButton('SETTINGS', canvasHeight * 0.7);
+        const rulesButton = createButton('RULES', canvasHeight * 0.8);
 
         // Add click handlers
         startButton.on('pointerdown', () => {
             this.registry.set('lives', 3);
             this.scene.start('GameScene1');
+        });
+        startg1s1Button.on('pointerdown', () => {
+            this.registry.set('lives', 1);
+            this.scene.start('G1S1');
         });
         settingsButton.on('pointerdown', () => {
             this.scene.start('Settings');

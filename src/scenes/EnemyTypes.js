@@ -7,7 +7,7 @@ class Enemy {
         const groundTop = scene.groundTop || (scene.scale.height - 100);
         y = groundTop - 24; // Ensure enemy spawns above ground
         
-        this.sprite = scene.add.rectangle(x, y, 32, 48, tint);
+        this.sprite = scene.add.rectangle(x, y, 8, 16, tint);
         scene.physics.add.existing(this.sprite);
         this.sprite.setScale(1);  // All enemies have same scale
         this.maxHealth = health;

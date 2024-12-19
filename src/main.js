@@ -6,31 +6,25 @@ import { GameScene2 } from './scenes/GameScene2';
 import { GameScene3 } from './scenes/GameScene3';
 import { GameScene4 } from './scenes/GameScene4';
 import { GameScene5 } from './scenes/GameScene5';
+import { G1S1 } from './scenes/G1S1';
 import { MissionComplete } from './scenes/MissionComplete';
 import { GameOver } from './scenes/GameOver';
 import Settings from './scenes/Settings';
 
 const config = {
     type: Phaser.AUTO,
-    scale: {
-        mode: Phaser.Scale.RESIZE,
-        parent: 'game-container',
-        width: '100%',
-        height: '100%',
-        min: {
-            width: 800,
-            height: 600
-        },
-        autoCenter: Phaser.Scale.CENTER_BOTH,
-        fullscreenTarget: 'game-container',
-        expandParent: true
-    },
+    width: 320,
+    height: 480,
     physics: {
         default: 'arcade',
         arcade: {
             gravity: { y: 300 },
             debug: false
         }
+    },
+    scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH
     },
     input: {
         mouse: {
@@ -47,6 +41,7 @@ const config = {
         GameScene4,
         GameScene5,
         MissionComplete,
+        G1S1,
         GameOver
     ]
 };
