@@ -21,6 +21,7 @@ export class GameScene5 extends BaseScene {
 
         this.player.x = width * 0.1;
         this.bossDefeated = false;
+        this.remainingEnemies = 1;  // Set to 1 for the boss
 
         // Add scene text
         this.add.text(width/2, height * 0.1, 'Boss Room - Scene 5', {
@@ -72,6 +73,12 @@ export class GameScene5 extends BaseScene {
             this.physics.add.collider(this.player, wall);
         });
 
+        // Load victory music if not already loaded
+        if (!this.sound.get('victoryMusic')) {
+            this.load.audio('victoryMusic', 'assets/sounds/congratulations.mp3');
+            this.load.start();
+        }
+
         console.log('Scene 5 created successfully'); // Debug log
     }
 
@@ -95,7 +102,7 @@ export class GameScene5 extends BaseScene {
             
             this.tweens.add({
                 targets: particle,
-                x: particle.x + (vx * 0.3), // Move in direction over 300ms
+                x: particle.x + (vx * 0.3),
                 y: particle.y + (vy * 0.3),
                 alpha: 0,
                 scale: 0.1,
@@ -105,16 +112,36 @@ export class GameScene5 extends BaseScene {
             });
         }
 
-        this.hitSound.play(); // Play hit sound
+        this.hitSound.play();
         bullet.destroy();
         
         if (this.boss && this.boss.sprite === enemySprite) {
             if (this.boss.damage(1)) {
+                console.log('Boss defeated!');
                 // Boss is dead
                 this.boss.destroy();
                 this.addPoints(100); // Big points for killing the boss
-                this.boss = null; // Set boss to null when destroyed
+                this.boss = null;
                 this.bossDefeated = true;
+                this.remainingEnemies = 0;
+
+                // Add completion text without space key requirement
+                this.add.text(this.scale.width/2, this.scale.height/2, 'Boss Defeated!\nHead right to complete the mission', {
+                    fontSize: '32px',
+                    fill: '#fff',
+                    align: 'center'
+                }).setOrigin(0.5).setScrollFactor(0);
+
+                // Play victory music
+                if (this.victoryMusic && !this.victoryMusic.isPlaying) {
+                    this.victoryMusic.play();
+                }
+
+                // Disable world bounds collision on the right side
+                this.player.body.setCollideWorldBounds(false);
+                
+                // Set the world bounds to allow moving past the right edge
+                this.physics.world.setBounds(0, 0, this.scale.width * 2, this.scale.height);
             }
         }
     }
@@ -133,25 +160,14 @@ export class GameScene5 extends BaseScene {
             }
         }
 
-        // Check if boss is defeated
-        if (!this.bossDefeated && this.boss && (!this.boss.sprite || !this.boss.sprite.active)) {
-            this.bossDefeated = true;
-            console.log('Boss defeated!'); // Debug log
-            
-            // Play victory music when boss is defeated
-            if (this.victoryMusic && !this.victoryMusic.isPlaying) {
-                this.victoryMusic.play();
-            }
-            
-            // Transition to mission complete after a delay
-            this.time.delayedCall(2000, () => {
-                this.scene.start('MissionComplete');
-            });
+        // Debug logging for position and state
+        if (this.bossDefeated) {
+            console.log('Player position:', this.player.x, 'Screen width:', this.scale.width);
         }
 
-        // Check for scene transition
-        if (this.bossDefeated && this.player.x > this.scale.width - 20) {
-            // Stop any current music
+        // Check for scene transition when boss is defeated AND player reaches right side
+        if (this.bossDefeated && this.player.x > this.scale.width - 100) {
+            console.log('Transitioning to MissionComplete scene');
             if (this.sound.get('bgMusic')) {
                 this.sound.get('bgMusic').stop();
             }

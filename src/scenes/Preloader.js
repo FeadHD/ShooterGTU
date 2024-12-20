@@ -120,8 +120,23 @@ export class Preloader extends Scene {
         });
         console.log('Loading character_death sprite');
 
+        // Load bullet animation sprite
+        this.load.spritesheet('bullet_animation', './assets/bullet_animation.png', {
+            frameWidth: 32,  // Adjust this based on your sprite's frame width
+            frameHeight: 32, // Adjust this based on your sprite's frame height
+            spacing: 0,
+            margin: 0
+        });
+
         // Load bullet sprite
-        this.load.image('bullet', './assets/bullet.png');
+        this.load.spritesheet('bullet', './assets/bullet.png', {
+            frameWidth: 32,  // Adjust this based on your new sprite's frame width
+            frameHeight: 32, // Adjust this based on your new sprite's frame height
+            startFrame: 0,
+            endFrame: 3,     // Adjust this based on number of frames in your sprite
+            spacing: 0,      // Adjust if there's spacing between frames
+            margin: 0        // Adjust if there's margin around frames
+        });
         
         // Load sound effects
         this.load.audio('laser', './assets/sounds/laser.wav');

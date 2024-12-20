@@ -6,6 +6,18 @@ export class MainMenu extends Scene {
     }
 
     create() {
+        // Reset game state
+        this.registry.set('lives', 3);
+        this.registry.set('score', 0);
+        
+        // Enable input system
+        this.input.keyboard.enabled = true;
+        this.input.mouse.enabled = true;
+        
+        // Remove any existing input listeners
+        this.input.keyboard.removeAllKeys();
+        this.input.removeAllListeners();
+
         // Debug background color to see canvas size
         this.cameras.main.setBackgroundColor('#000000');
 
@@ -144,6 +156,9 @@ export class MainMenu extends Scene {
 
         // Add click handlers
         startButton.on('pointerdown', () => {
+            // Clean up scene before starting game
+            this.input.keyboard.removeAllKeys();
+            this.input.removeAllListeners();
             this.registry.set('lives', 3);
             this.scene.start('GameScene1');
         });

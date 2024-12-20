@@ -170,7 +170,7 @@ class Enemy {
 
 class WeakEnemy extends Enemy {
     constructor(scene, x, y) {
-        super(scene, x, y, 'weak_enemy', 1);
+        super(scene, x, y, 'weak_enemy', 1, 0xffff00); // Yellow color for weak enemies
         this.moveSpeed = 100;
         this.patrolSpeed = 75;
     }
@@ -178,15 +178,15 @@ class WeakEnemy extends Enemy {
 
 class MediumEnemy extends Enemy {
     constructor(scene, x, y) {
-        super(scene, x, y, 'player', 2, 0xFFD700); // Yellow/gold color, 2 HP
-        this.aggroRange = 300; // Medium range
-        this.moveSpeed = 140;  // Medium speed
+        super(scene, x, y, 'player', 2, 0x00ffff); // Cyan color for medium enemies
+        this.aggroRange = 300;
+        this.moveSpeed = 140;
     }
 }
 
 class StrongEnemy extends Enemy {
     constructor(scene, x, y) {
-        super(scene, x, y, 'strong_enemy', 3);
+        super(scene, x, y, 'strong_enemy', 3, 0xff00ff); // Magenta color for strong enemies
         this.moveSpeed = 150;
         this.patrolSpeed = 100;
     }
@@ -194,7 +194,7 @@ class StrongEnemy extends Enemy {
 
 class BossEnemy extends Enemy {
     constructor(scene, x, y) {
-        super(scene, x, y, 'boss_enemy', 5, 0xff0000);
+        super(scene, x, y, 'boss_enemy', 5, 0xff0000); // Keep boss as red
         
         // Boss is bigger
         this.sprite.setScale(2);
