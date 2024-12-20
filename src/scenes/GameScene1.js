@@ -1,5 +1,5 @@
 import { BaseScene } from './BaseScene';
-import { WeakEnemy } from './EnemyTypes';
+import { Slime } from './Slime';
 
 export class GameScene1 extends BaseScene {
     constructor() {
@@ -47,8 +47,8 @@ export class GameScene1 extends BaseScene {
             const enemyY = this.getSpawnHeight();
 
             // Create two weak enemies at different positions
-            this.enemy1 = new WeakEnemy(this, width * 0.3, enemyY);  // Left side
-            this.enemy2 = new WeakEnemy(this, width * 0.7, enemyY);  // Right side
+            this.enemy1 = new Slime(this, width * 0.3, enemyY);  // Moved from 0.3 to 0.5 (middle)
+            this.enemy2 = new Slime(this, width * 0.7, enemyY);  // Moved from 0.7 to 0.8 (further right)
 
             // Add enemies to the group
             this.enemies.add(this.enemy1.sprite);

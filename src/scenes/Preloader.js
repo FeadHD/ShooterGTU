@@ -74,7 +74,7 @@ export class Preloader extends Scene {
             frameWidth: 48,
             frameHeight: 48,
             startFrame: 0,
-            endFrame: 3
+            endFrame: 4
         });
 
         this.load.spritesheet('character_run', './assets/character/character_Run.png', {
@@ -110,6 +110,29 @@ export class Preloader extends Scene {
             endFrame: 5
         });
         console.log('Loading character_death sprite');
+
+        // Load slime sprites
+        console.log('Loading slime sprites...');
+        this.load.spritesheet('slime_idle', './assets/enemys/slime/slime_idle.png', {
+            frameWidth: 32,
+            frameHeight: 32,
+            startFrame: 0,
+            endFrame: 3
+        });
+        
+        this.load.spritesheet('slime_jump', './assets/enemys/slime/slime_jump.png', {
+            frameWidth: 32,
+            frameHeight: 32,
+            startFrame: 0,
+            endFrame: 3
+        });
+
+        this.load.spritesheet('slime_death', './assets/enemys/slime/slime_death.png', {
+            frameWidth: 32,
+            frameHeight: 32,
+            startFrame: 0,
+            endFrame: 4
+        });
 
         // Load bullet animation sprite
         this.load.spritesheet('bullet_animation', './assets/bullet_animation.png', {
