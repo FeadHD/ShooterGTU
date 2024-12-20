@@ -127,6 +127,14 @@ export class MissionComplete extends Scene {
             fill: '#fff'
         }).setOrigin(0.5);
 
+        // Add final score text
+        const finalScore = this.registry.get('score');
+        this.add.text(width/2, height * 0.7, `Final Score: ${finalScore}`, {
+            fontFamily: 'Retronoid',
+            fontSize: '32px',
+            fill: '#ffd700'  // Gold color for score
+        }).setOrigin(0.5);
+
         // Add space key listener
         this.input.keyboard.on('keydown-SPACE', () => {
             // Stop and cleanup all music
@@ -135,6 +143,13 @@ export class MissionComplete extends Scene {
             const bgMusic = this.sound.get('bgMusic');
             if (victoryMusic) victoryMusic.destroy();
             if (bgMusic) bgMusic.destroy();
+            
+            // Update leaderboard with final score before resetting
+            const finalScore = this.registry.get('score');
+            const leaderboardScene = this.scene.get('LeaderboardScene');
+            if (leaderboardScene) {
+                leaderboardScene.updateLeaderboard('PLAYER', finalScore);
+            }
             
             // Reset the score to 0
             this.registry.set('score', 0);

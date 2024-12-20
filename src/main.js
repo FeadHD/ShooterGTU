@@ -9,6 +9,7 @@ import { GameScene5 } from './scenes/GameScene5';
 import { MissionComplete } from './scenes/MissionComplete';
 import { GameOver } from './scenes/GameOver';
 import Settings from './scenes/Settings';
+import { LeaderboardScene } from './scenes/LeaderboardScene';
 
 const config = {
     type: Phaser.AUTO,
@@ -43,6 +44,7 @@ const config = {
         Preloader,
         MainMenu,
         Settings,
+        LeaderboardScene,
         GameScene1,
         GameScene2,
         GameScene3,

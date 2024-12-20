@@ -10,7 +10,11 @@ export class BaseScene extends Scene {
         if (this.registry.get('lives') === undefined || this.registry.get('lives') <= 0) {
             this.registry.set('lives', 3);
         }
-        this.playerHP = 100;
+        // Initialize or get current HP
+        if (typeof this.registry.get('playerHP') !== 'number') {
+            this.registry.set('playerHP', 100);
+        }
+        this.playerHP = this.registry.get('playerHP');
         this.isDying = false;
         this.movementSpeed = 300;
         this.jumpSpeed = -450;
@@ -20,6 +24,11 @@ export class BaseScene extends Scene {
         const { width, height } = this.scale;
         this.physics.world.gravity.y = 800;
         this.physics.world.setBounds(0, 0, width, height);
+
+        // Set up camera
+        this.cameras.main.setViewport(0, 0, width, height);
+        this.cameras.main.setScroll(0, 0);
+        this.cameras.main.setBackgroundColor('#000000');
 
         // Create ground
         this.platforms = this.physics.add.staticGroup();
@@ -198,7 +207,9 @@ export class BaseScene extends Scene {
             fontFamily: 'Retronoid'
         };
 
-        this.scoreText = this.add.text(16, 16, 'Score: 0', {
+        // Initialize score text with current score from registry
+        const currentScore = this.registry.get('score');
+        this.scoreText = this.add.text(16, 16, 'Score: ' + currentScore, {
             ...textConfig,
             fill: '#fff'
         }).setScrollFactor(0);
@@ -268,7 +279,15 @@ export class BaseScene extends Scene {
             const sceneNumber = parseInt(currentScene.slice(-1));
             if (sceneNumber > 1) {
                 const prevScene = 'GameScene' + (sceneNumber - 1);
+                // Preserve current score, lives, and HP
+                const currentScore = this.registry.get('score');
+                const currentLives = this.registry.get('lives');
+                const currentHP = this.playerHP;
                 this.scene.start(prevScene);
+                // Restore score, lives, and HP in new scene
+                this.registry.set('score', currentScore);
+                this.registry.set('lives', currentLives);
+                this.registry.set('playerHP', currentHP);
             }
         });
         
@@ -277,7 +296,15 @@ export class BaseScene extends Scene {
             const sceneNumber = parseInt(currentScene.slice(-1));
             if (sceneNumber < 5) {
                 const nextScene = 'GameScene' + (sceneNumber + 1);
+                // Preserve current score, lives, and HP
+                const currentScore = this.registry.get('score');
+                const currentLives = this.registry.get('lives');
+                const currentHP = this.playerHP;
                 this.scene.start(nextScene);
+                // Restore score, lives, and HP in new scene
+                this.registry.set('score', currentScore);
+                this.registry.set('lives', currentLives);
+                this.registry.set('playerHP', currentHP);
             }
         });
     }
@@ -309,15 +336,13 @@ export class BaseScene extends Scene {
         this.hitSound.play();
         bullet.destroy();
 
-        const enemy = [this.enemy1, this.enemy2, this.boss].find(e => e && e.sprite === enemySprite);
+        // Get the enemy object from the sprite
+        const enemy = enemySprite.enemy;
         if (enemy) {
-            enemy.currentHealth--;
-            console.log('Enemy hit, health:', enemy.currentHealth);
-            if (enemy.currentHealth <= 0) {
-                enemy.sprite.destroy();
+            enemy.damage(1);
+            if (enemy.health <= 0) {
                 this.remainingEnemies--;
                 console.log('Enemy defeated, remaining:', this.remainingEnemies);
-                this.addPoints(enemy === this.boss ? 50 : 10);
                 this.checkLevelComplete();
             }
         }
@@ -370,6 +395,8 @@ export class BaseScene extends Scene {
         if (player.alpha < 1 || this.isDying) return;
 
         this.playerHP -= 25;
+        // Update HP in registry
+        this.registry.set('playerHP', this.playerHP);
         this.hpText.setText('HP: ' + this.playerHP);
 
         if (this.playerHP <= 0) {
@@ -395,6 +422,13 @@ export class BaseScene extends Scene {
         this.player.play('character_death');
         this.player.once('animationcomplete', () => {
             if (lives <= 0) {
+                // Check for high score
+                const finalScore = this.registry.get('score');
+                const leaderboardScene = this.scene.get('LeaderboardScene');
+                if (leaderboardScene) {
+                    leaderboardScene.updateLeaderboard('PLAYER', finalScore);
+                }
+                
                 // Show death message
                 const deathText = this.add.text(this.scale.width/2, this.scale.height/2, 'GAME OVER\nPress SPACE to return to main menu', {
                     fontFamily: 'Arial',
@@ -414,6 +448,8 @@ export class BaseScene extends Scene {
                 // Disable shooting
                 this.input.mouse.enabled = false;
             } else {
+                // Reset HP when restarting the scene
+                this.registry.set('playerHP', 100);
                 this.time.delayedCall(500, () => {
                     this.isDying = false;
                     this.input.keyboard.enabled = true;

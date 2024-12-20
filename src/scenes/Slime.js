@@ -2,7 +2,7 @@ import { Enemy } from './EnemyTypes';
 
 export class Slime extends Enemy {
     constructor(scene, x, y) {
-        super(scene, x, y, 'slime_idle', 1);
+        super(scene, x, y, 'slime_idle', 3);
 
         // Replace rectangle with sprite
         if (this.sprite) {
@@ -11,6 +11,8 @@ export class Slime extends Enemy {
         
         // Create new sprite
         this.sprite = scene.physics.add.sprite(x, y, 'slime_idle', 0);
+        // Set reference to this enemy instance on the sprite
+        this.sprite.enemy = this;
         console.log('Created slime sprite at:', x, y);
 
         if (this.sprite) {
@@ -69,11 +71,7 @@ export class Slime extends Enemy {
         this.maxHealth = 3;
         this.moveSpeed = 100;
         this.damageAmount = 20; // Renamed from damage to avoid confusion
-        this.scoreValue = 50;
-
-        // Add custom properties to the sprite
-        this.sprite.enemy = this;
-        this.sprite.setCollideWorldBounds(true);
+        this.scoreValue = 10; // Changed from 50 to 10 points per kill
     }
 
     createHealthBar() {
@@ -224,6 +222,8 @@ export class Slime extends Enemy {
         if (this.health <= 0) {
             console.log('Health <= 0, triggering death');
             this.health = 0;
+            // Add points before dying
+            this.scene.addPoints(this.scoreValue);
             this.die();
         }
     }
