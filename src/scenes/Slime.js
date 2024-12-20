@@ -157,11 +157,11 @@ export class Slime extends Enemy {
             key: 'slime_death',
             frames: this.scene.anims.generateFrameNumbers('slime_death', {
                 start: 0,
-                end: 4
+                end: 5  // Increased to include all frames
             }),
-            frameRate: 8,
-            repeat: 0,
-            hideOnComplete: false
+            frameRate: 10,  // Slightly faster animation
+            repeat: 0,  // Play once
+            hideOnComplete: true  // Hide the sprite when animation completes
         });
 
         console.log('Created animations:', 
@@ -237,39 +237,38 @@ export class Slime extends Enemy {
         console.log('Starting death sequence');
         this.isDying = true;
         
-        // Stop movement and prevent further physics
+        // Completely stop all movement and physics
         this.sprite.setVelocity(0, 0);
         this.sprite.body.allowGravity = false;
         this.sprite.body.enable = false;
+        this.sprite.body.moves = false;  // Prevent any further movement
+        this.moveSpeed = 0;  // Stop horizontal movement
+        
+        // Remove world bounds collision
+        this.sprite.body.onWorldBounds = false;
+        if (this.sprite.body.world) {
+            this.sprite.body.world.off('worldbounds', this.onWorldBounds, this);
+        }
         
         // Destroy health bar
         if (this.healthBar) this.healthBar.destroy();
         if (this.healthBarBackground) this.healthBarBackground.destroy();
 
-        // Make sure death animation exists
-        if (!this.scene.anims.exists('slime_death')) {
-            this.createAnimations();
-        }
-
-        // Debug animation state
-        console.log('Current texture:', this.sprite.texture.key);
-        console.log('Has death animation:', this.scene.anims.exists('slime_death'));
+        // Play death animation
+        this.playAnimation('death');
         
-        // Set texture and play animation
-        this.sprite.setTexture('slime_death');
-        this.sprite.anims.play('slime_death', true);
-        
-        // Debug animation playback
-        console.log('Animation started:', this.sprite.anims.currentAnim?.key);
-        
+        // Listen for animation complete
         this.sprite.on('animationcomplete', (animation) => {
-            console.log('Animation complete:', animation.key);
             if (animation.key === 'slime_death') {
-                if (typeof this.scene.addScore === 'function') {
-                    this.scene.addScore(this.scoreValue);
-                }
-                this.scene.time.delayedCall(500, () => {
-                    this.destroy();
+                // Add a small fade out effect
+                this.scene.tweens.add({
+                    targets: this.sprite,
+                    alpha: 0,
+                    duration: 200,
+                    onComplete: () => {
+                        // Clean up after fade
+                        this.destroy();
+                    }
                 });
             }
         });
@@ -292,34 +291,27 @@ export class Slime extends Enemy {
     }
 
     update() {
+        if (this.isDying) return;  // Skip all updates if dying
+
         if (!this.sprite || !this.sprite.body) return;
 
         const currentTime = this.scene.time.now;
 
-        // Handle animations based on state
-        if (this.sprite.body.onFloor()) {
-            if (currentTime - this.lastJumpTime >= this.jumpCooldown && Math.random() < this.jumpChance) {
-                this.jump();
-                this.lastJumpTime = currentTime;
-            } else {
-                this.playAnimation('idle');
-            }
-        } else {
-            this.playAnimation('jump');
-        }
-
-        // Handle sprite flipping
-        if (this.sprite.body.velocity.x < 0) {
-            this.sprite.setFlipX(true);
-        } else if (this.sprite.body.velocity.x > 0) {
-            this.sprite.setFlipX(false);
-        }
-
-        // Update movement
-        this.sprite.setVelocityX(this.moveSpeed);
-
         // Update health bar position
-        this.updateHealthBar();
+        if (this.healthBar && this.healthBarBackground) {
+            this.healthBar.x = this.sprite.x;
+            this.healthBar.y = this.sprite.y - 30;
+            this.healthBarBackground.x = this.sprite.x;
+            this.healthBarBackground.y = this.sprite.y - 30;
+        }
+
+        // Handle movement only if not dying
+        if (this.sprite.body.onFloor()) {
+            // Random chance to jump when on floor
+            if (Math.random() < this.jumpChance) {
+                this.jump();
+            }
+        }
     }
 
     jump() {
