@@ -74,11 +74,8 @@ export class Preloader extends Scene {
             frameWidth: 48,
             frameHeight: 48,
             startFrame: 0,
-            endFrame: 4,
-            spacing: 0,
-            margin: 0
+            endFrame: 3
         });
-        console.log('Loading character_idle sprite');
 
         this.load.spritesheet('character_run', './assets/character/character_Run.png', {
             frameWidth: 48,
@@ -90,13 +87,11 @@ export class Preloader extends Scene {
         });
         console.log('Loading character_run sprite');
 
-        this.load.spritesheet('character_walk', './assets/character/character_Walking.png', {
+        this.load.spritesheet('character_walk', './assets/character/character_walking.png', {
             frameWidth: 48,
             frameHeight: 48,
             startFrame: 0,
-            endFrame: 6,
-            spacing: 0,
-            margin: 0
+            endFrame: 7
         });
         console.log('Loading character_walk sprite');
 
@@ -104,9 +99,7 @@ export class Preloader extends Scene {
             frameWidth: 48,
             frameHeight: 48,
             startFrame: 0,
-            endFrame: 2,
-            spacing: 0,
-            margin: 0
+            endFrame: 3
         });
         console.log('Loading character_jump sprite');
 
@@ -114,9 +107,7 @@ export class Preloader extends Scene {
             frameWidth: 48,
             frameHeight: 48,
             startFrame: 0,
-            endFrame: 6,
-            spacing: 0,
-            margin: 0
+            endFrame: 5
         });
         console.log('Loading character_death sprite');
 

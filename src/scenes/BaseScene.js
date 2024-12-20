@@ -123,6 +123,7 @@ export class BaseScene extends Scene {
     }
 
     createAnimations() {
+        // Character idle animation
         this.anims.create({
             key: 'character_idle',
             frames: this.anims.generateFrameNumbers('character_idle', { start: 0, end: 3 }),
@@ -130,6 +131,7 @@ export class BaseScene extends Scene {
             repeat: -1
         });
 
+        // Character walking animation
         this.anims.create({
             key: 'character_walk',
             frames: this.anims.generateFrameNumbers('character_walk', { start: 0, end: 7 }),
@@ -137,6 +139,7 @@ export class BaseScene extends Scene {
             repeat: -1
         });
 
+        // Character jump animation
         this.anims.create({
             key: 'character_jump',
             frames: this.anims.generateFrameNumbers('character_jump', { start: 0, end: 3 }),
@@ -144,6 +147,7 @@ export class BaseScene extends Scene {
             repeat: 0
         });
 
+        // Character death animation
         this.anims.create({
             key: 'character_death',
             frames: this.anims.generateFrameNumbers('character_death', { start: 0, end: 5 }),
