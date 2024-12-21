@@ -1,6 +1,7 @@
 import { Scene } from 'phaser';
 import { GameUI } from './GameUI';
 import { Bullet } from '../../prefabs/Bullet';
+import { ParallaxBackground } from '../../prefabs/ParallaxBackground';
 
 export class BaseScene extends Scene {
     create() {
@@ -24,6 +25,10 @@ export class BaseScene extends Scene {
         const { width, height } = this.scale;
         this.physics.world.gravity.y = 800;
         this.physics.world.setBounds(0, 0, width, height);
+
+        // Create parallax background first, before other elements
+        console.log('BaseScene: Creating parallax background...');
+        this.parallaxBackground = new ParallaxBackground(this);
 
         // Create ground
         this.platforms = this.physics.add.staticGroup();
@@ -551,6 +556,11 @@ export class BaseScene extends Scene {
                 }
             }
         });
+
+        // Update parallax background
+        if (this.parallaxBackground) {
+            this.parallaxBackground.update();
+        }
     }
 
     addPoints(points) {

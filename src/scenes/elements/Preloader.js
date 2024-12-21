@@ -69,6 +69,12 @@ export class Preloader extends Scene {
         // Load main menu background
         this.load.image('mainbg', './assets/mainbg.png');
         
+        // Load parallax background layers
+        this.load.image('bg-sky', './assets/backgrounds/sky.png');
+        this.load.image('bg-mountains', './assets/backgrounds/mountains.png');
+        this.load.image('bg-trees', './assets/backgrounds/trees.png');
+        this.load.image('bg-ground', './assets/backgrounds/ground.png');
+        
         // Load character sprites with correct paths and frame sizes
         this.load.spritesheet('character_idle', './assets/character/character_Idle.png', {
             frameWidth: 48,
