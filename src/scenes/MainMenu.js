@@ -205,9 +205,10 @@ export class MainMenu extends Scene {
         };
 
         // Create menu buttons - moved up for better spacing
-        const startButton = createButton('START', canvasHeight * 0.5);
-        const settingsButton = createButton('SETTINGS', canvasHeight * 0.6);
-        const rulesButton = createButton('RULES', canvasHeight * 0.7);
+        const startButton = createButton('START', canvasHeight * 0.45);
+        const settingsButton = createButton('SETTINGS', canvasHeight * 0.55);
+        const leaderboardButton = createButton('LEADERBOARD', canvasHeight * 0.65);
+        const rulesButton = createButton('RULES', canvasHeight * 0.75);
 
         // Add click handlers
         startButton.on('pointerdown', () => {
@@ -219,6 +220,9 @@ export class MainMenu extends Scene {
         });
         settingsButton.on('pointerdown', () => {
             this.scene.start('Settings');
+        });
+        leaderboardButton.on('pointerdown', () => {
+            this.scene.start('Leaderboard');
         });
         rulesButton.on('pointerdown', () => {
             // Add rules functionality here

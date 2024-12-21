@@ -47,7 +47,35 @@ export class MissionComplete extends Scene {
         });
     }
 
+    saveScore() {
+        const currentScore = this.registry.get('score') || 0;
+        const walletAddress = this.registry.get('walletAddress');
+        const playerName = walletAddress || 'Guest';
+
+        // Get existing scores
+        let scores = JSON.parse(localStorage.getItem('topScores') || '[]');
+        
+        // Add new score
+        scores.push({
+            playerName: playerName,
+            score: currentScore,
+            timestamp: Date.now()
+        });
+
+        // Sort scores in descending order
+        scores.sort((a, b) => b.score - a.score);
+
+        // Keep only top 10
+        scores = scores.slice(0, 10);
+
+        // Save back to localStorage
+        localStorage.setItem('topScores', JSON.stringify(scores));
+    }
+
     create() {
+        // Save the score first
+        this.saveScore();
+
         // Stop any existing music
         this.sound.stopAll();
 

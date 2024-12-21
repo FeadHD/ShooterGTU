@@ -8,6 +8,7 @@ import { GameScene4 } from './scenes/GameScene4';
 import { GameScene5 } from './scenes/GameScene5';
 import { MissionComplete } from './scenes/MissionComplete';
 import { GameOver } from './scenes/GameOver';
+import { Leaderboard } from './scenes/Leaderboard';
 import Settings from './scenes/Settings';
 
 const config = {
@@ -15,8 +16,8 @@ const config = {
     scale: {
         mode: Phaser.Scale.RESIZE,
         parent: 'game-container',
-        width: 1920,
-        height: 1080,
+        width: window.innerWidth,
+        height: window.innerHeight,
         autoRound: true,
         min: {
             width: 800,
@@ -30,7 +31,7 @@ const config = {
     physics: {
         default: 'arcade',
         arcade: {
-            gravity: { y: 300 },
+            gravity: { y: 0 },
             debug: false
         }
     },
@@ -49,7 +50,8 @@ const config = {
         GameScene4,
         GameScene5,
         MissionComplete,
-        GameOver
+        GameOver,
+        Leaderboard
     ]
 };
 
