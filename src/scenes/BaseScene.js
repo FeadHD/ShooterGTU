@@ -10,7 +10,11 @@ export class BaseScene extends Scene {
         if (this.registry.get('lives') === undefined || this.registry.get('lives') <= 0) {
             this.registry.set('lives', 3);
         }
-        this.playerHP = 100;
+        // Initialize HP only if it's not set
+        if (this.registry.get('playerHP') === undefined) {
+            this.registry.set('playerHP', 100);
+        }
+        this.playerHP = this.registry.get('playerHP');
         this.isDying = false;
         this.movementSpeed = 300;
         this.jumpSpeed = -450;
@@ -293,19 +297,14 @@ export class BaseScene extends Scene {
         const leftBoundary = this.add.rectangle(0, height/2, 10, height, 0x000000, 0);
         const rightBoundary = this.add.rectangle(width, height/2, 10, height, 0x000000, 0);
         
+        // Make left boundary solid to prevent going back
         this.physics.add.existing(leftBoundary, true);
+        this.physics.add.collider(this.player, leftBoundary);
+        
+        // Right boundary for scene transition
         this.physics.add.existing(rightBoundary, true);
         
-        // Add overlap detection for scene transitions
-        this.physics.add.overlap(this.player, leftBoundary, () => {
-            const currentScene = this.scene.key;
-            const sceneNumber = parseInt(currentScene.slice(-1));
-            if (sceneNumber > 1) {
-                const prevScene = 'GameScene' + (sceneNumber - 1);
-                this.scene.start(prevScene);
-            }
-        });
-        
+        // Add overlap detection for scene transition (right side only)
         this.physics.add.overlap(this.player, rightBoundary, () => {
             const currentScene = this.scene.key;
             const sceneNumber = parseInt(currentScene.slice(-1));
@@ -391,6 +390,7 @@ export class BaseScene extends Scene {
         if (player.alpha < 1 || this.isDying) return;
 
         this.playerHP -= 25;
+        this.registry.set('playerHP', this.playerHP); // Store HP in registry
         this.hpText.setText('HP: ' + this.playerHP);
 
         if (this.playerHP <= 0) {
@@ -412,6 +412,11 @@ export class BaseScene extends Scene {
         const lives = this.registry.get('lives') - 1;
         this.registry.set('lives', lives);
         this.livesText.setText('Lives: ' + lives);
+
+        // Reset HP to 100 immediately upon any death
+        this.playerHP = 100;
+        this.registry.set('playerHP', 100);
+        this.hpText.setText('HP: 100');
 
         this.player.play('character_death');
         this.player.once('animationcomplete', () => {
@@ -456,6 +461,7 @@ export class BaseScene extends Scene {
             this.gameOver = false;
             this.registry.set('lives', 3);
             this.registry.set('score', 0);
+            this.registry.set('playerHP', 100); // Reset HP on game over
             this.scene.start('MainMenu');
             return;
         }

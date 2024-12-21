@@ -242,27 +242,44 @@ export class Slime extends Enemy {
                 this.healthBarBackground.setVisible(false);
             }
             
-            // Disable physics while dying
+            // Enable physics for falling
             if (this.sprite && this.sprite.body) {
-                this.sprite.body.enable = false;
-            }
-            
-            // Make sure death animation exists and play it
-            if (this.sprite && this.scene) {
-                const deathAnim = 'slime_death';
-                if (!this.scene.anims.exists(deathAnim)) {
-                    this.createDeathAnimation();
-                }
+                this.sprite.body.enable = true;
+                this.sprite.body.allowGravity = true;
+                this.sprite.body.checkCollision.none = false;
+                this.sprite.body.setVelocityX(0);
                 
-                // Set texture and play animation
-                this.sprite.setTexture('slime_death', 0);
-                this.sprite.play(deathAnim);
-                
-                // Listen for animation completion
-                this.sprite.on('animationcomplete', (animation) => {
-                    if (animation.key === deathAnim) {
-                        this.destroy();
-                    }
+                // Create a timer to check for ground collision
+                let groundCheckTimer = this.scene.time.addEvent({
+                    delay: 10,
+                    callback: () => {
+                        if (this.sprite && this.sprite.body && this.sprite.body.onFloor()) {
+                            // Stop the timer
+                            groundCheckTimer.destroy();
+                            
+                            // Once on the ground, disable physics and play death animation
+                            this.sprite.body.enable = false;
+                            
+                            // Make sure death animation exists and play it
+                            const deathAnim = 'slime_death';
+                            if (!this.scene.anims.exists(deathAnim)) {
+                                this.createDeathAnimation();
+                            }
+                            
+                            // Set texture and play animation
+                            this.sprite.setTexture('slime_death', 0);
+                            this.sprite.play(deathAnim);
+                            
+                            // Listen for animation completion
+                            this.sprite.on('animationcomplete', (animation) => {
+                                if (animation.key === deathAnim) {
+                                    this.destroy();
+                                }
+                            });
+                        }
+                    },
+                    callbackScope: this,
+                    loop: true
                 });
             } else {
                 // If no sprite or scene, destroy immediately
