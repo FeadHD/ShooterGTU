@@ -175,104 +175,135 @@ export class MainMenu extends Scene {
     }
 
     async initializeWallet() {
-        // Add MetaMask connect button with retro style
-        const connectButton = this.add.text(this.canvasWidth - 30, 30, 'Connect Wallet', {
-            fontFamily: 'Retronoid, Arial',
-            fontSize: '32px',
-            color: '#00ffff',
-            stroke: '#ffffff',
-            strokeThickness: 2,
-            backgroundColor: '#000000',
-            padding: { x: 15, y: 10 },
-            shadow: {
-                offsetX: 2,
-                offsetY: 2,
-                color: '#ff00ff',
-                blur: 5,
-                fill: true
-            }
-        }).setOrigin(1, 0);
-
-        // Function to handle wallet connection
-        const connectWallet = async () => {
-            try {
-                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                const account = accounts[0];
-                connectButton.setText('Disconnect Wallet');
-                this.registry.set('walletAddress', account);
-                return true;
-            } catch (error) {
-                console.error('Error connecting to MetaMask:', error);
-                connectButton.setText('Connect Wallet');
-                this.registry.set('walletAddress', null);
-                return false;
-            }
-        };
-
-        // Check for existing MetaMask connection
-        if (typeof window.ethereum !== 'undefined') {
-            try {
-                // Check if already connected
-                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-                if (accounts.length > 0) {
-                    // Auto-connect if we have permission
-                    await connectWallet();
+        let connectButton;
+        try {
+            // Add MetaMask connect button with retro style
+            connectButton = this.add.text(this.canvasWidth - 30, 30, 'Connect Wallet', {
+                fontFamily: 'Retronoid, Arial',
+                fontSize: '32px',
+                color: '#00ffff',
+                stroke: '#ffffff',
+                strokeThickness: 2,
+                backgroundColor: '#000000',
+                padding: { x: 15, y: 10 },
+                shadow: {
+                    offsetX: 2,
+                    offsetY: 2,
+                    color: '#ff00ff',
+                    blur: 5,
+                    fill: true
                 }
+            }).setOrigin(1, 0);
 
-                // Listen for account changes
-                window.ethereum.on('accountsChanged', async (accounts) => {
-                    if (accounts.length === 0) {
+            // Function to handle wallet connection
+            const connectWallet = async () => {
+                try {
+                    if (!connectButton || connectButton.destroyed) return false;
+                    
+                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    const account = accounts[0];
+                    
+                    // Use requestAnimationFrame to ensure the scene is ready
+                    requestAnimationFrame(() => {
+                        if (connectButton && !connectButton.destroyed) {
+                            connectButton.setText('Disconnect Wallet');
+                        }
+                    });
+                    
+                    this.registry.set('walletAddress', account);
+                    return true;
+                } catch (error) {
+                    console.error('Error connecting to MetaMask:', error);
+                    if (connectButton && !connectButton.destroyed) {
                         connectButton.setText('Connect Wallet');
-                        this.registry.set('walletAddress', null);
-                    } else {
+                    }
+                    this.registry.set('walletAddress', null);
+                    return false;
+                }
+            };
+
+            // Check for existing MetaMask connection
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    // Check if already connected
+                    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                    if (accounts.length > 0) {
+                        // Auto-connect if we have permission
                         await connectWallet();
                     }
-                });
 
-                // Listen for chain changes
-                window.ethereum.on('chainChanged', () => {
-                    // Reload the page on chain change
-                    window.location.reload();
-                });
-            } catch (error) {
-                console.error('Error checking MetaMask connection:', error);
-            }
-        }
-
-        // Make connect button interactive with enhanced effects
-        connectButton.setInteractive({ useHandCursor: true })
-            .on('pointerover', () => {
-                connectButton.setColor('#ff00ff');
-                connectButton.setScale(1.1);
-            })
-            .on('pointerout', () => {
-                connectButton.setColor('#00ffff');
-                connectButton.setScale(1);
-            })
-            .on('pointerdown', async () => {
-                const currentWallet = this.registry.get('walletAddress');
-                if (!currentWallet) {
-                    if (typeof window.ethereum !== 'undefined') {
-                        await connectWallet();
-                    } else {
-                        alert('Please install MetaMask to connect your wallet!');
-                    }
-                } else {
-                    // Disconnect wallet
-                    try {
-                        await window.ethereum.request({
-                            method: "wallet_revokePermissions",
-                            params: [{
-                                eth_accounts: {}
-                            }]
-                        });
+                    // Listen for account changes
+                    window.ethereum.on('accountsChanged', async (accounts) => {
+                        if (!connectButton || connectButton.destroyed) return;
                         
-                        this.registry.set('walletAddress', null);
-                        connectButton.setText('Connect Wallet');
-                    } catch (error) {
-                        console.error('Error disconnecting wallet:', error);
-                    }
+                        if (accounts.length === 0) {
+                            requestAnimationFrame(() => {
+                                if (connectButton && !connectButton.destroyed) {
+                                    connectButton.setText('Connect Wallet');
+                                }
+                            });
+                            this.registry.set('walletAddress', null);
+                        } else {
+                            await connectWallet();
+                        }
+                    });
+
+                    // Listen for chain changes
+                    window.ethereum.on('chainChanged', () => {
+                        window.location.reload();
+                    });
+                } catch (error) {
+                    console.error('Error checking MetaMask connection:', error);
                 }
-            });
+            }
+
+            // Make connect button interactive with enhanced effects
+            connectButton.setInteractive({ useHandCursor: true })
+                .on('pointerover', () => {
+                    if (!connectButton.destroyed) {
+                        connectButton.setColor('#ff00ff');
+                        connectButton.setScale(1.1);
+                    }
+                })
+                .on('pointerout', () => {
+                    if (!connectButton.destroyed) {
+                        connectButton.setColor('#00ffff');
+                        connectButton.setScale(1);
+                    }
+                })
+                .on('pointerdown', async () => {
+                    if (!connectButton.destroyed) {
+                        const currentWallet = this.registry.get('walletAddress');
+                        if (!currentWallet) {
+                            if (typeof window.ethereum !== 'undefined') {
+                                await connectWallet();
+                            } else {
+                                alert('Please install MetaMask to connect your wallet!');
+                            }
+                        } else {
+                            // Disconnect wallet
+                            try {
+                                await window.ethereum.request({
+                                    method: "wallet_revokePermissions",
+                                    params: [{
+                                        eth_accounts: {}
+                                    }]
+                                });
+                                
+                                this.registry.set('walletAddress', null);
+                                requestAnimationFrame(() => {
+                                    if (connectButton && !connectButton.destroyed) {
+                                        connectButton.setText('Connect Wallet');
+                                    }
+                                });
+                            } catch (error) {
+                                console.error('Error disconnecting wallet:', error);
+                            }
+                        }
+                    }
+                });
+        } catch (error) {
+            console.error('Error initializing wallet:', error);
+        }
     }
 }
