@@ -23,44 +23,24 @@ class GameUI {
         // Make UI elements fixed on screen
         this.container.setScrollFactor(0);
         
-        // Make UI camera ignore game elements
+        // Initial camera setup
         this.updateCameraIgnoreList();
     }
 
     updateCameraIgnoreList() {
-        // Make main camera ignore UI elements
-        this.scene.cameras.main.ignore(this.container);
-        
-        // Make UI camera ignore all game elements
+        // Make UI camera ignore everything except our container
         this.scene.children.list.forEach(child => {
-            // Ignore everything except UI container
-            if (child !== this.container) {
+            // Check if the child is a bullet or our container
+            const isBullet = child.texture && child.texture.key === 'bullet_animation';
+            if (child !== this.container && !isBullet) {
                 this.uiCamera.ignore(child);
             }
         });
-        
-        // Specifically ignore enemies group if it exists
-        if (this.scene.enemies) {
-            this.uiCamera.ignore(this.scene.enemies);
+
+        // Make main camera ignore UI elements
+        if (this.scene.cameras.main) {
+            this.scene.cameras.main.ignore(this.container);
         }
-        
-        // Specifically ignore bullets group if it exists
-        if (this.scene.bullets) {
-            this.uiCamera.ignore(this.scene.bullets);
-        }
-        
-        // Specifically ignore player bullets if they exist
-        if (this.scene.playerBullets) {
-            this.uiCamera.ignore(this.scene.playerBullets);
-        }
-        
-        // Log what we're ignoring
-        console.log('UI Camera ignore list updated:', {
-            enemies: !!this.scene.enemies,
-            bullets: !!this.scene.bullets,
-            playerBullets: !!this.scene.playerBullets,
-            container: this.container
-        });
     }
 
     setupUI() {
@@ -366,6 +346,10 @@ class GameUI {
         });
 
         return { overlay, gameOverContainer, scoreText, instructionText };
+    }
+
+    update() {
+        this.updateCameraIgnoreList();
     }
 
     destroy() {

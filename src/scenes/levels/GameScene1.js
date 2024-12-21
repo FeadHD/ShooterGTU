@@ -26,7 +26,7 @@ export class GameScene1 extends BaseScene {
         this.player.x = width * 0.1;
 
         // Set up the main game camera
-        this.cameras.main.setZoom(1.5);
+        this.cameras.main.setZoom(2.5);
         this.cameras.main.setBounds(0, 0, width, height);
         this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
         
