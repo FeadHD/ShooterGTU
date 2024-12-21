@@ -39,16 +39,20 @@ export class GameScene1 extends BaseScene {
         }).setOrigin(0.5);
 
         // Create enemy group
-        this.enemies = this.physics.add.group();
+        this.enemies = this.physics.add.group({
+            collideWorldBounds: true,
+            bounceX: 0,
+            bounceY: 0
+        });
 
         // Wait a short moment for platforms to be fully set up
         this.time.delayedCall(100, () => {
             // Use helper method to get correct spawn height
             const enemyY = this.getSpawnHeight();
 
-            // Create two weak enemies at different positions
-            this.enemy1 = new Slime(this, width * 0.3, enemyY);  // Moved from 0.3 to 0.5 (middle)
-            this.enemy2 = new Slime(this, width * 0.7, enemyY);  // Moved from 0.7 to 0.8 (further right)
+            // Create two slimes at different positions
+            this.enemy1 = new Slime(this, width * 0.3, enemyY);
+            this.enemy2 = new Slime(this, width * 0.7, enemyY);
 
             // Add enemies to the group
             this.enemies.add(this.enemy1.sprite);
@@ -56,10 +60,19 @@ export class GameScene1 extends BaseScene {
 
             // Set up collisions
             this.physics.add.collider(this.enemies, this.platforms);
-
-            // Add collision between player and enemies
             this.physics.add.collider(this.player, this.enemies, this.hitEnemy, null, this);
-            this.physics.add.collider(this.bullets, this.enemies, this.hitEnemyWithBullet, null, this);
+            
+            // Set up bullet collisions with process callback
+            this.physics.add.collider(
+                this.bullets, 
+                this.enemies, 
+                this.hitEnemyWithBullet, 
+                (bullet, enemySprite) => {
+                    // Only process collision if enemy is not invincible
+                    return enemySprite.enemy && !enemySprite.enemy.isInvincible;
+                },
+                this
+            );
             
             // Set number of enemies
             this.remainingEnemies = 2;
@@ -67,36 +80,33 @@ export class GameScene1 extends BaseScene {
     }
 
     hitEnemyWithBullet(bullet, enemySprite) {
-        // Create particles at hit location
-        for(let i = 0; i < 10; i++) {
-            const particle = this.add.circle(bullet.x, bullet.y, 3, 0xffff00);
-            const angle = Math.random() * Math.PI * 2;
-            const speed = 100 + Math.random() * 100;
-            const vx = Math.cos(angle) * speed;
-            const vy = Math.sin(angle) * speed;
-            
-            this.tweens.add({
-                targets: particle,
-                x: particle.x + (vx * 0.3), // Move in direction over 300ms
-                y: particle.y + (vy * 0.3),
-                alpha: 0,
-                scale: 0.1,
-                duration: 300,
-                ease: 'Power2',
-                onComplete: () => particle.destroy()
-            });
+        // Skip if enemy is already being destroyed
+        if (!enemySprite.active || !enemySprite.body || !enemySprite.body.enable) {
+            bullet.destroy();
+            return;
         }
-
-        this.hitSound.play(); // Play hit sound
+        
+        // Create particles at hit location
+        this.createHitEffect(bullet.x, bullet.y);
+        
+        // Play hit sound and destroy bullet
+        this.hitSound.play();
         bullet.destroy();
         
-        // Find the enemy object that owns this sprite
-        const enemy = [this.enemy1, this.enemy2].find(e => e.sprite === enemySprite);
-        if (enemy && enemy.damage(1)) {
-            // Enemy is dead
-            enemy.destroy();
-            this.addPoints(10);
-            this.remainingEnemies--;
+        // Get the enemy instance directly from the sprite
+        const enemy = enemySprite.enemy;
+        if (enemy && !enemy.isInvincible) {
+            // If enemy dies from this hit
+            if (enemy.damage(1)) {
+                // Add points before destroying the enemy
+                this.addPoints(10);
+                this.remainingEnemies--;
+                
+                // Check if level is complete
+                if (this.remainingEnemies <= 0) {
+                    this.checkLevelComplete();
+                }
+            }
         }
     }
 

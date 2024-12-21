@@ -21,6 +21,15 @@ export class MainMenu extends Scene {
         // Debug background color to see canvas size
         this.cameras.main.setBackgroundColor('#000000');
 
+        // Get the canvas dimensions
+        const canvasWidth = this.cameras.main.width;
+        const canvasHeight = this.cameras.main.height;
+
+        // Add and center the background image first
+        const bg = this.add.image(0, 0, 'mainbg');
+        bg.setOrigin(0, 0);
+        bg.setDisplaySize(canvasWidth, canvasHeight);
+
         // Handle music
         let bgMusic = this.sound.get('bgMusic');
         const musicEnabled = this.registry.get('musicEnabled');
@@ -38,44 +47,90 @@ export class MainMenu extends Scene {
             }
         }
 
-        // Add music control button
-        const canvasWidth = this.cameras.main.width;
-        const musicButton = this.add.text(canvasWidth - 100, 20, '⚙️ Music: ON', {
-            fontSize: '20px',
-            fill: '#fff',
-            backgroundColor: '#000',
-            padding: { x: 10, y: 5 }
+        // Add MetaMask connect button with retro style
+        const connectButton = this.add.text(canvasWidth - 30, 30, 'Connect Wallet', {
+            fontFamily: 'Retronoid, Arial',
+            fontSize: '32px',
+            color: '#00ffff',
+            stroke: '#ffffff',
+            strokeThickness: 2,
+            backgroundColor: '#000000',
+            padding: { x: 15, y: 10 },
+            shadow: {
+                offsetX: 2,
+                offsetY: 2,
+                color: '#ff00ff',
+                blur: 5,
+                fill: true
+            }
         }).setOrigin(1, 0);
 
-        // Update initial button state
-        if (!bgMusic.isPlaying || musicEnabled === false) {
-            musicButton.setText('⚙️ Music: OFF');
-        }
+        let isConnected = false;
 
-        musicButton.setInteractive({ useHandCursor: true })
-            .on('pointerover', () => musicButton.setStyle({ fill: '#ff0' }))
-            .on('pointerout', () => musicButton.setStyle({ fill: '#fff' }))
-            .on('pointerdown', () => {
-                if (bgMusic.isPlaying) {
-                    bgMusic.pause();
-                    this.registry.set('musicEnabled', false);
-                    musicButton.setText('⚙️ Music: OFF');
+        // Make connect button interactive with enhanced effects
+        connectButton.setInteractive({ useHandCursor: true })
+            .on('pointerover', () => {
+                connectButton.setColor('#ff00ff');
+                connectButton.setScale(1.1);
+            })
+            .on('pointerout', () => {
+                connectButton.setColor('#00ffff');
+                connectButton.setScale(1);
+            })
+            .on('pointerdown', async () => {
+                if (!isConnected) {
+                    try {
+                        // Check if MetaMask is installed
+                        if (typeof window.ethereum !== 'undefined') {
+                            // Request account access
+                            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                            const account = accounts[0];
+                            // Update button text to show disconnect option
+                            connectButton.setText('Disconnect Wallet');
+                            isConnected = true;
+                            
+                            // Store the account in the game registry
+                            this.registry.set('walletAddress', account);
+                            
+                            // Listen for account changes
+                            window.ethereum.on('accountsChanged', (newAccounts) => {
+                                if (newAccounts.length === 0) {
+                                    connectButton.setText('Connect Wallet');
+                                    this.registry.set('walletAddress', null);
+                                    isConnected = false;
+                                } else {
+                                    const newAccount = newAccounts[0];
+                                    this.registry.set('walletAddress', newAccount);
+                                }
+                            });
+                        } else {
+                            alert('Please install MetaMask to connect your wallet!');
+                        }
+                    } catch (error) {
+                        console.error('Error connecting to MetaMask:', error);
+                        connectButton.setText('Connect Wallet');
+                        isConnected = false;
+                    }
                 } else {
-                    bgMusic.resume();
-                    this.registry.set('musicEnabled', true);
-                    musicButton.setText('⚙️ Music: ON');
+                    // Disconnect wallet
+                    try {
+                        // Clear permissions which effectively disconnects the wallet
+                        await window.ethereum.request({
+                            method: "wallet_revokePermissions",
+                            params: [{
+                                eth_accounts: {}
+                            }]
+                        });
+                        
+                        // Clear local state
+                        this.registry.set('walletAddress', null);
+                        connectButton.setText('Connect Wallet');
+                        isConnected = false;
+                    } catch (error) {
+                        console.error('Error disconnecting wallet:', error);
+                    }
                 }
             });
-
-        // Add and center the background image
-        const bg = this.add.image(0, 0, 'mainbg');
-        bg.setOrigin(0, 0);
-        
-        // Get the canvas dimensions
-        const canvasHeight = this.cameras.main.height;
-        
-        // Scale background to fit screen
-        bg.setDisplaySize(canvasWidth, canvasHeight);
 
         // Create title with layered effect for 3D appearance
         const createTitle = () => {

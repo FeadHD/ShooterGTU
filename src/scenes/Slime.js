@@ -52,8 +52,8 @@ export class Slime extends Enemy {
             // Initialize movement
             this.initializeMovement();
 
-            // Debug flag for death
-            this.isDying = false;
+            // Store reference to this enemy instance on the sprite
+            this.sprite.enemy = this;
         }
 
         // Set movement properties
@@ -69,11 +69,11 @@ export class Slime extends Enemy {
         this.maxHealth = 3;
         this.moveSpeed = 100;
         this.damageAmount = 20; // Renamed from damage to avoid confusion
-        this.scoreValue = 50;
-
-        // Add custom properties to the sprite
-        this.sprite.enemy = this;
-        this.sprite.setCollideWorldBounds(true);
+        this.scoreValue = 10;
+        
+        // Add invincibility flag
+        this.isInvincible = false;
+        this.isDying = false;
     }
 
     createHealthBar() {
@@ -153,44 +153,39 @@ export class Slime extends Enemy {
         });
 
         // Create the death animation
-        this.scene.anims.create({
-            key: 'slime_death',
-            frames: this.scene.anims.generateFrameNumbers('slime_death', {
-                start: 0,
-                end: 5  // Increased to include all frames
-            }),
-            frameRate: 10,  // Slightly faster animation
-            repeat: 0,  // Play once
-            hideOnComplete: true  // Hide the sprite when animation completes
-        });
+        this.createDeathAnimation();
+    }
 
-        console.log('Created animations:', 
-            this.scene.anims.exists('slime_idle'),
-            this.scene.anims.exists('slime_jump'),
-            this.scene.anims.exists('slime_death')
-        );
+    createDeathAnimation() {
+        // Create the death animation if it doesn't exist
+        if (!this.scene.anims.exists('slime_death')) {
+            this.scene.anims.create({
+                key: 'slime_death',
+                frames: this.scene.anims.generateFrameNumbers('slime_death', {
+                    start: 0,
+                    end: 5
+                }),
+                frameRate: 10,
+                repeat: 0
+            });
+        }
     }
 
     playAnimation(type) {
-        try {
-            if (!this.sprite || !this.scene) return;
+        if (!this.sprite || !this.scene) return;
 
-            const animKey = `slime_${type}`;
-            
-            // Only play if animation exists and is different from current
-            if (this.scene.anims.exists(animKey)) {
-                if (!this.sprite.anims.isPlaying || this.sprite.anims.currentAnim.key !== animKey) {
-                    if (type === 'death') {
-                        // For death animation, set texture first
-                        this.sprite.setTexture('slime_death');
-                    }
-                    this.sprite.play(animKey, true);
-                }
-            } else {
-                console.warn(`Animation ${animKey} does not exist`);
+        const animKey = `slime_${type}`;
+        if (this.scene.anims.exists(animKey)) {
+            // For death animation, make sure we're using the right texture
+            if (type === 'death') {
+                this.sprite.setTexture('slime_death', 0);
             }
-        } catch (error) {
-            console.warn('Animation error:', error);
+            this.sprite.play(animKey, true);
+        } else if (type === 'death') {
+            // If death animation doesn't exist, create it
+            this.createDeathAnimation();
+            this.sprite.setTexture('slime_death', 0);
+            this.sprite.play('slime_death', true);
         }
     }
 
@@ -200,31 +195,103 @@ export class Slime extends Enemy {
         
         // Change direction when hitting world bounds
         this.sprite.body.onWorldBounds = true;
-        this.sprite.body.world.on('worldbounds', this.onWorldBounds, this);
+        this.worldBoundsListener = this.onWorldBounds.bind(this);
+        this.sprite.body.world.on('worldbounds', this.worldBoundsListener, this);
     }
 
-    onWorldBounds() {
-        // Reverse direction when hitting world bounds
-        this.moveSpeed = -this.moveSpeed;
-        this.sprite.setVelocityX(this.moveSpeed);
-        // Flip the sprite based on direction
-        this.sprite.flipX = this.moveSpeed > 0;
+    onWorldBounds(body) {
+        if (!this.sprite || !this.sprite.body) return;
+        if (body.gameObject === this.sprite) {
+            // Reverse direction
+            this.moveSpeed = -this.moveSpeed;
+            this.sprite.setVelocityX(this.moveSpeed);
+            // Flip the sprite based on direction
+            this.sprite.flipX = this.moveSpeed > 0;
+        }
     }
 
     damage(amount) {
-        if (this.isDying) return;
-
-        this.health -= amount;
-        console.log(`Slime took ${amount} damage. Health: ${this.health}`);
+        if (this.health <= 0 || this.isInvincible) return false; // Already dead or invincible
         
-        // Update health bar
+        this.health -= amount;
         this.updateHealthBar();
+        
+        // Flash the enemy and make temporarily invincible
+        if (this.sprite && this.sprite.active) {
+            this.isInvincible = true;
+            this.sprite.setAlpha(0.5);
+            setTimeout(() => {
+                if (this.sprite && this.sprite.active) {
+                    this.sprite.setAlpha(1);
+                    this.isInvincible = false;
+                }
+            }, 100);
+        }
 
-        // Check if slime should die
+        // Check if dead
         if (this.health <= 0) {
-            console.log('Health <= 0, triggering death');
-            this.health = 0;
-            this.die();
+            this.health = 0; // Ensure health doesn't go negative
+            this.isInvincible = true; // Stay invincible while dying
+            this.isDying = true; // Set dying flag
+            
+            // Hide health bars immediately
+            if (this.healthBar) {
+                this.healthBar.setVisible(false);
+            }
+            if (this.healthBarBackground) {
+                this.healthBarBackground.setVisible(false);
+            }
+            
+            // Disable physics while dying
+            if (this.sprite && this.sprite.body) {
+                this.sprite.body.enable = false;
+            }
+            
+            // Make sure death animation exists and play it
+            if (this.sprite && this.scene) {
+                const deathAnim = 'slime_death';
+                if (!this.scene.anims.exists(deathAnim)) {
+                    this.createDeathAnimation();
+                }
+                
+                // Set texture and play animation
+                this.sprite.setTexture('slime_death', 0);
+                this.sprite.play(deathAnim);
+                
+                // Listen for animation completion
+                this.sprite.on('animationcomplete', (animation) => {
+                    if (animation.key === deathAnim) {
+                        this.destroy();
+                    }
+                });
+            } else {
+                // If no sprite or scene, destroy immediately
+                this.destroy();
+            }
+            
+            return true;
+        }
+        return false;
+    }
+
+    destroy() {
+        // Remove world bounds listener
+        if (this.sprite && this.sprite.body && this.sprite.body.world) {
+            this.sprite.body.world.off('worldbounds', this.worldBoundsListener, this);
+        }
+
+        // Destroy sprite and health bars
+        if (this.sprite) {
+            this.sprite.destroy();
+            this.sprite = null;
+        }
+        if (this.healthBar) {
+            this.healthBar.destroy();
+            this.healthBar = null;
+        }
+        if (this.healthBarBackground) {
+            this.healthBarBackground.destroy();
+            this.healthBarBackground = null;
         }
     }
 
@@ -247,7 +314,7 @@ export class Slime extends Enemy {
         // Remove world bounds collision
         this.sprite.body.onWorldBounds = false;
         if (this.sprite.body.world) {
-            this.sprite.body.world.off('worldbounds', this.onWorldBounds, this);
+            this.sprite.body.world.off('worldbounds', this.worldBoundsListener, this);
         }
         
         // Destroy health bar
@@ -272,22 +339,6 @@ export class Slime extends Enemy {
                 });
             }
         });
-    }
-
-    destroy() {
-        console.log('Destroying slime');
-        if (this.sprite) {
-            this.sprite.destroy();
-            this.sprite = null;
-        }
-        if (this.healthBar) {
-            this.healthBar.destroy();
-            this.healthBar = null;
-        }
-        if (this.healthBarBackground) {
-            this.healthBarBackground.destroy();
-            this.healthBarBackground = null;
-        }
     }
 
     update() {

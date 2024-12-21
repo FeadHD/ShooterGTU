@@ -329,20 +329,7 @@ export class BaseScene extends Scene {
             // Don't show completion text for Scene 5 as it has its own handling
             if (currentScene !== 'GameScene5') {
                 const sceneNumber = parseInt(currentScene.slice(-1));
-                
-                let completionText = 'Level Complete!\nPress SPACE to continue';
-                let nextScene = `GameScene${sceneNumber + 1}`;
-                
-                const completeText = this.add.text(this.scale.width/2, this.scale.height/2, completionText, {
-                    fontSize: '32px',
-                    fill: '#fff',
-                    align: 'center'
-                }).setOrigin(0.5).setScrollFactor(0);
-                
-                this.input.keyboard.once('keydown-SPACE', () => {
-                    completeText.destroy();
-                    this.scene.start(nextScene);
-                });
+                this.nextSceneName = `GameScene${sceneNumber + 1}`;
             }
         }
     }
