@@ -89,6 +89,10 @@ export class Leaderboard extends Scene {
         const startY = this.cameras.main.height * 0.3;
         const spacing = 45;
         const maxScores = 10;
+
+        // Get current wallet address
+        const currentWallet = this.registry.get('walletAddress');
+
         const textStyle = {
             fontFamily: 'Retronoid, Arial',
             fontSize: '28px',
@@ -115,7 +119,14 @@ export class Leaderboard extends Scene {
 
             // Wallet Address or Guest
             const displayName = score.playerName === 'Guest' ? 'Guest' : score.playerName;
-            this.add.text(this.cameras.main.width * 0.5, y, displayName, textStyle)
+            
+            // Use gold color for current user's wallet
+            const walletStyle = {
+                ...textStyle,
+                color: currentWallet && score.playerName === currentWallet ? '#ffd700' : '#00ffff'
+            };
+            
+            this.add.text(this.cameras.main.width * 0.5, y, displayName, walletStyle)
                 .setOrigin(0.5);
 
             // Score

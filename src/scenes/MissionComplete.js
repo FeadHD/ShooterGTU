@@ -129,10 +129,20 @@ export class MissionComplete extends Scene {
             });
 
         // Add congratulations text
-        this.add.text(width/2, height * 0.3, 'Congratulations!', {
+        this.add.text(width/2, height * 0.3, 'MISSION COMPLETE', {
             fontFamily: 'Retronoid',
             fontSize: '48px',
             fill: '#fff'
+        }).setOrigin(0.5);
+
+        // Add score display
+        const finalScore = this.registry.get('score') || 0;
+        this.add.text(width/2, height * 0.4, `YOUR SCORE: ${finalScore}`, {
+            fontFamily: 'Retronoid',
+            fontSize: '40px',
+            fill: '#ffd700',  // Gold color for the score
+            stroke: '#000000',
+            strokeThickness: 4
         }).setOrigin(0.5);
 
         // Add mission completion text
