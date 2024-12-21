@@ -143,16 +143,21 @@ export class BaseScene extends Scene {
         .on('pointerout', () => settingsButton.setStyle({ fill: '#fff' }))
         .on('pointerdown', () => this.toggleMusic(settingsButton));
 
-        // Add wallet address if connected
+        // Add wallet status text
         const walletAddress = this.registry.get('walletAddress');
-        if (walletAddress) {
-            const walletText = this.add.text(canvasWidth - 200, 20, '🦊 ' + walletAddress.substring(0, 6) + '...' + walletAddress.substring(38), {
+        const walletText = this.add.text(canvasWidth - 200, 20, 
+            walletAddress ? 
+            '🦊 ' + walletAddress.substring(0, 6) + '...' + walletAddress.substring(38) :
+            '👤 Guest: No wallet connected', 
+            {
                 fontSize: '20px',
-                fill: '#00ffff',
+                fill: walletAddress ? '#00ffff' : '#ff9900',
                 backgroundColor: '#000',
                 padding: { x: 10, y: 5 }
-            }).setOrigin(1, 0);
-        }
+            }
+        ).setOrigin(1, 0);
+
+        this.updateMusicButton(settingsButton);
 
         this.updateMusicButton(settingsButton);
     }
