@@ -36,41 +36,50 @@ export class GameScene5 extends BaseScene {
             this.boss = null;
         }
 
-        // Create enemies group with physics
+        // Create enemy group with proper physics properties
         this.enemies = this.physics.add.group({
-            bounceX: 0,
-            bounceY: 0,
             collideWorldBounds: true,
-            dragX: 100
+            bounceX: 0.5,
+            bounceY: 0.2,
+            dragX: 200
         });
 
         // Wait a short moment for platforms to be fully set up
         this.time.delayedCall(100, () => {
             // Create the boss at the right side
-            this.boss = new BossEnemy(this, width * 0.8, this.groundTop - 92); // Account for boss's larger size
-            
-            if (this.boss && this.boss.sprite) {
-                this.enemies.add(this.boss.sprite);
-                
-                // Set up multiple collision handlers for redundancy
-                this.physics.add.collider(this.boss.sprite, this.platforms);
-                this.physics.add.collider(this.enemies, this.platforms);
-                
-                // Set up player and bullet collisions
-                this.physics.add.collider(this.player, this.enemies, this.hitEnemy, null, this);
-                this.physics.add.collider(this.bullets, this.enemies, this.hitEnemyWithBullet, null, this);
-                
-                // Extra physics settings for boss sprite
-                this.boss.sprite.body.setCollideWorldBounds(true);
-                this.boss.sprite.body.setBounce(0);
-                this.boss.sprite.body.setFriction(1);
-                this.boss.sprite.body.setDragX(100);
-            }
+            const bossY = this.groundTop - 92; // Account for boss's larger size
+            this.boss = new BossEnemy(this, width * 0.8, bossY);
+            this.enemies.add(this.boss.sprite);
+
+            // Set up collisions
+            this.physics.add.collider(this.enemies, this.platforms);
+            this.physics.add.collider(this.player, this.enemies, this.hitEnemy, null, this);
+
+            // Add bullet collisions with enemies
+            this.physics.add.collider(
+                this.bullets,
+                this.enemies,
+                this.hitEnemyWithBullet,
+                (bullet, enemySprite) => {
+                    // Only process collision if enemy is not invincible
+                    return enemySprite.enemy && !enemySprite.enemy.isInvincible;
+                },
+                this
+            );
+
+            this.physics.add.collider(this.bullets, this.platforms);
 
             // Add invisible wall on the left to prevent going back
             const wall = this.add.rectangle(0, height/2, 20, height, 0x000000, 0);
             this.physics.add.existing(wall, true);
             this.physics.add.collider(this.player, wall);
+
+            // Set total enemies (just the boss)
+            this.remainingEnemies = 1;
+
+            // Extra physics settings for boss sprite
+            this.boss.sprite.body.setCollideWorldBounds(true);
+            this.boss.sprite.body.setFriction(1);
         });
 
         // Load victory music if not already loaded

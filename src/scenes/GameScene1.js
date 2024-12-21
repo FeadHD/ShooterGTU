@@ -41,8 +41,9 @@ export class GameScene1 extends BaseScene {
         // Create enemy group
         this.enemies = this.physics.add.group({
             collideWorldBounds: true,
-            bounceX: 0,
-            bounceY: 0
+            bounceX: 0.5,
+            bounceY: 0.2,
+            dragX: 200
         });
 
         // Wait a short moment for platforms to be fully set up
@@ -61,6 +62,15 @@ export class GameScene1 extends BaseScene {
             // Set up collisions
             this.physics.add.collider(this.enemies, this.platforms);
             this.physics.add.collider(this.player, this.enemies, this.hitEnemy, null, this);
+            
+            // Add collisions between enemies with increased bounce
+            this.physics.add.collider(
+                this.enemies,
+                this.enemies,
+                this.handleEnemyCollision,
+                null,
+                this
+            );
             
             // Set up bullet collisions with process callback
             this.physics.add.collider(
@@ -107,6 +117,34 @@ export class GameScene1 extends BaseScene {
                     this.checkLevelComplete();
                 }
             }
+        }
+    }
+
+    handleEnemyCollision(enemy1, enemy2) {
+        // If enemies are moving towards each other, reverse their directions
+        if ((enemy1.body.velocity.x > 0 && enemy2.body.velocity.x < 0) ||
+            (enemy1.body.velocity.x < 0 && enemy2.body.velocity.x > 0)) {
+            
+            if (enemy1.enemy) {
+                enemy1.enemy.reverseDirection();
+                // Add slight upward velocity for better separation
+                enemy1.setVelocityY(-150);
+            }
+            if (enemy2.enemy) {
+                enemy2.enemy.reverseDirection();
+                // Add slight upward velocity for better separation
+                enemy2.setVelocityY(-150);
+            }
+        }
+        
+        // Ensure enemies bounce off each other
+        const pushForce = 100;
+        if (enemy1.x < enemy2.x) {
+            enemy1.setVelocityX(-pushForce);
+            enemy2.setVelocityX(pushForce);
+        } else {
+            enemy1.setVelocityX(pushForce);
+            enemy2.setVelocityX(-pushForce);
         }
     }
 

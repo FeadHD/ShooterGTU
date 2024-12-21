@@ -413,23 +413,89 @@ export class BaseScene extends Scene {
         this.registry.set('lives', lives);
         this.livesText.setText('Lives: ' + lives);
 
-        // Reset HP to 100 immediately upon any death
-        this.playerHP = 100;
-        this.registry.set('playerHP', 100);
-        this.hpText.setText('HP: 100');
-
         this.player.play('character_death');
         this.player.once('animationcomplete', () => {
             if (lives <= 0) {
-                // Show death message
-                const deathText = this.add.text(this.scale.width/2, this.scale.height/2, 'GAME OVER\nPress SPACE to return to main menu', {
-                    fontFamily: 'Arial',
-                    fontSize: '32px',
-                    color: '#ff0000',
+                const width = this.scale.width;
+                const height = this.scale.height;
+
+                // Add dark overlay
+                const overlay = this.add.rectangle(0, 0, width, height, 0x000000, 0.7)
+                    .setOrigin(0, 0)
+                    .setDepth(98);
+
+                // Create glitch effect container
+                const gameOverContainer = this.add.container(width/2, height * 0.3).setDepth(99);
+
+                // Add "GAME OVER" text with shadow layers
+                const shadowOffset = 4;
+                const numLayers = 3;
+                
+                for (let i = numLayers; i >= 0; i--) {
+                    const layerColor = i === 0 ? '#ff0000' : '#ff00ff';
+                    const gameOverText = this.add.text(i * shadowOffset, i * shadowOffset, 'GAME OVER', {
+                        fontFamily: 'Retronoid',
+                        fontSize: '72px',
+                        color: layerColor,
+                        align: 'center',
+                        stroke: '#000000',
+                        strokeThickness: 4
+                    }).setOrigin(0.5);
+                    gameOverContainer.add(gameOverText);
+                }
+
+                // Add final score
+                const finalScore = this.registry.get('score');
+                const scoreText = this.add.text(width/2, height * 0.5, `FINAL SCORE: ${finalScore}`, {
+                    fontFamily: 'Retronoid',
+                    fontSize: '48px',
+                    color: '#00ffff',
                     align: 'center',
                     stroke: '#000000',
-                    strokeThickness: 4
-                }).setOrigin(0.5);
+                    strokeThickness: 3,
+                    shadow: {
+                        offsetX: 2,
+                        offsetY: 2,
+                        color: '#ff00ff',
+                        blur: 5,
+                        fill: true
+                    }
+                }).setOrigin(0.5).setDepth(99);
+
+                // Add instruction text with blinking effect
+                const instructionText = this.add.text(width/2, height * 0.7, 'PRESS SPACE TO CONTINUE', {
+                    fontFamily: 'Retronoid',
+                    fontSize: '32px',
+                    color: '#ffd700',
+                    align: 'center',
+                    stroke: '#000000',
+                    strokeThickness: 2
+                }).setOrigin(0.5).setDepth(99);
+
+                // Add blinking effect to instruction text
+                this.tweens.add({
+                    targets: instructionText,
+                    alpha: 0,
+                    duration: 500,
+                    yoyo: true,
+                    repeat: -1
+                });
+
+                // Add glitch effect to Game Over text
+                this.time.addEvent({
+                    delay: 2000,
+                    callback: () => {
+                        this.tweens.add({
+                            targets: gameOverContainer,
+                            x: width/2 + Phaser.Math.Between(-5, 5),
+                            y: height * 0.3 + Phaser.Math.Between(-5, 5),
+                            duration: 50,
+                            yoyo: true,
+                            repeat: 3
+                        });
+                    },
+                    loop: true
+                });
 
                 // Set flag for game over state
                 this.gameOver = true;
@@ -441,6 +507,11 @@ export class BaseScene extends Scene {
                 this.input.mouse.enabled = false;
             } else {
                 this.time.delayedCall(500, () => {
+                    // Reset HP only when respawning
+                    this.playerHP = 100;
+                    this.registry.set('playerHP', 100);
+                    this.hpText.setText('HP: 100');
+                    
                     this.isDying = false;
                     this.input.keyboard.enabled = true;
                     this.input.mouse.enabled = true;

@@ -15,26 +15,31 @@ class Enemy {
         
         // Set up physics properties
         this.sprite.body.setCollideWorldBounds(true);
-        this.sprite.body.setBounce(0);
+        this.sprite.body.setBounce(0.2);
         this.sprite.body.setFriction(1);
         this.sprite.body.setGravityY(800); // Match world gravity
-        this.sprite.body.setDragX(50); // Add some drag for smoother movement
+        this.sprite.body.setDragX(200); // Increased drag for better control
+        this.sprite.body.setMaxVelocity(300, 1000); // Limit maximum velocity
         
-        // Adjust physics body size and offset
-        this.sprite.body.setSize(32, 46); // Slightly smaller height
-        this.sprite.body.setOffset(0, 1); // Move collision box up slightly
+        // Adjust physics body size and offset for better collisions
+        this.sprite.body.setSize(28, 44); // Slightly smaller for better collision
+        this.sprite.body.setOffset(2, 2); // Center the collision box
 
         // Enemy behavior properties
         this.aggroRange = 300; // Distance at which enemy starts chasing player
         this.moveSpeed = 150;  // Movement speed when chasing
         this.patrolSpeed = 100; // Movement speed when patrolling
+        this.direction = 1; // 1 for right, -1 for left
         
         // Set up patrol boundaries
         this.leftBound = 20;  // Just enough space to not trigger scene change
         this.rightBound = scene.scale.width - 20;  // Just enough space to not trigger scene change
         
         // Set initial velocity for patrol
-        this.setVelocityX(this.patrolSpeed);
+        this.setVelocityX(this.patrolSpeed * this.direction);
+        
+        // Store reference to this enemy instance on the sprite
+        this.sprite.enemy = this;
         
         // Create health bar after all setup is complete (except for BossEnemy)
         if (!(this instanceof BossEnemy)) {
@@ -126,6 +131,11 @@ class Enemy {
         }
     }
 
+    reverseDirection() {
+        this.direction *= -1;
+        this.setVelocityX(this.patrolSpeed * this.direction);
+    }
+
     update() {
         if (!this.sprite || !this.sprite.active) return;
 
@@ -160,9 +170,9 @@ class Enemy {
         } else {
             // Normal patrol behavior when player is out of range
             if (this.getX() >= this.rightBound) {
-                this.setVelocityX(-this.patrolSpeed);
+                this.reverseDirection();
             } else if (this.getX() <= this.leftBound) {
-                this.setVelocityX(this.patrolSpeed);
+                this.reverseDirection();
             }
         }
     }

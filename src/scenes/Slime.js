@@ -20,14 +20,15 @@ export class Slime extends Enemy {
             this.sprite.setScale(2); // Scale to 2x size
             this.sprite.setFrame(0);
             
-            // Set up physics with circular hitbox
-            this.sprite.body.setCircle(8); // Radius of 8 pixels (16x16 circle)
-            this.sprite.body.setOffset(8, 8); // Center the hitbox
-            this.sprite.body.setGravityY(1000); // Set gravity to 1000
+            // Set up physics with rectangular hitbox for better collisions
+            this.sprite.body.setSize(14, 14); // Slightly smaller than sprite
+            this.sprite.body.setOffset(9, 9); // Center the hitbox
+            this.sprite.body.setGravityY(1000);
             this.sprite.body.setCollideWorldBounds(true);
-            this.sprite.body.setBounce(0.3); // Add some bounce for hopping effect
+            this.sprite.body.setBounce(0.2); // Reduced bounce for more stable movement
             this.sprite.body.setFriction(1);
-            this.sprite.body.setDragX(100); // Increased drag to stop faster
+            this.sprite.body.setDragX(200); // Increased drag for better control
+            this.sprite.body.setMaxVelocity(300, 1000); // Limit maximum velocity
             this.sprite.body.setImmovable(false);
             this.sprite.body.setAllowGravity(true);
             this.sprite.body.moves = true;
@@ -57,23 +58,24 @@ export class Slime extends Enemy {
         }
 
         // Set movement properties
-        this.jumpForce = -400;
-        this.jumpChance = 0.02; // Increased jump chance
+        this.jumpForce = -350; // Reduced jump force
+        this.jumpChance = 0.015; // Reduced jump chance
         this.lastJumpTime = 0;
-        this.jumpCooldown = 1000; // 1 second cooldown between jumps
-        this.horizontalJumpForce = 200; // Increased horizontal force for bigger jumps
+        this.jumpCooldown = 1500; // Increased cooldown between jumps
+        this.horizontalJumpForce = 150; // Reduced horizontal force
 
         // Slime enemy class implementation
         this.scene = scene;
-        this.health = 3; // Reduced health to make it easier to kill
+        this.health = 3;
         this.maxHealth = 3;
-        this.moveSpeed = 100;
-        this.damageAmount = 20; // Renamed from damage to avoid confusion
+        this.moveSpeed = 80; // Slightly reduced speed
+        this.damageAmount = 20;
         this.scoreValue = 10;
         
         // Add invincibility flag
         this.isInvincible = false;
         this.isDying = false;
+        this.direction = 1; // 1 for right, -1 for left
     }
 
     createHealthBar() {
@@ -191,7 +193,7 @@ export class Slime extends Enemy {
 
     initializeMovement() {
         // Basic horizontal movement
-        this.sprite.setVelocityX(this.moveSpeed);
+        this.sprite.setVelocityX(this.moveSpeed * this.direction);
         
         // Change direction when hitting world bounds
         this.sprite.body.onWorldBounds = true;
@@ -203,11 +205,14 @@ export class Slime extends Enemy {
         if (!this.sprite || !this.sprite.body) return;
         if (body.gameObject === this.sprite) {
             // Reverse direction
-            this.moveSpeed = -this.moveSpeed;
-            this.sprite.setVelocityX(this.moveSpeed);
-            // Flip the sprite based on direction
-            this.sprite.flipX = this.moveSpeed > 0;
+            this.reverseDirection();
         }
+    }
+
+    reverseDirection() {
+        this.direction *= -1;
+        this.sprite.setVelocityX(this.moveSpeed * this.direction);
+        this.sprite.flipX = this.direction < 0;
     }
 
     damage(amount) {

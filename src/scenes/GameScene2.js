@@ -25,8 +25,13 @@ export class GameScene2 extends BaseScene {
         // Set next scene (can be modified if you add more scenes)
         this.nextSceneName = 'GameScene1';
 
-        // Create enemy group
-        this.enemies = this.physics.add.group();
+        // Create enemy group with proper physics properties
+        this.enemies = this.physics.add.group({
+            collideWorldBounds: true,
+            bounceX: 0.5,
+            bounceY: 0.2,
+            dragX: 200
+        });
 
         // Wait a short moment for platforms to be fully set up
         this.time.delayedCall(100, () => {
@@ -48,7 +53,28 @@ export class GameScene2 extends BaseScene {
 
             // Add collision between player and enemies
             this.physics.add.collider(this.player, this.enemies, this.hitEnemy, null, this);
-            this.physics.add.collider(this.bullets, this.enemies, this.hitEnemyWithBullet, null, this);
+
+            // Add collisions between enemies with proper handling
+            this.physics.add.collider(
+                this.enemies,
+                this.enemies,
+                this.handleEnemyCollision,
+                null,
+                this
+            );
+
+            // Add bullet collisions with enemies
+            this.physics.add.collider(
+                this.bullets,
+                this.enemies,
+                this.hitEnemyWithBullet,
+                (bullet, enemySprite) => {
+                    // Only process collision if enemy is not invincible
+                    return enemySprite.enemy && !enemySprite.enemy.isInvincible;
+                },
+                this
+            );
+
             this.physics.add.collider(this.bullets, this.platforms);
 
             // Add invisible wall on the left to prevent going back
@@ -69,7 +95,7 @@ export class GameScene2 extends BaseScene {
             const speed = 100 + Math.random() * 100;
             const vx = Math.cos(angle) * speed;
             const vy = Math.sin(angle) * speed;
-            
+
             this.tweens.add({
                 targets: particle,
                 x: particle.x + (vx * 0.3), // Move in direction over 300ms
@@ -84,13 +110,41 @@ export class GameScene2 extends BaseScene {
 
         this.hitSound.play(); // Play hit sound
         bullet.destroy();
-        
+
         // Find the enemy object that owns this sprite
         const enemy = [this.enemy1, this.enemy2, this.enemy3].find(e => e.sprite === enemySprite);
         if (enemy && enemy.damage(1)) {
             // Enemy is dead
             enemy.destroy();
             this.addPoints(10);
+        }
+    }
+
+    handleEnemyCollision(enemy1, enemy2) {
+        // If enemies are moving towards each other, reverse their directions
+        if ((enemy1.body.velocity.x > 0 && enemy2.body.velocity.x < 0) ||
+            (enemy1.body.velocity.x < 0 && enemy2.body.velocity.x > 0)) {
+
+            if (enemy1.enemy) {
+                enemy1.enemy.reverseDirection();
+                // Add slight upward velocity for better separation
+                enemy1.body.setVelocityY(-150);
+            }
+            if (enemy2.enemy) {
+                enemy2.enemy.reverseDirection();
+                // Add slight upward velocity for better separation
+                enemy2.body.setVelocityY(-150);
+            }
+        }
+
+        // Ensure enemies bounce off each other
+        const pushForce = 100;
+        if (enemy1.x < enemy2.x) {
+            enemy1.body.setVelocityX(-pushForce);
+            enemy2.body.setVelocityX(pushForce);
+        } else {
+            enemy1.body.setVelocityX(pushForce);
+            enemy2.body.setVelocityX(-pushForce);
         }
     }
 
@@ -107,14 +161,14 @@ export class GameScene2 extends BaseScene {
             const bgMusic = this.sound.get('bgMusic');
             const isMusicPlaying = bgMusic ? bgMusic.isPlaying : false;
             this.registry.set('musicEnabled', isMusicPlaying);
-            
+
             this.scene.start('GameScene3');
         } else if (this.player.x < 20) {
             // Store the current music state before transitioning
             const bgMusic = this.sound.get('bgMusic');
             const isMusicPlaying = bgMusic ? bgMusic.isPlaying : false;
             this.registry.set('musicEnabled', isMusicPlaying);
-            
+
             this.scene.start('GameScene1');
         }
     }
