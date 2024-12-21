@@ -1,5 +1,6 @@
 import { Scene } from 'phaser';
 import { GameUI } from './GameUI';
+import { Bullet } from '../../prefabs/Bullet';
 
 export class BaseScene extends Scene {
     create() {
@@ -227,63 +228,11 @@ export class BaseScene extends Scene {
         this.laserSound = this.sound.add('laser', { volume: 0.05 });
         this.hitSound = this.sound.add('hit', { volume: 0.1 });
 
-        // Create bullet sprite for the group to use
-        const size = 16;
-        const bulletTexture = this.add.renderTexture(0, 0, size, size);
-        
-        // Create bullet tip (pointed end)
-        const tip = this.add.triangle(size/2, size/4, 
-            0, 6,      // point 1
-            4, 0,      // point 2
-            -4, 0,     // point 3
-            0xcccccc   // silver color
-        );
-        
-        // Create bullet body (main part)
-        const body = this.add.rectangle(size/2, size/2 + 2, 6, 8, 0xb8b8b8);
-        
-        // Create casing rim
-        const rim = this.add.rectangle(size/2, size/2 + 6, 8, 2, 0x999999);
-        
-        // Create highlight for metallic effect
-        const highlight = this.add.rectangle(size/2 - 1, size/2, 1, 6, 0xffffff);
-        highlight.setAlpha(0.5);
-        
-        // Draw all parts to create the complete bullet
-        bulletTexture.draw(body);    // Draw main body first
-        bulletTexture.draw(tip);     // Draw tip
-        bulletTexture.draw(rim);     // Draw rim
-        bulletTexture.draw(highlight); // Add highlight
-        
-        // Save the composite texture
-        bulletTexture.saveTexture('bulletTexture');
-        
-        // Clean up temporary objects
-        tip.destroy();
-        body.destroy();
-        rim.destroy();
-        highlight.destroy();
-        bulletTexture.destroy();
-
         // Create bullet group with physics
         this.bullets = this.physics.add.group({
-            defaultKey: 'bullet_animation',
+            classType: Bullet,
             maxSize: -1,  // Remove bullet limit
-            createCallback: (bullet) => {
-                bullet.setScale(1);
-                bullet.setAlpha(1);
-                bullet.body.setAllowGravity(false);
-                bullet.body.setSize(24, 24);
-                bullet.play('bullet_anim');
-            }
-        });
-
-        // Create bullet animation
-        this.anims.create({
-            key: 'bullet_anim',
-            frames: this.anims.generateFrameNumbers('bullet_animation'),  // This will use all frames
-            frameRate: 12,  // Adjust speed as needed
-            repeat: -1     // Loop the animation
+            runChildUpdate: true  // This will call preUpdate on each bullet
         });
 
         // Create animations and player
@@ -407,16 +356,8 @@ export class BaseScene extends Scene {
     shoot(direction = 'right') {
         const bullet = this.bullets.get(this.player.x, this.player.y);
         if (!bullet) return;
-
-        bullet.setActive(true);
-        bullet.setVisible(true);
         
-        // Set bullet rotation based on direction
-        bullet.setAngle(direction === 'right' ? 0 : 180);
-        
-        const speed = 600;
-        bullet.setVelocityX(direction === 'right' ? speed : -speed);
-        
+        bullet.fire(this.player.x, this.player.y, direction);
         this.laserSound.play();
     }
 
