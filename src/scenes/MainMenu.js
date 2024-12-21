@@ -6,9 +6,8 @@ export class MainMenu extends Scene {
     }
 
     create() {
-        // Reset game state
+        // Reset lives only
         this.registry.set('lives', 3);
-        this.registry.set('score', 0);
         
         // Enable input system
         this.input.keyboard.enabled = true;
@@ -65,7 +64,14 @@ export class MainMenu extends Scene {
             }
         }).setOrigin(1, 0);
 
-        let isConnected = false;
+        // Check if wallet is already connected
+        const storedWalletAddress = this.registry.get('walletAddress');
+        let isConnected = !!storedWalletAddress;
+        
+        // Update button text if wallet is already connected
+        if (isConnected) {
+            connectButton.setText('Disconnect Wallet');
+        }
 
         // Make connect button interactive with enhanced effects
         connectButton.setInteractive({ useHandCursor: true })
@@ -212,6 +218,8 @@ export class MainMenu extends Scene {
 
         // Add click handlers
         startButton.on('pointerdown', () => {
+            // Reset score only when starting a new game
+            this.registry.set('score', 0);
             // Clean up scene before starting game
             this.input.keyboard.removeAllKeys();
             this.input.removeAllListeners();

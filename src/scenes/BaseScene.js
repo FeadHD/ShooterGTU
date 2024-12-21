@@ -3,7 +3,7 @@ import { Scene } from 'phaser';
 export class BaseScene extends Scene {
     create() {
         // Initialize game state
-        if (typeof this.registry.get('score') !== 'number') {
+        if (this.registry.get('score') === undefined) {
             this.registry.set('score', 0);
         }
         // Always ensure lives are set to 3 at the start of a new game
@@ -198,7 +198,8 @@ export class BaseScene extends Scene {
             fontFamily: 'Retronoid'
         };
 
-        this.scoreText = this.add.text(16, 16, 'Score: 0', {
+        const currentScore = this.registry.get('score') || 0;
+        this.scoreText = this.add.text(16, 16, 'Score: ' + currentScore, {
             ...textConfig,
             fill: '#fff'
         }).setScrollFactor(0);
@@ -214,18 +215,51 @@ export class BaseScene extends Scene {
         }).setScrollFactor(0);
 
         // Add music toggle
-        const settingsButton = this.add.text(width - 100, 20, '⚙️ Music', {
+        const settingsButton = this.add.text(width - 20, 20, '⚙️ Music', {
             fontSize: '20px',
+            fontFamily: 'Retronoid',
             fill: '#fff',
-            backgroundColor: '#000',
-            padding: { x: 10, y: 5 }
+            backgroundColor: '#000000',
+            padding: { x: 10, y: 5 },
+            stroke: '#ffffff',
+            strokeThickness: 1
         }).setOrigin(1, 0)
+        .setScrollFactor(0)
         .setInteractive({ useHandCursor: true })
         .on('pointerover', () => settingsButton.setStyle({ fill: '#ff0' }))
         .on('pointerout', () => settingsButton.setStyle({ fill: '#fff' }))
         .on('pointerdown', () => this.toggleMusic(settingsButton));
 
+        // Add wallet display next to settings button
+        const walletAddress = this.registry.get('walletAddress');
+        const displayAddress = walletAddress ? 
+            walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4) : 
+            'Wallet not connected';
+
+        this.walletText = this.add.text(width - 140, 20, displayAddress, {
+            fontSize: '20px',
+            fontFamily: 'Retronoid',
+            fill: '#00ffff',
+            backgroundColor: '#000000',
+            padding: { x: 10, y: 5 },
+            stroke: '#ffffff',
+            strokeThickness: 1
+        }).setOrigin(1, 0)
+        .setScrollFactor(0);
+
         this.updateMusicButton(settingsButton);
+
+        // Listen for wallet changes
+        if (typeof window.ethereum !== 'undefined') {
+            window.ethereum.on('accountsChanged', (accounts) => {
+                const newAddress = accounts[0] || null;
+                this.registry.set('walletAddress', newAddress);
+                const displayAddress = newAddress ? 
+                    newAddress.slice(0, 6) + '...' + newAddress.slice(-4) : 
+                    'Wallet not connected';
+                this.walletText.setText(displayAddress);
+            });
+        }
     }
 
     toggleMusic(button) {
