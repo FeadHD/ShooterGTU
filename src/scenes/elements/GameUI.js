@@ -1,17 +1,71 @@
 import { Scene } from 'phaser';
 
-export class GameUI {
+class GameUI {
     constructor(scene) {
         this.scene = scene;
         this.textConfig = {
             fontSize: '24px',
             fontFamily: 'Retronoid'
         };
+        
+        // Create main UI container
+        this.container = this.scene.add.container(0, 0);
+        this.container.setDepth(100);
+        
+        // Create UI camera that stays fixed
+        const { width, height } = scene.scale;
+        this.uiCamera = scene.cameras.add(0, 0, width, height);
+        this.uiCamera.setScroll(0, 0);
+        
+        // Set up UI elements
         this.setupUI();
+        
+        // Make UI elements fixed on screen
+        this.container.setScrollFactor(0);
+        
+        // Make UI camera ignore game elements
+        this.updateCameraIgnoreList();
+    }
+
+    updateCameraIgnoreList() {
+        // Make main camera ignore UI elements
+        this.scene.cameras.main.ignore(this.container);
+        
+        // Make UI camera ignore all game elements
+        this.scene.children.list.forEach(child => {
+            // Ignore everything except UI container
+            if (child !== this.container) {
+                this.uiCamera.ignore(child);
+            }
+        });
+        
+        // Specifically ignore enemies group if it exists
+        if (this.scene.enemies) {
+            this.uiCamera.ignore(this.scene.enemies);
+        }
+        
+        // Specifically ignore bullets group if it exists
+        if (this.scene.bullets) {
+            this.uiCamera.ignore(this.scene.bullets);
+        }
+        
+        // Specifically ignore player bullets if they exist
+        if (this.scene.playerBullets) {
+            this.uiCamera.ignore(this.scene.playerBullets);
+        }
+        
+        // Log what we're ignoring
+        console.log('UI Camera ignore list updated:', {
+            enemies: !!this.scene.enemies,
+            bullets: !!this.scene.bullets,
+            playerBullets: !!this.scene.playerBullets,
+            container: this.container
+        });
     }
 
     setupUI() {
         const width = this.scene.scale.width;
+        console.log('Setting up UI...');
         this.createScoreDisplay();
         this.createLivesDisplay();
         this.createHPDisplay();
@@ -22,27 +76,88 @@ export class GameUI {
 
     createScoreDisplay() {
         const currentScore = this.scene.registry.get('score') || 0;
+        console.log('Creating score display with value:', currentScore);
+        
         this.scoreText = this.scene.add.text(16, 16, 'Score: ' + currentScore, {
             ...this.textConfig,
             fill: '#fff'
-        }).setScrollFactor(0);
+        });
+        
+        console.log('Score Text created:', {
+            x: this.scoreText.x,
+            y: this.scoreText.y,
+            text: this.scoreText.text,
+            visible: this.scoreText.visible,
+            alpha: this.scoreText.alpha
+        });
+        
+        this.container.add(this.scoreText);
+        
+        console.log('Container after adding score:', {
+            x: this.container.x,
+            y: this.container.y,
+            visible: this.container.visible,
+            alpha: this.container.alpha,
+            children: this.container.length
+        });
     }
 
     createLivesDisplay() {
+        console.log('Creating lives display...');
         this.livesText = this.scene.add.text(16, 56, 'Lives: ' + this.scene.registry.get('lives'), {
             ...this.textConfig,
             fill: '#ff0000'
-        }).setScrollFactor(0);
+        });
+        
+        console.log('Lives Text created:', {
+            x: this.livesText.x,
+            y: this.livesText.y,
+            text: this.livesText.text,
+            visible: this.livesText.visible,
+            alpha: this.livesText.alpha
+        });
+        
+        this.container.add(this.livesText);
+        
+        console.log('Container after adding lives:', {
+            x: this.container.x,
+            y: this.container.y,
+            visible: this.container.visible,
+            alpha: this.container.alpha,
+            children: this.container.length
+        });
     }
 
     createHPDisplay() {
-        this.hpText = this.scene.add.text(16, 96, 'HP: ' + this.scene.playerHP, {
+        const hp = this.scene.playerHP;
+        console.log('Creating HP display with value:', hp);
+        
+        this.hpText = this.scene.add.text(16, 96, 'HP: ' + hp, {
             ...this.textConfig,
             fill: '#00ff00'
-        }).setScrollFactor(0);
+        });
+        
+        console.log('HP Text created:', {
+            x: this.hpText.x,
+            y: this.hpText.y,
+            text: this.hpText.text,
+            visible: this.hpText.visible,
+            alpha: this.hpText.alpha
+        });
+        
+        this.container.add(this.hpText);
+        
+        console.log('Container after adding HP:', {
+            x: this.container.x,
+            y: this.container.y,
+            visible: this.container.visible,
+            alpha: this.container.alpha,
+            children: this.container.length
+        });
     }
 
     createSettingsButton(width) {
+        console.log('Creating settings button...');
         this.settingsButton = this.scene.add.text(width - 20, 20, '⚙️ Music', {
             fontSize: '20px',
             fontFamily: 'Retronoid',
@@ -53,12 +168,29 @@ export class GameUI {
             strokeThickness: 1
         })
         .setOrigin(1, 0)
-        .setScrollFactor(0)
         .setInteractive({ useHandCursor: true })
         .on('pointerover', () => this.settingsButton.setStyle({ fill: '#ff0' }))
         .on('pointerout', () => this.settingsButton.setStyle({ fill: '#fff' }))
         .on('pointerdown', () => this.toggleMusic());
-
+        
+        console.log('Settings Button created:', {
+            x: this.settingsButton.x,
+            y: this.settingsButton.y,
+            text: this.settingsButton.text,
+            visible: this.settingsButton.visible,
+            alpha: this.settingsButton.alpha
+        });
+        
+        this.container.add(this.settingsButton);
+        
+        console.log('Container after adding settings button:', {
+            x: this.container.x,
+            y: this.container.y,
+            visible: this.container.visible,
+            alpha: this.container.alpha,
+            children: this.container.length
+        });
+        
         this.updateMusicButton();
     }
 
@@ -67,7 +199,9 @@ export class GameUI {
         const displayAddress = walletAddress ? 
             walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4) : 
             'Wallet not connected';
-
+        
+        console.log('Creating wallet display with address:', displayAddress);
+        
         this.walletText = this.scene.add.text(width - 140, 20, displayAddress, {
             fontSize: '20px',
             fontFamily: 'Retronoid',
@@ -77,8 +211,25 @@ export class GameUI {
             stroke: '#ffffff',
             strokeThickness: 1
         })
-        .setOrigin(1, 0)
-        .setScrollFactor(0);
+        .setOrigin(1, 0);
+        
+        console.log('Wallet Text created:', {
+            x: this.walletText.x,
+            y: this.walletText.y,
+            text: this.walletText.text,
+            visible: this.walletText.visible,
+            alpha: this.walletText.alpha
+        });
+        
+        this.container.add(this.walletText);
+        
+        console.log('Container after adding wallet:', {
+            x: this.container.x,
+            y: this.container.y,
+            visible: this.container.visible,
+            alpha: this.container.alpha,
+            children: this.container.length
+        });
     }
 
     setupWalletListeners() {
@@ -218,10 +369,8 @@ export class GameUI {
     }
 
     destroy() {
-        this.scoreText.destroy();
-        this.livesText.destroy();
-        this.hpText.destroy();
-        this.settingsButton.destroy();
-        this.walletText.destroy();
+        this.container.destroy();
     }
 }
+
+export { GameUI };

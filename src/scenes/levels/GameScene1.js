@@ -1,4 +1,5 @@
 import { BaseScene } from '../elements/BaseScene';
+import { GameUI } from '../elements/GameUI';
 import { Slime } from '../../prefabs/Slime';
 
 export class GameScene1 extends BaseScene {
@@ -24,6 +25,41 @@ export class GameScene1 extends BaseScene {
         // Set player to left side
         this.player.x = width * 0.1;
 
+        // Set up the main game camera
+        this.cameras.main.setZoom(1.5);
+        this.cameras.main.setBounds(0, 0, width, height);
+        this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
+        
+        // Set up UI
+        this.gameUI = new GameUI(this);
+        
+        // Make sure UI stays fixed
+        this.gameUI.container.setScrollFactor(0);
+        
+        // Debug UI visibility
+        console.log('GameScene1 UI Setup:', {
+            container: {
+                x: this.gameUI.container.x,
+                y: this.gameUI.container.y,
+                visible: this.gameUI.container.visible,
+                alpha: this.gameUI.container.alpha,
+                children: this.gameUI.container.length
+            },
+            camera: {
+                visible: this.gameUI.uiCamera.visible,
+                active: this.gameUI.uiCamera.active,
+                viewport: this.gameUI.uiCamera.viewport,
+                scroll: {
+                    x: this.gameUI.uiCamera.scrollX,
+                    y: this.gameUI.uiCamera.scrollY
+                },
+                zoom: this.gameUI.uiCamera.zoom
+            }
+        });
+
+        // Update camera ignore lists
+        this.gameUI.updateCameraIgnoreList();
+        
         // Add scene text
         this.add.text(width/2, height * 0.1, 'Scene 1', {
             fontFamily: 'Retronoid',
