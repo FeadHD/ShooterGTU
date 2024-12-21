@@ -232,7 +232,9 @@ export class BaseScene extends Scene {
         this.bullets = this.physics.add.group({
             classType: Bullet,
             maxSize: -1,  // Remove bullet limit
-            runChildUpdate: true  // This will call preUpdate on each bullet
+            runChildUpdate: true,  // This will call preUpdate on each bullet
+            allowGravity: false,  // Disable gravity for all bullets in the group
+            immovable: true  // Make bullets not affected by collisions
         });
 
         // Create animations and player
@@ -251,6 +253,10 @@ export class BaseScene extends Scene {
         
         // Set up scene boundaries for transitions
         this.createSceneBoundaries();
+
+        // Listen for scene events
+        this.events.on('shutdown', this.cleanup, this);
+        this.events.on('sleep', this.cleanup, this);
     }
 
     createAnimations() {
@@ -324,6 +330,13 @@ export class BaseScene extends Scene {
     }
 
     createUI() {
+        // Clean up existing UI if it exists
+        if (this.gameUI) {
+            this.gameUI.destroy();
+            this.gameUI = null;
+        }
+        
+        // Create new UI
         this.gameUI = new GameUI(this);
     }
 
@@ -356,6 +369,10 @@ export class BaseScene extends Scene {
     shoot(direction = 'right') {
         const bullet = this.bullets.get(this.player.x, this.player.y);
         if (!bullet) return;
+        
+        // Ensure bullet physics properties are set
+        bullet.body.setAllowGravity(false);
+        bullet.body.setImmovable(true);
         
         bullet.fire(this.player.x, this.player.y, direction);
         this.laserSound.play();
@@ -564,6 +581,18 @@ export class BaseScene extends Scene {
         const b = Math.min(255, Math.round((color & 0xFF) * factor));
         
         return (r << 16) | (g << 8) | b;
+    }
+
+    cleanup() {
+        // Clean up UI
+        if (this.gameUI) {
+            this.gameUI.destroy();
+            this.gameUI = null;
+        }
+
+        // Clean up event listeners
+        this.events.off('shutdown', this.cleanup, this);
+        this.events.off('sleep', this.cleanup, this);
     }
 
     shutdown() {

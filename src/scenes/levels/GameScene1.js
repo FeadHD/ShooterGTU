@@ -26,7 +26,7 @@ export class GameScene1 extends BaseScene {
         this.player.x = width * 0.1;
 
         // Set up the main game camera
-        this.cameras.main.setZoom(2.5);
+        this.cameras.main.setZoom(1.5);
         this.cameras.main.setBounds(0, 0, width, height);
         this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
         
@@ -97,7 +97,13 @@ export class GameScene1 extends BaseScene {
 
             // Set up collisions
             this.physics.add.collider(this.enemies, this.platforms);
-            this.physics.add.collider(this.player, this.enemies, this.hitEnemy, null, this);
+            
+            // Set up player-enemy collision for damage
+            this.physics.add.overlap(this.player, this.enemies, (player, enemySprite) => {
+                if (enemySprite.enemy && !this.isDying) {
+                    this.hitEnemy(player, enemySprite);
+                }
+            }, null, this);
             
             // Add collisions between enemies with increased bounce
             this.physics.add.collider(

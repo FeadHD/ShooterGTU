@@ -1,5 +1,6 @@
 import { BaseScene } from '../elements/BaseScene';
 import { MediumEnemy } from '../../prefabs/EnemyTypes';
+import { GameUI } from '../elements/GameUI';
 
 export class GameScene2 extends BaseScene {
     constructor() {
@@ -14,6 +15,18 @@ export class GameScene2 extends BaseScene {
 
         // Set player to left side
         this.player.x = width * 0.1;
+
+        // Set up the main game camera
+        this.cameras.main.setZoom(1.5);
+        this.cameras.main.setBounds(0, 0, width, height);
+        this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
+
+        // Set up UI
+        this.gameUI = new GameUI(this);
+        
+        // Make sure UI stays fixed and update camera ignore lists
+        this.gameUI.container.setScrollFactor(0);
+        this.gameUI.updateCameraIgnoreList();
 
         // Add scene text
         this.add.text(width/2, height * 0.1, 'Scene 2', {

@@ -1,5 +1,6 @@
 import { BaseScene } from '../elements/BaseScene';
 import { BossEnemy } from '../../prefabs/EnemyTypes';
+import { GameUI } from '../elements/GameUI';
 
 export class GameScene5 extends BaseScene {
     constructor() {
@@ -14,14 +15,24 @@ export class GameScene5 extends BaseScene {
 
     create() {
         console.log('Creating Scene 5...'); // Debug log
-        this.cameras.main.setBackgroundColor('#2A2A2A');
+        this.cameras.main.setBackgroundColor('#1A1A1A');
         super.create();
 
         const { width, height } = this.scale;
 
+        // Set player to left side
         this.player.x = width * 0.1;
-        this.bossDefeated = false;
-        this.remainingEnemies = 1;  // Set to 1 for the boss
+
+        // Set up the main game camera
+        this.cameras.main.setZoom(1.5);
+        this.cameras.main.setBounds(0, 0, width, height);
+        this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
+
+        // Set up UI
+        this.gameUI = new GameUI(this);
+        
+        // Make sure UI stays fixed
+        this.gameUI.container.setScrollFactor(0);
 
         // Add scene text
         this.add.text(width/2, height * 0.1, 'Boss Room - Scene 5', {

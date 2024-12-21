@@ -1,6 +1,6 @@
 import { Scene } from 'phaser';
 
-class GameUI {
+export class GameUI {
     constructor(scene) {
         this.scene = scene;
         this.textConfig = {
@@ -17,29 +17,89 @@ class GameUI {
         this.uiCamera = scene.cameras.add(0, 0, width, height);
         this.uiCamera.setScroll(0, 0);
         
-        // Set up UI elements
-        this.setupUI();
-        
         // Make UI elements fixed on screen
         this.container.setScrollFactor(0);
-        
+
+        // Set up UI elements
+        this.setupUI();
+
         // Initial camera setup
         this.updateCameraIgnoreList();
+
+        // Listen for scene events
+        this.scene.events.on('create', this.updateCameraIgnoreList, this);
+        this.scene.events.on('wake', this.updateCameraIgnoreList, this);
+        this.scene.events.on('resume', this.updateCameraIgnoreList, this);
+        
+        // Listen for new objects
+        this.scene.events.on('addedtoscene', this.handleNewObject, this);
+        
+        // Debug log
+        console.log('GameUI initialized:', {
+            container: this.container ? 'created' : 'null',
+            uiCamera: this.uiCamera ? 'created' : 'null',
+            scene: this.scene.scene.key
+        });
+    }
+
+    handleNewObject = (gameObject) => {
+        if (!this.uiCamera || !gameObject || gameObject === this.container) return;
+        
+        try {
+            // Ignore the new object in the UI camera
+            this.uiCamera.ignore(gameObject);
+        } catch (error) {
+            console.error('Error handling new object:', error);
+        }
     }
 
     updateCameraIgnoreList() {
-        // Make UI camera ignore everything except our container
-        this.scene.children.list.forEach(child => {
-            // Check if the child is a bullet or our container
-            const isBullet = child.texture && child.texture.key === 'bullet_animation';
-            if (child !== this.container && !isBullet) {
-                this.uiCamera.ignore(child);
-            }
-        });
+        if (!this.uiCamera || !this.scene || !this.container) {
+            console.log('Cannot update camera ignore list - missing components');
+            return;
+        }
 
-        // Make main camera ignore UI elements
-        if (this.scene.cameras.main) {
-            this.scene.cameras.main.ignore(this.container);
+        try {
+            // Make main camera ignore UI container
+            if (this.scene.cameras && this.scene.cameras.main) {
+                this.scene.cameras.main.ignore(this.container);
+            }
+
+            // Make UI camera ignore everything except UI container
+            this.scene.children.list.forEach(child => {
+                if (child && child !== this.container) {
+                    this.uiCamera.ignore(child);
+                }
+            });
+
+            // Ignore specific game objects and groups
+            const objectsToIgnore = [
+                this.scene.player,
+                this.scene.enemies,
+                this.scene.bullets,
+                this.scene.platforms,
+                this.scene.background,
+                this.scene.techLights,
+                this.scene.particles,
+                this.scene.spikes
+            ];
+
+            objectsToIgnore.forEach(obj => {
+                if (obj) {
+                    if (obj.getChildren) {
+                        // If it's a group/container, ignore all children
+                        obj.getChildren().forEach(child => {
+                            if (child) this.uiCamera.ignore(child);
+                        });
+                    } else {
+                        // If it's a single object
+                        this.uiCamera.ignore(obj);
+                    }
+                }
+            });
+
+        } catch (error) {
+            console.error('Error in updateCameraIgnoreList:', error);
         }
     }
 
@@ -348,13 +408,30 @@ class GameUI {
         return { overlay, gameOverContainer, scoreText, instructionText };
     }
 
-    update() {
-        this.updateCameraIgnoreList();
-    }
-
     destroy() {
-        this.container.destroy();
+        console.log('Destroying GameUI in scene:', this.scene.scene.key);
+        
+        // Clean up event listeners
+        if (this.scene) {
+            this.scene.events.off('create', this.updateCameraIgnoreList, this);
+            this.scene.events.off('wake', this.updateCameraIgnoreList, this);
+            this.scene.events.off('resume', this.updateCameraIgnoreList, this);
+            this.scene.events.off('addedtoscene', this.handleNewObject, this);
+        }
+        
+        // Remove UI camera
+        if (this.uiCamera) {
+            this.scene.cameras.remove(this.uiCamera);
+            this.uiCamera = null;
+        }
+        
+        // Destroy container and its contents
+        if (this.container) {
+            this.container.destroy(true);
+            this.container = null;
+        }
+
+        // Clear scene reference
+        this.scene = null;
     }
 }
-
-export { GameUI };

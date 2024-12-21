@@ -72,10 +72,14 @@ export class Slime extends Enemy {
         this.damageAmount = 20;
         this.scoreValue = 10;
         
+        // Add player tracking properties
+        this.detectionRange = 800; // Detection range in pixels
+        this.aggroRange = 200; // Range for increased aggression
+        
         // Add invincibility flag
         this.isInvincible = false;
         this.isDying = false;
-        this.direction = 1; // 1 for right, -1 for left
+        this.direction = Math.random() < 0.5 ? -1 : 1; // Random initial direction
     }
 
     createHealthBar() {
@@ -378,13 +382,84 @@ export class Slime extends Enemy {
             this.healthBarBackground.y = this.sprite.y - 30;
         }
 
-        // Handle movement only if not dying
-        if (this.sprite.body.onFloor()) {
-            // Random chance to jump when on floor
-            if (Math.random() < this.jumpChance) {
-                this.jump();
+        // Track player if available
+        if (this.scene.player && this.scene.player.sprite) {
+            const player = this.scene.player.sprite;
+            const distanceToPlayer = Phaser.Math.Distance.Between(
+                this.sprite.x,
+                this.sprite.y,
+                player.x,
+                player.y
+            );
+
+            // If player is within detection range
+            if (distanceToPlayer <= this.detectionRange) {
+                // Move towards player
+                this.direction = player.x < this.sprite.x ? -1 : 1;
+                this.sprite.setVelocityX(this.moveSpeed * this.direction);
+                this.sprite.flipX = this.direction < 0;
+
+                // Handle jumping
+                if (this.sprite.body.onFloor()) {
+                    if (distanceToPlayer <= this.aggroRange) {
+                        // More aggressive jumping when close to player
+                        if (Math.random() < this.jumpChance * 3 && 
+                            currentTime - this.lastJumpTime >= this.jumpCooldown) {
+                            this.jumpTowardsPlayer(player);
+                        }
+                    } else {
+                        // Normal jumping when player is detected but not too close
+                        if (Math.random() < this.jumpChance && 
+                            currentTime - this.lastJumpTime >= this.jumpCooldown) {
+                            this.jumpTowardsPlayer(player);
+                        }
+                    }
+                }
+            } else {
+                // Default wandering behavior when player is out of range
+                if (this.sprite.body.onFloor()) {
+                    // Continue moving in current direction
+                    this.sprite.setVelocityX(this.moveSpeed * this.direction);
+                    this.sprite.flipX = this.direction < 0;
+                    
+                    // Random chance to jump when on floor
+                    if (Math.random() < this.jumpChance && 
+                        currentTime - this.lastJumpTime >= this.jumpCooldown) {
+                        this.jump();
+                    }
+                }
+            }
+        } else {
+            // Default behavior when no player is detected
+            if (this.sprite.body.onFloor()) {
+                // Continue moving in current direction
+                this.sprite.setVelocityX(this.moveSpeed * this.direction);
+                this.sprite.flipX = this.direction < 0;
+                
+                // Random chance to jump when on floor
+                if (Math.random() < this.jumpChance && 
+                    currentTime - this.lastJumpTime >= this.jumpCooldown) {
+                    this.jump();
+                }
             }
         }
+    }
+
+    jumpTowardsPlayer(player) {
+        if (!this.sprite || !this.sprite.body) return;
+
+        this.lastJumpTime = this.scene.time.now;
+        
+        // Play jump animation
+        this.playAnimation('jump');
+
+        // Apply vertical jump force
+        this.sprite.body.setVelocityY(this.jumpForce);
+
+        // Calculate direction to player
+        const direction = player.x < this.sprite.x ? -1 : 1;
+        this.sprite.setVelocityX(direction * this.horizontalJumpForce);
+        this.sprite.flipX = direction < 0;
     }
 
     jump() {
@@ -399,5 +474,8 @@ export class Slime extends Enemy {
         // Apply horizontal force in random direction
         const direction = Math.random() < 0.5 ? -1 : 1;
         this.sprite.body.setVelocityX(direction * this.horizontalJumpForce);
+        
+        // Flip sprite based on direction
+        this.sprite.flipX = direction < 0;
     }
 }
