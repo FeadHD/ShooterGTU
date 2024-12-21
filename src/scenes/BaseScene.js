@@ -27,10 +27,189 @@ export class BaseScene extends Scene {
 
         // Create ground
         this.platforms = this.physics.add.staticGroup();
-        const ground = this.add.rectangle(width/2, height - 100, width, 32, 0x00ff00);
+        
+        // Calculate ground dimensions
+        const groundTop = height - 100;  // Keep the same top position
+        const groundHeight = height - groundTop;  // Height from top position to bottom of screen
+        
+        // Create gradient ground using graphics
+        const groundGraphics = this.add.graphics();
+        
+        // Define gradient colors (metallic grays with subtle blue tint)
+        const topColor = 0x9BA7B5;    // Light metallic gray with slight blue tint
+        const midColor = 0x6A7A8C;    // Medium steel gray with blue tint
+        const bottomColor = 0x2C3540;  // Dark gunmetal gray with blue tint
+        
+        // Create gradient fill
+        groundGraphics.clear();
+        
+        // Define panel properties
+        const panelCount = 8;  // Number of large panels
+        const panelHeight = groundHeight / panelCount;
+        const lineThickness = 1;  // Thickness of separator lines
+        const lineAlpha = 0.3;    // Transparency of lines (subtle)
+        const lineBrightness = 1.2;  // How much lighter the lines are than the background
+        
+        // Draw panels with gradient and separator lines
+        for (let i = 0; i < panelCount; i++) {
+            const panelTop = groundTop + (i * panelHeight);
+            const ratio = i / (panelCount - 1);
+            
+            // Calculate base color for this panel
+            let panelColor;
+            if (ratio < 0.5) {
+                // Blend from top to mid color
+                const blendRatio = ratio * 2;
+                panelColor = this.blendColors(topColor, midColor, blendRatio);
+            } else {
+                // Blend from mid to bottom color
+                const blendRatio = (ratio - 0.5) * 2;
+                panelColor = this.blendColors(midColor, bottomColor, blendRatio);
+            }
+            
+            // Draw panel background
+            groundGraphics.fillStyle(panelColor, 1);
+            groundGraphics.fillRect(0, panelTop, width, panelHeight);
+            
+            // Draw subtle tech details within each panel
+            const lineColor = this.lightenColor(panelColor, lineBrightness);
+            groundGraphics.lineStyle(lineThickness, lineColor, lineAlpha);
+            
+            // Draw horizontal separator line at bottom of panel
+            groundGraphics.beginPath();
+            groundGraphics.moveTo(0, panelTop + panelHeight);
+            groundGraphics.lineTo(width, panelTop + panelHeight);
+            groundGraphics.strokePath();
+            
+            // Draw some subtle vertical lines (tech details)
+            const verticalLines = 6;  // Number of vertical lines per panel
+            for (let j = 1; j < verticalLines; j++) {
+                const x = (width / verticalLines) * j;
+                const lineHeight = panelHeight * 0.3;  // Lines are 30% of panel height
+                const lineY = panelTop + (panelHeight - lineHeight) / 2;
+                
+                groundGraphics.beginPath();
+                groundGraphics.moveTo(x, lineY);
+                groundGraphics.lineTo(x, lineY + lineHeight);
+                groundGraphics.strokePath();
+            }
+        }
+
+        // Create tech line graphics (separate layer for glow effect)
+        const techLinesGraphics = this.add.graphics();
+        
+        // Define tech line properties
+        const glowColor = 0x00FFFF;  // Cyan color for tech feel
+        const glowAlpha = 0.3;       // Base transparency
+        const glowThickness = 1;     // Line thickness
+        const numTechLines = 12;     // Number of glowing lines
+        const techLineSpacing = groundHeight / numTechLines;
+        
+        // Create container for blinking lights
+        this.techLights = [];
+        
+        // Draw glowing tech lines and add lights
+        techLinesGraphics.lineStyle(glowThickness, glowColor, glowAlpha);
+        
+        for (let i = 0; i < numTechLines; i++) {
+            const y = groundTop + (i * techLineSpacing);
+            
+            // Draw main line
+            techLinesGraphics.beginPath();
+            techLinesGraphics.moveTo(0, y);
+            techLinesGraphics.lineTo(width, y);
+            techLinesGraphics.strokePath();
+            
+            // Add glow effect by drawing multiple semi-transparent lines
+            const glowLayers = 3;
+            for (let g = 1; g <= glowLayers; g++) {
+                const glowOffset = g * 0.5;
+                const layerAlpha = glowAlpha / (g * 2);
+                
+                techLinesGraphics.lineStyle(glowThickness, glowColor, layerAlpha);
+                
+                // Draw line above
+                techLinesGraphics.beginPath();
+                techLinesGraphics.moveTo(0, y - glowOffset);
+                techLinesGraphics.lineTo(width, y - glowOffset);
+                techLinesGraphics.strokePath();
+                
+                // Draw line below
+                techLinesGraphics.beginPath();
+                techLinesGraphics.moveTo(0, y + glowOffset);
+                techLinesGraphics.lineTo(width, y + glowOffset);
+                techLinesGraphics.strokePath();
+            }
+
+            // Add blinking lights along this line
+            const numLights = 8;  // Number of lights per line
+            for (let j = 1; j < numLights; j++) {
+                const x = (width / numLights) * j;
+                
+                // Create light graphics
+                const light = this.add.graphics();
+                
+                // Randomize light properties
+                const lightSize = 2 + Math.random() * 2;  // Random size between 2-4 pixels
+                const baseColor = Math.random() < 0.7 ? 0x00FFFF : 0xFFFFFF;  // 70% cyan, 30% white
+                const baseAlpha = 0.1 + Math.random() * 0.2;  // Random base alpha
+                
+                // Draw the light
+                light.fillStyle(baseColor, baseAlpha);
+                light.fillCircle(x, y, lightSize);
+                
+                // Add glow effect
+                const glowSize = lightSize * 1.5;
+                light.fillStyle(baseColor, baseAlpha * 0.5);
+                light.fillCircle(x, y, glowSize);
+                
+                // Store light reference
+                this.techLights.push(light);
+                
+                // Create blinking animation
+                const blinkDuration = 1500 + Math.random() * 3000;  // Random duration between 1.5-4.5 seconds
+                const delay = Math.random() * 2000;  // Random delay up to 2 seconds
+                
+                this.tweens.add({
+                    targets: light,
+                    alpha: { from: 1, to: 0.1 },
+                    duration: blinkDuration,
+                    yoyo: true,
+                    repeat: -1,
+                    delay: delay,
+                    ease: 'Sine.easeInOut'
+                });
+            }
+        }
+
+        // Store tech lines graphics for animation
+        this.techLinesGraphics = techLinesGraphics;
+        
+        // Add subtle pulse animation to tech lines
+        this.tweens.add({
+            targets: techLinesGraphics,
+            alpha: 0.1,
+            duration: 2000,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+        
+        // Create invisible rectangle for collision
+        const ground = this.add.rectangle(
+            width/2,
+            groundTop + groundHeight/2,
+            width,
+            groundHeight
+        );
+        ground.setAlpha(0);  // Make it invisible since we're using the graphics for visuals
+        
+        // Add physics and collision
         this.physics.add.existing(ground, true);
         this.platforms.add(ground);
-        this.groundTop = ground.y - 16;
+        
+        // Store ground top position for spawning entities
+        this.groundTop = groundTop;
         this.getSpawnHeight = () => this.groundTop - 24;
 
         // Create particles and sounds
@@ -573,5 +752,44 @@ export class BaseScene extends Scene {
         const currentScore = this.registry.get('score');
         this.registry.set('score', currentScore + points);
         this.scoreText.setText('Score: ' + (currentScore + points));
+    }
+
+    // Helper function to blend two colors
+    blendColors(color1, color2, ratio) {
+        const r1 = (color1 >> 16) & 0xFF;
+        const g1 = (color1 >> 8) & 0xFF;
+        const b1 = color1 & 0xFF;
+        
+        const r2 = (color2 >> 16) & 0xFF;
+        const g2 = (color2 >> 8) & 0xFF;
+        const b2 = color2 & 0xFF;
+        
+        const r = Math.round(r1 + (r2 - r1) * ratio);
+        const g = Math.round(g1 + (g2 - g1) * ratio);
+        const b = Math.round(b1 + (b2 - b1) * ratio);
+        
+        return (r << 16) | (g << 8) | b;
+    }
+
+    // Helper function to lighten a color
+    lightenColor(color, factor) {
+        const r = Math.min(255, Math.round(((color >> 16) & 0xFF) * factor));
+        const g = Math.min(255, Math.round(((color >> 8) & 0xFF) * factor));
+        const b = Math.min(255, Math.round((color & 0xFF) * factor));
+        
+        return (r << 16) | (g << 8) | b;
+    }
+
+    shutdown() {
+        // Clean up tech lights when leaving scene
+        if (this.techLights) {
+            this.techLights.forEach(light => {
+                if (light) {
+                    light.destroy();
+                }
+            });
+            this.techLights = [];
+        }
+        super.shutdown();
     }
 }

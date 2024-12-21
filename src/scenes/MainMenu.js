@@ -68,7 +68,7 @@ export class MainMenu extends Scene {
         
         for (let i = numLayers; i >= 0; i--) {
             const layerColor = i === 0 ? '#4400ff' : '#ff00ff';
-            this.add.text(canvasWidth/2 + (i * shadowOffset), canvasHeight * 0.25 + (i * shadowOffset), 'GOOD TIME UNIVERSE', {
+            this.add.text(canvasWidth/2 + (i * shadowOffset), canvasHeight * 0.15 + (i * shadowOffset), 'GOOD TIME UNIVERSE', {
                 fontFamily: 'Retronoid, Arial',
                 fontSize: '100px',
                 color: layerColor,
@@ -77,7 +77,7 @@ export class MainMenu extends Scene {
         }
 
         // Add main title text with glow effect
-        this.add.text(canvasWidth/2, canvasHeight * 0.25, 'GOOD TIME UNIVERSE', {
+        this.add.text(canvasWidth/2, canvasHeight * 0.15, 'GOOD TIME UNIVERSE', {
             fontFamily: 'Retronoid, Arial',
             fontSize: '100px',
             color: '#00ffff',
@@ -89,6 +89,23 @@ export class MainMenu extends Scene {
                 offsetY: 2,
                 color: '#ff00ff',
                 blur: 8,
+                fill: true
+            }
+        }).setOrigin(0.5);
+
+        // Add mission title with similar style but smaller
+        this.add.text(canvasWidth/2, canvasHeight * 0.25, 'MISSION ONE: LEDGER HEIST', {
+            fontFamily: 'Retronoid, Arial',
+            fontSize: '48px',
+            color: '#00ffff',
+            align: 'center',
+            stroke: '#ffffff',
+            strokeThickness: 1,
+            shadow: {
+                offsetX: 1,
+                offsetY: 1,
+                color: '#ff00ff',
+                blur: 4,
                 fill: true
             }
         }).setOrigin(0.5);
