@@ -13,15 +13,11 @@ import Settings from '../scenes/menus/Settings';
 export const config = {
     type: Phaser.AUTO,
     scale: {
-        mode: Phaser.Scale.RESIZE,
+        mode: Phaser.Scale.NONE,
         parent: 'game-container',
-        width: window.innerWidth,
-        height: window.innerHeight,
+        width: 1920,
+        height: 1080,
         autoRound: true,
-        min: {
-            width: 800,
-            height: 600
-        },
         zoom: 1,
         autoCenter: Phaser.Scale.CENTER_BOTH,
         fullscreenTarget: 'game-container',
