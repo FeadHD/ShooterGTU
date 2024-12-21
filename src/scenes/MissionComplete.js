@@ -100,21 +100,43 @@ export class MissionComplete extends Scene {
                 }
             });
 
+        // Create the leaderboard scene and add the score
+        const leaderboardScene = this.scene.get('LeaderboardScene');
+        const finalScore = this.registry.get('score') || 0;
+        leaderboardScene.addScore(finalScore);
+
+        // Display final score
+        this.add.text(width/2, height * 0.3, `FINAL SCORE: ${finalScore}`, {
+            fontFamily: 'Retronoid, Arial',
+            fontSize: '64px',
+            color: '#00ffff',
+            align: 'center',
+            stroke: '#ffffff',
+            strokeThickness: 4,
+            shadow: {
+                offsetX: 2,
+                offsetY: 2,
+                color: '#ff00ff',
+                blur: 5,
+                fill: true
+            }
+        }).setOrigin(0.5);
+
         // Add congratulations text
-        this.add.text(width/2, height * 0.3, 'Congratulations!', {
+        this.add.text(width/2, height * 0.5, 'Congratulations!', {
             fontFamily: 'Retronoid',
             fontSize: '48px',
             fill: '#fff'
         }).setOrigin(0.5);
 
         // Add mission completion text
-        this.add.text(width/2, height * 0.5, "You've finished Mission ONE:", {
+        this.add.text(width/2, height * 0.6, "You've finished Mission ONE:", {
             fontFamily: 'Retronoid',
             fontSize: '32px',
             fill: '#fff'
         }).setOrigin(0.5);
 
-        this.add.text(width/2, height * 0.6, 'Ledger Heist', {
+        this.add.text(width/2, height * 0.7, 'Ledger Heist', {
             fontFamily: 'Retronoid',
             fontSize: '40px',
             fill: '#ffd700'  // Gold color for mission name
@@ -127,14 +149,6 @@ export class MissionComplete extends Scene {
             fill: '#fff'
         }).setOrigin(0.5);
 
-        // Add final score text
-        const finalScore = this.registry.get('score');
-        this.add.text(width/2, height * 0.7, `Final Score: ${finalScore}`, {
-            fontFamily: 'Retronoid',
-            fontSize: '32px',
-            fill: '#ffd700'  // Gold color for score
-        }).setOrigin(0.5);
-
         // Add space key listener
         this.input.keyboard.on('keydown-SPACE', () => {
             // Stop and cleanup all music
@@ -143,13 +157,6 @@ export class MissionComplete extends Scene {
             const bgMusic = this.sound.get('bgMusic');
             if (victoryMusic) victoryMusic.destroy();
             if (bgMusic) bgMusic.destroy();
-            
-            // Update leaderboard with final score before resetting
-            const finalScore = this.registry.get('score');
-            const leaderboardScene = this.scene.get('LeaderboardScene');
-            if (leaderboardScene) {
-                leaderboardScene.updateLeaderboard('PLAYER', finalScore);
-            }
             
             // Reset the score to 0
             this.registry.set('score', 0);

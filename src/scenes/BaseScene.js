@@ -129,6 +129,32 @@ export class BaseScene extends Scene {
         
         // Set up scene boundaries for transitions
         this.createSceneBoundaries();
+
+        // Add settings button
+        const canvasWidth = this.cameras.main.width;
+        const settingsButton = this.add.text(canvasWidth - 20, 20, '⚙️ Settings', {
+            fontSize: '20px',
+            fill: '#fff',
+            backgroundColor: '#000',
+            padding: { x: 10, y: 5 }
+        }).setOrigin(1, 0)
+        .setInteractive({ useHandCursor: true })
+        .on('pointerover', () => settingsButton.setStyle({ fill: '#ff0' }))
+        .on('pointerout', () => settingsButton.setStyle({ fill: '#fff' }))
+        .on('pointerdown', () => this.toggleMusic(settingsButton));
+
+        // Add wallet address if connected
+        const walletAddress = this.registry.get('walletAddress');
+        if (walletAddress) {
+            const walletText = this.add.text(canvasWidth - 200, 20, '🦊 ' + walletAddress.substring(0, 6) + '...' + walletAddress.substring(38), {
+                fontSize: '20px',
+                fill: '#00ffff',
+                backgroundColor: '#000',
+                padding: { x: 10, y: 5 }
+            }).setOrigin(1, 0);
+        }
+
+        this.updateMusicButton(settingsButton);
     }
 
     createAnimations() {
@@ -223,20 +249,6 @@ export class BaseScene extends Scene {
             ...textConfig,
             fill: '#00ff00'
         }).setScrollFactor(0);
-
-        // Add music toggle
-        const settingsButton = this.add.text(width - 100, 20, '⚙️ Music', {
-            fontSize: '20px',
-            fill: '#fff',
-            backgroundColor: '#000',
-            padding: { x: 10, y: 5 }
-        }).setOrigin(1, 0)
-        .setInteractive({ useHandCursor: true })
-        .on('pointerover', () => settingsButton.setStyle({ fill: '#ff0' }))
-        .on('pointerout', () => settingsButton.setStyle({ fill: '#fff' }))
-        .on('pointerdown', () => this.toggleMusic(settingsButton));
-
-        this.updateMusicButton(settingsButton);
     }
 
     toggleMusic(button) {
@@ -245,20 +257,21 @@ export class BaseScene extends Scene {
             if (bgMusic.isPlaying) {
                 bgMusic.pause();
                 this.registry.set('musicEnabled', false);
-                button.setText('⚙️ Music: OFF');
+                button.setText('⚙️ Settings (🔇)');
             } else {
                 bgMusic.resume();
                 this.registry.set('musicEnabled', true);
-                button.setText('⚙️ Music: ON');
+                button.setText('⚙️ Settings (🔊)');
             }
         }
     }
 
     updateMusicButton(button) {
-        const bgMusic = this.sound.get('bgMusic');
-        if (bgMusic && (!bgMusic.isPlaying || this.registry.get('musicEnabled') === false)) {
-            button.setText('⚙️ Music: OFF');
-            if (bgMusic.isPlaying) bgMusic.pause();
+        const musicEnabled = this.registry.get('musicEnabled');
+        if (musicEnabled === false) {
+            button.setText('⚙️ Settings (🔇)');
+        } else {
+            button.setText('⚙️ Settings (🔊)');
         }
     }
 

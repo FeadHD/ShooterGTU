@@ -1,8 +1,10 @@
 import { Scene } from 'phaser';
+import WalletService from '../services/WalletService';
 
 export class MainMenu extends Scene {
     constructor() {
         super('MainMenu');
+        this.walletConnected = false;
     }
 
     create() {
@@ -113,6 +115,42 @@ export class MainMenu extends Scene {
 
         // Create the title
         createTitle();
+
+        // Add wallet connect button in top right
+        const walletButton = this.add.text(canvasWidth - 20, 20, '🦊 Connect Wallet', {
+            fontFamily: 'Retronoid, Arial',
+            fontSize: '24px',
+            fill: '#00ffff',
+            backgroundColor: '#000000',
+            padding: { x: 10, y: 5 },
+            stroke: '#ffffff',
+            strokeThickness: 1,
+        }).setOrigin(1, 0);
+
+        walletButton.setInteractive({ useHandCursor: true })
+            .on('pointerover', () => walletButton.setStyle({ fill: '#ff00ff' }))
+            .on('pointerout', () => walletButton.setStyle({ fill: '#00ffff' }))
+            .on('pointerdown', async () => {
+                if (!this.walletConnected) {
+                    const result = await WalletService.connectWallet();
+                    if (result.success) {
+                        this.walletConnected = true;
+                        walletButton.setText('🦊 ' + result.address.substring(0, 6) + '...' + result.address.substring(38));
+                        this.registry.set('walletAddress', result.address);
+                    } else {
+                        const errorText = this.add.text(400, 300, result.error, {
+                            fontSize: '20px',
+                            fill: '#ff0000',
+                            backgroundColor: '#000',
+                            padding: { x: 10, y: 5 }
+                        }).setOrigin(0.5);
+                        
+                        this.time.delayedCall(3000, () => {
+                            errorText.destroy();
+                        });
+                    }
+                }
+            });
 
         // Create retro-style buttons
         const buttonStyle = {
