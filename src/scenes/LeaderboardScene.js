@@ -14,11 +14,11 @@ export class LeaderboardScene extends Scene {
         } else {
             // Initialize with empty scores if no saved data
             this.leaderboard = [
-                { name: '0x0000...0000', score: 0 },
-                { name: '0x0000...0000', score: 0 },
-                { name: '0x0000...0000', score: 0 },
-                { name: '0x0000...0000', score: 0 },
-                { name: '0x0000...0000', score: 0 }
+                { name: 'Guest', score: 0 },
+                { name: 'Guest', score: 0 },
+                { name: 'Guest', score: 0 },
+                { name: 'Guest', score: 0 },
+                { name: 'Guest', score: 0 }
             ];
             this.saveLeaderboard();
         }
@@ -29,20 +29,20 @@ export class LeaderboardScene extends Scene {
     }
 
     addScore(score) {
-        const walletAddress = this.registry.get('walletAddress') || '0x0000...0000';
-        const displayAddress = walletAddress.length > 10 ? 
+        const walletAddress = this.registry.get('walletAddress');
+        const playerName = walletAddress ? 
             walletAddress.substring(0, 6) + '...' + walletAddress.substring(38) : 
-            walletAddress;
+            'Guest';
 
         // Add new score
-        this.leaderboard.push({ name: displayAddress, score: score });
-        
+        this.leaderboard.push({ name: playerName, score });
+
         // Sort by score (highest first)
         this.leaderboard.sort((a, b) => b.score - a.score);
-        
-        // Keep only top 5
+
+        // Keep only top 5 scores
         this.leaderboard = this.leaderboard.slice(0, 5);
-        
+
         // Save to localStorage
         this.saveLeaderboard();
     }

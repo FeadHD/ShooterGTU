@@ -14,6 +14,14 @@ export class MissionComplete extends Scene {
         this.load.audio('bgMusic', 'assets/sounds/background_music.mp3');
     }
 
+    init(data) {
+        this.score = data.score || 0;
+        const walletAddress = this.registry.get('walletAddress');
+        this.playerName = walletAddress ? 
+            walletAddress.substring(0, 6) + '...' + walletAddress.substring(38) : 
+            'Guest';
+    }
+
     createFirework(x, y) {
         const colors = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff];
         const particles = [];
@@ -104,6 +112,12 @@ export class MissionComplete extends Scene {
         const leaderboardScene = this.scene.get('LeaderboardScene');
         const finalScore = this.registry.get('score') || 0;
         leaderboardScene.addScore(finalScore);
+
+        // Display player name and score
+        this.add.text(width / 2, height / 2 - 100, `Player: ${this.playerName}`, {
+            fontSize: '32px',
+            fill: '#fff'
+        }).setOrigin(0.5);
 
         // Display final score
         this.add.text(width/2, height * 0.3, `FINAL SCORE: ${finalScore}`, {
