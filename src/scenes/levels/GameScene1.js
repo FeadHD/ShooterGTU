@@ -1,5 +1,5 @@
 import { BaseScene } from '../elements/BaseScene';
-import { Slime } from './Slime';
+import { Slime } from '../../prefabs/Slime';
 
 export class GameScene1 extends BaseScene {
     constructor() {

@@ -1,5 +1,5 @@
 import { BaseScene } from '../elements/BaseScene';
-import { StrongEnemy } from '../elements/EnemyTypes';
+import { StrongEnemy } from '../../prefabs/EnemyTypes';
 
 export class GameScene4 extends BaseScene {
     constructor() {
