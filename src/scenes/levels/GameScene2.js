@@ -1,13 +1,13 @@
-import { BaseScene } from './BaseScene';
-import { StrongEnemy } from './EnemyTypes';
+import { BaseScene } from '../elements/BaseScene';
+import { MediumEnemy } from '../elements/EnemyTypes';
 
-export class GameScene3 extends BaseScene {
+export class GameScene2 extends BaseScene {
     constructor() {
-        super({ key: 'GameScene3' });
+        super({ key: 'GameScene2' });
     }
 
     create() {
-        this.cameras.main.setBackgroundColor('#3A3A3A');
+        this.cameras.main.setBackgroundColor('#4A4A4A');
         super.create();
 
         const { width, height } = this.scale;
@@ -16,15 +16,15 @@ export class GameScene3 extends BaseScene {
         this.player.x = width * 0.1;
 
         // Add scene text
-        this.add.text(width/2, height * 0.1, 'Scene 3', {
+        this.add.text(width/2, height * 0.1, 'Scene 2', {
             fontFamily: 'Retronoid',
             fontSize: '32px',
             fill: '#fff'
         }).setOrigin(0.5);
 
-        // Set next scene
-        this.nextSceneName = 'GameScene4';
-        
+        // Set next scene (can be modified if you add more scenes)
+        this.nextSceneName = 'GameScene1';
+
         // Create enemy group with proper physics properties
         this.enemies = this.physics.add.group({
             collideWorldBounds: true,
@@ -38,22 +38,22 @@ export class GameScene3 extends BaseScene {
             // Use helper method to get correct spawn height
             const enemyY = this.getSpawnHeight();
 
-            // Create four strong enemies at different positions
-            this.enemy1 = new StrongEnemy(this, width * 0.3, enemyY);  // Left
-            this.enemy2 = new StrongEnemy(this, width * 0.5, enemyY);  // Middle-left
-            this.enemy3 = new StrongEnemy(this, width * 0.7, enemyY);  // Middle-right
-            this.enemy4 = new StrongEnemy(this, width * 0.9, enemyY);  // Right
+            // Create three medium enemies at different positions
+            this.enemy1 = new MediumEnemy(this, width * 0.25, enemyY);
+            this.enemy2 = new MediumEnemy(this, width * 0.5, enemyY);
+            this.enemy3 = new MediumEnemy(this, width * 0.75, enemyY);
 
             // Add enemies to the group
             this.enemies.add(this.enemy1.sprite);
             this.enemies.add(this.enemy2.sprite);
             this.enemies.add(this.enemy3.sprite);
-            this.enemies.add(this.enemy4.sprite);
 
             // Set up collisions
             this.physics.add.collider(this.enemies, this.platforms);
+
+            // Add collision between player and enemies
             this.physics.add.collider(this.player, this.enemies, this.hitEnemy, null, this);
-            
+
             // Add collisions between enemies with proper handling
             this.physics.add.collider(
                 this.enemies,
@@ -83,7 +83,7 @@ export class GameScene3 extends BaseScene {
             this.physics.add.collider(this.player, wall);
 
             // Set number of enemies
-            this.remainingEnemies = 4;
+            this.remainingEnemies = 3;
         });
     }
 
@@ -95,7 +95,7 @@ export class GameScene3 extends BaseScene {
             const speed = 100 + Math.random() * 100;
             const vx = Math.cos(angle) * speed;
             const vy = Math.sin(angle) * speed;
-            
+
             this.tweens.add({
                 targets: particle,
                 x: particle.x + (vx * 0.3), // Move in direction over 300ms
@@ -110,9 +110,9 @@ export class GameScene3 extends BaseScene {
 
         this.hitSound.play(); // Play hit sound
         bullet.destroy();
-        
+
         // Find the enemy object that owns this sprite
-        const enemy = [this.enemy1, this.enemy2, this.enemy3, this.enemy4].find(e => e.sprite === enemySprite);
+        const enemy = [this.enemy1, this.enemy2, this.enemy3].find(e => e.sprite === enemySprite);
         if (enemy && enemy.damage(1)) {
             // Enemy is dead
             enemy.destroy();
@@ -155,10 +155,21 @@ export class GameScene3 extends BaseScene {
         if (this.enemy1) this.enemy1.update();
         if (this.enemy2) this.enemy2.update();
         if (this.enemy3) this.enemy3.update();
-        if (this.enemy4) this.enemy4.update();
 
         if (this.player.x > this.scale.width - 20) {
-            this.scene.start('GameScene4');
+            // Store the current music state before transitioning
+            const bgMusic = this.sound.get('bgMusic');
+            const isMusicPlaying = bgMusic ? bgMusic.isPlaying : false;
+            this.registry.set('musicEnabled', isMusicPlaying);
+
+            this.scene.start('GameScene3');
+        } else if (this.player.x < 20) {
+            // Store the current music state before transitioning
+            const bgMusic = this.sound.get('bgMusic');
+            const isMusicPlaying = bgMusic ? bgMusic.isPlaying : false;
+            this.registry.set('musicEnabled', isMusicPlaying);
+
+            this.scene.start('GameScene1');
         }
     }
 }

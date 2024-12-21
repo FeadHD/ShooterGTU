@@ -1,13 +1,18 @@
-import { BaseScene } from './BaseScene';
-import { MediumEnemy } from './EnemyTypes';
+import { BaseScene } from '../elements/BaseScene';
+import { StrongEnemy } from '../elements/EnemyTypes';
 
-export class GameScene2 extends BaseScene {
+export class GameScene4 extends BaseScene {
     constructor() {
-        super({ key: 'GameScene2' });
+        super({ key: 'GameScene4' });
+    }
+
+    preload() {
+        // Load victory music
+        this.load.audio('victoryMusic', 'assets/sounds/congratulations.mp3');
     }
 
     create() {
-        this.cameras.main.setBackgroundColor('#4A4A4A');
+        this.cameras.main.setBackgroundColor('#2A2A2A');
         super.create();
 
         const { width, height } = this.scale;
@@ -15,16 +20,19 @@ export class GameScene2 extends BaseScene {
         // Set player to left side
         this.player.x = width * 0.1;
 
+        // Create victory music with volume control
+        this.victoryMusic = this.sound.add('victoryMusic', { volume: 0.3 });
+
         // Add scene text
-        this.add.text(width/2, height * 0.1, 'Scene 2', {
+        this.add.text(width/2, height * 0.1, 'Scene 4', {
             fontFamily: 'Retronoid',
             fontSize: '32px',
             fill: '#fff'
         }).setOrigin(0.5);
 
-        // Set next scene (can be modified if you add more scenes)
-        this.nextSceneName = 'GameScene1';
-
+        // Set next scene
+        this.nextSceneName = 'GameScene5';
+        
         // Create enemy group with proper physics properties
         this.enemies = this.physics.add.group({
             collideWorldBounds: true,
@@ -38,22 +46,24 @@ export class GameScene2 extends BaseScene {
             // Use helper method to get correct spawn height
             const enemyY = this.getSpawnHeight();
 
-            // Create three medium enemies at different positions
-            this.enemy1 = new MediumEnemy(this, width * 0.25, enemyY);
-            this.enemy2 = new MediumEnemy(this, width * 0.5, enemyY);
-            this.enemy3 = new MediumEnemy(this, width * 0.75, enemyY);
+            // Create five strong enemies at different positions
+            this.enemy1 = new StrongEnemy(this, width * 0.2, enemyY);  // Far left
+            this.enemy2 = new StrongEnemy(this, width * 0.4, enemyY);  // Left
+            this.enemy3 = new StrongEnemy(this, width * 0.6, enemyY);  // Middle
+            this.enemy4 = new StrongEnemy(this, width * 0.8, enemyY);  // Right
+            this.enemy5 = new StrongEnemy(this, width * 0.9, enemyY); // Far right
 
             // Add enemies to the group
             this.enemies.add(this.enemy1.sprite);
             this.enemies.add(this.enemy2.sprite);
             this.enemies.add(this.enemy3.sprite);
+            this.enemies.add(this.enemy4.sprite);
+            this.enemies.add(this.enemy5.sprite);
 
             // Set up collisions
             this.physics.add.collider(this.enemies, this.platforms);
-
-            // Add collision between player and enemies
             this.physics.add.collider(this.player, this.enemies, this.hitEnemy, null, this);
-
+            
             // Add collisions between enemies with proper handling
             this.physics.add.collider(
                 this.enemies,
@@ -83,8 +93,11 @@ export class GameScene2 extends BaseScene {
             this.physics.add.collider(this.player, wall);
 
             // Set number of enemies
-            this.remainingEnemies = 3;
+            this.remainingEnemies = 5;
         });
+
+        // Flag to track if all enemies are defeated
+        this.allEnemiesDefeated = false;
     }
 
     hitEnemyWithBullet(bullet, enemySprite) {
@@ -95,7 +108,7 @@ export class GameScene2 extends BaseScene {
             const speed = 100 + Math.random() * 100;
             const vx = Math.cos(angle) * speed;
             const vy = Math.sin(angle) * speed;
-
+            
             this.tweens.add({
                 targets: particle,
                 x: particle.x + (vx * 0.3), // Move in direction over 300ms
@@ -110,13 +123,17 @@ export class GameScene2 extends BaseScene {
 
         this.hitSound.play(); // Play hit sound
         bullet.destroy();
-
+        
         // Find the enemy object that owns this sprite
-        const enemy = [this.enemy1, this.enemy2, this.enemy3].find(e => e.sprite === enemySprite);
+        const enemy = [this.enemy1, this.enemy2, this.enemy3, this.enemy4, this.enemy5].find(e => e.sprite === enemySprite);
         if (enemy && enemy.damage(1)) {
             // Enemy is dead
             enemy.destroy();
             this.addPoints(10);
+            this.remainingEnemies--;
+            if (this.remainingEnemies === 0) {
+                this.allEnemiesDefeated = true;
+            }
         }
     }
 
@@ -155,21 +172,18 @@ export class GameScene2 extends BaseScene {
         if (this.enemy1) this.enemy1.update();
         if (this.enemy2) this.enemy2.update();
         if (this.enemy3) this.enemy3.update();
+        if (this.enemy4) this.enemy4.update();
+        if (this.enemy5) this.enemy5.update();
 
-        if (this.player.x > this.scale.width - 20) {
-            // Store the current music state before transitioning
-            const bgMusic = this.sound.get('bgMusic');
-            const isMusicPlaying = bgMusic ? bgMusic.isPlaying : false;
-            this.registry.set('musicEnabled', isMusicPlaying);
-
-            this.scene.start('GameScene3');
-        } else if (this.player.x < 20) {
-            // Store the current music state before transitioning
-            const bgMusic = this.sound.get('bgMusic');
-            const isMusicPlaying = bgMusic ? bgMusic.isPlaying : false;
-            this.registry.set('musicEnabled', isMusicPlaying);
-
-            this.scene.start('GameScene1');
+        // Check for scene transition
+        if (this.allEnemiesDefeated && this.player.x > this.scale.width - 20) {
+            console.log('Transitioning to Scene 5...'); // Debug log
+            // Stop any current music
+            if (this.sound.get('backgroundMusic')) {
+                this.sound.get('backgroundMusic').stop();
+            }
+            this.scene.start('GameScene5');
+            console.log('Scene 5 started'); // Debug log
         }
     }
 }

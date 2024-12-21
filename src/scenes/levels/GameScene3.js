@@ -1,18 +1,13 @@
-import { BaseScene } from './BaseScene';
-import { StrongEnemy } from './EnemyTypes';
+import { BaseScene } from '../elements/BaseScene';
+import { StrongEnemy } from '../elements/EnemyTypes';
 
-export class GameScene4 extends BaseScene {
+export class GameScene3 extends BaseScene {
     constructor() {
-        super({ key: 'GameScene4' });
-    }
-
-    preload() {
-        // Load victory music
-        this.load.audio('victoryMusic', 'assets/sounds/congratulations.mp3');
+        super({ key: 'GameScene3' });
     }
 
     create() {
-        this.cameras.main.setBackgroundColor('#2A2A2A');
+        this.cameras.main.setBackgroundColor('#3A3A3A');
         super.create();
 
         const { width, height } = this.scale;
@@ -20,18 +15,15 @@ export class GameScene4 extends BaseScene {
         // Set player to left side
         this.player.x = width * 0.1;
 
-        // Create victory music with volume control
-        this.victoryMusic = this.sound.add('victoryMusic', { volume: 0.3 });
-
         // Add scene text
-        this.add.text(width/2, height * 0.1, 'Scene 4', {
+        this.add.text(width/2, height * 0.1, 'Scene 3', {
             fontFamily: 'Retronoid',
             fontSize: '32px',
             fill: '#fff'
         }).setOrigin(0.5);
 
         // Set next scene
-        this.nextSceneName = 'GameScene5';
+        this.nextSceneName = 'GameScene4';
         
         // Create enemy group with proper physics properties
         this.enemies = this.physics.add.group({
@@ -46,19 +38,17 @@ export class GameScene4 extends BaseScene {
             // Use helper method to get correct spawn height
             const enemyY = this.getSpawnHeight();
 
-            // Create five strong enemies at different positions
-            this.enemy1 = new StrongEnemy(this, width * 0.2, enemyY);  // Far left
-            this.enemy2 = new StrongEnemy(this, width * 0.4, enemyY);  // Left
-            this.enemy3 = new StrongEnemy(this, width * 0.6, enemyY);  // Middle
-            this.enemy4 = new StrongEnemy(this, width * 0.8, enemyY);  // Right
-            this.enemy5 = new StrongEnemy(this, width * 0.9, enemyY); // Far right
+            // Create four strong enemies at different positions
+            this.enemy1 = new StrongEnemy(this, width * 0.3, enemyY);  // Left
+            this.enemy2 = new StrongEnemy(this, width * 0.5, enemyY);  // Middle-left
+            this.enemy3 = new StrongEnemy(this, width * 0.7, enemyY);  // Middle-right
+            this.enemy4 = new StrongEnemy(this, width * 0.9, enemyY);  // Right
 
             // Add enemies to the group
             this.enemies.add(this.enemy1.sprite);
             this.enemies.add(this.enemy2.sprite);
             this.enemies.add(this.enemy3.sprite);
             this.enemies.add(this.enemy4.sprite);
-            this.enemies.add(this.enemy5.sprite);
 
             // Set up collisions
             this.physics.add.collider(this.enemies, this.platforms);
@@ -93,11 +83,8 @@ export class GameScene4 extends BaseScene {
             this.physics.add.collider(this.player, wall);
 
             // Set number of enemies
-            this.remainingEnemies = 5;
+            this.remainingEnemies = 4;
         });
-
-        // Flag to track if all enemies are defeated
-        this.allEnemiesDefeated = false;
     }
 
     hitEnemyWithBullet(bullet, enemySprite) {
@@ -125,15 +112,11 @@ export class GameScene4 extends BaseScene {
         bullet.destroy();
         
         // Find the enemy object that owns this sprite
-        const enemy = [this.enemy1, this.enemy2, this.enemy3, this.enemy4, this.enemy5].find(e => e.sprite === enemySprite);
+        const enemy = [this.enemy1, this.enemy2, this.enemy3, this.enemy4].find(e => e.sprite === enemySprite);
         if (enemy && enemy.damage(1)) {
             // Enemy is dead
             enemy.destroy();
             this.addPoints(10);
-            this.remainingEnemies--;
-            if (this.remainingEnemies === 0) {
-                this.allEnemiesDefeated = true;
-            }
         }
     }
 
@@ -173,17 +156,9 @@ export class GameScene4 extends BaseScene {
         if (this.enemy2) this.enemy2.update();
         if (this.enemy3) this.enemy3.update();
         if (this.enemy4) this.enemy4.update();
-        if (this.enemy5) this.enemy5.update();
 
-        // Check for scene transition
-        if (this.allEnemiesDefeated && this.player.x > this.scale.width - 20) {
-            console.log('Transitioning to Scene 5...'); // Debug log
-            // Stop any current music
-            if (this.sound.get('backgroundMusic')) {
-                this.sound.get('backgroundMusic').stop();
-            }
-            this.scene.start('GameScene5');
-            console.log('Scene 5 started'); // Debug log
+        if (this.player.x > this.scale.width - 20) {
+            this.scene.start('GameScene4');
         }
     }
 }

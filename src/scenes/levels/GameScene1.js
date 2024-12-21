@@ -1,4 +1,4 @@
-import { BaseScene } from './BaseScene';
+import { BaseScene } from '../elements/BaseScene';
 import { Slime } from './Slime';
 
 export class GameScene1 extends BaseScene {
