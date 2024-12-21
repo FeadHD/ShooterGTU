@@ -1,4 +1,5 @@
 import { Scene } from 'phaser';
+import { GameUI } from './GameUI';
 
 export class BaseScene extends Scene {
     create() {
@@ -6,11 +7,9 @@ export class BaseScene extends Scene {
         if (this.registry.get('score') === undefined) {
             this.registry.set('score', 0);
         }
-        // Always ensure lives are set to 3 at the start of a new game
         if (this.registry.get('lives') === undefined || this.registry.get('lives') <= 0) {
             this.registry.set('lives', 3);
         }
-        // Initialize HP only if it's not set
         if (this.registry.get('playerHP') === undefined) {
             this.registry.set('playerHP', 100);
         }
@@ -295,7 +294,7 @@ export class BaseScene extends Scene {
         this.setupControls();
 
         // Create UI
-        this.createUI(width);
+        this.createUI();
 
         // Initialize game tracking
         this.remainingEnemies = 0;
@@ -375,97 +374,8 @@ export class BaseScene extends Scene {
         });
     }
 
-    createUI(width) {
-        const textConfig = {
-            fontSize: '24px',
-            fontFamily: 'Retronoid'
-        };
-
-        const currentScore = this.registry.get('score') || 0;
-        this.scoreText = this.add.text(16, 16, 'Score: ' + currentScore, {
-            ...textConfig,
-            fill: '#fff'
-        }).setScrollFactor(0);
-
-        this.livesText = this.add.text(16, 56, 'Lives: ' + this.registry.get('lives'), {
-            ...textConfig,
-            fill: '#ff0000'
-        }).setScrollFactor(0);
-
-        this.hpText = this.add.text(16, 96, 'HP: ' + this.playerHP, {
-            ...textConfig,
-            fill: '#00ff00'
-        }).setScrollFactor(0);
-
-        // Add music toggle
-        const settingsButton = this.add.text(width - 20, 20, '⚙️ Music', {
-            fontSize: '20px',
-            fontFamily: 'Retronoid',
-            fill: '#fff',
-            backgroundColor: '#000000',
-            padding: { x: 10, y: 5 },
-            stroke: '#ffffff',
-            strokeThickness: 1
-        }).setOrigin(1, 0)
-        .setScrollFactor(0)
-        .setInteractive({ useHandCursor: true })
-        .on('pointerover', () => settingsButton.setStyle({ fill: '#ff0' }))
-        .on('pointerout', () => settingsButton.setStyle({ fill: '#fff' }))
-        .on('pointerdown', () => this.toggleMusic(settingsButton));
-
-        // Add wallet display next to settings button
-        const walletAddress = this.registry.get('walletAddress');
-        const displayAddress = walletAddress ? 
-            walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4) : 
-            'Wallet not connected';
-
-        this.walletText = this.add.text(width - 140, 20, displayAddress, {
-            fontSize: '20px',
-            fontFamily: 'Retronoid',
-            fill: '#00ffff',
-            backgroundColor: '#000000',
-            padding: { x: 10, y: 5 },
-            stroke: '#ffffff',
-            strokeThickness: 1
-        }).setOrigin(1, 0)
-        .setScrollFactor(0);
-
-        this.updateMusicButton(settingsButton);
-
-        // Listen for wallet changes
-        if (typeof window.ethereum !== 'undefined') {
-            window.ethereum.on('accountsChanged', (accounts) => {
-                const newAddress = accounts[0] || null;
-                this.registry.set('walletAddress', newAddress);
-                const displayAddress = newAddress ? 
-                    newAddress.slice(0, 6) + '...' + newAddress.slice(-4) : 
-                    'Wallet not connected';
-                this.walletText.setText(displayAddress);
-            });
-        }
-    }
-
-    toggleMusic(button) {
-        const bgMusic = this.sound.get('bgMusic');
-        if (bgMusic) {
-            if (bgMusic.isPlaying) {
-                bgMusic.pause();
-                this.registry.set('musicEnabled', false);
-                button.setText('⚙️ Music: OFF');
-            } else {
-                bgMusic.resume();
-                this.registry.set('musicEnabled', true);
-                button.setText('⚙️ Music: ON');
-            }
-        }
-    }
-
-    updateMusicButton(button) {
-        const bgMusic = this.sound.get('bgMusic');
-        if (bgMusic && (!bgMusic.isPlaying || this.registry.get('musicEnabled') === false)) {
-            button.setText('⚙️ Music: OFF');
-            if (bgMusic.isPlaying) bgMusic.pause();
-        }
+    createUI() {
+        this.gameUI = new GameUI(this);
     }
 
     createSceneBoundaries() {
@@ -566,11 +476,11 @@ export class BaseScene extends Scene {
     }
 
     hitEnemy(player, enemy) {
-        if (player.alpha < 1 || this.isDying) return;
+        if (this.isDying) return;
 
         this.playerHP -= 25;
         this.registry.set('playerHP', this.playerHP); // Store HP in registry
-        this.hpText.setText('HP: ' + this.playerHP);
+        this.gameUI.updateHP(this.playerHP);
 
         if (this.playerHP <= 0) {
             this.handlePlayerDeath();
@@ -584,99 +494,32 @@ export class BaseScene extends Scene {
     }
 
     handlePlayerDeath() {
+        // Set dying state and stop player movement
         this.isDying = true;
         this.player.setVelocity(0, 0);
         this.player.body.moves = false;
         
+        // Decrease lives and update UI
         const lives = this.registry.get('lives') - 1;
         this.registry.set('lives', lives);
-        this.livesText.setText('Lives: ' + lives);
-
+        this.gameUI.updateLives(lives);
+    
+        // Play death animation
         this.player.play('character_death');
         this.player.once('animationcomplete', () => {
             if (lives <= 0) {
-                const width = this.scale.width;
-                const height = this.scale.height;
-
-                // Add dark overlay
-                const overlay = this.add.rectangle(0, 0, width, height, 0x000000, 0.7)
-                    .setOrigin(0, 0)
-                    .setDepth(98);
-
-                // Create glitch effect container
-                const gameOverContainer = this.add.container(width/2, height * 0.3).setDepth(99);
-
-                // Add "GAME OVER" text with shadow layers
-                const shadowOffset = 4;
-                const numLayers = 3;
+                // Game Over state
+                const { overlay, gameOverContainer, scoreText, instructionText } = this.gameUI.showGameOver();
                 
-                for (let i = numLayers; i >= 0; i--) {
-                    const layerColor = i === 0 ? '#ff0000' : '#ff00ff';
-                    const gameOverText = this.add.text(i * shadowOffset, i * shadowOffset, 'GAME OVER', {
-                        fontFamily: 'Retronoid',
-                        fontSize: '72px',
-                        color: layerColor,
-                        align: 'center',
-                        stroke: '#000000',
-                        strokeThickness: 4
-                    }).setOrigin(0.5);
-                    gameOverContainer.add(gameOverText);
-                }
-
-                // Add final score
-                const finalScore = this.registry.get('score');
-                const scoreText = this.add.text(width/2, height * 0.5, `FINAL SCORE: ${finalScore}`, {
-                    fontFamily: 'Retronoid',
-                    fontSize: '48px',
-                    color: '#00ffff',
-                    align: 'center',
-                    stroke: '#000000',
-                    strokeThickness: 3,
-                    shadow: {
-                        offsetX: 2,
-                        offsetY: 2,
-                        color: '#ff00ff',
-                        blur: 5,
-                        fill: true
-                    }
-                }).setOrigin(0.5).setDepth(99);
-
-                // Add instruction text with blinking effect
-                const instructionText = this.add.text(width/2, height * 0.7, 'PRESS SPACE TO CONTINUE', {
-                    fontFamily: 'Retronoid',
-                    fontSize: '32px',
-                    color: '#ffd700',
-                    align: 'center',
-                    stroke: '#000000',
-                    strokeThickness: 2
-                }).setOrigin(0.5).setDepth(99);
-
-                // Add blinking effect to instruction text
-                this.tweens.add({
-                    targets: instructionText,
-                    alpha: 0,
-                    duration: 500,
-                    yoyo: true,
-                    repeat: -1
-                });
-
-                // Add glitch effect to Game Over text
-                this.time.addEvent({
-                    delay: 2000,
-                    callback: () => {
-                        this.tweens.add({
-                            targets: gameOverContainer,
-                            x: width/2 + Phaser.Math.Between(-5, 5),
-                            y: height * 0.3 + Phaser.Math.Between(-5, 5),
-                            duration: 50,
-                            yoyo: true,
-                            repeat: 3
-                        });
-                    },
-                    loop: true
-                });
-
-                // Set flag for game over state
+                // Store references to new UI elements
+                this.gameOverElements = {
+                    overlay,
+                    container: gameOverContainer,
+                    scoreText,
+                    instructionText
+                };
+    
+                // Set game over state
                 this.gameOver = true;
                 
                 // Add space key for game over
@@ -685,16 +528,20 @@ export class BaseScene extends Scene {
                 // Disable shooting
                 this.input.mouse.enabled = false;
             } else {
+                // Respawn logic with delay
                 this.time.delayedCall(500, () => {
-                    // Reset HP only when respawning
+                    // Reset HP
                     this.playerHP = 100;
                     this.registry.set('playerHP', 100);
-                    this.hpText.setText('HP: 100');
+                    this.gameUI.updateHP(100);
                     
+                    // Reset game state
                     this.isDying = false;
                     this.input.keyboard.enabled = true;
                     this.input.mouse.enabled = true;
                     this.player.body.moves = true;
+                    
+                    // Restart the scene
                     this.scene.restart();
                 });
             }
@@ -749,9 +596,7 @@ export class BaseScene extends Scene {
     }
 
     addPoints(points) {
-        const currentScore = this.registry.get('score');
-        this.registry.set('score', currentScore + points);
-        this.scoreText.setText('Score: ' + (currentScore + points));
+        this.gameUI.updateScore(points);
     }
 
     // Helper function to blend two colors
