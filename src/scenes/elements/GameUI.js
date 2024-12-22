@@ -324,18 +324,24 @@ export class GameUI {
     }
 
     showGameOver() {
-        const width = this.scene.scale.width;
-        const height = this.scene.scale.height;
+        // Get the camera's viewport dimensions
+        const camera = this.scene.cameras.main;
+        const width = camera.width;
+        const height = camera.height;
 
-        // Add dark overlay
+        // Add dark overlay that follows the camera
         const overlay = this.scene.add.rectangle(0, 0, width, height, 0x000000, 0.7)
             .setOrigin(0, 0)
-            .setDepth(98);
+            .setDepth(98)
+            .setScrollFactor(0);
 
-        // Create glitch effect container
-        const gameOverContainer = this.scene.add.container(width/2, height * 0.3).setDepth(99);
+        // Create main container for all game over elements
+        const mainContainer = this.scene.add.container(width/2, height/2)
+            .setDepth(99)
+            .setScrollFactor(0);
 
-        // Add "GAME OVER" text with shadow layers
+        // Create "GAME OVER" text with shadow layers
+        const gameOverContainer = this.scene.add.container(0, -100);
         const shadowOffset = 4;
         const numLayers = 3;
         
@@ -354,7 +360,7 @@ export class GameUI {
 
         // Add final score
         const finalScore = this.scene.registry.get('score');
-        const scoreText = this.scene.add.text(width/2, height * 0.5, `FINAL SCORE: ${finalScore}`, {
+        const scoreText = this.scene.add.text(0, 0, `FINAL SCORE: ${finalScore}`, {
             fontFamily: 'Retronoid',
             fontSize: '48px',
             color: '#00ffff',
@@ -368,17 +374,20 @@ export class GameUI {
                 blur: 5,
                 fill: true
             }
-        }).setOrigin(0.5).setDepth(99);
+        }).setOrigin(0.5);
 
-        // Add instruction text with blinking effect
-        const instructionText = this.scene.add.text(width/2, height * 0.7, 'PRESS SPACE TO CONTINUE', {
+        // Add instruction text
+        const instructionText = this.scene.add.text(0, 100, 'PRESS SPACE TO CONTINUE', {
             fontFamily: 'Retronoid',
             fontSize: '32px',
             color: '#ffd700',
             align: 'center',
             stroke: '#000000',
             strokeThickness: 2
-        }).setOrigin(0.5).setDepth(99);
+        }).setOrigin(0.5);
+
+        // Add all elements to the main container
+        mainContainer.add([gameOverContainer, scoreText, instructionText]);
 
         // Add blinking effect to instruction text
         this.scene.tweens.add({
@@ -395,8 +404,8 @@ export class GameUI {
             callback: () => {
                 this.scene.tweens.add({
                     targets: gameOverContainer,
-                    x: width/2 + Phaser.Math.Between(-5, 5),
-                    y: height * 0.3 + Phaser.Math.Between(-5, 5),
+                    x: Phaser.Math.Between(-5, 5),
+                    y: -100 + Phaser.Math.Between(-5, 5),
                     duration: 50,
                     yoyo: true,
                     repeat: 3
@@ -405,7 +414,13 @@ export class GameUI {
             loop: true
         });
 
-        return { overlay, gameOverContainer, scoreText, instructionText };
+        // Return references to the created elements
+        return {
+            overlay,
+            gameOverContainer: mainContainer,
+            scoreText,
+            instructionText
+        };
     }
 
     destroy() {

@@ -17,6 +17,7 @@ export class BaseScene extends Scene {
         }
         this.playerHP = this.registry.get('playerHP');
         this.isDying = false;
+        this.invulnerableUntil = 0;
         this.movementSpeed = 300;
         this.jumpSpeed = -450;
         this.input.keyboard.enabled = true;  // Ensure keyboard is enabled on scene start
@@ -440,6 +441,9 @@ export class BaseScene extends Scene {
 
     hitEnemy(player, enemy) {
         if (this.isDying) return;
+        
+        // Check if player is currently invulnerable
+        if (this.time.now < this.invulnerableUntil) return;
 
         this.playerHP -= 25;
         this.registry.set('playerHP', this.playerHP); // Store HP in registry
@@ -448,10 +452,21 @@ export class BaseScene extends Scene {
         if (this.playerHP <= 0) {
             this.handlePlayerDeath();
         } else {
-            player.alpha = 0.5;
-            this.time.delayedCall(1000, () => {
-                if (!this.isDying) player.alpha = 1;
+            // Set invulnerability for 1000ms
+            this.invulnerableUntil = this.time.now + 1000;
+            
+            // Create flashing effect during invulnerability
+            this.tweens.add({
+                targets: player,
+                alpha: { from: 0.5, to: 1 },
+                duration: 100,
+                repeat: 4, // 5 flashes during 1 second
+                yoyo: true,
+                onComplete: () => {
+                    if (!this.isDying) player.alpha = 1;
+                }
             });
+            
             this.hitSound.play();
         }
     }
@@ -472,15 +487,10 @@ export class BaseScene extends Scene {
         this.player.once('animationcomplete', () => {
             if (lives <= 0) {
                 // Game Over state
-                const { overlay, gameOverContainer, scoreText, instructionText } = this.gameUI.showGameOver();
+                const gameOverElements = this.gameUI.showGameOver();
                 
                 // Store references to new UI elements
-                this.gameOverElements = {
-                    overlay,
-                    container: gameOverContainer,
-                    scoreText,
-                    instructionText
-                };
+                this.gameOverElements = gameOverElements;
     
                 // Set game over state
                 this.gameOver = true;
