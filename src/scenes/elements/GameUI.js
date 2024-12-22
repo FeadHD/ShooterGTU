@@ -106,12 +106,32 @@ export class GameUI {
     setupUI() {
         const width = this.scene.scale.width;
         console.log('Setting up UI...');
+
+        // Create container if it doesn't exist
+        if (!this.container) {
+            this.container = this.scene.add.container(0, 0);
+            this.container.setDepth(100);
+            this.container.setScrollFactor(0);
+        }
+
+        // Create UI camera if it doesn't exist
+        if (!this.uiCamera) {
+            const { width, height } = this.scene.scale;
+            this.uiCamera = this.scene.cameras.add(0, 0, width, height);
+            this.uiCamera.setScroll(0, 0);
+        }
+
+        // Create UI elements
         this.createScoreDisplay();
         this.createLivesDisplay();
         this.createHPDisplay();
+        this.createBitcoinCounter();
         this.createSettingsButton(width);
         this.createWalletDisplay(width);
         this.setupWalletListeners();
+
+        // Update camera ignore list
+        this.updateCameraIgnoreList();
     }
 
     createScoreDisplay() {
@@ -193,6 +213,26 @@ export class GameUI {
             visible: this.container.visible,
             alpha: this.container.alpha,
             children: this.container.length
+        });
+    }
+
+    createBitcoinCounter() {
+        // Get current bitcoin count from registry
+        const currentBitcoins = this.scene.registry.get('bitcoins') || 0;
+
+        // Create bitcoin text
+        this.bitcoinText = this.scene.add.text(16, 136, `Bitcoin: ${currentBitcoins}`, {
+            fontFamily: 'Retronoid',
+            fontSize: '24px',
+            fill: '#FFD700', // Gold color
+            stroke: '#000000',
+            strokeThickness: 4
+        });
+        this.container.add(this.bitcoinText);
+
+        // Listen for bitcoin count changes
+        this.scene.registry.events.on('changedata-bitcoins', (parent, value) => {
+            this.bitcoinText.setText(`Bitcoin: ${value}`);
         });
     }
 
@@ -476,29 +516,39 @@ export class GameUI {
     }
 
     destroy() {
-        console.log('Destroying GameUI in scene:', this.scene.scene.key);
-        
-        // Clean up event listeners
-        if (this.scene) {
-            this.scene.events.off('create', this.updateCameraIgnoreList, this);
-            this.scene.events.off('wake', this.updateCameraIgnoreList, this);
-            this.scene.events.off('resume', this.updateCameraIgnoreList, this);
-            this.scene.events.off('addedtoscene', this.handleNewObject, this);
+        // Remove registry event listeners
+        if (this.scene && this.scene.registry) {
+            this.scene.registry.events.off('changedata-score');
+            this.scene.registry.events.off('changedata-lives');
+            this.scene.registry.events.off('changedata-playerHP');
+            this.scene.registry.events.off('changedata-bitcoins');
         }
         
-        // Remove UI camera
-        if (this.uiCamera) {
-            this.scene.cameras.remove(this.uiCamera);
-            this.uiCamera = null;
-        }
-        
-        // Destroy container and its contents
+        // Destroy container and all its children
         if (this.container) {
             this.container.destroy(true);
             this.container = null;
         }
+        
+        // Destroy UI camera if it exists
+        if (this.uiCamera) {
+            this.scene.cameras.remove(this.uiCamera);
+            this.uiCamera = null;
+        }
+    }
 
-        // Clear scene reference
-        this.scene = null;
+    show() {
+        // Show the container
+        if (this.container) {
+            this.container.setVisible(true);
+        }
+        
+        // Show UI camera
+        if (this.uiCamera) {
+            this.uiCamera.setVisible(true);
+        }
+
+        // Re-setup UI elements with current values
+        this.setupUI();
     }
 }

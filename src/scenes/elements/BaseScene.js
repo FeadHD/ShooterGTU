@@ -15,6 +15,9 @@ export class BaseScene extends Scene {
         if (this.registry.get('playerHP') === undefined) {
             this.registry.set('playerHP', 100);
         }
+        if (this.registry.get('bitcoins') === undefined) {
+            this.registry.set('bitcoins', 0);
+        }
         this.playerHP = this.registry.get('playerHP');
         this.isDying = false;
         this.invulnerableUntil = 0;
@@ -261,8 +264,23 @@ export class BaseScene extends Scene {
         this.createSceneBoundaries();
 
         // Listen for scene events
+        this.events.on('wake', this.onSceneWake, this);
+        this.events.on('resume', this.onSceneResume, this);
         this.events.on('shutdown', this.cleanup, this);
         this.events.on('sleep', this.cleanup, this);
+
+        // Add debug graphics and toggle
+        this.debugGraphics = this.add.graphics();
+        this.debugGraphics.setDepth(999);
+        this.showDebug = false;
+        
+        // Add E key for debug toggle
+        this.input.keyboard.addKey('E').on('down', () => {
+            this.showDebug = !this.showDebug;
+            if (!this.showDebug) {
+                this.debugGraphics.clear();
+            }
+        });
     }
 
     createAnimations() {
@@ -336,14 +354,14 @@ export class BaseScene extends Scene {
     }
 
     createUI() {
-        // Clean up existing UI if it exists
-        if (this.gameUI) {
-            this.gameUI.destroy();
-            this.gameUI = null;
+        // Create new UI if it doesn't exist, otherwise show existing UI
+        if (!this.gameUI) {
+            this.gameUI = new GameUI(this);
+            console.log('Created new GameUI:', this.gameUI);
+        } else {
+            this.gameUI.show();
+            console.log('Showing existing GameUI:', this.gameUI);
         }
-        
-        // Create new UI
-        this.gameUI = new GameUI(this);
     }
 
     createSceneBoundaries() {
@@ -522,6 +540,34 @@ export class BaseScene extends Scene {
     }
 
     update() {
+        if (this.showDebug) {
+            this.debugGraphics.clear();
+            
+            // Draw hitboxes for all physics bodies
+            this.children.list.forEach(obj => {
+                if (obj.body) {
+                    // Draw physics body
+                    this.debugGraphics
+                        .lineStyle(2, 0x00ff00)
+                        .strokeRect(obj.body.x, obj.body.y, obj.body.width, obj.body.height);
+                        
+                    // Draw direction indicator if entity has flipX property
+                    if (obj.flipX !== undefined) {
+                        const centerX = obj.body.x + obj.body.width / 2;
+                        const centerY = obj.body.y + obj.body.height / 2;
+                        const direction = obj.flipX ? -1 : 1;
+                        
+                        this.debugGraphics
+                            .lineStyle(2, 0xff0000)
+                            .beginPath()
+                            .moveTo(centerX, centerY)
+                            .lineTo(centerX + (direction * 20), centerY)
+                            .strokePath();
+                    }
+                }
+            });
+        }
+
         if (this.gameOver && this.spaceKey && this.spaceKey.isDown) {
             // Clean up before transitioning
             this.input.keyboard.removeAllKeys();
@@ -607,12 +653,21 @@ export class BaseScene extends Scene {
         // Clean up UI
         if (this.gameUI) {
             this.gameUI.destroy();
-            this.gameUI = null;
         }
 
         // Clean up event listeners
+        this.events.off('wake', this.onSceneWake, this);
+        this.events.off('resume', this.onSceneResume, this);
         this.events.off('shutdown', this.cleanup, this);
         this.events.off('sleep', this.cleanup, this);
+    }
+
+    onSceneWake() {
+        this.createUI();
+    }
+
+    onSceneResume() {
+        this.createUI();
     }
 
     shutdown() {

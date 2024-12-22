@@ -1,5 +1,6 @@
 import { BaseScene } from '../elements/BaseScene';
 import { StrongEnemy } from '../../prefabs/EnemyTypes';
+import { Bitcoin } from '../../prefabs/Bitcoin';
 import { GameUI } from '../elements/GameUI';
 
 export class GameScene3 extends BaseScene {
@@ -44,6 +45,28 @@ export class GameScene3 extends BaseScene {
             bounceY: 0.2,
             dragX: 200
         });
+
+        // Create bitcoin group
+        this.bitcoins = this.add.group();
+
+        // Add 10 bitcoins in a wave pattern
+        const startX = width * 0.2;
+        const endX = width * 0.8;
+        const spacing = (endX - startX) / 9; // 9 spaces for 10 coins
+        const baseY = height - 150; // Base Y position (150px from bottom)
+        const amplitude = 50; // Height of the wave
+        const frequency = 0.3; // Frequency of the wave
+
+        for (let i = 0; i < 10; i++) {
+            const x = startX + (i * spacing);
+            const waveOffset = Math.sin(i * frequency) * amplitude;
+            const y = baseY - 50 - waveOffset; // Base height of 50px plus wave
+            const bitcoin = new Bitcoin(this, x, y);
+            this.bitcoins.add(bitcoin);
+            this.physics.add.overlap(this.player, bitcoin, () => {
+                bitcoin.collect();
+            });
+        }
 
         // Wait a short moment for platforms to be fully set up
         this.time.delayedCall(100, () => {

@@ -73,9 +73,6 @@ export class MissionComplete extends Scene {
     }
 
     create() {
-        // Save the score first
-        this.saveScore();
-
         // Stop any existing music
         this.sound.stopAll();
 
@@ -128,35 +125,89 @@ export class MissionComplete extends Scene {
                 }
             });
 
-        // Add congratulations text
-        this.add.text(width/2, height * 0.3, 'MISSION COMPLETE', {
-            fontFamily: 'Retronoid',
-            fontSize: '48px',
-            fill: '#fff'
-        }).setOrigin(0.5);
-
-        // Add score display
+        // Get final stats
         const finalScore = this.registry.get('score') || 0;
-        this.add.text(width/2, height * 0.4, `YOUR SCORE: ${finalScore}`, {
+        const bitcoins = this.registry.get('bitcoins') || 0;
+        const bonusPoints = bitcoins * 5;
+        const totalFinalScore = finalScore + bonusPoints;
+
+        // Create mission complete text
+        this.add.text(width/2, height/3, 'Mission Complete!', {
             fontFamily: 'Retronoid',
-            fontSize: '40px',
-            fill: '#ffd700',  // Gold color for the score
-            stroke: '#000000',
-            strokeThickness: 4
+            fontSize: '64px',
+            fill: '#ffffff'
         }).setOrigin(0.5);
 
-        // Add mission completion text
-        this.add.text(width/2, height * 0.5, "You've finished Mission ONE:", {
+        // Create score text that will animate
+        const scoreText = this.add.text(width/2, height/2, `Score: ${finalScore}`, {
             fontFamily: 'Retronoid',
             fontSize: '32px',
-            fill: '#fff'
+            fill: '#ffffff'
         }).setOrigin(0.5);
 
-        this.add.text(width/2, height * 0.6, 'Ledger Heist', {
+        // Create bitcoin text that will animate
+        const bitcoinText = this.add.text(width/2, height/2 + 50, 'Bitcoins: ' + bitcoins, {
             fontFamily: 'Retronoid',
-            fontSize: '40px',
-            fill: '#ffd700'  // Gold color for mission name
+            fontSize: '32px',
+            fill: '#FFD700' // Gold color to match the UI
         }).setOrigin(0.5);
+
+        // Animate bitcoin count down to zero and score up
+        let currentCount = bitcoins;
+        let currentScore = finalScore;
+        const countInterval = 50; // Time between each count in ms
+        const countTimer = this.time.addEvent({
+            delay: countInterval,
+            callback: () => {
+                // Update bitcoin count
+                currentCount--;
+                bitcoinText.setText('Bitcoins: ' + currentCount);
+                
+                // Update score with animation
+                currentScore += 5;
+                scoreText.setText('Score: ' + currentScore);
+                
+                // Flash score text in gold
+                this.tweens.add({
+                    targets: scoreText,
+                    scale: { from: 1.2, to: 1 },
+                    duration: 100,
+                    ease: 'Quad.out'
+                });
+                
+                // Temporarily change score color to gold
+                scoreText.setFill('#FFD700');
+                this.time.delayedCall(100, () => {
+                    scoreText.setFill('#ffffff');
+                });
+                
+                // Play coin sound
+                if (this.sound.get('coin')) {
+                    this.sound.play('coin', { volume: 0.3 });
+                }
+                
+                if (currentCount <= 0) {
+                    countTimer.destroy();
+                    // Reset bitcoin counter to 0
+                    this.registry.set('bitcoins', 0);
+                    // Update final score in registry
+                    this.registry.set('score', totalFinalScore);
+                    
+                    // Final score flash
+                    this.tweens.add({
+                        targets: scoreText,
+                        scale: { from: 1.5, to: 1 },
+                        duration: 200,
+                        ease: 'Bounce.out',
+                        onComplete: () => {
+                            // Save the score after all animations are complete
+                            this.saveScore();
+                        }
+                    });
+                }
+            },
+            repeat: bitcoins - 1
+        });
 
         // Add instruction text
         this.add.text(width/2, height * 0.8, 'Press SPACE to return to menu', {

@@ -1,6 +1,7 @@
 import { BaseScene } from '../elements/BaseScene';
 import { GameUI } from '../elements/GameUI';
 import { Slime } from '../../prefabs/Slime';
+import { Bitcoin } from '../../prefabs/Bitcoin';
 
 export class GameScene1 extends BaseScene {
     constructor() {
@@ -81,6 +82,25 @@ export class GameScene1 extends BaseScene {
             bounceY: 0.2,
             dragX: 200
         });
+
+        // Create bitcoin group
+        this.bitcoins = this.add.group();
+
+        // Add 10 bitcoins spread across the level
+        const startX = width * 0.2;
+        const endX = width * 0.8;
+        const spacing = (endX - startX) / 9; // 9 spaces for 10 coins
+        const baseY = height - 150; // Base Y position (150px from bottom)
+
+        for (let i = 0; i < 10; i++) {
+            const x = startX + (i * spacing);
+            const y = baseY - Phaser.Math.Between(0, 100); // Random height up to 100px above base
+            const bitcoin = new Bitcoin(this, x, y);
+            this.bitcoins.add(bitcoin);
+            this.physics.add.overlap(this.player, bitcoin, () => {
+                bitcoin.collect();
+            });
+        }
 
         // Wait a short moment for platforms to be fully set up
         this.time.delayedCall(100, () => {

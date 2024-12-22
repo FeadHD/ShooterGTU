@@ -155,12 +155,17 @@ export class MainMenu extends Scene {
 
         // Add click handlers
         startButton.on('pointerdown', () => {
-            // Reset score only when starting a new game
+            // Reset game state
             this.registry.set('score', 0);
+            this.registry.set('lives', 3);
+            this.registry.set('playerHP', 100);
+            this.registry.set('bitcoins', 0);
+
             // Clean up scene before starting game
             this.input.keyboard.removeAllKeys();
             this.input.removeAllListeners();
-            this.registry.set('lives', 3);
+
+            // Start first level
             this.scene.start('GameScene1');
         });
         settingsButton.on('pointerdown', () => {

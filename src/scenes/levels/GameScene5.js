@@ -1,6 +1,7 @@
 import { BaseScene } from '../elements/BaseScene';
 import { BossEnemy } from '../../prefabs/EnemyTypes';
 import { GameUI } from '../elements/GameUI';
+import { Bitcoin } from '../../prefabs/Bitcoin';
 
 export class GameScene5 extends BaseScene {
     constructor() {
@@ -91,6 +92,30 @@ export class GameScene5 extends BaseScene {
             // Extra physics settings for boss sprite
             this.boss.sprite.body.setCollideWorldBounds(true);
             this.boss.sprite.body.setFriction(1);
+
+            // Create bitcoin group
+            this.bitcoins = this.add.group();
+
+            // Add 10 bitcoins in a V pattern
+            const startX = width * 0.2;
+            const endX = width * 0.8;
+            const spacing = (endX - startX) / 9; // 9 spaces for 10 coins
+            const baseY = height - 150; // Base Y position (150px from bottom)
+            const maxHeight = 80; // Maximum height of the V pattern
+
+            for (let i = 0; i < 10; i++) {
+                const x = startX + (i * spacing);
+                // Create V pattern by using absolute distance from center
+                const heightFactor = Math.abs(i - 4.5) / 4.5; // 0 at center, 1 at edges
+                const y = baseY - (maxHeight * (1 - heightFactor)); // Highest at center
+                const bitcoin = new Bitcoin(this, x, y);
+                this.bitcoins.add(bitcoin);
+                this.physics.add.overlap(this.player, bitcoin, () => {
+                    bitcoin.collect();
+                });
+            }
+
+            // Create level elements
         });
 
         // Load victory music if not already loaded

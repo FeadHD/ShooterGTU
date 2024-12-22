@@ -167,9 +167,15 @@ export class Preloader extends Scene {
         this.load.audio('laser', './assets/sounds/laser.wav');
         this.load.audio('bgMusic', './assets/sounds/background_music.mp3');
         this.load.audio('hit', './assets/sounds/hit.wav');
+        this.load.audio('bitcoin_collect', './assets/sounds/bitcoin_collect.mp3');
         
         // Load the font file directly
         this.load.binary('retronoid', './assets/fonts/retronoid/Retronoid.ttf');
+
+        // Load bitcoin animation frames
+        for (let i = 1; i <= 8; i++) {
+            this.load.image(`bitcoin_${i}`, `assets/bitcoin/Bitcoin_${i}.png`);
+        }
 
         // Add load complete event
         this.load.on('complete', () => {
