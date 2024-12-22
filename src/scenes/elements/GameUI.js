@@ -126,7 +126,7 @@ export class GameUI {
         this.createLivesDisplay();
         this.createHPDisplay();
         this.createBitcoinCounter();
-        this.createSettingsButton(width);
+        this.createMusicButton(width);
         this.createWalletDisplay(width);
         this.setupWalletListeners();
 
@@ -135,84 +135,65 @@ export class GameUI {
     }
 
     createScoreDisplay() {
+        // Get current score from registry
         const currentScore = this.scene.registry.get('score') || 0;
-        console.log('Creating score display with value:', currentScore);
         
-        this.scoreText = this.scene.add.text(16, 16, 'Score: ' + currentScore, {
-            ...this.textConfig,
-            fill: '#fff'
-        });
-        
-        console.log('Score Text created:', {
-            x: this.scoreText.x,
-            y: this.scoreText.y,
-            text: this.scoreText.text,
-            visible: this.scoreText.visible,
-            alpha: this.scoreText.alpha
+        // Create score text with consistent styling
+        this.scoreText = this.scene.add.text(16, 16, `Score: ${currentScore}`, {
+            fontFamily: 'Retronoid',
+            fontSize: '24px',
+            fill: '#00ffff', // Cyan color
+            stroke: '#000000',
+            strokeThickness: 4
         });
         
         this.container.add(this.scoreText);
-        
-        console.log('Container after adding score:', {
-            x: this.container.x,
-            y: this.container.y,
-            visible: this.container.visible,
-            alpha: this.container.alpha,
-            children: this.container.length
+
+        // Listen for score changes
+        this.scene.registry.events.on('changedata-score', (parent, value) => {
+            this.scoreText.setText(`Score: ${value}`);
         });
     }
 
     createLivesDisplay() {
-        console.log('Creating lives display...');
-        this.livesText = this.scene.add.text(16, 56, 'Lives: ' + this.scene.registry.get('lives'), {
-            ...this.textConfig,
-            fill: '#ff0000'
-        });
+        // Get current lives from registry
+        const lives = this.scene.registry.get('lives') || 3;
         
-        console.log('Lives Text created:', {
-            x: this.livesText.x,
-            y: this.livesText.y,
-            text: this.livesText.text,
-            visible: this.livesText.visible,
-            alpha: this.livesText.alpha
+        // Create lives text with consistent styling
+        this.livesText = this.scene.add.text(16, 56, `Lives: ${lives}`, {
+            fontFamily: 'Retronoid',
+            fontSize: '24px',
+            fill: '#ff0000', // Red color
+            stroke: '#000000',
+            strokeThickness: 4
         });
         
         this.container.add(this.livesText);
-        
-        console.log('Container after adding lives:', {
-            x: this.container.x,
-            y: this.container.y,
-            visible: this.container.visible,
-            alpha: this.container.alpha,
-            children: this.container.length
+
+        // Listen for lives changes
+        this.scene.registry.events.on('changedata-lives', (parent, value) => {
+            this.livesText.setText(`Lives: ${value}`);
         });
     }
 
     createHPDisplay() {
-        const hp = this.scene.playerHP;
-        console.log('Creating HP display with value:', hp);
+        // Get current HP from registry
+        const hp = this.scene.registry.get('playerHP') || this.scene.playerHP || 100;
         
-        this.hpText = this.scene.add.text(16, 96, 'HP: ' + hp, {
-            ...this.textConfig,
-            fill: '#00ff00'
-        });
-        
-        console.log('HP Text created:', {
-            x: this.hpText.x,
-            y: this.hpText.y,
-            text: this.hpText.text,
-            visible: this.hpText.visible,
-            alpha: this.hpText.alpha
+        // Create HP text with consistent styling
+        this.hpText = this.scene.add.text(16, 96, `HP: ${hp}`, {
+            fontFamily: 'Retronoid',
+            fontSize: '24px',
+            fill: '#00ff00', // Green color
+            stroke: '#000000',
+            strokeThickness: 4
         });
         
         this.container.add(this.hpText);
-        
-        console.log('Container after adding HP:', {
-            x: this.container.x,
-            y: this.container.y,
-            visible: this.container.visible,
-            alpha: this.container.alpha,
-            children: this.container.length
+
+        // Listen for HP changes
+        this.scene.registry.events.on('changedata-playerHP', (parent, value) => {
+            this.hpText.setText(`HP: ${value}`);
         });
     }
 
@@ -236,168 +217,128 @@ export class GameUI {
         });
     }
 
-    createSettingsButton(width) {
-        console.log('Creating settings button...');
-        const bgMusic = this.scene.sound.get('bgMusic');
-        const isPlaying = bgMusic && bgMusic.isPlaying;
+    createMusicButton(width) {
+        // Create container for music controls
+        this.musicContainer = this.scene.add.container(width - 150, 16);
         
-        // Create static part (gear icon)
-        const musicTextStyle = {
-            fontSize: '20px',
+        // Create music label with consistent styling
+        const musicLabel = this.scene.add.text(0, 0, 'Music:', {
             fontFamily: 'Retronoid',
-            fill: '#000000',
-            padding: { x: 10, y: 5 },
-            stroke: '#ffffff',
-            strokeThickness: 1
-        };
-
-        const onStateStyle = {
-            fontSize: '20px',
+            fontSize: '24px',
+            fill: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 4
+        });
+        
+        // Create ON text
+        this.musicOnText = this.scene.add.text(musicLabel.width + 10, 0, 'ON', {
             fontFamily: 'Retronoid',
+            fontSize: '24px',
             fill: '#00ff00',
-            padding: { x: 10, y: 5 },
             stroke: '#000000',
-            strokeThickness: 1
-        };
-
-        const offStateStyle = {
-            fontSize: '20px',
+            strokeThickness: 4
+        });
+        
+        // Create OFF text (initially hidden)
+        this.musicOffText = this.scene.add.text(musicLabel.width + 10, 0, 'OFF', {
             fontFamily: 'Retronoid',
+            fontSize: '24px',
             fill: '#ff0000',
-            padding: { x: 10, y: 5 },
             stroke: '#000000',
-            strokeThickness: 1
-        };
-
-        // Create container for both texts
-        this.settingsContainer = this.scene.add.container(width - 200, 20);
+            strokeThickness: 4
+        });
+        this.musicOffText.setVisible(false);
         
-        // Add static gear icon
-        const gearIcon = this.scene.add.text(0, 0, '⚙️ Music', musicTextStyle);
-            
-        // Add dynamic state text
-        this.musicStateText = this.scene.add.text(gearIcon.width + 5, 0, isPlaying ? 'ON' : '', 
-            isPlaying ? onStateStyle : offStateStyle);
-
-        // Add both texts to container
-        this.settingsContainer.add([gearIcon, this.musicStateText]);
+        // Add all texts to the container
+        this.musicContainer.add([musicLabel, this.musicOnText, this.musicOffText]);
         
-        // Make container interactive
-        this.settingsContainer
-            .setSize(gearIcon.width + this.musicStateText.width + 5, gearIcon.height)
-            .setInteractive({ useHandCursor: true })
-            .on('pointerover', () => {
-                gearIcon.setStyle({ fill: '#333333' });
-            })
-            .on('pointerout', () => {
-                gearIcon.setStyle({ fill: '#000000' });
-            })
-            .on('pointerdown', () => this.toggleMusic());
+        // Make both texts interactive and stop event propagation
+        this.musicOnText.setInteractive({ useHandCursor: true });
+        this.musicOffText.setInteractive({ useHandCursor: true });
         
-        console.log('Settings Button created:', {
-            x: this.settingsContainer.x,
-            y: this.settingsContainer.y,
-            visible: this.settingsContainer.visible,
-            alpha: this.settingsContainer.alpha
+        this.musicOnText.on('pointerdown', (pointer, localX, localY, event) => {
+            event.stopPropagation();
+            this.toggleMusic();
         });
         
-        this.container.add(this.settingsContainer);
-        
-        console.log('Container after adding settings button:', {
-            x: this.container.x,
-            y: this.container.y,
-            visible: this.container.visible,
-            alpha: this.container.alpha,
-            children: this.container.length
+        this.musicOffText.on('pointerdown', (pointer, localX, localY, event) => {
+            event.stopPropagation();
+            this.toggleMusic();
         });
         
-        this.updateMusicButton();
+        // Add to main UI container
+        this.container.add(this.musicContainer);
+        
+        // Listen for music state changes
+        this.scene.registry.events.on('changedata-musicEnabled', (parent, value) => {
+            this.updateMusicButtonState(value);
+        });
+        
+        // Set initial state from registry or bgMusic state
+        const bgMusic = this.scene.sound.get('bgMusic');
+        const isMusicEnabled = this.scene.registry.get('musicEnabled');
+        const initialState = isMusicEnabled !== undefined ? isMusicEnabled : (bgMusic ? bgMusic.isPlaying : true);
+        this.updateMusicButtonState(initialState);
     }
 
-    createWalletDisplay(width) {
-        const walletAddress = this.scene.registry.get('walletAddress');
-        const displayAddress = walletAddress ? 
-            walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4) : 
-            'Wallet not connected';
-        
-        console.log('Creating wallet display with address:', displayAddress);
-        
-        this.walletText = this.scene.add.text(width - 200, 20, displayAddress, {
-            fontSize: '20px',
-            fontFamily: 'Retronoid',
-            fill: '#00ffff',
-            padding: { x: 10, y: 5 },
-            stroke: '#ffffff',
-            strokeThickness: 1
-        })
-        .setOrigin(1, 0);
-        
-        console.log('Wallet Text created:', {
-            x: this.walletText.x,
-            y: this.walletText.y,
-            text: this.walletText.text,
-            visible: this.walletText.visible,
-            alpha: this.walletText.alpha
-        });
-        
-        this.container.add(this.walletText);
-        
-        console.log('Container after adding wallet:', {
-            x: this.container.x,
-            y: this.container.y,
-            visible: this.container.visible,
-            alpha: this.container.alpha,
-            children: this.container.length
-        });
-    }
-
-    setupWalletListeners() {
-        if (typeof window.ethereum !== 'undefined') {
-            window.ethereum.on('accountsChanged', (accounts) => {
-                const newAddress = accounts[0] || null;
-                this.scene.registry.set('walletAddress', newAddress);
-                const displayAddress = newAddress ? 
-                    newAddress.slice(0, 6) + '...' + newAddress.slice(-4) : 
-                    'Wallet not connected';
-                this.walletText.setText(displayAddress);
-            });
+    updateMusicButtonState(isEnabled) {
+        if (this.musicOnText && this.musicOffText) {
+            this.musicOnText.setVisible(isEnabled);
+            this.musicOffText.setVisible(!isEnabled);
         }
     }
 
     toggleMusic() {
         const bgMusic = this.scene.sound.get('bgMusic');
         if (bgMusic) {
-            if (bgMusic.isPlaying) {
-                bgMusic.pause();
-                this.scene.registry.set('musicEnabled', false);
-                this.musicStateText.setText('OFF');
-                this.musicStateText.setStyle({
-                    fill: '#ff0000',
-                    stroke: '#000000',
-                    strokeThickness: 1
-                });
-            } else {
+            const newState = !bgMusic.isPlaying;
+            if (newState) {
                 bgMusic.resume();
-                this.scene.registry.set('musicEnabled', true);
-                this.musicStateText.setText('ON');
-                this.musicStateText.setStyle({
-                    fill: '#00ff00',
-                    stroke: '#000000',
-                    strokeThickness: 1
-                });
+            } else {
+                bgMusic.pause();
             }
+            this.scene.registry.set('musicEnabled', newState);
+            this.updateMusicButtonState(newState);
         }
     }
 
-    updateMusicButton() {
-        const bgMusic = this.scene.sound.get('bgMusic');
-        const isPlaying = bgMusic && bgMusic.isPlaying;
-        this.musicStateText.setText(isPlaying ? 'ON' : 'OFF');
-        this.musicStateText.setStyle({
-            fill: isPlaying ? '#00ff00' : '#ff0000',
+    createWalletDisplay(width) {
+        const walletAddress = this.scene.registry.get('walletAddress');
+        const displayAddress = walletAddress ? 
+            walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4) : 
+            'Not Connected';
+        
+        // Create wallet text with matching bitcoin style
+        this.walletText = this.scene.add.text(width - 500, 16, `Wallet: ${displayAddress}`, {
+            fontFamily: 'Retronoid',
+            fontSize: '24px',
+            fill: '#ffffff', // Changed to white
             stroke: '#000000',
-            strokeThickness: 1
+            strokeThickness: 4
         });
+        
+        this.walletText.setInteractive({ useHandCursor: true });
+        this.walletText.on('pointerdown', (pointer, localX, localY, event) => {
+            event.stopPropagation();
+            if (!this.walletText.text.includes('0x')) {
+                this.scene.events.emit('connectWallet');
+            }
+        });
+
+        this.container.add(this.walletText);
+    }
+
+    setupWalletListeners() {
+        if (typeof window.ethereum !== 'undefined') {
+            window.ethereum.on('accountsChanged', (accounts) => {
+                if (accounts.length > 0) {
+                    const displayAddress = accounts[0].slice(0, 6) + '...' + accounts[0].slice(-4);
+                    this.walletText.setText(`Wallet: ${displayAddress}`);
+                } else {
+                    this.walletText.setText('Wallet: Not Connected');
+                }
+            });
+        }
     }
 
     updateScore(points) {
@@ -412,7 +353,7 @@ export class GameUI {
     }
 
     updateHP(hp) {
-        this.hpText.setText('HP: ' + hp);
+        this.scene.registry.set('playerHP', hp);
     }
 
     showGameOver() {
@@ -522,6 +463,7 @@ export class GameUI {
             this.scene.registry.events.off('changedata-lives');
             this.scene.registry.events.off('changedata-playerHP');
             this.scene.registry.events.off('changedata-bitcoins');
+            this.scene.registry.events.off('changedata-musicEnabled');
         }
         
         // Destroy container and all its children

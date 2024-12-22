@@ -63,10 +63,6 @@ export class Bitcoin extends Phaser.Physics.Arcade.Sprite {
         const currentBitcoins = this.scene.registry.get('bitcoins') || 0;
         this.scene.registry.set('bitcoins', currentBitcoins + 1);
 
-        // Add 5 points to score
-        const currentScore = this.scene.registry.get('score') || 0;
-        this.scene.registry.set('score', currentScore + 5);
-
         // Play collection sound
         this.scene.sound.play('bitcoin_collect', { volume: 0.08 });
 

@@ -6,7 +6,18 @@ export class Game extends Scene {
     }
 
     init() {
-        this.score = 0;
+        // Initialize score
+        this.registry.set('score', 0);
+        
+        // Initialize player HP
+        this.registry.set('playerHP', 100);
+        
+        // Initialize music state if not already set
+        if (this.registry.get('musicEnabled') === undefined) {
+            this.registry.set('musicEnabled', true);
+        }
+        
+        // Initialize other game variables
         this.lastFired = 0;
     }
 
@@ -140,9 +151,17 @@ export class Game extends Scene {
 
     hitPlayer(player, enemy) {
         enemy.destroy();
-        this.energyBar.width = Math.max(this.energyBar.width - 50, 0);
+        
+        // Update HP in registry
+        const currentHP = this.registry.get('playerHP') || 100;
+        const damage = 10; // Damage amount when hit by enemy
+        const newHP = Math.max(currentHP - damage, 0);
+        this.registry.set('playerHP', newHP);
+        
+        // Update energy bar visual
+        this.energyBar.width = (newHP / 100) * 200;
 
-        if (this.energyBar.width <= 0) {
+        if (newHP <= 0) {
             this.gameOver();
         }
     }
