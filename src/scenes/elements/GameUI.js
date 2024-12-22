@@ -7,6 +7,34 @@ export class GameUI {
             fontSize: '24px',
             fontFamily: 'Retronoid'
         };
+
+        // Define music button styles
+        this.musicTextStyle = {
+            fontSize: '20px',
+            fontFamily: 'Retronoid',
+            fill: '#000000',
+            padding: { x: 10, y: 5 },
+            stroke: '#ffffff',
+            strokeThickness: 1
+        };
+
+        this.onStateStyle = {
+            fontSize: '20px',
+            fontFamily: 'Retronoid',
+            fill: '#00ff00',
+            padding: { x: 10, y: 5 },
+            stroke: '#000000',
+            strokeThickness: 1
+        };
+
+        this.offStateStyle = {
+            fontSize: '20px',
+            fontFamily: 'Retronoid',
+            fill: '#ff0000',
+            padding: { x: 10, y: 5 },
+            stroke: '#000000',
+            strokeThickness: 1
+        };
         
         // Create main UI container
         this.container = this.scene.add.container(0, 0);
@@ -201,58 +229,40 @@ export class GameUI {
         const bgMusic = this.scene.sound.get('bgMusic');
         const isPlaying = bgMusic && bgMusic.isPlaying;
         
-        // Create static part (gear icon)
-        const musicTextStyle = {
-            fontSize: '20px',
-            fontFamily: 'Retronoid',
-            fill: '#000000',
-            padding: { x: 10, y: 5 },
-            stroke: '#ffffff',
-            strokeThickness: 1
-        };
-
-        const onStateStyle = {
-            fontSize: '20px',
-            fontFamily: 'Retronoid',
-            fill: '#00ff00',
-            padding: { x: 10, y: 5 },
-            stroke: '#000000',
-            strokeThickness: 1
-        };
-
-        const offStateStyle = {
-            fontSize: '20px',
-            fontFamily: 'Retronoid',
-            fill: '#ff0000',
-            padding: { x: 10, y: 5 },
-            stroke: '#000000',
-            strokeThickness: 1
-        };
-
-        // Create container for both texts
+        // Create container for UI elements
         this.settingsContainer = this.scene.add.container(width - 200, 20);
         
-        // Add static gear icon
-        const gearIcon = this.scene.add.text(0, 0, '⚙️ Music', musicTextStyle);
+        // Add non-interactive "MUSIC" label
+        const musicLabel = this.scene.add.text(0, 0, '⚙️ Music', {
+            ...this.musicTextStyle,
+            fill: '#000000'
+        }).setOrigin(0, 0);
             
-        // Add dynamic state text
-        this.musicStateText = this.scene.add.text(gearIcon.width + 5, 0, isPlaying ? 'ON' : '', 
-            isPlaying ? onStateStyle : offStateStyle);
-
-        // Add both texts to container
-        this.settingsContainer.add([gearIcon, this.musicStateText]);
-        
-        // Make container interactive
-        this.settingsContainer
-            .setSize(gearIcon.width + this.musicStateText.width + 5, gearIcon.height)
-            .setInteractive({ useHandCursor: true })
+        // Add interactive ON/OFF state text
+        this.musicStateText = this.scene.add.text(musicLabel.width + 5, 0, isPlaying ? 'ON' : 'OFF', 
+            isPlaying ? this.onStateStyle : this.offStateStyle)
+            .setOrigin(0, 0)
+            .setInteractive({ 
+                useHandCursor: true,
+                hitArea: new Phaser.Geom.Rectangle(0, 0, 40, 30),
+                hitAreaCallback: Phaser.Geom.Rectangle.Contains
+            })
             .on('pointerover', () => {
-                gearIcon.setStyle({ fill: '#333333' });
+                this.musicStateText.setStyle({ 
+                    ...this.musicStateText.style,
+                    stroke: '#ffffff'
+                });
             })
             .on('pointerout', () => {
-                gearIcon.setStyle({ fill: '#000000' });
+                this.musicStateText.setStyle({ 
+                    ...this.musicStateText.style,
+                    stroke: '#000000'
+                });
             })
             .on('pointerdown', () => this.toggleMusic());
+
+        // Add elements to container
+        this.settingsContainer.add([musicLabel, this.musicStateText]);
         
         console.log('Settings Button created:', {
             x: this.settingsContainer.x,
@@ -329,35 +339,20 @@ export class GameUI {
         if (bgMusic) {
             if (bgMusic.isPlaying) {
                 bgMusic.pause();
-                this.scene.registry.set('musicEnabled', false);
-                this.musicStateText.setText('OFF');
-                this.musicStateText.setStyle({
-                    fill: '#ff0000',
-                    stroke: '#000000',
-                    strokeThickness: 1
-                });
             } else {
                 bgMusic.resume();
-                this.scene.registry.set('musicEnabled', true);
-                this.musicStateText.setText('ON');
-                this.musicStateText.setStyle({
-                    fill: '#00ff00',
-                    stroke: '#000000',
-                    strokeThickness: 1
-                });
             }
+            this.updateMusicButton();
         }
     }
 
     updateMusicButton() {
         const bgMusic = this.scene.sound.get('bgMusic');
-        const isPlaying = bgMusic && bgMusic.isPlaying;
-        this.musicStateText.setText(isPlaying ? 'ON' : 'OFF');
-        this.musicStateText.setStyle({
-            fill: isPlaying ? '#00ff00' : '#ff0000',
-            stroke: '#000000',
-            strokeThickness: 1
-        });
+        if (bgMusic && this.musicStateText) {
+            const isPlaying = bgMusic.isPlaying;
+            this.musicStateText.setText(isPlaying ? 'ON' : 'OFF');
+            this.musicStateText.setStyle(isPlaying ? this.onStateStyle : this.offStateStyle);
+        }
     }
 
     updateScore(points) {
