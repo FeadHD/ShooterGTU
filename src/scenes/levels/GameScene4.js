@@ -24,7 +24,7 @@ export class GameScene4 extends BaseScene {
         // Set up the main game camera
         this.cameras.main.setZoom(1.5);
         this.cameras.main.setBounds(0, 0, width, height);
-        this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
+        this.cameras.main.startFollow(this.player, true, 0.25, 0.25, 0, 0);
 
         // Set up UI
         this.gameUI = new GameUI(this);

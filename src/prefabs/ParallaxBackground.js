@@ -13,10 +13,15 @@ export class ParallaxBackground {
         // Create background layers with different scroll factors
         // The smaller the scrollFactor, the slower it moves
         const layers = [
-            { key: 'bg-sky', scrollFactor: 0.0, scale: 1.2, y: 0 },         // Sky stays fixed
-            { key: 'bg-mountains', scrollFactor: 0.05, scale: 0.8, y: height * 0.3 },   // Mountains very far back
-            { key: 'bg-trees', scrollFactor: 0.15, scale: 0.9, y: height * 0.4 },       // Trees in middle distance
-            { key: 'bg-ground', scrollFactor: 0.5, scale: 1.2, y: height * 0.7 }        // Ground in foreground
+            { key: 'bg-1', scrollFactor: 0.0, scale: 1.2, y: 0 },          // Farthest background
+            { key: 'bg-2', scrollFactor: 0.05, scale: 1.2, y: 0 },         // Very far mountains
+            { key: 'bg-3', scrollFactor: 0.1, scale: 1.2, y: 0 },          // Far mountains with fx
+            { key: 'bg-4', scrollFactor: 0.15, scale: 1.2, y: 0 },         // Mountains
+            { key: 'bg-5', scrollFactor: 0.2, scale: 1.2, y: 0 },          // Hills
+            { key: 'bg-6', scrollFactor: 0.25, scale: 1.2, y: 0 },         // Trees with fx
+            { key: 'bg-7', scrollFactor: 0.3, scale: 1.2, y: 0 },          // Trees
+            { key: 'bg-8', scrollFactor: 0.35, scale: 1.2, y: 0 },         // Near trees with fx
+            { key: 'bg-9', scrollFactor: 0.4, scale: 1.2, y: 0 }           // Closest trees
         ];
 
         layers.forEach(layer => {

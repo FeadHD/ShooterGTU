@@ -184,7 +184,6 @@ export class MainMenu extends Scene {
                 color: '#00ffff',
                 stroke: '#ffffff',
                 strokeThickness: 2,
-                backgroundColor: '#000000',
                 padding: { x: 15, y: 10 },
                 shadow: {
                     offsetX: 2,
