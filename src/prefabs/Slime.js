@@ -2,14 +2,15 @@ import { Enemy } from './EnemyTypes';
 
 export class Slime extends Enemy {
     constructor(scene, x, y) {
-        super(scene, x, y, 'slime_idle', 1);
-
-        // Replace rectangle with sprite
+        // Call parent constructor with minimal parameters
+        super(scene, x, y, 'slime_idle', 3);
+        
+        // Destroy the rectangle sprite created by parent
         if (this.sprite) {
             this.sprite.destroy();
         }
         
-        // Create new sprite
+        // Create slime sprite
         this.sprite = scene.physics.add.sprite(x, y, 'slime_idle', 0);
         console.log('Created slime sprite at:', x, y);
 
@@ -21,8 +22,8 @@ export class Slime extends Enemy {
             this.sprite.setFrame(0);
             
             // Set up physics with rectangular hitbox for better collisions
-            this.sprite.body.setSize(14, 14); // Slightly smaller than sprite
-            this.sprite.body.setOffset(9, 9); // Center the hitbox
+            this.sprite.body.setSize(28, 22); // Make hitbox more square
+            this.sprite.body.setOffset(2, 2); // Center the hitbox
             this.sprite.body.setGravityY(1000);
             this.sprite.body.setCollideWorldBounds(true);
             this.sprite.body.setBounce(0.2); // Reduced bounce for more stable movement
@@ -32,99 +33,99 @@ export class Slime extends Enemy {
             this.sprite.body.setImmovable(false);
             this.sprite.body.setAllowGravity(true);
             this.sprite.body.moves = true;
+            this.sprite.body.enable = true;
 
-            // Position slime on top of the ground (2 pixels lower)
-            const spawnY = scene.getSpawnHeight() + 2;
-            this.sprite.y = spawnY;
+            // Add these new properties for better tile collision
+            this.sprite.body.pushable = false; // Prevents being pushed by other physics bodies
+            this.sprite.body.setMass(1); // Consistent mass for collision calculations
+            
+            // Ensure solid collision with tiles
+            this.sprite.body.checkCollision.up = true;
+            this.sprite.body.checkCollision.down = true;
+            this.sprite.body.checkCollision.left = true;
+            this.sprite.body.checkCollision.right = true;
 
-            // Clean up any existing health bars
-            if (this.healthBar) this.healthBar.destroy();
-            if (this.healthBarBackground) this.healthBarBackground.destroy();
+            // Position slime on top of the ground
+            this.sprite.y = y;
+            this.sprite.body.reset(x, y);
             
-            // Create health bar
-            this.createHealthBar();
-            
-            // Create animations
-            this.createAnimations();
-            
-            // Start playing idle animation
-            this.playAnimation('idle');
-            
-            // Initialize movement
-            this.initializeMovement();
-
             // Store reference to this enemy instance on the sprite
             this.sprite.enemy = this;
+
+            // Set movement properties
+            this.jumpForce = -350; 
+            this.jumpChance = 0.015; 
+            this.lastJumpTime = 0;
+            this.jumpCooldown = 1500; 
+            this.horizontalJumpForce = 150; 
+
+            // Slime enemy class implementation
+            this.health = 3;
+            this.maxHealth = 3;
+            this.moveSpeed = 80; 
+            this.damageAmount = 20;
+            this.scoreValue = 10;
+            
+            // Add player tracking properties
+            this.detectionRange = 800; 
+            this.aggroRange = 200; 
+            
+            // Add invincibility flag
+            this.isInvincible = false;
+            this.isDying = false;
+            this.direction = Math.random() < 0.5 ? -1 : 1; 
         }
-
-        // Set movement properties
-        this.jumpForce = -350; // Reduced jump force
-        this.jumpChance = 0.015; // Reduced jump chance
-        this.lastJumpTime = 0;
-        this.jumpCooldown = 1500; // Increased cooldown between jumps
-        this.horizontalJumpForce = 150; // Reduced horizontal force
-
-        // Slime enemy class implementation
-        this.scene = scene;
-        this.health = 3;
-        this.maxHealth = 3;
-        this.moveSpeed = 80; // Slightly reduced speed
-        this.damageAmount = 20;
-        this.scoreValue = 10;
-        
-        // Add player tracking properties
-        this.detectionRange = 800; // Detection range in pixels
-        this.aggroRange = 200; // Range for increased aggression
-        
-        // Add invincibility flag
-        this.isInvincible = false;
-        this.isDying = false;
-        this.direction = Math.random() < 0.5 ? -1 : 1; // Random initial direction
     }
 
     createHealthBar() {
-        // Destroy existing health bars if they exist
-        if (this.healthBar) this.healthBar.destroy();
-        if (this.healthBarBackground) this.healthBarBackground.destroy();
+        const width = 32;
+        const height = 4;
+        const padding = 2;
+        const y = -20; 
 
-        // Create health bar background
+        // Create background bar
         this.healthBarBackground = this.scene.add.rectangle(
-            this.sprite.x,
-            this.sprite.y - 30,
-            50,
-            5,
+            0,
+            y,
+            width + padding * 2,
+            height + padding * 2,
+            0x000000
+        );
+        this.healthBarBackground.setDepth(1);
+        this.healthBarBackground.setOrigin(0.5, 0.5);
+        
+        // Create health bar
+        this.healthBar = this.scene.add.rectangle(
+            0,
+            y,
+            width,
+            height,
             0xff0000
         );
-
-        // Create health bar foreground
-        this.healthBar = this.scene.add.rectangle(
-            this.sprite.x,
-            this.sprite.y - 30,
-            50,
-            5,
-            0x00ff00
-        );
-
-        // Set the origin to match the sprite
-        this.healthBarBackground.setOrigin(0.5, 0.5);
+        this.healthBar.setDepth(1);
         this.healthBar.setOrigin(0.5, 0.5);
 
-        // Set depth to ensure health bars are always visible
-        this.healthBarBackground.setDepth(1);
-        this.healthBar.setDepth(1);
+        // Make health bars ignore physics
+        if (this.healthBarBackground.body) {
+            this.healthBarBackground.body.enable = false;
+        }
+        if (this.healthBar.body) {
+            this.healthBar.body.enable = false;
+        }
     }
 
     updateHealthBar() {
-        if (!this.sprite || !this.healthBar || !this.healthBarBackground) return;
+        if (this.healthBar && this.sprite) {
+            // Update position to follow slime
+            const healthBarY = this.sprite.y - 20;
+            this.healthBarBackground.setPosition(this.sprite.x, healthBarY);
+            this.healthBar.setPosition(this.sprite.x, healthBarY);
 
-        // Update health bar position
-        const barY = this.sprite.y - 30;
-        this.healthBarBackground.setPosition(this.sprite.x, barY);
-        this.healthBar.setPosition(this.sprite.x, barY);
-
-        // Update health bar width based on current health
-        const healthPercent = Math.max(0, this.health) / this.maxHealth;
-        this.healthBar.width = 50 * healthPercent;
+            // Update health bar width based on current health
+            const width = 32;
+            const healthPercentage = this.health / this.maxHealth;
+            this.healthBar.width = width * healthPercentage;
+        }
     }
 
     createAnimations() {
@@ -169,7 +170,7 @@ export class Slime extends Enemy {
                 key: 'slime_death',
                 frames: this.scene.anims.generateFrameNumbers('slime_death', {
                     start: 0,
-                    end: 5
+                    end: 4
                 }),
                 frameRate: 10,
                 repeat: 0
@@ -196,13 +197,21 @@ export class Slime extends Enemy {
     }
 
     initializeMovement() {
-        // Basic horizontal movement
-        this.sprite.setVelocityX(this.moveSpeed * this.direction);
-        
-        // Change direction when hitting world bounds
-        this.sprite.body.onWorldBounds = true;
-        this.worldBoundsListener = this.onWorldBounds.bind(this);
-        this.sprite.body.world.on('worldbounds', this.worldBoundsListener, this);
+        if (this.sprite && this.sprite.body) {
+            // Set initial velocity
+            this.sprite.setVelocityX(this.moveSpeed * this.direction);
+            
+            // Create animations if they don't exist
+            this.createAnimations();
+            
+            // Start playing idle animation
+            this.playAnimation('idle');
+            
+            // Change direction when hitting world bounds
+            this.sprite.body.onWorldBounds = true;
+            this.worldBoundsListener = this.onWorldBounds.bind(this);
+            this.sprite.body.world.on('worldbounds', this.worldBoundsListener, this);
+        }
     }
 
     onWorldBounds(body) {
@@ -334,8 +343,8 @@ export class Slime extends Enemy {
         this.sprite.setVelocity(0, 0);
         this.sprite.body.allowGravity = false;
         this.sprite.body.enable = false;
-        this.sprite.body.moves = false;  // Prevent any further movement
-        this.moveSpeed = 0;  // Stop horizontal movement
+        this.sprite.body.moves = false;  
+        this.moveSpeed = 0;  
         
         // Remove world bounds collision
         this.sprite.body.onWorldBounds = false;
@@ -368,18 +377,25 @@ export class Slime extends Enemy {
     }
 
     update() {
-        if (this.isDying) return;  // Skip all updates if dying
-
-        if (!this.sprite || !this.sprite.body) return;
+        if (!this.sprite || !this.sprite.body || !this.sprite.active) return;
 
         const currentTime = this.scene.time.now;
 
-        // Update health bar position
-        if (this.healthBar && this.healthBarBackground) {
-            this.healthBar.x = this.sprite.x;
-            this.healthBar.y = this.sprite.y - 30;
-            this.healthBarBackground.x = this.sprite.x;
-            this.healthBarBackground.y = this.sprite.y - 30;
+        // Basic movement
+        if (this.sprite.body.onFloor()) {
+            // Ensure slime is moving in its direction
+            if (Math.abs(this.sprite.body.velocity.x) < this.moveSpeed) {
+                this.sprite.setVelocityX(this.moveSpeed * this.direction);
+            }
+            
+            // Update sprite flip based on direction
+            this.sprite.flipX = this.direction < 0;
+            
+            // Random chance to jump when on floor
+            if (Math.random() < this.jumpChance && 
+                currentTime - this.lastJumpTime >= this.jumpCooldown) {
+                this.jump();
+            }
         }
 
         // Track player if available
@@ -407,46 +423,22 @@ export class Slime extends Enemy {
                             currentTime - this.lastJumpTime >= this.jumpCooldown) {
                             this.jumpTowardsPlayer(player);
                         }
-                    } else {
-                        // Normal jumping when player is detected but not too close
-                        if (Math.random() < this.jumpChance && 
-                            currentTime - this.lastJumpTime >= this.jumpCooldown) {
-                            this.jumpTowardsPlayer(player);
-                        }
                     }
-                }
-            } else {
-                // Default wandering behavior when player is out of range
-                if (this.sprite.body.onFloor()) {
-                    // Continue moving in current direction
-                    this.sprite.setVelocityX(this.moveSpeed * this.direction);
-                    this.sprite.flipX = this.direction < 0;
-                    
-                    // Random chance to jump when on floor
-                    if (Math.random() < this.jumpChance && 
-                        currentTime - this.lastJumpTime >= this.jumpCooldown) {
-                        this.jump();
-                    }
-                }
-            }
-        } else {
-            // Default behavior when no player is detected
-            if (this.sprite.body.onFloor()) {
-                // Continue moving in current direction
-                this.sprite.setVelocityX(this.moveSpeed * this.direction);
-                this.sprite.flipX = this.direction < 0;
-                
-                // Random chance to jump when on floor
-                if (Math.random() < this.jumpChance && 
-                    currentTime - this.lastJumpTime >= this.jumpCooldown) {
-                    this.jump();
                 }
             }
         }
+
+        // Check if slime hits world bounds and reverse direction
+        if (this.sprite.body.blocked.left || this.sprite.body.blocked.right) {
+            this.direction *= -1;
+        }
+
+        // Update health bar position
+        this.updateHealthBar();
     }
 
     jumpTowardsPlayer(player) {
-        if (!this.sprite || !this.sprite.body) return;
+        if (!this.sprite || !this.sprite.body || !this.sprite.body.onFloor()) return;
 
         this.lastJumpTime = this.scene.time.now;
         
@@ -458,12 +450,20 @@ export class Slime extends Enemy {
 
         // Calculate direction to player
         const direction = player.x < this.sprite.x ? -1 : 1;
-        this.sprite.setVelocityX(direction * this.horizontalJumpForce);
-        this.sprite.flipX = direction < 0;
+        
+        // Check if there's a wall in the direction we want to jump
+        const tileX = Math.floor((this.sprite.x + direction * 16) / 32);
+        const tileY = Math.floor(this.sprite.y / 32);
+        const tile = this.scene.mapLayer.getTileAt(tileX, tileY);
+        
+        if (!tile || !tile.collides) {
+            this.sprite.setVelocityX(direction * this.horizontalJumpForce);
+            this.sprite.flipX = direction < 0;
+        }
     }
 
     jump() {
-        if (!this.sprite || !this.sprite.body) return;
+        if (!this.sprite || !this.sprite.body || !this.sprite.body.onFloor()) return;
 
         // Play jump animation
         this.playAnimation('jump');
@@ -473,9 +473,15 @@ export class Slime extends Enemy {
 
         // Apply horizontal force in random direction
         const direction = Math.random() < 0.5 ? -1 : 1;
-        this.sprite.body.setVelocityX(direction * this.horizontalJumpForce);
         
-        // Flip sprite based on direction
-        this.sprite.flipX = direction < 0;
+        // Check if there's a wall in the direction we want to jump
+        const tileX = Math.floor((this.sprite.x + direction * 16) / 32);
+        const tileY = Math.floor(this.sprite.y / 32);
+        const tile = this.scene.mapLayer.getTileAt(tileX, tileY);
+        
+        if (!tile || !tile.collides) {
+            this.sprite.setVelocityX(direction * this.horizontalJumpForce);
+            this.sprite.flipX = direction < 0;
+        }
     }
 }

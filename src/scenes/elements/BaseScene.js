@@ -4,6 +4,16 @@ import { Bullet } from '../../prefabs/Bullet';
 import { ParallaxBackground } from '../../prefabs/ParallaxBackground';
 
 export class BaseScene extends Scene {
+    preload() {
+        // Load bullet spritesheet if not already loaded
+        if (!this.textures.exists('bullet_animation')) {
+            this.load.spritesheet('bullet_animation', 'assets/sprites/bullet_animation.png', {
+                frameWidth: 24,
+                frameHeight: 24
+            });
+        }
+    }
+
     create() {
         // Initialize game state
         if (this.registry.get('score') === undefined) {
@@ -25,6 +35,16 @@ export class BaseScene extends Scene {
         this.jumpSpeed = -450;
         this.input.keyboard.enabled = true;  // Ensure keyboard is enabled on scene start
 
+        // Create bullet animation if it doesn't exist
+        if (!this.anims.exists('bullet_anim')) {
+            this.anims.create({
+                key: 'bullet_anim',
+                frames: this.anims.generateFrameNumbers('bullet_animation', { start: 0, end: 3 }),
+                frameRate: 10,
+                repeat: -1
+            });
+        }
+
         // Set up world
         const { width, height } = this.scale;
         this.physics.world.gravity.y = 800;
@@ -37,24 +57,27 @@ export class BaseScene extends Scene {
         // Create ground
         this.platforms = this.physics.add.staticGroup();
         
-        // Calculate ground dimensions
-        const groundTop = height - 100;  // Keep the same top position
-        const groundHeight = height - groundTop;  // Height from top position to bottom of screen
+        // Calculate ground dimensions - ensure total height is exactly 64 pixels
+        const TOTAL_GROUND_HEIGHT = 64;  // Fixed total height
+        const groundTop = height - TOTAL_GROUND_HEIGHT;  // Position from bottom
+        const groundHeight = TOTAL_GROUND_HEIGHT;  // Explicit height
+        const LEVEL_WIDTH = 3840; // Full level width
         
         // Create gradient ground using graphics
         const groundGraphics = this.add.graphics();
+        groundGraphics.setDepth(1);  // Ensure graphics are rendered at correct depth
         
         // Define gradient colors (metallic grays with subtle blue tint)
         const topColor = 0x9BA7B5;    // Light metallic gray with slight blue tint
         const midColor = 0x6A7A8C;    // Medium steel gray with blue tint
         const bottomColor = 0x2C3540;  // Dark gunmetal gray with blue tint
         
-        // Create gradient fill
+        // Create gradient fill within the 64-pixel boundary
         groundGraphics.clear();
         
-        // Define panel properties
+        // Define panel properties - ensure they fit within 64 pixels
         const panelCount = 8;  // Number of large panels
-        const panelHeight = groundHeight / panelCount;
+        const panelHeight = TOTAL_GROUND_HEIGHT / panelCount;  // Each panel is 8 pixels tall (64/8)
         const lineThickness = 1;  // Thickness of separator lines
         const lineAlpha = 0.3;    // Transparency of lines (subtle)
         const lineBrightness = 1.2;  // How much lighter the lines are than the background
@@ -76,24 +99,24 @@ export class BaseScene extends Scene {
                 panelColor = this.blendColors(midColor, bottomColor, blendRatio);
             }
             
-            // Draw panel background
+            // Draw panel background across full level width
             groundGraphics.fillStyle(panelColor, 1);
-            groundGraphics.fillRect(0, panelTop, width, panelHeight);
+            groundGraphics.fillRect(0, panelTop, LEVEL_WIDTH, panelHeight);
             
             // Draw subtle tech details within each panel
             const lineColor = this.lightenColor(panelColor, lineBrightness);
             groundGraphics.lineStyle(lineThickness, lineColor, lineAlpha);
             
-            // Draw horizontal separator line at bottom of panel
+            // Draw horizontal separator line at bottom of panel across full width
             groundGraphics.beginPath();
             groundGraphics.moveTo(0, panelTop + panelHeight);
-            groundGraphics.lineTo(width, panelTop + panelHeight);
+            groundGraphics.lineTo(LEVEL_WIDTH, panelTop + panelHeight);
             groundGraphics.strokePath();
             
             // Draw some subtle vertical lines (tech details)
-            const verticalLines = 6;  // Number of vertical lines per panel
+            const verticalLines = Math.ceil(LEVEL_WIDTH / 200);  // One line every 200 pixels
             for (let j = 1; j < verticalLines; j++) {
-                const x = (width / verticalLines) * j;
+                const x = (LEVEL_WIDTH / verticalLines) * j;
                 const lineHeight = panelHeight * 0.3;  // Lines are 30% of panel height
                 const lineY = panelTop + (panelHeight - lineHeight) / 2;
                 
@@ -106,30 +129,31 @@ export class BaseScene extends Scene {
 
         // Create tech line graphics (separate layer for glow effect)
         const techLinesGraphics = this.add.graphics();
+        techLinesGraphics.setDepth(2);  // Render above base ground
         
         // Define tech line properties
         const glowColor = 0x00FFFF;  // Cyan color for tech feel
         const glowAlpha = 0.3;       // Base transparency
         const glowThickness = 1;     // Line thickness
-        const numTechLines = 12;     // Number of glowing lines
-        const techLineSpacing = groundHeight / numTechLines;
+        const numTechLines = 8;      // Number of horizontal lines
+        const techLineSpacing = TOTAL_GROUND_HEIGHT / numTechLines;
         
-        // Create container for blinking lights
+        // Initialize tech lights array
         this.techLights = [];
         
-        // Draw glowing tech lines and add lights
+        // Draw glowing tech lines across full width
         techLinesGraphics.lineStyle(glowThickness, glowColor, glowAlpha);
         
         for (let i = 0; i < numTechLines; i++) {
             const y = groundTop + (i * techLineSpacing);
             
-            // Draw main line
+            // Draw main line across full width
             techLinesGraphics.beginPath();
             techLinesGraphics.moveTo(0, y);
-            techLinesGraphics.lineTo(width, y);
+            techLinesGraphics.lineTo(LEVEL_WIDTH, y);
             techLinesGraphics.strokePath();
             
-            // Add glow effect by drawing multiple semi-transparent lines
+            // Add glow effect
             const glowLayers = 3;
             for (let g = 1; g <= glowLayers; g++) {
                 const glowOffset = g * 0.5;
@@ -137,23 +161,22 @@ export class BaseScene extends Scene {
                 
                 techLinesGraphics.lineStyle(glowThickness, glowColor, layerAlpha);
                 
-                // Draw line above
+                // Draw lines with glow above and below across full width
                 techLinesGraphics.beginPath();
                 techLinesGraphics.moveTo(0, y - glowOffset);
-                techLinesGraphics.lineTo(width, y - glowOffset);
+                techLinesGraphics.lineTo(LEVEL_WIDTH, y - glowOffset);
                 techLinesGraphics.strokePath();
                 
-                // Draw line below
                 techLinesGraphics.beginPath();
                 techLinesGraphics.moveTo(0, y + glowOffset);
-                techLinesGraphics.lineTo(width, y + glowOffset);
+                techLinesGraphics.lineTo(LEVEL_WIDTH, y + glowOffset);
                 techLinesGraphics.strokePath();
             }
 
-            // Add blinking lights along this line
-            const numLights = 8;  // Number of lights per line
+            // Add blinking lights along the line
+            const numLights = Math.ceil(LEVEL_WIDTH / 200);  // One light every 200 pixels
             for (let j = 1; j < numLights; j++) {
-                const x = (width / numLights) * j;
+                const x = (LEVEL_WIDTH / numLights) * j;
                 
                 // Create light graphics
                 const light = this.add.graphics();
@@ -204,14 +227,15 @@ export class BaseScene extends Scene {
             ease: 'Sine.easeInOut'
         });
         
-        // Create invisible rectangle for collision
+        // Create invisible rectangle for collision - exactly 64 pixels tall
         const ground = this.add.rectangle(
-            width/2,
-            groundTop + groundHeight/2,
-            width,
-            groundHeight
+            width/2,                    // center x
+            groundTop + TOTAL_GROUND_HEIGHT/2, // center y
+            width,                      // full width
+            TOTAL_GROUND_HEIGHT         // exactly 64 pixels tall
         );
         ground.setAlpha(0);  // Make it invisible since we're using the graphics for visuals
+        ground.setDepth(0);  // Ensure collision is at base level
         
         // Add physics and collision
         this.physics.add.existing(ground, true);
@@ -219,7 +243,7 @@ export class BaseScene extends Scene {
         
         // Store ground top position for spawning entities
         this.groundTop = groundTop;
-        this.getSpawnHeight = () => this.groundTop - 24;
+        this.getSpawnHeight = () => this.groundTop - 16;  // Reduced offset for closer ground alignment
 
         // Create particles and sounds
         this.hitParticles = this.add.particles({
@@ -245,6 +269,13 @@ export class BaseScene extends Scene {
             allowGravity: false,  // Disable gravity for all bullets in the group
             immovable: true  // Make bullets not affected by collisions
         });
+
+        // Add collision between bullets and platforms/tiles
+        if (this.mapLayer) {
+            this.physics.add.collider(this.bullets, this.mapLayer, (bullet) => {
+                this.destroyBullet(bullet);
+            }, null, this);
+        }
 
         // Create animations and player
         this.createAnimations();
@@ -332,6 +363,9 @@ export class BaseScene extends Scene {
         if (this.anims.exists('character_idle')) {
             this.player.play('character_idle');
         }
+
+        // Initialize jump counter
+        this.player.jumpsAvailable = 2;
 
         this.physics.add.collider(this.player, this.platforms);
     }
@@ -586,6 +620,11 @@ export class BaseScene extends Scene {
 
         const onGround = this.player.body.onFloor();
 
+        // Reset jumps when touching the ground
+        if (onGround) {
+            this.player.jumpsAvailable = 2;
+        }
+
         if (this.wasd.left.isDown) {
             this.player.setVelocityX(-this.movementSpeed);
             this.player.flipX = true;  // Face left
@@ -599,9 +638,13 @@ export class BaseScene extends Scene {
             if (onGround) this.player.play('character_idle', true);
         }
 
-        if (this.wasd.up.isDown && onGround) {
-            this.player.setVelocityY(this.jumpSpeed);
-            this.player.play('character_jump', true);
+        // Modified jump logic to support double jump
+        if (this.wasd.up.isDown && Phaser.Input.Keyboard.JustDown(this.wasd.up)) {
+            if (this.player.jumpsAvailable > 0) {
+                this.player.setVelocityY(this.jumpSpeed);
+                this.player.play('character_jump', true);
+                this.player.jumpsAvailable--;
+            }
         }
 
         // Check for bullets that are off screen and destroy them
