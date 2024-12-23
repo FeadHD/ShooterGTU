@@ -3,12 +3,13 @@ import { Scene } from 'phaser';
 export class MissionComplete extends Scene {
     constructor() {
         super({ key: 'MissionComplete' });
+        this.musicStarted = false;
     }
 
     preload() {
         // Load particle image
         this.load.image('particle', 'assets/particle.png');
-        // Load victory music
+        // Load victory music with correct path and extension
         this.load.audio('victoryMusic', 'assets/sounds/congratulations.mp3');
         // Load background music for restart
         this.load.audio('bgMusic', 'assets/sounds/background_music.mp3');
@@ -73,24 +74,21 @@ export class MissionComplete extends Scene {
     }
 
     create() {
-        // Stop any existing music
+        // Stop any existing music immediately
         this.sound.stopAll();
 
-        // Stop any existing background music first
-        const existingMusic = this.sound.get('bgMusic');
-        if (existingMusic) {
-            existingMusic.stop();
-        }
-
-        // Get music state
+        // Get music state right away
         const musicEnabled = this.registry.get('musicEnabled');
 
-        // Create and play victory music only if music is enabled
-        this.victoryMusic = this.sound.add('victoryMusic', { volume: 0.3, loop: true });
-        if (musicEnabled !== false) {
+        // Create and play victory music immediately
+        if (!this.musicStarted && musicEnabled !== false) {
+            this.victoryMusic = this.sound.add('victoryMusic', { 
+                volume: 0.5, 
+                loop: true 
+            });
             this.victoryMusic.play();
+            this.musicStarted = true;
         }
-        console.log('Playing victory music in mission complete scene'); // Debug log
 
         this.cameras.main.setBackgroundColor('#000000');
         

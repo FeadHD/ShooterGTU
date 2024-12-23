@@ -105,16 +105,16 @@ export class Game extends Scene {
         this.player.setVelocity(0);
 
         if (this.cursors.left.isDown) {
-            this.player.setVelocityX(-300);
+            this.player.setVelocityX(-500);
         }
         if (this.cursors.right.isDown) {
-            this.player.setVelocityX(300);
+            this.player.setVelocityX(500);
         }
         if (this.cursors.up.isDown) {
-            this.player.setVelocityY(-300);
+            this.player.setVelocityY(-500);
         }
         if (this.cursors.down.isDown) {
-            this.player.setVelocityY(300);
+            this.player.setVelocityY(500);
         }
     }
 

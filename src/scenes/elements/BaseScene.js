@@ -54,196 +54,12 @@ export class BaseScene extends Scene {
         console.log('BaseScene: Creating parallax background...');
         this.parallaxBackground = new ParallaxBackground(this);
 
-        // Create ground
+        // Create platforms group for collision
         this.platforms = this.physics.add.staticGroup();
         
-        // Calculate ground dimensions - ensure total height is exactly 64 pixels
-        const TOTAL_GROUND_HEIGHT = 64;  // Fixed total height
-        const groundTop = height - TOTAL_GROUND_HEIGHT;  // Position from bottom
-        const groundHeight = TOTAL_GROUND_HEIGHT;  // Explicit height
-        const LEVEL_WIDTH = 3840; // Full level width
-        
-        // Create gradient ground using graphics
-        const groundGraphics = this.add.graphics();
-        groundGraphics.setDepth(1);  // Ensure graphics are rendered at correct depth
-        
-        // Define gradient colors (metallic grays with subtle blue tint)
-        const topColor = 0x9BA7B5;    // Light metallic gray with slight blue tint
-        const midColor = 0x6A7A8C;    // Medium steel gray with blue tint
-        const bottomColor = 0x2C3540;  // Dark gunmetal gray with blue tint
-        
-        // Create gradient fill within the 64-pixel boundary
-        groundGraphics.clear();
-        
-        // Define panel properties - ensure they fit within 64 pixels
-        const panelCount = 8;  // Number of large panels
-        const panelHeight = TOTAL_GROUND_HEIGHT / panelCount;  // Each panel is 8 pixels tall (64/8)
-        const lineThickness = 1;  // Thickness of separator lines
-        const lineAlpha = 0.3;    // Transparency of lines (subtle)
-        const lineBrightness = 1.2;  // How much lighter the lines are than the background
-        
-        // Draw panels with gradient and separator lines
-        for (let i = 0; i < panelCount; i++) {
-            const panelTop = groundTop + (i * panelHeight);
-            const ratio = i / (panelCount - 1);
-            
-            // Calculate base color for this panel
-            let panelColor;
-            if (ratio < 0.5) {
-                // Blend from top to mid color
-                const blendRatio = ratio * 2;
-                panelColor = this.blendColors(topColor, midColor, blendRatio);
-            } else {
-                // Blend from mid to bottom color
-                const blendRatio = (ratio - 0.5) * 2;
-                panelColor = this.blendColors(midColor, bottomColor, blendRatio);
-            }
-            
-            // Draw panel background across full level width
-            groundGraphics.fillStyle(panelColor, 1);
-            groundGraphics.fillRect(0, panelTop, LEVEL_WIDTH, panelHeight);
-            
-            // Draw subtle tech details within each panel
-            const lineColor = this.lightenColor(panelColor, lineBrightness);
-            groundGraphics.lineStyle(lineThickness, lineColor, lineAlpha);
-            
-            // Draw horizontal separator line at bottom of panel across full width
-            groundGraphics.beginPath();
-            groundGraphics.moveTo(0, panelTop + panelHeight);
-            groundGraphics.lineTo(LEVEL_WIDTH, panelTop + panelHeight);
-            groundGraphics.strokePath();
-            
-            // Draw some subtle vertical lines (tech details)
-            const verticalLines = Math.ceil(LEVEL_WIDTH / 200);  // One line every 200 pixels
-            for (let j = 1; j < verticalLines; j++) {
-                const x = (LEVEL_WIDTH / verticalLines) * j;
-                const lineHeight = panelHeight * 0.3;  // Lines are 30% of panel height
-                const lineY = panelTop + (panelHeight - lineHeight) / 2;
-                
-                groundGraphics.beginPath();
-                groundGraphics.moveTo(x, lineY);
-                groundGraphics.lineTo(x, lineY + lineHeight);
-                groundGraphics.strokePath();
-            }
-        }
-
-        // Create tech line graphics (separate layer for glow effect)
-        const techLinesGraphics = this.add.graphics();
-        techLinesGraphics.setDepth(2);  // Render above base ground
-        
-        // Define tech line properties
-        const glowColor = 0x00FFFF;  // Cyan color for tech feel
-        const glowAlpha = 0.3;       // Base transparency
-        const glowThickness = 1;     // Line thickness
-        const numTechLines = 8;      // Number of horizontal lines
-        const techLineSpacing = TOTAL_GROUND_HEIGHT / numTechLines;
-        
-        // Initialize tech lights array
-        this.techLights = [];
-        
-        // Draw glowing tech lines across full width
-        techLinesGraphics.lineStyle(glowThickness, glowColor, glowAlpha);
-        
-        for (let i = 0; i < numTechLines; i++) {
-            const y = groundTop + (i * techLineSpacing);
-            
-            // Draw main line across full width
-            techLinesGraphics.beginPath();
-            techLinesGraphics.moveTo(0, y);
-            techLinesGraphics.lineTo(LEVEL_WIDTH, y);
-            techLinesGraphics.strokePath();
-            
-            // Add glow effect
-            const glowLayers = 3;
-            for (let g = 1; g <= glowLayers; g++) {
-                const glowOffset = g * 0.5;
-                const layerAlpha = glowAlpha / (g * 2);
-                
-                techLinesGraphics.lineStyle(glowThickness, glowColor, layerAlpha);
-                
-                // Draw lines with glow above and below across full width
-                techLinesGraphics.beginPath();
-                techLinesGraphics.moveTo(0, y - glowOffset);
-                techLinesGraphics.lineTo(LEVEL_WIDTH, y - glowOffset);
-                techLinesGraphics.strokePath();
-                
-                techLinesGraphics.beginPath();
-                techLinesGraphics.moveTo(0, y + glowOffset);
-                techLinesGraphics.lineTo(LEVEL_WIDTH, y + glowOffset);
-                techLinesGraphics.strokePath();
-            }
-
-            // Add blinking lights along the line
-            const numLights = Math.ceil(LEVEL_WIDTH / 200);  // One light every 200 pixels
-            for (let j = 1; j < numLights; j++) {
-                const x = (LEVEL_WIDTH / numLights) * j;
-                
-                // Create light graphics
-                const light = this.add.graphics();
-                
-                // Randomize light properties
-                const lightSize = 2 + Math.random() * 2;  // Random size between 2-4 pixels
-                const baseColor = Math.random() < 0.7 ? 0x00FFFF : 0xFFFFFF;  // 70% cyan, 30% white
-                const baseAlpha = 0.1 + Math.random() * 0.2;  // Random base alpha
-                
-                // Draw the light
-                light.fillStyle(baseColor, baseAlpha);
-                light.fillCircle(x, y, lightSize);
-                
-                // Add glow effect
-                const glowSize = lightSize * 1.5;
-                light.fillStyle(baseColor, baseAlpha * 0.5);
-                light.fillCircle(x, y, glowSize);
-                
-                // Store light reference
-                this.techLights.push(light);
-                
-                // Create blinking animation
-                const blinkDuration = 1500 + Math.random() * 3000;  // Random duration between 1.5-4.5 seconds
-                const delay = Math.random() * 2000;  // Random delay up to 2 seconds
-                
-                this.tweens.add({
-                    targets: light,
-                    alpha: { from: 1, to: 0.1 },
-                    duration: blinkDuration,
-                    yoyo: true,
-                    repeat: -1,
-                    delay: delay,
-                    ease: 'Sine.easeInOut'
-                });
-            }
-        }
-
-        // Store tech lines graphics for animation
-        this.techLinesGraphics = techLinesGraphics;
-        
-        // Add subtle pulse animation to tech lines
-        this.tweens.add({
-            targets: techLinesGraphics,
-            alpha: 0.1,
-            duration: 2000,
-            yoyo: true,
-            repeat: -1,
-            ease: 'Sine.easeInOut'
-        });
-        
-        // Create invisible rectangle for collision - exactly 64 pixels tall
-        const ground = this.add.rectangle(
-            width/2,                    // center x
-            groundTop + TOTAL_GROUND_HEIGHT/2, // center y
-            width,                      // full width
-            TOTAL_GROUND_HEIGHT         // exactly 64 pixels tall
-        );
-        ground.setAlpha(0);  // Make it invisible since we're using the graphics for visuals
-        ground.setDepth(0);  // Ensure collision is at base level
-        
-        // Add physics and collision
-        this.physics.add.existing(ground, true);
-        this.platforms.add(ground);
-        
-        // Store ground top position for spawning entities
-        this.groundTop = groundTop;
-        this.getSpawnHeight = () => this.groundTop - 16;  // Reduced offset for closer ground alignment
+        // Store reference for spawning entities
+        this.groundTop = height - 64;
+        this.getSpawnHeight = () => this.groundTop - 16;
 
         // Create particles and sounds
         this.hitParticles = this.add.particles({
@@ -270,12 +86,10 @@ export class BaseScene extends Scene {
             immovable: true  // Make bullets not affected by collisions
         });
 
-        // Add collision between bullets and platforms/tiles
-        if (this.mapLayer) {
-            this.physics.add.collider(this.bullets, this.mapLayer, (bullet) => {
-                this.destroyBullet(bullet);
-            }, null, this);
-        }
+        // Add collision between bullets and platforms
+        this.physics.add.collider(this.bullets, this.platforms, (bullet) => {
+            this.destroyBullet(bullet);
+        }, null, this);
 
         // Create animations and player
         this.createAnimations();
@@ -300,13 +114,21 @@ export class BaseScene extends Scene {
         this.events.on('shutdown', this.cleanup, this);
         this.events.on('sleep', this.cleanup, this);
 
-        // Add debug graphics and toggle
+        // Create debug graphics
         this.debugGraphics = this.add.graphics();
         this.debugGraphics.setDepth(999);
         this.showDebug = false;
-        
+
         // Add E key for debug toggle
         this.input.keyboard.addKey('E').on('down', () => {
+            this.showDebug = !this.showDebug;
+            if (!this.showDebug) {
+                this.debugGraphics.clear();
+            }
+        });
+
+        // Add O key for boundary visualization
+        this.input.keyboard.addKey('O').on('down', () => {
             this.showDebug = !this.showDebug;
             if (!this.showDebug) {
                 this.debugGraphics.clear();
@@ -399,12 +221,15 @@ export class BaseScene extends Scene {
     }
 
     createSceneBoundaries() {
-        const width = this.scale.width;
         const height = this.scale.height;
+        const worldWidth = 3840; // Fixed world width for all scenes
         
         // Create invisible walls at scene edges
         const leftBoundary = this.add.rectangle(0, height/2, 10, height, 0x000000, 0);
-        const rightBoundary = this.add.rectangle(width, height/2, 10, height, 0x000000, 0);
+        const rightBoundary = this.add.rectangle(worldWidth - 10, height/2, 10, height, 0x000000, 0);
+        
+        // Add pink rectangle to visualize scene transition area
+        const transitionZone = this.add.rectangle(worldWidth - 55, height/2, 100, height, 0xff69b4, 0.3);
         
         // Make left boundary solid to prevent going back
         this.physics.add.existing(leftBoundary, true);
@@ -412,6 +237,14 @@ export class BaseScene extends Scene {
         
         // Right boundary for scene transition
         this.physics.add.existing(rightBoundary, true);
+        
+        // Store references for debug visualization
+        this.boundaries = {
+            leftBoundary,
+            rightBoundary,
+            transitionZone,
+            worldBounds: this.physics.world.bounds
+        };
         
         // Add overlap detection for scene transition (right side only)
         this.physics.add.overlap(this.player, rightBoundary, () => {
@@ -422,6 +255,9 @@ export class BaseScene extends Scene {
                 this.scene.start(nextScene);
             }
         });
+
+        // Make sure transition zone scrolls with camera
+        transitionZone.setScrollFactor(1);
     }
 
     shoot(direction = 'right') {
@@ -577,6 +413,16 @@ export class BaseScene extends Scene {
         if (this.showDebug) {
             this.debugGraphics.clear();
             
+            // Draw world bounds in blue
+            this.debugGraphics
+                .lineStyle(2, 0x0000ff)
+                .strokeRect(
+                    this.physics.world.bounds.x,
+                    this.physics.world.bounds.y,
+                    this.physics.world.bounds.width,
+                    this.physics.world.bounds.height
+                );
+            
             // Draw hitboxes for all physics bodies
             this.children.list.forEach(obj => {
                 if (obj.body) {
@@ -600,6 +446,39 @@ export class BaseScene extends Scene {
                     }
                 }
             });
+
+            // Draw boundaries in different colors
+            if (this.boundaries) {
+                // Left boundary in red
+                this.debugGraphics
+                    .lineStyle(2, 0xff0000)
+                    .strokeRect(
+                        this.boundaries.leftBoundary.x - 5,
+                        this.boundaries.leftBoundary.y - this.boundaries.leftBoundary.height/2,
+                        10,
+                        this.boundaries.leftBoundary.height
+                    );
+                
+                // Right boundary in green
+                this.debugGraphics
+                    .lineStyle(2, 0x00ff00)
+                    .strokeRect(
+                        this.boundaries.rightBoundary.x - 5,
+                        this.boundaries.rightBoundary.y - this.boundaries.rightBoundary.height/2,
+                        10,
+                        this.boundaries.rightBoundary.height
+                    );
+                
+                // Transition zone in yellow
+                this.debugGraphics
+                    .lineStyle(2, 0xffff00)
+                    .strokeRect(
+                        this.boundaries.transitionZone.x - this.boundaries.transitionZone.width/2,
+                        this.boundaries.transitionZone.y - this.boundaries.transitionZone.height/2,
+                        this.boundaries.transitionZone.width,
+                        this.boundaries.transitionZone.height
+                    );
+            }
         }
 
         if (this.gameOver && this.spaceKey && this.spaceKey.isDown) {
@@ -705,14 +584,6 @@ export class BaseScene extends Scene {
         this.events.off('sleep', this.cleanup, this);
     }
 
-    onSceneWake() {
-        this.createUI();
-    }
-
-    onSceneResume() {
-        this.createUI();
-    }
-
     shutdown() {
         // Clean up tech lights when leaving scene
         if (this.techLights) {
@@ -724,5 +595,13 @@ export class BaseScene extends Scene {
             this.techLights = [];
         }
         super.shutdown();
+    }
+
+    onSceneWake() {
+        this.createUI();
+    }
+
+    onSceneResume() {
+        this.createUI();
     }
 }

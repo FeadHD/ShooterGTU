@@ -34,7 +34,9 @@ export class GameScene1 extends BaseScene {
         super.create();
         
         const { width, height } = this.scale;
-        this.physics.world.setBounds(0, 0, 3840, 1080)
+        
+        // Set world bounds before calling super.create()
+        this.physics.world.setBounds(0, 0, 3840, 1080);
         
         // Set next scene
         this.nextSceneName = 'GameScene2';
@@ -47,6 +49,15 @@ export class GameScene1 extends BaseScene {
         this.cameras.main.setBounds(0, 0, 3840, 1080);
         this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
 
+        // Add debug graphics for world bounds
+        const debugGraphics = this.add.graphics();
+        debugGraphics.lineStyle(2, 0xff0000);
+        debugGraphics.strokeRect(0, 0, 3840, 1080);
+        debugGraphics.setScrollFactor(1);
+
+        // Initialize platforms group
+        this.platforms = this.physics.add.staticGroup();
+
         // Initialize slimes group
         this.slimes = this.physics.add.group({
             collideWorldBounds: true,
@@ -55,19 +66,16 @@ export class GameScene1 extends BaseScene {
             dragX: 200
         });
 
-        // Add collision between bullets and slimes
-        this.physics.add.collider(this.bullets, this.slimes, (bullet, slimeSprite) => {
-            // Get the slime instance from the sprite
-            const slime = slimeSprite.enemy;
-            if (slime) {
-                // Damage the slime
-                slime.damage(1);
-                
-                // Create hit effect and destroy bullet
-                this.createHitEffect(bullet.x, bullet.y);
-                bullet.destroy();
-            }
-        }, null, this);
+        // Initialize enemies group
+        this.enemies = this.physics.add.group({
+            collideWorldBounds: true,
+            bounceX: 0.5,
+            bounceY: 0.2,
+            dragX: 200
+        });
+
+        // Initialize bitcoins group
+        this.bitcoins = this.add.group();
 
         // Hide the scene initially
         this.cameras.main.setAlpha(0);
@@ -77,73 +85,9 @@ export class GameScene1 extends BaseScene {
         
         // Make sure UI stays fixed
         this.gameUI.container.setScrollFactor(0);
-        
-        // Debug UI visibility
-        console.log('GameScene1 UI Setup:', {
-            container: {
-                x: this.gameUI.container.x,
-                y: this.gameUI.container.y,
-                visible: this.gameUI.container.visible,
-                alpha: this.gameUI.container.alpha,
-                children: this.gameUI.container.length
-            },
-            camera: {
-                visible: this.gameUI.uiCamera.visible,
-                active: this.gameUI.uiCamera.active,
-                viewport: this.gameUI.uiCamera.viewport,
-                scroll: {
-                    x: this.gameUI.uiCamera.scrollX,
-                    y: this.gameUI.uiCamera.scrollY
-                },
-                zoom: this.gameUI.uiCamera.zoom
-            }
-        });
-
-        // Update camera ignore lists
         this.gameUI.updateCameraIgnoreList();
-        
-        // Add scene text
-        this.add.text(width/2, height * 0.1, 'Scene 1', {
-            fontFamily: 'Retronoid',
-            fontSize: '32px',
-            fill: '#fff'
-        }).setOrigin(0.5);
 
-        // Add instruction text
-        this.instructionText = this.add.text(width/2, height * 0.2, 'Defeat all enemies to proceed!', {
-            fontFamily: 'Retronoid',
-            fontSize: '24px',
-            fill: '#ff0'
-        }).setOrigin(0.5);
-
-        // Create enemy group
-        this.enemies = this.physics.add.group({
-            collideWorldBounds: true,
-            bounceX: 0.5,
-            bounceY: 0.2,
-            dragX: 200
-        });
-
-        // Create bitcoin group
-        this.bitcoins = this.add.group();
-
-        // Add 10 bitcoins spread across the level
-        const startX = width * 0.2;
-        const endX = width * 0.8;
-        const spacing = (endX - startX) / 9; // 9 spaces for 10 coins
-        const baseY = height - 150; // Base Y position (150px from bottom)
-
-        for (let i = 0; i < 10; i++) {
-            const x = startX + (i * spacing);
-            const y = baseY - Phaser.Math.Between(0, 100); // Random height up to 100px above base
-            const bitcoin = new Bitcoin(this, x, y);
-            this.bitcoins.add(bitcoin);
-            this.physics.add.overlap(this.player, bitcoin, () => {
-                bitcoin.collect();
-            });
-        }
-
-        // Debug level data loading
+        // Load and create tilemap
         const levelData = this.cache.json.get('level1');
         
         if (!levelData) {
@@ -151,19 +95,19 @@ export class GameScene1 extends BaseScene {
             return;
         }
 
-        // Get the layer instance for Megapixel layer
-        const megapixelLayer = levelData.layerInstances[0];  // First layer is our Megapixel layer
-        if (!megapixelLayer) {
-            console.error('Megapixel layer not found');
+        // Get the layer instance for Tiles layer
+        const tilesLayer = levelData.layerInstances[0];  // First layer is our Tiles layer
+        if (!tilesLayer) {
+            console.error('Tiles layer not found');
             return;
         }
 
         // Create tilemap from JSON using level dimensions
         const map = this.make.tilemap({ 
-            width: Math.ceil(levelData.pxWid / megapixelLayer.__gridSize),
-            height: Math.ceil(levelData.pxHei / megapixelLayer.__gridSize),
-            tileWidth: megapixelLayer.__gridSize,
-            tileHeight: megapixelLayer.__gridSize
+            width: Math.ceil(levelData.pxWid / tilesLayer.__gridSize),
+            height: Math.ceil(levelData.pxHei / tilesLayer.__gridSize),
+            tileWidth: tilesLayer.__gridSize,
+            tileHeight: tilesLayer.__gridSize
         });
         
         // Add tileset to map
@@ -175,82 +119,41 @@ export class GameScene1 extends BaseScene {
         }
         
         // Create layer from LDtk data
-        const layer = map.createBlankLayer('Megapixel', tileset, 0, 0);
+        const layer = map.createBlankLayer('TileLayer', tileset, 0, 0);
         
         if (!layer) {
             console.error('Failed to create layer');
             return;
         }
 
-        // Store layer and map references
+        // Store layer reference for rendering
         this.mapLayer = layer;
-        this.map = map;
 
         // Create a promise to track tile placement
         const placeTilesPromise = new Promise((resolve) => {
-            if (megapixelLayer.gridTiles && megapixelLayer.gridTiles.length > 0) {
+            if (tilesLayer.gridTiles && tilesLayer.gridTiles.length > 0) {
                 let tilesPlaced = 0;
-                const totalTiles = megapixelLayer.gridTiles.length;
-                const totalRows = Math.ceil(levelData.pxHei / megapixelLayer.__gridSize);
+                const totalTiles = tilesLayer.gridTiles.length;
 
-                // Create a map to track platform tiles
-                const platformTiles = new Set();
-
-                // First pass: identify platform tiles
-                megapixelLayer.gridTiles.forEach((tile) => {
-                    const gridX = Math.floor(tile.px[0] / megapixelLayer.__gridSize);
-                    const gridY = Math.floor(tile.px[1] / megapixelLayer.__gridSize);
-                    if (gridY === 8 || tile.t === 370) { // Platform height or solid tile type
-                        platformTiles.add(`${gridX},${gridY}`);
-                    }
-                });
-
-                // Second pass: place tiles and set up collisions
-                megapixelLayer.gridTiles.forEach((tile) => {
-                    const gridX = Math.floor(tile.px[0] / megapixelLayer.__gridSize);
-                    const gridY = Math.floor(tile.px[1] / megapixelLayer.__gridSize);
+                tilesLayer.gridTiles.forEach((tile) => {
+                    const gridX = Math.floor(tile.px[0] / tilesLayer.__gridSize);
+                    const gridY = Math.floor(tile.px[1] / tilesLayer.__gridSize);
                     
                     try {
-                        // Place the tile at the grid coordinates
-                        const placedTile = layer.putTileAt(tile.t, gridX, gridY);
+                        // Place the visual tile
+                        layer.putTileAt(tile.t, gridX, gridY);
                         
-                        // Check if this tile is in the bottom two rows
-                        if (gridY >= totalRows - 2) {
-                            // Add collision for bottom tiles
-                            placedTile.setCollision(true);
-                            
-                            // Create collision rectangle for this tile
-                            const tileRect = this.add.rectangle(
-                                gridX * megapixelLayer.__gridSize + megapixelLayer.__gridSize/2,
-                                gridY * megapixelLayer.__gridSize + megapixelLayer.__gridSize/2,
-                                megapixelLayer.__gridSize,
-                                megapixelLayer.__gridSize
-                            );
-                            this.physics.add.existing(tileRect, true);
-                            this.platforms.add(tileRect);
-                        }
-
-                        // Set collision for platform tiles
-                        if (
-                            tile.t === 370 || // Solid tile type
-                            platformTiles.has(`${gridX},${gridY}`) || // Current tile is a platform
-                            platformTiles.has(`${gridX},${gridY-1}`) // Tile below a platform
-                        ) {
-                            placedTile.setCollision(true);
-                            
-                            // Create collision rectangle for platform tiles
-                            const platformRect = this.add.rectangle(
-                                gridX * megapixelLayer.__gridSize + megapixelLayer.__gridSize/2,
-                                gridY * megapixelLayer.__gridSize + megapixelLayer.__gridSize/2,
-                                megapixelLayer.__gridSize,
-                                megapixelLayer.__gridSize
-                            );
-                            this.physics.add.existing(platformRect, true);
-                            this.platforms.add(platformRect);
-                        }
+                        // Create collision rectangle for every tile
+                        const tileRect = this.add.rectangle(
+                            gridX * tilesLayer.__gridSize + tilesLayer.__gridSize/2,
+                            gridY * tilesLayer.__gridSize + tilesLayer.__gridSize/2,
+                            tilesLayer.__gridSize,
+                            tilesLayer.__gridSize
+                        );
+                        this.physics.add.existing(tileRect, true);
+                        this.platforms.add(tileRect);
                         
                         tilesPlaced++;
-                        
                         if (tilesPlaced === totalTiles) {
                             resolve();
                         }
@@ -272,25 +175,87 @@ export class GameScene1 extends BaseScene {
             }
         });
 
-        // Wait for all tiles to be placed before showing the scene
+        // Wait for all tiles to be placed before setting up collisions
         placeTilesPromise.then(() => {
-            // Add collision between player and tile layer
-            if (this.player && this.mapLayer) {
-                this.physics.add.collider(this.player, this.mapLayer);
-            }
+            // Add collision between player and platforms
+            this.physics.add.collider(this.player, this.platforms);
 
-            console.log('All tiles placed, showing scene');
-            // Fade in the scene
-            this.tweens.add({
-                targets: this.cameras.main,
-                alpha: 1,
-                duration: 500,
-                ease: 'Linear',
-                onComplete: () => {
-                    // Continue with the rest of the scene setup
-                    this.setupRestOfScene();
-                }
+            // Wait a short moment for platforms to be fully set up
+            this.time.delayedCall(100, () => {
+                // Use helper method to get correct spawn height
+                const enemyY = this.getSpawnHeight();
+
+                // Create three slimes near the end of the level
+                const worldWidth = 3840;
+                const endArea = worldWidth - 500; // Start spawning 500 pixels from the end
+                
+                // Position slimes in the last section of the level
+                this.enemy1 = new Slime(this, endArea + 100, enemyY);
+                this.enemy2 = new Slime(this, endArea + 250, enemyY);
+                this.enemy3 = new Slime(this, endArea + 400, enemyY);
+
+                // Add slimes to the group
+                this.slimes.add(this.enemy1.sprite);
+                this.slimes.add(this.enemy2.sprite);
+                this.slimes.add(this.enemy3.sprite);
+
+                // Add collision between player and slimes
+                this.physics.add.collider(this.player, this.slimes, this.hitEnemy, null, this);
+
+                // Add collisions between slimes
+                this.physics.add.collider(
+                    this.slimes,
+                    this.slimes,
+                    this.handleEnemyCollision,
+                    null,
+                    this
+                );
+
+                // Add bullet collisions with slimes
+                this.physics.add.collider(this.bullets, this.slimes, (bullet, slimeSprite) => {
+                    // Get the slime instance from the sprite
+                    const slime = slimeSprite.enemy;
+                    if (slime) {
+                        // Damage the slime
+                        slime.damage(1);
+                        
+                        // Create hit effect and destroy bullet
+                        this.createHitEffect(bullet.x, bullet.y);
+                        bullet.destroy();
+                    }
+                }, null, this);
+
+                // Set number of enemies
+                this.remainingEnemies = 3;
             });
+        });
+
+        // Add bitcoins spread across the level
+        const startX = width * 0.2;
+        const endX = width * 0.8;
+        const spacing = (endX - startX) / 9;
+        const baseY = height - 150;
+
+        for (let i = 0; i < 10; i++) {
+            const x = startX + (i * spacing);
+            const y = baseY - Phaser.Math.Between(0, 100);
+            const bitcoin = new Bitcoin(this, x, y);
+            this.bitcoins.add(bitcoin);
+            this.physics.add.overlap(this.player, bitcoin, () => {
+                bitcoin.collect();
+            });
+        }
+
+        // Fade in the scene
+        this.tweens.add({
+            targets: this.cameras.main,
+            alpha: 1,
+            duration: 500,
+            ease: 'Linear',
+            onComplete: () => {
+                // Continue with the rest of the scene setup
+                this.setupRestOfScene();
+            }
         });
     }
 
@@ -310,132 +275,6 @@ export class GameScene1 extends BaseScene {
                 this.destroyBullet(bullet);
             }, null, this);
         }
-
-        // Create and set up slimes group with consistent physics settings
-        // this.slimes = this.physics.add.group({
-        //     runChildUpdate: true,
-        //     collideWorldBounds: true,
-        //     dragX: 200,
-        //     bounceX: 0.2,
-        //     bounceY: 0.2,
-        //     gravityY: 1000
-        // });
-
-        // Add collision between slimes and tile layer
-        if (this.mapLayer) {
-            // Set up tile collision properties
-            this.mapLayer.setCollisionByProperty({ collides: true });
-            this.mapLayer.setCollision(370); // Solid tile type
-
-            // Add collider between slimes and map layer
-            this.physics.add.collider(this.slimes, this.mapLayer, null, null, this);
-            
-            // Add collider between slimes and platforms
-            this.physics.add.collider(this.slimes, this.platforms);
-        }
-
-        // Add collider between slimes and platforms
-        this.physics.add.collider(this.slimes, this.platforms);
-
-        // Function to find valid spawn points for slimes
-        const findSpawnPoints = () => {
-            const spawnPoints = [];
-            const mapWidth = this.mapLayer.width;
-            const mapHeight = this.mapLayer.height;
-
-            // Scan the map for solid tiles (type 370)
-            for (let x = 0; x < mapWidth; x++) {
-                for (let y = 0; y < mapHeight - 1; y++) {
-                    const tile = this.mapLayer.getTileAt(x, y);
-                    const tileAbove = this.mapLayer.getTileAt(x, y - 1);
-                    
-                    // Check if current tile is solid and tile above is empty
-                    if ((tile && (tile.index === 370 || tile.collides)) && 
-                        (!tileAbove || (!tileAbove.collides && tileAbove.index !== 370))) {
-                        // Position slime exactly on top of the tile
-                        spawnPoints.push({ 
-                            x: x * 32 + 16, // Center of tile
-                            y: y * 32 - 8   // Just above the tile
-                        });
-                    }
-                }
-            }
-            return spawnPoints;
-        };
-
-        // Find valid spawn points
-        const spawnPoints = findSpawnPoints();
-
-        // Create all slimes (both random and fixed positions)
-        const createAndInitSlime = (x, y) => {
-            const slime = new Slime(this, x, y);
-            if (slime && slime.sprite) {
-                // Add to physics group
-                this.slimes.add(slime.sprite);
-                
-                // Set up sprite
-                slime.sprite.setActive(true);
-                slime.sprite.setVisible(true);
-                
-                // Set up physics body
-                if (slime.sprite.body) {
-                    slime.sprite.body.reset(x, y);
-                    slime.sprite.body.enable = true;
-                    slime.sprite.body.moves = true;
-                }
-                
-                // Create health bar
-                slime.createHealthBar();
-                
-                // Start movement
-                slime.initializeMovement();
-                
-                // Add update callback
-                this.events.on('update', () => {
-                    if (slime && slime.sprite && slime.sprite.active) {
-                        slime.update();
-                        slime.updateHealthBar();
-                    }
-                });
-                
-                return slime;
-            }
-            return null;
-        };
-
-        // Create fixed position slimes
-        const enemyY = this.scale.height * 0.7;
-        this.enemy1 = createAndInitSlime(this.scale.width * 0.3, enemyY);
-        this.enemy2 = createAndInitSlime(this.scale.width * 0.7, enemyY);
-
-        // Create random position slimes
-        const numRandomSlimes = 1; 
-        for (let i = 0; i < numRandomSlimes; i++) {
-            if (spawnPoints.length > 0) {
-                const spawnIndex = Math.floor(Math.random() * spawnPoints.length);
-                const spawnPoint = spawnPoints[spawnIndex];
-                createAndInitSlime(spawnPoint.x, spawnPoint.y);
-                spawnPoints.splice(spawnIndex, 1);
-            }
-        }
-
-        // Set up collisions between slimes
-        this.physics.add.collider(this.slimes, this.slimes);
-
-        // Set up bullet collisions
-        this.physics.add.collider(
-            this.bullets, 
-            this.slimes, 
-            this.hitEnemyWithBullet, 
-            (bullet, enemySprite) => {
-                return enemySprite.enemy && !enemySprite.enemy.isInvincible;
-            },
-            this
-        );
-
-        // Create camera bounds
-        this.cameras.main.setBounds(0, 0, 3840, 1080);
-        this.cameras.main.startFollow(this.player);
 
         // Set up controls
         this.setupControls();
@@ -556,50 +395,6 @@ export class GameScene1 extends BaseScene {
             this.slimes.getChildren().forEach((slime, index) => {
                 console.log(`Slime ${index} health: ${slime.enemy?.health}`);
             });
-        }
-
-        // Get the actual map width
-        const mapWidth = 3840;  // Fixed level width
-        const endX = mapWidth - 100;  // End point is 100px from right edge
-
-        // Check if player has reached the end using camera position
-        const reachedEnd = this.cameras.main.scrollX + this.scale.width > endX;
-        
-        // Check if all slimes are defeated by checking their health
-        const activeSlimeCount = this.slimes ? 
-            this.slimes.getChildren().filter(slime => 
-                slime.enemy && slime.enemy.health > 0
-            ).length : 0;
-
-        const allSlimesDefeated = activeSlimeCount === 0;
-
-        // Debug transition conditions
-        console.log('Scene transition check:', {
-            reachedEnd,
-            playerX: this.player.x,
-            endX,
-            mapWidth,
-            activeSlimeCount,
-            allSlimesDefeated
-        });
-
-        if (reachedEnd && !allSlimesDefeated) {
-            // Block player from proceeding, but give them some space to move
-            this.player.x = endX - 10;  // Push back slightly from end point
-            // Show message
-            if (!this.messageShown) {
-                console.log("Defeat all enemies before proceeding!");
-                this.messageShown = true;
-            }
-            return;
-        }
-
-        // Only transition when both conditions are met
-        if (reachedEnd && allSlimesDefeated) {
-            console.log("Scene transition conditions met:");
-            console.log(`- Reached end: ${reachedEnd}`);
-            console.log(`- Active slimes remaining: ${activeSlimeCount}`);
-            this.scene.start('GameScene2');
         }
     }
 }

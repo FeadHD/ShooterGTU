@@ -6,203 +6,209 @@ import { Bitcoin } from '../../prefabs/Bitcoin';
 export class GameScene2 extends BaseScene {
     constructor() {
         super({ key: 'GameScene2' });
+        this.tileColliderAdded = false;
+        this.messageShown = false;
+        this.totalEnemies = 3;
+        this.remainingEnemies = this.totalEnemies;
+    }
+
+    preload() {
+        // Load all audio files
+        this.load.audio('laser', 'assets/sounds/laser.wav');
+        this.load.audio('hit', 'assets/sounds/hit.wav');
+        this.load.audio('victoryMusic', 'assets/sounds/congratulations');
+
+        // Load tileset with error handling
+        this.load.on('loaderror', (file) => {
+            console.error('Error loading file:', file.src);
+        });
+
+        // Load tileset
+        this.load.image('tileset-map-2', 'assets/levels/image/TileSet v1.0.png');
+        
+        // Load level data
+        this.load.json('level2', 'assets/levels/Json/Level_Map_2.json');
     }
 
     create() {
-        this.cameras.main.setBackgroundColor('#4A4A4A');
+        this.cameras.main.setBackgroundColor('#2A2A2A');
         super.create();
 
         const { width, height } = this.scale;
 
+        // Set world bounds before calling super.create()
+        this.physics.world.setBounds(0, 0, 3840, 1080);
+        
+        // Set next scene
+        this.nextSceneName = 'GameScene3';
+        
         // Set player to left side
         this.player.x = width * 0.1;
 
         // Set up the main game camera
         this.cameras.main.setZoom(1.5);
-        this.cameras.main.setBounds(0, 0, width, height);
-        this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
+        this.cameras.main.setBounds(0, 0, 3840, 1080);
+        this.cameras.main.startFollow(this.player, true, 0.25, 0.25, 0, 0);
+
+        // Add debug graphics for world bounds
+        const debugGraphics = this.add.graphics();
+        debugGraphics.lineStyle(2, 0xff0000);
+        debugGraphics.strokeRect(0, 0, 3840, 1080);
+        debugGraphics.setScrollFactor(1);
+
+        // Initialize platforms group
+        this.platforms = this.physics.add.staticGroup();
+
+        // Initialize bitcoins group
+        this.bitcoins = this.add.group();
+
+        // Hide the scene initially
+        this.cameras.main.setAlpha(0);
 
         // Set up UI
         this.gameUI = new GameUI(this);
         
-        // Make sure UI stays fixed and update camera ignore lists
+        // Make sure UI stays fixed
         this.gameUI.container.setScrollFactor(0);
         this.gameUI.updateCameraIgnoreList();
 
-        // Add scene text
-        this.add.text(width/2, height * 0.1, 'Scene 2', {
-            fontFamily: 'Retronoid',
-            fontSize: '32px',
-            fill: '#fff'
-        }).setOrigin(0.5);
-
-        // Set next scene (can be modified if you add more scenes)
-        this.nextSceneName = 'GameScene1';
-
-        // Create enemy group with proper physics properties
-        this.enemies = this.physics.add.group({
-            collideWorldBounds: true,
-            bounceX: 0.5,
-            bounceY: 0.2,
-            dragX: 200
-        });
-
-        // Create bitcoin group
-        this.bitcoins = this.add.group();
-
-        // Add 10 bitcoins spread across the level
-        const startX = width * 0.2;
-        const endX = width * 0.8;
-        const spacing = (endX - startX) / 9; // 9 spaces for 10 coins
-        const baseY = height - 150; // Base Y position (150px from bottom)
-
-        for (let i = 0; i < 10; i++) {
-            const x = startX + (i * spacing);
-            const y = baseY - Phaser.Math.Between(0, 100); // Random height up to 100px above base
-            const bitcoin = new Bitcoin(this, x, y);
-            this.bitcoins.add(bitcoin);
-            this.physics.add.overlap(this.player, bitcoin, () => {
-                bitcoin.collect();
-            });
+        // Load and create tilemap
+        const levelData = this.cache.json.get('level2');
+        
+        if (!levelData) {
+            console.error('Failed to load level data');
+            return;
         }
 
-        // Wait a short moment for platforms to be fully set up
-        this.time.delayedCall(100, () => {
-            // Use helper method to get correct spawn height
-            const enemyY = this.getSpawnHeight();
+        // Get the layer instance for Tiles layer
+        const tilesLayer = levelData.layerInstances[0];  // First layer is our Tiles layer
+        if (!tilesLayer) {
+            console.error('Tiles layer not found');
+            return;
+        }
 
-            // Create three medium enemies at different positions
-            this.enemy1 = new MediumEnemy(this, width * 0.25, enemyY);
-            this.enemy2 = new MediumEnemy(this, width * 0.5, enemyY);
-            this.enemy3 = new MediumEnemy(this, width * 0.75, enemyY);
-
-            // Add enemies to the group
-            this.enemies.add(this.enemy1.sprite);
-            this.enemies.add(this.enemy2.sprite);
-            this.enemies.add(this.enemy3.sprite);
-
-            // Set up collisions
-            this.physics.add.collider(this.enemies, this.platforms);
-
-            // Add collision between player and enemies
-            this.physics.add.collider(this.player, this.enemies, this.hitEnemy, null, this);
-
-            // Add collisions between enemies with proper handling
-            this.physics.add.collider(
-                this.enemies,
-                this.enemies,
-                this.handleEnemyCollision,
-                null,
-                this
-            );
-
-            // Add bullet collisions with enemies
-            this.physics.add.collider(
-                this.bullets,
-                this.enemies,
-                this.hitEnemyWithBullet,
-                (bullet, enemySprite) => {
-                    // Only process collision if enemy is not invincible
-                    return enemySprite.enemy && !enemySprite.enemy.isInvincible;
-                },
-                this
-            );
-
-            this.physics.add.collider(this.bullets, this.platforms);
-
-            // Add invisible wall on the left to prevent going back
-            const wall = this.add.rectangle(0, height/2, 20, height, 0x000000, 0);
-            this.physics.add.existing(wall, true);
-            this.physics.add.collider(this.player, wall);
-
-            // Set number of enemies
-            this.remainingEnemies = 3;
+        // Create tilemap from JSON using level dimensions
+        const map = this.make.tilemap({ 
+            width: Math.ceil(levelData.pxWid / tilesLayer.__gridSize),
+            height: Math.ceil(levelData.pxHei / tilesLayer.__gridSize),
+            tileWidth: tilesLayer.__gridSize,
+            tileHeight: tilesLayer.__gridSize
         });
-    }
+        
+        // Add tileset to map
+        const tileset = map.addTilesetImage('tileset-map-2', 'tileset-map-2', 32, 32, 0, 0);
+        
+        if (!tileset) {
+            console.error('Failed to create tileset');
+            return;
+        }
+        
+        // Create layer from LDtk data
+        const layer = map.createBlankLayer('TileLayer', tileset, 0, 0);
+        
+        if (!layer) {
+            console.error('Failed to create layer');
+            return;
+        }
 
-    hitEnemyWithBullet(bullet, enemySprite) {
-        // Create particles at hit location
-        for(let i = 0; i < 10; i++) {
-            const particle = this.add.circle(bullet.x, bullet.y, 3, 0xffff00);
-            const angle = Math.random() * Math.PI * 2;
-            const speed = 100 + Math.random() * 100;
-            const vx = Math.cos(angle) * speed;
-            const vy = Math.sin(angle) * speed;
+        // Store layer reference for rendering
+        this.mapLayer = layer;
 
+        // Create a promise to track tile placement
+        const placeTilesPromise = new Promise((resolve) => {
+            if (tilesLayer.gridTiles && tilesLayer.gridTiles.length > 0) {
+                let tilesPlaced = 0;
+                const totalTiles = tilesLayer.gridTiles.length;
+
+                tilesLayer.gridTiles.forEach((tile) => {
+                    const gridX = Math.floor(tile.px[0] / tilesLayer.__gridSize);
+                    const gridY = Math.floor(tile.px[1] / tilesLayer.__gridSize);
+                    
+                    try {
+                        // Place the visual tile
+                        layer.putTileAt(tile.t, gridX, gridY);
+                        
+                        // Create collision rectangle for every tile
+                        const tileRect = this.add.rectangle(
+                            gridX * tilesLayer.__gridSize + tilesLayer.__gridSize/2,
+                            gridY * tilesLayer.__gridSize + tilesLayer.__gridSize/2,
+                            tilesLayer.__gridSize,
+                            tilesLayer.__gridSize
+                        );
+                        this.physics.add.existing(tileRect, true);
+                        this.platforms.add(tileRect);
+                        
+                        tilesPlaced++;
+                        if (tilesPlaced === totalTiles) {
+                            resolve();
+                        }
+                    } catch (error) {
+                        console.error('Error placing tile:', {
+                            gridX, gridY,
+                            px: tile.px,
+                            tileId: tile.t,
+                            error: error.message
+                        });
+                        tilesPlaced++;
+                        if (tilesPlaced === totalTiles) {
+                            resolve();
+                        }
+                    }
+                });
+            } else {
+                resolve();
+            }
+        });
+
+        // Wait for all tiles to be placed before setting up collisions
+        placeTilesPromise.then(() => {
+            // Add collision between player and platforms
+            this.physics.add.collider(this.player, this.platforms);
+
+            // Wait a short moment for platforms to be fully set up
+            this.time.delayedCall(100, () => {
+                // Add bitcoins in a V pattern
+                const startX = width * 0.2;
+                const endX = width * 0.8;
+                const spacing = (endX - startX) / 9;
+                const baseY = height - 150;
+                const heightStep = 15;
+
+                for (let i = 0; i < 10; i++) {
+                    const x = startX + (i * spacing);
+                    const y = baseY - (i * heightStep);
+                    const bitcoin = new Bitcoin(this, x, y);
+                    this.bitcoins.add(bitcoin);
+                    this.physics.add.overlap(this.player, bitcoin, () => {
+                        bitcoin.collect();
+                    });
+                }
+
+                // Set allEnemiesDefeated to true since there are no enemies
+                this.allEnemiesDefeated = true;
+            });
+
+            // Fade in the scene
             this.tweens.add({
-                targets: particle,
-                x: particle.x + (vx * 0.3), // Move in direction over 300ms
-                y: particle.y + (vy * 0.3),
-                alpha: 0,
-                scale: 0.1,
-                duration: 300,
-                ease: 'Power2',
-                onComplete: () => particle.destroy()
+                targets: this.cameras.main,
+                alpha: 1,
+                duration: 500,
+                ease: 'Linear',
+                repeat: 0
             });
-        }
-
-        this.hitSound.play(); // Play hit sound
-        bullet.destroy();
-
-        // Find the enemy object that owns this sprite
-        const enemy = [this.enemy1, this.enemy2, this.enemy3].find(e => e.sprite === enemySprite);
-        if (enemy && enemy.damage(1)) {
-            // Enemy is dead
-            enemy.destroy();
-            this.addPoints(10);
-        }
-    }
-
-    handleEnemyCollision(enemy1, enemy2) {
-        // If enemies are moving towards each other, reverse their directions
-        if ((enemy1.body.velocity.x > 0 && enemy2.body.velocity.x < 0) ||
-            (enemy1.body.velocity.x < 0 && enemy2.body.velocity.x > 0)) {
-
-            if (enemy1.enemy) {
-                enemy1.enemy.reverseDirection();
-                // Add slight upward velocity for better separation
-                enemy1.body.setVelocityY(-150);
-            }
-            if (enemy2.enemy) {
-                enemy2.enemy.reverseDirection();
-                // Add slight upward velocity for better separation
-                enemy2.body.setVelocityY(-150);
-            }
-        }
-
-        // Ensure enemies bounce off each other
-        const pushForce = 100;
-        if (enemy1.x < enemy2.x) {
-            enemy1.body.setVelocityX(-pushForce);
-            enemy2.body.setVelocityX(pushForce);
-        } else {
-            enemy1.body.setVelocityX(pushForce);
-            enemy2.body.setVelocityX(-pushForce);
-        }
+        });
     }
 
     update() {
         super.update();
 
-        // Update enemy patrols
-        if (this.enemy1) this.enemy1.update();
-        if (this.enemy2) this.enemy2.update();
-        if (this.enemy3) this.enemy3.update();
-
-        if (this.player.x > this.scale.width - 20) {
-            // Store the current music state before transitioning
-            const bgMusic = this.sound.get('bgMusic');
-            const isMusicPlaying = bgMusic ? bgMusic.isPlaying : false;
-            this.registry.set('musicEnabled', isMusicPlaying);
-
+        // Check for scene transition when player reaches the end
+        if (this.player.x > 3800) {
+            // Stop any current music
+            if (this.sound.get('backgroundMusic')) {
+                this.sound.get('backgroundMusic').stop();
+            }
             this.scene.start('GameScene3');
-        } else if (this.player.x < 20) {
-            // Store the current music state before transitioning
-            const bgMusic = this.sound.get('bgMusic');
-            const isMusicPlaying = bgMusic ? bgMusic.isPlaying : false;
-            this.registry.set('musicEnabled', isMusicPlaying);
-
-            this.scene.start('GameScene1');
         }
     }
 }
