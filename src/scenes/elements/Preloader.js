@@ -32,6 +32,12 @@ export class Preloader extends Scene {
     }
 
     preload() {
+        // Load WebFont first
+        this.load.script('webfont', 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js');
+
+        // Load font CSS
+        this.load.css('fonts', 'assets/fonts/fonts.css');
+
         // Debug logging for asset loading
         this.load.on('filecomplete', (key, type, data) => {
             console.log('Loaded:', key, type);
@@ -63,9 +69,7 @@ export class Preloader extends Scene {
             console.log('Particle texture loaded successfully');
         });
 
-        // Load styles
-        this.load.css('style', './assets/css/style.css');
-        
+        // Load styles and fonts
         // Load main menu background
         this.load.image('mainbg', './assets/mainbg.png');
         
@@ -169,9 +173,6 @@ export class Preloader extends Scene {
         this.load.audio('hit', './assets/sounds/hit.wav');
         this.load.audio('bitcoin_collect', './assets/sounds/bitcoin_collect.mp3');
         
-        // Load the font file directly
-        this.load.binary('retronoid', './assets/fonts/retronoid/Retronoid.ttf');
-
         // Load bitcoin animation frames
         for (let i = 1; i <= 8; i++) {
             this.load.image(`bitcoin_${i}`, `assets/bitcoin/Bitcoin_${i}.png`);
@@ -194,18 +195,30 @@ export class Preloader extends Scene {
     }
 
     create() {
-        // Create a new style element
-        const style = document.createElement('style');
-        const fontData = this.cache.binary.get('retronoid');
-        const fontFace = new FontFace('Retronoid', fontData);
-
-        // Load the font face
-        fontFace.load().then((loadedFace) => {
-            document.fonts.add(loadedFace);
-            console.log('Font loaded successfully');
-        }).catch(error => {
-            console.error('Font loading error:', error);
-        });
+        // Wait for WebFont to load before starting game
+        if (typeof WebFont !== 'undefined') {
+            WebFont.load({
+                custom: {
+                    families: ['Retronoid'],
+                    urls: ['assets/fonts/fonts.css']
+                },
+                active: () => {
+                    console.log('Font loaded successfully');
+                    this.scene.start('MainMenu');
+                },
+                inactive: () => {
+                    console.warn('Font failed to load, using fallback');
+                    // Set fallback font in game registry for other scenes to use
+                    this.registry.set('fontFamily', 'Arial');
+                    this.scene.start('MainMenu');
+                },
+                timeout: 3000 // Set timeout to 3 seconds
+            });
+        } else {
+            console.warn('WebFont not loaded, using fallback');
+            this.registry.set('fontFamily', 'Arial');
+            this.scene.start('MainMenu');
+        }
 
         // Debug logging for texture loading
         const textureKeys = ['character_idle', 'character_run', 'character_walk', 'character_jump', 'character_death'];
@@ -219,8 +232,5 @@ export class Preloader extends Scene {
                 console.error(`${key} texture failed to load`);
             }
         });
-
-        console.log('All assets loaded, starting MainMenu');
-        this.scene.start('MainMenu');
     }
 }

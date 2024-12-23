@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { PlayerController } from '../modules/controls/PlayerController';
 
 export class Player extends Phaser.Physics.Arcade.Sprite {
     constructor(scene, x, y) {
@@ -20,7 +21,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.setScale(2)
             .setCollideWorldBounds(true)
             .setBounce(0.1)
-            .setGravityY(300);
+            .setGravityY(300)
+            .setAlpha(1); // Set opacity to 100%
             
         this.body.setSize(32, 32);
         
@@ -30,25 +32,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         }
 
         // Set up controls
-        this.setupControls();
-    }
-
-    setupControls() {
-        // WASD controls
-        this.controls = this.scene.input.keyboard.addKeys({
-            up: Phaser.Input.Keyboard.KeyCodes.W,
-            down: Phaser.Input.Keyboard.KeyCodes.S,
-            left: Phaser.Input.Keyboard.KeyCodes.A,
-            right: Phaser.Input.Keyboard.KeyCodes.D
-        });
-
-        // Mouse controls for shooting
-        this.scene.input.on('pointerdown', (pointer) => {
-            if (pointer.leftButtonDown()) {
-                const direction = this.flipX ? 'left' : 'right';
-                this.shoot(direction);
-            }
-        });
+        this.controller = new PlayerController(scene);
+        this.controller.setupShootingControls(this);
     }
 
     shoot(direction = 'right') {
@@ -157,11 +142,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         }
 
         // Handle horizontal movement
-        if (this.controls.left.isDown) {
+        if (this.controller.isMovingLeft()) {
             this.setVelocityX(-this.movementSpeed);
             this.flipX = true;
             if (onGround) this.play('character_walk', true);
-        } else if (this.controls.right.isDown) {
+        } else if (this.controller.isMovingRight()) {
             this.setVelocityX(this.movementSpeed);
             this.flipX = false;
             if (onGround) this.play('character_walk', true);
@@ -171,12 +156,17 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         }
 
         // Handle jumping
-        if (this.controls.up.isDown && Phaser.Input.Keyboard.JustDown(this.controls.up)) {
-            if (this.jumpsAvailable > 0) {
-                this.setVelocityY(this.jumpSpeed);
-                this.play('character_jump', true);
-                this.jumpsAvailable--;
-            }
+        if (this.controller.isJumping() && this.jumpsAvailable > 0) {
+            this.setVelocityY(this.jumpSpeed);
+            this.play('character_jump', true);
+            this.jumpsAvailable--;
         }
+    }
+
+    destroy() {
+        if (this.controller) {
+            this.controller.destroy();
+        }
+        super.destroy();
     }
 }

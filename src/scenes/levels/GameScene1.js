@@ -34,7 +34,14 @@ export class GameScene1 extends BaseScene {
         super.create();
         
         const { width, height } = this.scale;
-        this.physics.world.setBounds(0, 0, 3840, 1080)
+        
+        // Set world bounds to match the level size
+        const levelWidth = 3840; // Adjust this to match your level width
+        const levelHeight = 1080; // Adjust this to match your level height
+        this.physics.world.setBounds(0, 0, levelWidth, levelHeight);
+        
+        // Set camera bounds to match world bounds
+        this.cameras.main.setBounds(0, 0, levelWidth, levelHeight);
         
         // Set next scene
         this.nextSceneName = 'GameScene2';
@@ -44,7 +51,6 @@ export class GameScene1 extends BaseScene {
 
         // Set up the main game camera
         this.cameras.main.setZoom(1.5);
-        this.cameras.main.setBounds(0, 0, 3840, 1080);
         this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
 
         // Initialize slimes group
@@ -437,9 +443,6 @@ export class GameScene1 extends BaseScene {
         this.cameras.main.setBounds(0, 0, 3840, 1080);
         this.cameras.main.startFollow(this.player);
 
-        // Set up controls
-        this.setupControls();
-
         // Set up player-enemy collision for damage
         this.physics.add.overlap(this.player, this.slimes, (player, enemySprite) => {
             if (enemySprite.enemy && !this.isDying) {
@@ -547,58 +550,33 @@ export class GameScene1 extends BaseScene {
     update() {
         super.update();
 
-        // Debug info about slimes
-        if (this.slimes) {
-            const activeSlimes = this.slimes.getChildren().filter(slime => 
-                slime.enemy && slime.enemy.health > 0
-            );
-            console.log(`Active slimes: ${activeSlimes.length}, Total slimes: ${this.slimes.getChildren().length}`);
-            this.slimes.getChildren().forEach((slime, index) => {
-                console.log(`Slime ${index} health: ${slime.enemy?.health}`);
-            });
-        }
-
-        // Get the actual map width
-        const mapWidth = 3840;  // Fixed level width
-        const endX = mapWidth - 100;  // End point is 100px from right edge
-
-        // Check if player has reached the end using camera position
-        const reachedEnd = this.cameras.main.scrollX + this.scale.width > endX;
+        // Check for scene transition
+        const reachedEnd = this.player.x > 3740;
         
-        // Check if all slimes are defeated by checking their health
-        const activeSlimeCount = this.slimes ? 
-            this.slimes.getChildren().filter(slime => 
-                slime.enemy && slime.enemy.health > 0
-            ).length : 0;
-
+        // Check for active slimes based on their health
+        const activeSlimes = this.slimes.getChildren().filter(slime => 
+            slime.enemy && slime.enemy.health > 0
+        );
+        const activeSlimeCount = activeSlimes.length;
         const allSlimesDefeated = activeSlimeCount === 0;
 
-        // Debug transition conditions
-        console.log('Scene transition check:', {
+        // Debug info
+        console.log({
             reachedEnd,
             playerX: this.player.x,
-            endX,
-            mapWidth,
+            endX: 3740,
+            mapWidth: 3840,
             activeSlimeCount,
-            allSlimesDefeated
+            allSlimesDefeated,
+            slimeDetails: activeSlimes.map(slime => ({
+                health: slime.enemy?.health,
+                active: slime.active,
+                visible: slime.visible
+            }))
         });
 
-        if (reachedEnd && !allSlimesDefeated) {
-            // Block player from proceeding, but give them some space to move
-            this.player.x = endX - 10;  // Push back slightly from end point
-            // Show message
-            if (!this.messageShown) {
-                console.log("Defeat all enemies before proceeding!");
-                this.messageShown = true;
-            }
-            return;
-        }
-
-        // Only transition when both conditions are met
+        // Transition to next scene if player has reached the end and defeated all slimes
         if (reachedEnd && allSlimesDefeated) {
-            console.log("Scene transition conditions met:");
-            console.log(`- Reached end: ${reachedEnd}`);
-            console.log(`- Active slimes remaining: ${activeSlimeCount}`);
             this.scene.start('GameScene2');
         }
     }
