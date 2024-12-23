@@ -8,6 +8,7 @@ import { Leaderboard } from '../scenes/menus/Leaderboard';
 import { MainMenu } from '../scenes/menus/MainMenu';
 import { MissionComplete } from '../scenes/menus/MissionComplete';
 import { Preloader } from '../scenes/elements/Preloader';
+import { TitleScene } from '../scenes/elements/TitleScene';
 import Settings from '../scenes/menus/Settings';
 
 export const config = {
@@ -36,6 +37,7 @@ export const config = {
         }
     },
     scene: [
+        TitleScene,
         Preloader,
         MainMenu,
         Settings,
