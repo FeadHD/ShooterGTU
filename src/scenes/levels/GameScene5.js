@@ -1,5 +1,5 @@
 import { BaseScene } from '../elements/BaseScene';
-import { BossEnemy } from '../../prefabs/EnemyTypes';
+import { RobotBoss } from '../../prefabs/RobotBoss';
 import { GameUI } from '../elements/GameUI';
 
 export class GameScene5 extends BaseScene {
@@ -47,38 +47,37 @@ export class GameScene5 extends BaseScene {
             this.boss = null;
         }
 
-        // Create enemy group with proper physics properties
-        this.enemies = this.physics.add.group({
-            collideWorldBounds: true,
-            bounceX: 0.5,
-            bounceY: 0.2,
-            dragX: 200
-        });
-
         // Wait a short moment for platforms to be fully set up
         this.time.delayedCall(100, () => {
-            // Create the boss at the right side
-            const bossY = this.groundTop - 92; // Account for boss's larger size
-            this.boss = new BossEnemy(this, width * 0.8, bossY);
-            this.enemies.add(this.boss.sprite);
+            // Create the RobotBoss at the right side
+            const bossY = this.groundTop - 92;
+            this.boss = new RobotBoss(this, width * 0.8, bossY);
 
             // Set up collisions
-            this.physics.add.collider(this.enemies, this.platforms);
-            this.physics.add.collider(this.player, this.enemies, this.hitEnemy, null, this);
+            this.physics.add.collider(this.boss, this.platforms);
+            this.physics.add.collider(this.player, this.boss, this.hitEnemy, null, this);
 
-            // Add bullet collisions with enemies
-            this.physics.add.collider(
+            // Add collision between player and boss lasers
+            this.physics.add.overlap(
+                this.player,
+                this.boss.lasers,
+                (player, laser) => {
+                    this.hitEnemy(player, laser);
+                    laser.destroy();
+                }
+            );
+
+            // Add bullet collisions with boss
+            this.physics.add.overlap(
                 this.bullets,
-                this.enemies,
-                this.hitEnemyWithBullet,
-                (bullet, enemySprite) => {
-                    // Only process collision if enemy is not invincible
-                    return enemySprite.enemy && !enemySprite.enemy.isInvincible;
-                },
-                this
+                this.boss,
+                (boss, bullet) => {
+                    this.hitBoss(bullet, boss);
+                }
             );
 
             this.physics.add.collider(this.bullets, this.platforms);
+            this.physics.add.collider(this.boss.lasers, this.platforms, (laser) => laser.destroy());
 
             // Add invisible wall on the left to prevent going back
             const wall = this.add.rectangle(0, height/2, 20, height, 0x000000, 0);
@@ -87,10 +86,6 @@ export class GameScene5 extends BaseScene {
 
             // Set total enemies (just the boss)
             this.remainingEnemies = 1;
-
-            // Extra physics settings for boss sprite
-            this.boss.sprite.body.setCollideWorldBounds(true);
-            this.boss.sprite.body.setFriction(1);
         });
 
         // Load victory music if not already loaded
@@ -102,16 +97,7 @@ export class GameScene5 extends BaseScene {
         console.log('Scene 5 created successfully'); // Debug log
     }
 
-    shutdown() {
-        // Clean up when leaving the scene
-        if (this.boss) {
-            this.boss.destroy();
-            this.boss = null;
-        }
-        super.shutdown();
-    }
-
-    hitEnemyWithBullet(bullet, enemySprite) {
+    hitBoss(bullet, boss) {
         // Create particles at hit location
         for(let i = 0; i < 10; i++) {
             const particle = this.add.circle(bullet.x, bullet.y, 3, 0xffff00);
@@ -135,54 +121,48 @@ export class GameScene5 extends BaseScene {
         this.hitSound.play();
         bullet.destroy();
         
-        if (this.boss && this.boss.sprite === enemySprite) {
-            if (this.boss.damage(1)) {
-                console.log('Boss defeated!');
-                // Boss is dead
-                this.boss.destroy();
-                this.addPoints(100); // Big points for killing the boss
-                this.boss = null;
-                this.bossDefeated = true;
-                this.remainingEnemies = 0;
+        // Deal damage to boss
+        this.boss.takeDamage(1);
+        
+        // Check if boss is defeated
+        if (this.boss.health <= 0) {
+            console.log('Boss defeated!');
+            this.addPoints(100); // Big points for killing the boss
+            this.bossDefeated = true;
+            this.remainingEnemies = 0;
 
-                // Add completion text without space key requirement
-                this.add.text(this.scale.width/2, this.scale.height/2, 'Boss Defeated!\nHead right to complete the mission', {
-                    fontSize: '32px',
-                    fill: '#fff',
-                    align: 'center'
-                }).setOrigin(0.5).setScrollFactor(0);
+            // Add completion text without space key requirement
+            this.add.text(this.scale.width/2, this.scale.height/2, 'Boss Defeated!\nHead right to complete the mission', {
+                fontSize: '32px',
+                fill: '#fff',
+                align: 'center'
+            }).setOrigin(0.5).setScrollFactor(0);
 
-                // Play victory music
-                if (this.victoryMusic && !this.victoryMusic.isPlaying) {
-                    this.victoryMusic.play();
-                }
-
-                // Disable world bounds collision on the right side
-                this.player.body.setCollideWorldBounds(false);
-                
-                // Set the world bounds to allow moving past the right edge
-                this.physics.world.setBounds(0, 0, this.scale.width * 2, this.scale.height);
+            // Play victory music
+            if (this.victoryMusic && !this.victoryMusic.isPlaying) {
+                this.victoryMusic.play();
             }
+
+            // Disable world bounds collision on the right side
+            this.player.body.setCollideWorldBounds(false);
+            
+            // Set the world bounds to allow moving past the right edge
+            this.physics.world.setBounds(0, 0, this.scale.width * 2, this.scale.height);
         }
     }
 
     update() {
         super.update();
 
-        // Update boss patrol if it exists and ensure it stays above ground
-        if (this.boss && this.boss.sprite && this.boss.sprite.active) {
+        // Update boss if it exists
+        if (this.boss && this.boss.active) {
             this.boss.update();
             
-            // Extra check to keep boss above ground
-            if (this.boss.sprite.y > this.groundTop - 46) {
-                this.boss.sprite.y = this.groundTop - 46;
-                this.boss.sprite.body.setVelocityY(0);
+            // Keep boss above ground
+            if (this.boss.y > this.groundTop - 92) {
+                this.boss.y = this.groundTop - 92;
+                this.boss.body.setVelocityY(0);
             }
-        }
-
-        // Debug logging for position and state
-        if (this.bossDefeated) {
-            console.log('Player position:', this.player.x, 'Screen width:', this.scale.width);
         }
 
         // Check for scene transition when boss is defeated AND player reaches right side

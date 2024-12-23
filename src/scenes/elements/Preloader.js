@@ -80,6 +80,10 @@ export class Preloader extends Scene {
         this.load.image('bg-8', './assets/backgrounds/8fx.png');
         this.load.image('bg-9', './assets/backgrounds/9.png');
         
+        // Load boss assets
+        this.load.image('robotBoss', './assets/sprites/robotBoss.png');
+        this.load.image('laser', './assets/sprites/laser.png');
+        
         // Load character sprites with correct paths and frame sizes
         this.load.spritesheet('character_idle', './assets/character/character_Idle.png', {
             frameWidth: 48,
