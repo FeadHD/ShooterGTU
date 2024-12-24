@@ -105,13 +105,18 @@ export class GameUI {
 
     setupUI() {
         const width = this.scene.scale.width;
+        const height = this.scene.scale.height;
         console.log('Setting up UI...');
 
         // Create container if it doesn't exist
         if (!this.container) {
             this.container = this.scene.add.container(0, 0);
             this.container.setDepth(100);
-            this.container.setScrollFactor(0);
+        }
+
+        // Clear existing UI elements
+        if (this.container.list.length > 0) {
+            this.container.removeAll(true);
         }
 
         // Create UI camera if it doesn't exist
@@ -120,6 +125,22 @@ export class GameUI {
             this.uiCamera = this.scene.cameras.add(0, 0, width, height);
             this.uiCamera.setScroll(0, 0);
         }
+
+        // Create scene name text
+        this.sceneNameText = this.scene.add.text(width/2, width * 0.02, 'Scene 1', {
+            fontFamily: 'Retronoid',
+            fontSize: '32px',
+            fill: '#fff'
+        }).setOrigin(0.5);
+        this.container.add(this.sceneNameText);
+
+        // Create instruction text
+        this.instructionText = this.scene.add.text(width/2, width * 0.05, 'Defeat all enemies to proceed!', {
+            fontFamily: 'Retronoid',
+            fontSize: '24px',
+            fill: '#ff0'
+        }).setOrigin(0.5);
+        this.container.add(this.instructionText);
 
         // Create UI elements
         this.createScoreDisplay();

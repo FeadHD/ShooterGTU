@@ -108,20 +108,6 @@ export class GameScene1 extends BaseScene {
         // Update camera ignore lists
         this.gameUI.updateCameraIgnoreList();
         
-        // Add scene text
-        this.add.text(width/2, height * 0.1, 'Scene 1', {
-            fontFamily: 'Retronoid',
-            fontSize: '32px',
-            fill: '#fff'
-        }).setOrigin(0.5);
-
-        // Add instruction text
-        this.instructionText = this.add.text(width/2, height * 0.2, 'Defeat all enemies to proceed!', {
-            fontFamily: 'Retronoid',
-            fontSize: '24px',
-            fill: '#ff0'
-        }).setOrigin(0.5);
-
         // Create enemy group
         this.enemies = this.physics.add.group({
             collideWorldBounds: true,
