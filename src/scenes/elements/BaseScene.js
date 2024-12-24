@@ -55,20 +55,6 @@ export class BaseScene extends Scene {
         this.groundTop = height - 64;
         this.getSpawnHeight = () => this.groundTop - 16;
 
-        // Create particles
-        this.hitParticles = this.add.particles({
-            key: 'particle',
-            config: {
-                speed: { min: 100, max: 200 },
-                scale: { start: 1, end: 0 },
-                tint: 0xffff00,
-                blendMode: 'ADD',
-                lifespan: 300,
-                quantity: 10,
-                emitZone: { type: 'random', source: new Phaser.Geom.Circle(0, 0, 20) }
-            }
-        });
-
         // Create bullet group with physics
         this.bullets = this.physics.add.group({
             classType: Bullet,
@@ -147,18 +133,6 @@ export class BaseScene extends Scene {
         this.gameUI = new GameUI(this);
         this.gameUI.container.setScrollFactor(0);
         this.gameUI.updateCameraIgnoreList();
-    }
-
-    shoot(direction = 'right') {
-        const bullet = this.bullets.get(this.player.x, this.player.y);
-        if (!bullet) return;
-        
-        // Ensure bullet physics properties are set
-        bullet.body.setAllowGravity(false);
-        bullet.body.setImmovable(true);
-        
-        bullet.fire(this.player.x, this.player.y, direction);
-        this.effectsManager.playSound('laser');
     }
 
     destroyBullet(bullet) {
