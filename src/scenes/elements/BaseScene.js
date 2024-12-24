@@ -6,6 +6,7 @@ import { Player } from '../../prefabs/Player';
 import { AnimationManager } from '../../modules/managers/AnimationManager';
 import { StateManager } from '../../modules/managers/StateManager';
 import { DebugSystem } from '../../_Debug/DebugSystem';
+import { SceneBoundaryManager } from '../../modules/managers/BoundaryManager';
 
 export class BaseScene extends Scene {
     preload() {
@@ -31,6 +32,7 @@ export class BaseScene extends Scene {
         this.stateManager = new StateManager(this);
         this.animationManager = new AnimationManager(this);
         this.debugSystem = new DebugSystem(this);
+        this.boundaryManager = new SceneBoundaryManager(this);
 
         // Initialize game state and animations
         this.stateManager.initializeGameState();
@@ -83,9 +85,9 @@ export class BaseScene extends Scene {
         }, null, this);
 
         // Create game elements
-        this.createSceneBoundaries();
         this.createAnimations();
         this.createPlayer(width);
+        this.boundaryManager.createBoundaries(this.player);
 
         // Ensure font is loaded before creating UI
         if (typeof WebFont !== 'undefined') {
@@ -151,20 +153,6 @@ export class BaseScene extends Scene {
         });
 
         return this.player;
-    }
-
-    createSceneBoundaries() {
-        const width = this.scale.width;
-        const height = this.scale.height;
-        
-        // Create invisible wall only on the left to prevent going back
-        const leftBoundary = this.add.rectangle(0, height/2, 10, height, 0x000000, 0);
-        this.physics.add.existing(leftBoundary, true);
-        
-        // Add collision between player and left boundary
-        if (this.player) {
-            this.physics.add.collider(this.player, leftBoundary);
-        }
     }
 
     createUI() {
