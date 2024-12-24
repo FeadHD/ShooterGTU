@@ -8,6 +8,7 @@ import { StateManager } from '../../modules/managers/StateManager';
 import { DebugSystem } from '../../_Debug/DebugSystem';
 import { SceneBoundaryManager } from '../../modules/managers/BoundaryManager';
 import { EffectsManager } from '../../modules/managers/EffectsManager';
+import { EnemyManager } from '../../modules/managers/EnemyManager';
 
 export class BaseScene extends Scene {
     preload() {
@@ -34,6 +35,7 @@ export class BaseScene extends Scene {
         this.debugSystem = new DebugSystem(this);
         this.boundaryManager = new SceneBoundaryManager(this);
         this.effectsManager = new EffectsManager(this);
+        this.enemyManager = new EnemyManager(this);
 
         // Initialize game state and animations
         this.stateManager.initializeGameState();
@@ -93,10 +95,6 @@ export class BaseScene extends Scene {
             console.warn('WebFont not available in BaseScene, creating UI anyway');
             this.createUI();
         }
-
-        // Initialize game tracking
-        this.remainingEnemies = 0;
-        this.nextSceneName = '';
         
         // Listen for scene events
         this.events.on('wake', this.onSceneWake, this);
@@ -104,18 +102,8 @@ export class BaseScene extends Scene {
         this.events.on('shutdown', this.cleanup, this);
         this.events.on('sleep', this.cleanup, this);
 
-        // Add debug graphics and toggle
-        this.debugGraphics = this.add.graphics();
-        this.debugGraphics.setDepth(999);
-        this.showDebug = false;
-        
-        // Add E key for debug toggle
-        this.input.keyboard.addKey('E').on('down', () => {
-            this.showDebug = !this.showDebug;
-            if (!this.showDebug) {
-                this.debugGraphics.clear();
-            }
-        });
+        // Initialize debug system
+        this.debugSystem.initialize();
     }
 
     createPlayer(width) {
@@ -142,33 +130,7 @@ export class BaseScene extends Scene {
     }
 
     hitEnemyWithBullet(bullet, enemySprite) {
-        this.effectsManager.createHitEffect(bullet.x, bullet.y);
-        this.effectsManager.playSound('hit');
-        bullet.destroy();
-
-        const enemy = [this.enemy1, this.enemy2, this.boss].find(e => e && e.sprite === enemySprite);
-        if (enemy) {
-            enemy.currentHealth--;
-            console.log('Enemy hit, health:', enemy.currentHealth);
-            if (enemy.currentHealth <= 0) {
-                enemy.sprite.destroy();
-                this.remainingEnemies--;
-                console.log('Enemy defeated, remaining:', this.remainingEnemies);
-                this.addPoints(enemy === this.boss ? 50 : 10);
-                this.checkLevelComplete();
-            }
-        }
-    }
-
-    checkLevelComplete() {
-        if (this.remainingEnemies <= 0) {
-            const currentScene = this.scene.key;
-            // Don't show completion text for Scene 5 as it has its own handling
-            if (currentScene !== 'GameScene5') {
-                const sceneNumber = parseInt(currentScene.slice(-1));
-                this.nextSceneName = `GameScene${sceneNumber + 1}`;
-            }
-        }
+        this.enemyManager.handleBulletHit(bullet, enemySprite);
     }
 
     hitEnemy(player, enemy) {
@@ -185,16 +147,7 @@ export class BaseScene extends Scene {
         this.invulnerableUntil = this.time.now + 1000;
         
         // Visual feedback
-        this.tweens.add({
-            targets: player,
-            alpha: 0.5,
-            duration: 100,
-            yoyo: true,
-            repeat: 4,
-            onComplete: () => {
-                player.setAlpha(1);
-            }
-        });
+        this.effectsManager.createFlashEffect(player);
 
         // Check for player death
         if (currentHP <= 0) {
@@ -248,58 +201,23 @@ export class BaseScene extends Scene {
         // Reset player HP
         this.stateManager.set('playerHP', 100);
         this.gameUI.updateHP(100);
-        
-        // Play respawn animation or idle
-        if (this.anims.exists('character_respawn')) {
-            this.player.play('character_respawn');
-        } else {
-            this.player.play('character_Idle');
-        }
-        
-        // Make player temporarily invulnerable
-        this.invulnerableUntil = this.time.now + 2000;
-    }
-
-    update() {
-        if (this.player) {
-            this.player.update();
-        }
-
-        if (this.debugSystem) {
-            this.debugSystem.update();
-        }
-    }
-
-    addPoints(points) {
-        const currentScore = this.registry.get('score');
-        this.registry.set('score', currentScore + points);
-        this.gameUI.updateScore(currentScore + points);
     }
 
     cleanup() {
-        // Clean up any event listeners or timers here
-        if (this.player) {
-            this.player.destroy();
-        }
+        this.enemyManager.cleanup();
+        this.effectsManager.cleanup();
+        this.debugSystem.cleanup();
     }
 
     onSceneWake() {
-        // Re-enable input when scene wakes up
         this.input.keyboard.enabled = true;
-        this.input.mouse.enabled = true;
     }
 
     onSceneResume() {
-        // Re-enable input when scene resumes
         this.input.keyboard.enabled = true;
-        this.input.mouse.enabled = true;
     }
 
     shutdown() {
-        // Clean up when scene is shut down
-        if (this.effectsManager) {
-            this.effectsManager.cleanup();
-        }
         this.cleanup();
         super.shutdown();
     }

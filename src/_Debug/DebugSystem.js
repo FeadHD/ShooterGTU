@@ -4,15 +4,23 @@ export class DebugSystem {
         this.graphics = scene.add.graphics();
         this.graphics.setDepth(999);
         this.enabled = false;
+        this.showDebug = false;
 
         // Add debug toggle key
         this.debugKey = scene.input.keyboard.addKey('E');
         this.debugKey.on('down', () => {
             this.enabled = !this.enabled;
+            this.showDebug = !this.showDebug;
             if (!this.enabled) {
                 this.graphics.clear();
             }
         });
+    }
+
+    initialize() {
+        // Add debug graphics
+        this.debugGraphics = this.scene.add.graphics();
+        this.debugGraphics.setDepth(999);
     }
 
     drawPhysicsBounds(gameObject) {
@@ -105,6 +113,55 @@ export class DebugSystem {
                     this.drawPhysicsBounds(enemy);
                 }
             });
+        }
+
+        if (!this.showDebug) return;
+
+        this.debugGraphics.clear();
+        
+        // Draw physics bounds
+        this.drawPhysicsBoundsDebug();
+        
+        // Draw platform bounds
+        this.drawPlatformBoundsDebug();
+        
+        // Draw player bounds if it exists
+        if (this.scene.player && this.scene.player.body) {
+            this.drawPlayerBoundsDebug();
+        }
+    }
+
+    drawPhysicsBoundsDebug() {
+        const bounds = this.scene.physics.world.bounds;
+        
+        this.debugGraphics.lineStyle(1, 0x00ff00);
+        this.debugGraphics.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height);
+    }
+
+    drawPlatformBoundsDebug() {
+        if (!this.scene.platforms) return;
+
+        this.debugGraphics.lineStyle(1, 0xff0000);
+        
+        this.scene.platforms.children.iterate((platform) => {
+            if (platform && platform.body) {
+                const bounds = platform.body;
+                this.debugGraphics.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height);
+            }
+        });
+    }
+
+    drawPlayerBoundsDebug() {
+        const player = this.scene.player;
+        const bounds = player.body;
+        
+        this.debugGraphics.lineStyle(1, 0x0000ff);
+        this.debugGraphics.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height);
+    }
+
+    cleanup() {
+        if (this.debugGraphics) {
+            this.debugGraphics.destroy();
         }
     }
 }
