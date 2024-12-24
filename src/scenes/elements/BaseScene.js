@@ -134,7 +134,7 @@ export class BaseScene extends Scene {
     }
 
     hitEnemy(player, enemy) {
-        if (this.isDying) return;
+        if (player.isDying) return;
         
         // Check if player is currently invulnerable
         if (this.time.now < this.invulnerableUntil) return;
@@ -148,10 +148,10 @@ export class BaseScene extends Scene {
         
         // Visual feedback
         this.effectsManager.createFlashEffect(player);
-
+        
         // Check for player death
         if (currentHP <= 0) {
-            this.handlePlayerDeath();
+            player.die();
         }
     }
 

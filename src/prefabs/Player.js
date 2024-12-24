@@ -83,18 +83,24 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     die() {
+        if (this.isDying) return;  // Prevent multiple death calls
+        
         this.isDying = true;
         this.setVelocity(0, 0);
         this.body.moves = false;
         
+        // Disable controls
+        this.controller.enabled = false;
+        
         // Decrease lives
-        const lives = this.scene.registry.get('lives') - 1;
-        this.scene.registry.set('lives', lives);
+        const lives = this.scene.stateManager.decrement('lives');
         this.scene.gameUI.updateLives(lives);
     
+        console.log('Playing death animation');  // Debug log
         // Play death animation
-        this.play('character_death');
+        this.play('character_Death', true);  // Force start the animation
         this.once('animationcomplete', () => {
+            console.log('Death animation complete');  // Debug log
             if (lives <= 0) {
                 this.handleGameOver();
             } else {
@@ -114,25 +120,23 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     handleRespawn() {
-        this.scene.time.delayedCall(500, () => {
-            // Reset HP
-            this.playerHP = 100;
-            this.scene.registry.set('playerHP', 100);
-            this.scene.gameUI.updateHP(100);
-            
-            // Reset state
-            this.isDying = false;
-            this.scene.input.keyboard.enabled = true;
-            this.scene.input.mouse.enabled = true;
-            this.body.moves = true;
-            
-            // Restart scene
-            this.scene.scene.restart();
-        });
+        // Reset player position
+        this.setPosition(this.scene.cameras.main.width * 0.1, this.scene.getSpawnHeight());
+        this.setVelocity(0, 0);
+        
+        // Reset player state
+        this.isDying = false;
+        this.body.moves = true;
+        this.setAlpha(1);
+        this.controller.enabled = true;  // Re-enable controls
+        
+        // Reset player HP
+        this.scene.stateManager.set('playerHP', 100);
+        this.scene.gameUI.updateHP(100);
     }
 
     update() {
-        if (this.body) {
+        if (this.body && !this.isDying) {  
             // Handle horizontal movement
             if (this.controller.isMovingLeft()) {
                 this.setVelocityX(-this.movementSpeed);

@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 export class PlayerController {
     constructor(scene) {
         this.scene = scene;
+        this.enabled = true;  
         this.defaultBindings = {
             up: Phaser.Input.Keyboard.KeyCodes.W,
             down: Phaser.Input.Keyboard.KeyCodes.S,
@@ -125,15 +126,23 @@ export class PlayerController {
     }
 
     isMovingLeft() {
-        return this.controls.left.isDown;
+        return this.enabled && this.controls.left.isDown;
     }
 
     isMovingRight() {
-        return this.controls.right.isDown;
+        return this.enabled && this.controls.right.isDown;
+    }
+
+    isMovingUp() {
+        return this.enabled && this.controls.up.isDown;
+    }
+
+    isMovingDown() {
+        return this.enabled && this.controls.down.isDown;
     }
 
     isJumping() {
-        return this.controls.up.isDown;
+        return this.enabled && this.controls.up.isDown;
     }
 
     destroy() {

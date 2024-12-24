@@ -49,6 +49,22 @@ export class AnimationManager {
             frameRate: 12,
             repeat: -1
         });
+
+        // Death animation
+        this.scene.anims.create({
+            key: 'character_Death',
+            frames: this.scene.anims.generateFrameNumbers('character_death', { start: 0, end: 8 }),
+            frameRate: 10,
+            repeat: 0
+        });
+
+        // Jump animation
+        this.scene.anims.create({
+            key: 'character_Jump',
+            frames: this.scene.anims.generateFrameNumbers('character_jump', { start: 0, end: 1 }),
+            frameRate: 8,
+            repeat: 0
+        });
     }
 
     createEnemyAnimations() {

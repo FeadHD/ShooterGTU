@@ -115,7 +115,9 @@ export class Preloader extends Scene {
             frameWidth: 48,
             frameHeight: 48,
             startFrame: 0,
-            endFrame: 3
+            endFrame: 1,
+            spacing: 0,
+            margin: 0
         });
         console.log('Loading character_jump sprite');
 
@@ -123,7 +125,9 @@ export class Preloader extends Scene {
             frameWidth: 48,
             frameHeight: 48,
             startFrame: 0,
-            endFrame: 5
+            endFrame: 8,
+            spacing: 0,
+            margin: 0
         });
         console.log('Loading character_death sprite');
 
