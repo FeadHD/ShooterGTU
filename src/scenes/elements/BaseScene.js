@@ -5,6 +5,7 @@ import { ParallaxBackground } from '../../prefabs/ParallaxBackground';
 import { Player } from '../../prefabs/Player';
 import { AnimationManager } from '../../modules/managers/AnimationManager';
 import { StateManager } from '../../modules/managers/StateManager';
+import { DebugSystem } from '../../_Debug/DebugSystem';
 
 export class BaseScene extends Scene {
     preload() {
@@ -29,6 +30,7 @@ export class BaseScene extends Scene {
         // Initialize managers
         this.stateManager = new StateManager(this);
         this.animationManager = new AnimationManager(this);
+        this.debugSystem = new DebugSystem(this);
 
         // Initialize game state and animations
         this.stateManager.initializeGameState();
@@ -329,16 +331,12 @@ export class BaseScene extends Scene {
     }
 
     update() {
-        if (this.showDebug) {
-            this.debugGraphics.clear();
-            this.platforms.children.entries.forEach(platform => {
-                this.debugGraphics.lineStyle(1, 0x00ff00);
-                this.debugGraphics.strokeRect(platform.x, platform.y, platform.width, platform.height);
-            });
-        }
-        
         if (this.player) {
             this.player.update();
+        }
+
+        if (this.debugSystem) {
+            this.debugSystem.update();
         }
     }
 
