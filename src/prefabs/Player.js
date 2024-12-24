@@ -132,34 +132,49 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     update() {
-        if (this.isDying) return;
+        if (this.body) {
+            // Handle horizontal movement
+            if (this.controller.isMovingLeft()) {
+                this.setVelocityX(-this.movementSpeed);
+                this.setFlipX(true);
+                if (this.body.onFloor()) {
+                    this.play('character_Walking', true);
+                }
+            } else if (this.controller.isMovingRight()) {
+                this.setVelocityX(this.movementSpeed);
+                this.setFlipX(false);
+                if (this.body.onFloor()) {
+                    this.play('character_Walking', true);
+                }
+            } else {
+                this.setVelocityX(0);
+                if (this.body.onFloor()) {
+                    this.play('character_Idle', true);
+                }
+            }
 
-        const onGround = this.body.onFloor();
+            // Handle jumping
+            if (this.controller.isJumping() && this.jumpsAvailable > 0) {
+                this.setVelocityY(this.jumpSpeed);
+                this.jumpsAvailable--;
+                this.play('character_Jump', true);
+            }
 
-        // Reset jumps when touching ground
-        if (onGround) {
-            this.jumpsAvailable = 2;
-        }
+            // Reset jump ability when landing
+            if (this.body.onFloor()) {
+                this.jumpsAvailable = 2;
+            }
 
-        // Handle horizontal movement
-        if (this.controller.isMovingLeft()) {
-            this.setVelocityX(-this.movementSpeed);
-            this.flipX = true;
-            if (onGround) this.play('character_walk', true);
-        } else if (this.controller.isMovingRight()) {
-            this.setVelocityX(this.movementSpeed);
-            this.flipX = false;
-            if (onGround) this.play('character_walk', true);
-        } else {
-            this.setVelocityX(0);
-            if (onGround) this.play('character_idle', true);
-        }
-
-        // Handle jumping
-        if (this.controller.isJumping() && this.jumpsAvailable > 0) {
-            this.setVelocityY(this.jumpSpeed);
-            this.play('character_jump', true);
-            this.jumpsAvailable--;
+            // Update bullet group
+            if (this.bulletGroup) {
+                this.bulletGroup.children.iterate((bullet) => {
+                    if (bullet && bullet.active) {
+                        if (bullet.x < 0 || bullet.x > this.scene.game.config.width) {
+                            bullet.destroy();
+                        }
+                    }
+                });
+            }
         }
     }
 

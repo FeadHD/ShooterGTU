@@ -92,6 +92,15 @@ export class Preloader extends Scene {
             endFrame: 4
         });
 
+        this.load.spritesheet('character_walking', './assets/character/character_Walking.png', {
+            frameWidth: 48,
+            frameHeight: 48,
+            startFrame: 0,
+            endFrame: 6,
+            spacing: 0,
+            margin: 0
+        });
+
         this.load.spritesheet('character_run', './assets/character/character_Run.png', {
             frameWidth: 48,
             frameHeight: 48,
@@ -101,14 +110,6 @@ export class Preloader extends Scene {
             margin: 0
         });
         console.log('Loading character_run sprite');
-
-        this.load.spritesheet('character_walk', './assets/character/character_walking.png', {
-            frameWidth: 48,
-            frameHeight: 48,
-            startFrame: 0,
-            endFrame: 7
-        });
-        console.log('Loading character_walk sprite');
 
         this.load.spritesheet('character_jump', './assets/character/character_Jump.png', {
             frameWidth: 48,

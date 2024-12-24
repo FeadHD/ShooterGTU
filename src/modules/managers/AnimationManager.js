@@ -26,45 +26,29 @@ export class AnimationManager {
     }
 
     createCharacterAnimations() {
-        // Player idle animation
-        if (!this.scene.anims.exists('player-idle')) {
-            this.scene.anims.create({
-                key: 'player-idle',
-                frames: this.scene.anims.generateFrameNumbers('player', { start: 0, end: 3 }),
-                frameRate: 8,
-                repeat: -1
-            });
-        }
+        // Idle animation
+        this.scene.anims.create({
+            key: 'character_Idle',
+            frames: this.scene.anims.generateFrameNumbers('character_idle', { start: 0, end: 3 }),
+            frameRate: 8,
+            repeat: -1
+        });
 
-        // Player run animation
-        if (!this.scene.anims.exists('player-run')) {
-            this.scene.anims.create({
-                key: 'player-run',
-                frames: this.scene.anims.generateFrameNumbers('player', { start: 8, end: 13 }),
-                frameRate: 10,
-                repeat: -1
-            });
-        }
+        // Walking animation
+        this.scene.anims.create({
+            key: 'character_Walking',
+            frames: this.scene.anims.generateFrameNumbers('character_walking', { start: 0, end: 5 }),
+            frameRate: 10,
+            repeat: -1
+        });
 
-        // Player jump animation
-        if (!this.scene.anims.exists('player-jump')) {
-            this.scene.anims.create({
-                key: 'player-jump',
-                frames: this.scene.anims.generateFrameNumbers('player', { start: 16, end: 23 }),
-                frameRate: 12,
-                repeat: 0
-            });
-        }
-
-        // Player shoot animation
-        if (!this.scene.anims.exists('player-shoot')) {
-            this.scene.anims.create({
-                key: 'player-shoot',
-                frames: this.scene.anims.generateFrameNumbers('player', { start: 24, end: 26 }),
-                frameRate: 15,
-                repeat: 0
-            });
-        }
+        // Running animation
+        this.scene.anims.create({
+            key: 'character_Run',
+            frames: this.scene.anims.generateFrameNumbers('character_run', { start: 0, end: 5 }),
+            frameRate: 12,
+            repeat: -1
+        });
     }
 
     createEnemyAnimations() {
