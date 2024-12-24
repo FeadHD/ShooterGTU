@@ -7,20 +7,25 @@ import { AnimationManager } from '../../modules/managers/AnimationManager';
 import { StateManager } from '../../modules/managers/StateManager';
 import { DebugSystem } from '../../_Debug/DebugSystem';
 import { SceneBoundaryManager } from '../../modules/managers/BoundaryManager';
+import { EffectsManager } from '../../modules/managers/EffectsManager';
 
 export class BaseScene extends Scene {
     preload() {
-        // Load bullet spritesheet if not already loaded
-        if (!this.textures.exists('bullet_animation')) {
-            this.load.spritesheet('bullet_animation', 'assets/sprites/bullet_animation.png', {
+        // Load character spritesheet if not already loaded
+        if (!this.textures.exists('character')) {
+            this.load.spritesheet('character', 'assets/character.png', {
                 frameWidth: 24,
                 frameHeight: 24
             });
         }
-        // Load any additional assets specific to this scene
-        if (!this.textures.exists('particle')) {
-            this.load.image('particle', 'assets/particle.png');
-        }
+        
+        // Load particle texture
+        this.load.image('particle', 'assets/particle.png');
+        
+        // Load sound effects
+        this.load.audio('laser', 'assets/sounds/laser.wav');
+        this.load.audio('hit', 'assets/sounds/hit.wav');
+        this.load.audio('explosion', 'assets/sounds/explosion.wav');
     }
 
     create() {
@@ -33,6 +38,7 @@ export class BaseScene extends Scene {
         this.animationManager = new AnimationManager(this);
         this.debugSystem = new DebugSystem(this);
         this.boundaryManager = new SceneBoundaryManager(this);
+        this.effectsManager = new EffectsManager(this);
 
         // Initialize game state and animations
         this.stateManager.initializeGameState();
@@ -355,6 +361,9 @@ export class BaseScene extends Scene {
 
     shutdown() {
         // Clean up when scene is shut down
+        if (this.effectsManager) {
+            this.effectsManager.cleanup();
+        }
         this.cleanup();
         super.shutdown();
     }
