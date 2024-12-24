@@ -33,7 +33,28 @@ export class PlayerController {
     }
 
     changeKeyBinding(action, event) {
-        const keyCode = event.keyCode;
+        // Handle both keyCode and key for better arrow key support
+        let keyCode;
+        
+        // Map arrow keys to their Phaser key codes
+        switch(event.key) {
+            case 'ArrowUp':
+                keyCode = Phaser.Input.Keyboard.KeyCodes.UP;
+                break;
+            case 'ArrowDown':
+                keyCode = Phaser.Input.Keyboard.KeyCodes.DOWN;
+                break;
+            case 'ArrowLeft':
+                keyCode = Phaser.Input.Keyboard.KeyCodes.LEFT;
+                break;
+            case 'ArrowRight':
+                keyCode = Phaser.Input.Keyboard.KeyCodes.RIGHT;
+                break;
+            default:
+                // For non-arrow keys, use the keyCode
+                keyCode = event.keyCode;
+        }
+
         this.keyBindings[action] = keyCode;
         
         // Clean up old key binding
@@ -44,6 +65,23 @@ export class PlayerController {
         // Create new key binding
         this.controls[action] = this.scene.input.keyboard.addKey(keyCode);
         this.saveKeyBindings();
+    }
+
+    getKeyName(keyCode) {
+        // Add special handling for arrow keys
+        switch(keyCode) {
+            case Phaser.Input.Keyboard.KeyCodes.UP:
+                return '↑';
+            case Phaser.Input.Keyboard.KeyCodes.DOWN:
+                return '↓';
+            case Phaser.Input.Keyboard.KeyCodes.LEFT:
+                return '←';
+            case Phaser.Input.Keyboard.KeyCodes.RIGHT:
+                return '→';
+            default:
+                const keyName = Phaser.Input.Keyboard.KeyCodes[keyCode];
+                return keyName || String.fromCharCode(keyCode);
+        }
     }
 
     setupKeyBindingUI() {
@@ -59,7 +97,7 @@ export class PlayerController {
                 const handleKeyPress = (event) => {
                     event.preventDefault();
                     this.changeKeyBinding(action, event);
-                    button.textContent = `Change ${action} key: ${this.getKeyName(event.keyCode)}`;
+                    button.textContent = `Change ${action} key: ${this.getKeyName(this.keyBindings[action])}`;
                     document.removeEventListener('keydown', handleKeyPress);
                 };
                 
@@ -68,10 +106,6 @@ export class PlayerController {
             
             document.getElementById('keyBindingContainer')?.appendChild(button);
         });
-    }
-
-    getKeyName(keyCode) {
-        return Phaser.Input.Keyboard.KeyCodes[keyCode] || String.fromCharCode(keyCode);
     }
 
     resetToDefaults() {

@@ -10,6 +10,7 @@ import { MissionComplete } from '../scenes/menus/MissionComplete';
 import { Preloader } from '../scenes/elements/Preloader';
 import { TitleScene } from '../scenes/elements/TitleScene';
 import Settings from '../scenes/menus/Settings';
+import { ControlsSettingsScene } from '../scenes/menus/ControlsSettingsScene';
 
 export const config = {
     type: Phaser.AUTO,
@@ -37,17 +38,18 @@ export const config = {
         }
     },
     scene: [
-        TitleScene,
         Preloader,
+        TitleScene,
         MainMenu,
-        Settings,
         GameScene1,
         GameScene2,
         GameScene3,
         GameScene4,
         GameScene5,
-        MissionComplete,
+        Settings,
+        Leaderboard,
         GameOver,
-        Leaderboard
+        MissionComplete,
+        ControlsSettingsScene
     ]
 };

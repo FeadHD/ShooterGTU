@@ -149,9 +149,10 @@ export class MainMenu extends Scene {
 
         // Create menu buttons - moved up for better spacing
         const startButton = createButton('START', canvasHeight * 0.45);
-        const settingsButton = createButton('SETTINGS', canvasHeight * 0.55);
-        const leaderboardButton = createButton('LEADERBOARD', canvasHeight * 0.65);
-        const rulesButton = createButton('RULES', canvasHeight * 0.75);
+        const controlsButton = createButton('CONTROLS', canvasHeight * 0.55);
+        const settingsButton = createButton('SETTINGS', canvasHeight * 0.65);
+        const leaderboardButton = createButton('LEADERBOARD', canvasHeight * 0.75);
+        const rulesButton = createButton('RULES', canvasHeight * 0.85);
 
         // Add click handlers
         startButton.on('pointerdown', () => {
@@ -167,6 +168,9 @@ export class MainMenu extends Scene {
 
             // Start first level
             this.scene.start('GameScene1');
+        });
+        controlsButton.on('pointerdown', () => {
+            this.scene.start('ControlsSettingsScene');
         });
         settingsButton.on('pointerdown', () => {
             this.scene.start('Settings');
