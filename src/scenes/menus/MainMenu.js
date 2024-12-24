@@ -12,8 +12,11 @@ export class MainMenu extends Scene {
     }
 
     async createScene() {
-        // Reset lives only
+        // Reset all game state
         this.registry.set('lives', 3);
+        this.registry.set('playerHP', 100);
+        this.registry.set('score', 0);
+        this.registry.set('bitcoins', 0);
         
         // Enable input system
         this.input.keyboard.enabled = true;
@@ -165,6 +168,13 @@ export class MainMenu extends Scene {
             // Clean up scene before starting game
             this.input.keyboard.removeAllKeys();
             this.input.removeAllListeners();
+            
+            // Stop any existing scenes
+            this.scene.stop('GameScene1');
+            this.scene.stop('GameScene2');
+            this.scene.stop('GameScene3');
+            this.scene.stop('GameScene4');
+            this.scene.stop('GameScene5');
 
             // Start first level
             this.scene.start('GameScene1');

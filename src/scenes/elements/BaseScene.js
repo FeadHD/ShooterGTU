@@ -211,12 +211,54 @@ export class BaseScene extends Scene {
         if (this.debugSystem) {
             this.debugSystem.update();
         }
+
+        // Check for space key press during game over
+        if (this.gameOver && this.spaceKey && this.spaceKey.isDown) {
+            // Clean up current scene
+            this.cleanup();
+            
+            // Reset registry values
+            this.registry.set('lives', 3);
+            this.registry.set('playerHP', 100);
+            this.registry.set('score', 0);
+            this.registry.set('bitcoins', 0);
+
+            // Stop current scene and start from MainMenu
+            this.scene.start('MainMenu');
+        }
     }
 
     cleanup() {
-        this.enemyManager.cleanup();
-        this.effectsManager.cleanup();
-        this.debugSystem.cleanup();
+        // Clean up game over elements if they exist
+        if (this.gameOverElements) {
+            if (this.gameOverElements.overlay) this.gameOverElements.overlay.destroy();
+            if (this.gameOverElements.gameOverContainer) this.gameOverElements.gameOverContainer.destroy();
+            this.gameOverElements = null;
+        }
+
+        // Clean up UI
+        if (this.gameUI) {
+            this.gameUI.destroy();
+            this.gameUI = null;
+        }
+
+        // Clean up managers
+        if (this.stateManager) this.stateManager = null;
+        if (this.animationManager) this.animationManager = null;
+        if (this.effectsManager) this.effectsManager = null;
+        if (this.enemyManager) this.enemyManager = null;
+        if (this.debugSystem) this.debugSystem = null;
+
+        // Clean up input
+        if (this.input) {
+            this.input.keyboard.enabled = false;
+            this.input.keyboard.removeAllKeys();
+            this.input.removeAllListeners();
+        }
+
+        // Reset flags
+        this.gameOver = false;
+        this.spaceKey = null;
     }
 
     onSceneWake() {
