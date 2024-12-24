@@ -245,51 +245,87 @@ export class BaseScene extends Scene {
         // Check if player is currently invulnerable
         if (this.time.now < this.invulnerableUntil) return;
 
-        this.playerHP -= 25;
-        this.registry.set('playerHP', this.playerHP); // Store HP in registry
-        this.gameUI.updateHP(this.playerHP);
+        // Use StateManager to decrement player HP
+        const currentHP = this.stateManager.decrement('playerHP', 25);
+        this.gameUI.updateHP(currentHP);
 
-        if (this.playerHP <= 0) {
+        // Set invulnerability period
+        this.invulnerableUntil = this.time.now + 1000;
+        
+        // Visual feedback
+        this.tweens.add({
+            targets: player,
+            alpha: 0.5,
+            duration: 100,
+            yoyo: true,
+            repeat: 4,
+            onComplete: () => {
+                player.setAlpha(1);
+            }
+        });
+
+        // Check for player death
+        if (currentHP <= 0) {
             this.handlePlayerDeath();
-        } else {
-            // Set invulnerability for 1000ms
-            this.invulnerableUntil = this.time.now + 1000;
-            
-            // Create flashing effect during invulnerability
-            this.tweens.add({
-                targets: player,
-                alpha: { from: 0.5, to: 1 },
-                duration: 100,
-                repeat: 4,
-                yoyo: true,
-                onComplete: () => {
-                    if (!this.isDying) this.alpha = 1;
-                }
-            });
-            
-            this.hitSound.play();
         }
     }
 
     handlePlayerDeath() {
+        if (this.isDying) return; // Prevent multiple death handlers
+        
         this.isDying = true;
         this.player.setVelocity(0, 0);
         this.player.body.moves = false;
         
-        // Decrease lives
-        const lives = this.registry.get('lives') - 1;
-        this.registry.set('lives', lives);
+        // Decrease lives using StateManager
+        const lives = this.stateManager.decrement('lives');
         this.gameUI.updateLives(lives);
     
-        // Play death animation
-        this.player.play('character_death');
-        this.player.once('animationcomplete', () => {
-            if (lives <= 0) {
-                this.handleGameOver();
-            } else {
-                this.handleRespawn();
-            }
-        });
+        // Play death animation if it exists
+        if (this.anims.exists('character_Death')) {
+            this.player.play('character_Death');
+            this.player.once('animationcomplete', () => {
+                if (lives <= 0) {
+                    this.stateManager.handleGameOver();
+                } else {
+                    this.handleRespawn();
+                }
+            });
+        } else {
+            // If no death animation, wait a moment then proceed
+            this.time.delayedCall(1000, () => {
+                if (lives <= 0) {
+                    this.stateManager.handleGameOver();
+                } else {
+                    this.handleRespawn();
+                }
+            });
+        }
+    }
+
+    handleRespawn() {
+        // Reset player position
+        this.player.setPosition(this.cameras.main.width * 0.1, this.getSpawnHeight());
+        this.player.setVelocity(0, 0);
+        
+        // Reset player state
+        this.isDying = false;
+        this.player.body.moves = true;
+        this.player.setAlpha(1);
+        
+        // Reset player HP
+        this.stateManager.set('playerHP', 100);
+        this.gameUI.updateHP(100);
+        
+        // Play respawn animation or idle
+        if (this.anims.exists('character_respawn')) {
+            this.player.play('character_respawn');
+        } else {
+            this.player.play('character_Idle');
+        }
+        
+        // Make player temporarily invulnerable
+        this.invulnerableUntil = this.time.now + 2000;
     }
 
     update() {

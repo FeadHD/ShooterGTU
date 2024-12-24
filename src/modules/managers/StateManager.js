@@ -7,19 +7,25 @@ export class StateManager {
     }
 
     initializeGameState() {
-        const defaults = {
-            score: 0,
-            lives: 3,
-            playerHP: 100,
-            bitcoins: 0,
-            musicEnabled: true
-        };
-
-        Object.entries(defaults).forEach(([key, value]) => {
-            if (this.registry.get(key) === undefined) {
-                this.registry.set(key, value);
-            }
-        });
+        // Initialize game state if not already set
+        if (!this.registry.has('score')) {
+            this.registry.set('score', 0);
+        }
+        if (!this.registry.has('lives')) {
+            this.registry.set('lives', 3);
+        }
+        if (!this.registry.has('playerHP')) {
+            this.registry.set('playerHP', 100);
+        }
+        if (!this.registry.has('bitcoins')) {
+            this.registry.set('bitcoins', 0);
+        }
+        if (!this.registry.has('musicEnabled')) {
+            this.registry.set('musicEnabled', true);
+        }
+        if (!this.registry.has('gameStarted')) {
+            this.registry.set('gameStarted', false);
+        }
     }
 
     get(key) {
@@ -28,18 +34,21 @@ export class StateManager {
 
     set(key, value) {
         this.registry.set(key, value);
+        return value;
     }
 
     increment(key, amount = 1) {
-        const currentValue = this.get(key);
-        this.set(key, currentValue + amount);
-        return currentValue + amount;
+        const currentValue = this.registry.get(key);
+        const newValue = currentValue + amount;
+        this.registry.set(key, newValue);
+        return newValue;
     }
 
     decrement(key, amount = 1) {
-        const currentValue = this.get(key);
-        this.set(key, currentValue - amount);
-        return currentValue - amount;
+        const currentValue = this.registry.get(key);
+        const newValue = Math.max(0, currentValue - amount);
+        this.registry.set(key, newValue);
+        return newValue;
     }
 
     reset(key) {
@@ -48,7 +57,8 @@ export class StateManager {
             lives: 3,
             playerHP: 100,
             bitcoins: 0,
-            musicEnabled: true
+            musicEnabled: true,
+            gameStarted: false
         };
         
         if (key) {
@@ -70,7 +80,7 @@ export class StateManager {
 
     saveToLocalStorage() {
         const gameState = {};
-        ['score', 'lives', 'playerHP', 'bitcoins', 'musicEnabled'].forEach(key => {
+        ['score', 'lives', 'playerHP', 'bitcoins', 'musicEnabled', 'gameStarted'].forEach(key => {
             gameState[key] = this.get(key);
         });
         localStorage.setItem('gameState', JSON.stringify(gameState));
@@ -90,5 +100,9 @@ export class StateManager {
 
     clearSavedState() {
         localStorage.removeItem('gameState');
+    }
+
+    handleGameOver() {
+        this.scene.scene.start('GameOver');
     }
 }
