@@ -3,6 +3,7 @@ import { GameUI } from './GameUI';
 import { Bullet } from '../../prefabs/Bullet';
 import { ParallaxBackground } from '../../prefabs/ParallaxBackground';
 import { Player } from '../../prefabs/Player';
+import { AnimationManager } from '../../modules/managers/AnimationManager';
 
 export class BaseScene extends Scene {
     preload() {
@@ -16,7 +17,11 @@ export class BaseScene extends Scene {
     }
 
     create() {
-        // Initialize game state
+        // Get the canvas dimensions
+        const width = this.cameras.main.width;
+        const height = this.cameras.main.height;
+
+        // Initialize game state if not set
         if (this.registry.get('score') === undefined) {
             this.registry.set('score', 0);
         }
@@ -26,24 +31,17 @@ export class BaseScene extends Scene {
         if (this.registry.get('playerHP') === undefined) {
             this.registry.set('playerHP', 100);
         }
-        if (this.registry.get('bitcoins') === undefined) {
+        if (!this.registry.get('bitcoins')) {
             this.registry.set('bitcoins', 0);
         }
 
         this.input.keyboard.enabled = true;  // Ensure keyboard is enabled on scene start
 
-        // Create bullet animation if it doesn't exist
-        if (!this.anims.exists('bullet_anim')) {
-            this.anims.create({
-                key: 'bullet_anim',
-                frames: this.anims.generateFrameNumbers('bullet_animation', { start: 0, end: 3 }),
-                frameRate: 10,
-                repeat: -1
-            });
-        }
+        // Initialize animation manager and create animations
+        this.animationManager = new AnimationManager(this);
+        this.animationManager.createAllAnimations();
 
         // Set up world
-        const { width, height } = this.scale;
         this.physics.world.gravity.y = 800;
         this.physics.world.setBounds(0, 0, width, height);
 
@@ -88,8 +86,8 @@ export class BaseScene extends Scene {
             this.destroyBullet(bullet);
         }, null, this);
 
-        // Create animations and player
-        this.createAnimations();
+        // Create game elements
+        this.createSceneBoundaries();
         this.createPlayer(width);
 
         // Ensure font is loaded before creating UI
@@ -117,9 +115,6 @@ export class BaseScene extends Scene {
         this.remainingEnemies = 0;
         this.nextSceneName = '';
         
-        // Set up scene boundaries for transitions
-        this.createSceneBoundaries();
-
         // Listen for scene events
         this.events.on('wake', this.onSceneWake, this);
         this.events.on('resume', this.onSceneResume, this);
@@ -141,37 +136,9 @@ export class BaseScene extends Scene {
     }
 
     createAnimations() {
-        // Character idle animation
-        this.anims.create({
-            key: 'character_idle',
-            frames: this.anims.generateFrameNumbers('character_idle', { start: 0, end: 3 }),
-            frameRate: 8,
-            repeat: -1
-        });
-
-        // Character walking animation
-        this.anims.create({
-            key: 'character_walk',
-            frames: this.anims.generateFrameNumbers('character_walk', { start: 0, end: 7 }),
-            frameRate: 10,
-            repeat: -1
-        });
-
-        // Character jump animation
-        this.anims.create({
-            key: 'character_jump',
-            frames: this.anims.generateFrameNumbers('character_jump', { start: 0, end: 3 }),
-            frameRate: 10,
-            repeat: 0
-        });
-
-        // Character death animation
-        this.anims.create({
-            key: 'character_death',
-            frames: this.anims.generateFrameNumbers('character_death', { start: 0, end: 5 }),
-            frameRate: 10,
-            repeat: 0
-        });
+        // All animations are now handled by AnimationManager
+        // This method is kept for backward compatibility
+        // and can be removed once all scenes are updated
     }
 
     createPlayer(width) {
