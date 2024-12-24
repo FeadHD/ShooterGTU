@@ -203,6 +203,16 @@ export class BaseScene extends Scene {
         this.gameUI.updateHP(100);
     }
 
+    update() {
+        if (this.player) {
+            this.player.update();
+        }
+
+        if (this.debugSystem) {
+            this.debugSystem.update();
+        }
+    }
+
     cleanup() {
         this.enemyManager.cleanup();
         this.effectsManager.cleanup();
