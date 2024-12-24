@@ -4,6 +4,7 @@ import { Bullet } from '../../prefabs/Bullet';
 import { ParallaxBackground } from '../../prefabs/ParallaxBackground';
 import { Player } from '../../prefabs/Player';
 import { AnimationManager } from '../../modules/managers/AnimationManager';
+import { StateManager } from '../../modules/managers/StateManager';
 
 export class BaseScene extends Scene {
     preload() {
@@ -14,6 +15,10 @@ export class BaseScene extends Scene {
                 frameHeight: 24
             });
         }
+        // Load any additional assets specific to this scene
+        if (!this.textures.exists('particle')) {
+            this.load.image('particle', 'assets/particle.png');
+        }
     }
 
     create() {
@@ -21,32 +26,21 @@ export class BaseScene extends Scene {
         const width = this.cameras.main.width;
         const height = this.cameras.main.height;
 
-        // Initialize game state if not set
-        if (this.registry.get('score') === undefined) {
-            this.registry.set('score', 0);
-        }
-        if (this.registry.get('lives') === undefined || this.registry.get('lives') <= 0) {
-            this.registry.set('lives', 3);
-        }
-        if (this.registry.get('playerHP') === undefined) {
-            this.registry.set('playerHP', 100);
-        }
-        if (!this.registry.get('bitcoins')) {
-            this.registry.set('bitcoins', 0);
-        }
+        // Initialize managers
+        this.stateManager = new StateManager(this);
+        this.animationManager = new AnimationManager(this);
+
+        // Initialize game state and animations
+        this.stateManager.initializeGameState();
+        this.animationManager.createAllAnimations();
 
         this.input.keyboard.enabled = true;  // Ensure keyboard is enabled on scene start
 
-        // Initialize animation manager and create animations
-        this.animationManager = new AnimationManager(this);
-        this.animationManager.createAllAnimations();
-
-        // Set up world
+        // Set up world physics
         this.physics.world.gravity.y = 800;
         this.physics.world.setBounds(0, 0, width, height);
 
         // Create parallax background first, before other elements
-        console.log('BaseScene: Creating parallax background...');
         this.parallaxBackground = new ParallaxBackground(this);
 
         // Create platforms group for collision
@@ -88,6 +82,7 @@ export class BaseScene extends Scene {
 
         // Create game elements
         this.createSceneBoundaries();
+        this.createAnimations();
         this.createPlayer(width);
 
         // Ensure font is loaded before creating UI
