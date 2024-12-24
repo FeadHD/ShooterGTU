@@ -91,7 +91,6 @@ export class BaseScene extends Scene {
         }, null, this);
 
         // Create game elements
-        this.createAnimations();
         this.createPlayer(width);
         this.boundaryManager.createBoundaries(this.player);
 
@@ -140,23 +139,12 @@ export class BaseScene extends Scene {
         });
     }
 
-    createAnimations() {
-        // All animations are now handled by AnimationManager
-        // This method is kept for backward compatibility
-        // and can be removed once all scenes are updated
-    }
-
     createPlayer(width) {
         // Create player using the Player prefab
         this.player = new Player(this, width * 0.1, this.getSpawnHeight());
         
         // Add collision with platforms
         this.physics.add.collider(this.player, this.platforms);
-
-        // Add collision with bullets
-        this.physics.add.collider(this.bullets, this.platforms, (bullet) => {
-            this.destroyBullet(bullet);
-        });
 
         return this.player;
     }
@@ -187,7 +175,7 @@ export class BaseScene extends Scene {
     }
 
     hitEnemyWithBullet(bullet, enemySprite) {
-        this.createHitEffect(bullet.x, bullet.y);
+        this.effectsManager.createHitEffect(bullet.x, bullet.y);
         this.hitSound.play();
         bullet.destroy();
 
@@ -213,25 +201,6 @@ export class BaseScene extends Scene {
                 const sceneNumber = parseInt(currentScene.slice(-1));
                 this.nextSceneName = `GameScene${sceneNumber + 1}`;
             }
-        }
-    }
-
-    createHitEffect(x, y) {
-        for(let i = 0; i < 10; i++) {
-            const particle = this.add.circle(x, y, 3, 0xffff00);
-            const angle = Math.random() * Math.PI * 2;
-            const speed = 100 + Math.random() * 100;
-            
-            this.tweens.add({
-                targets: particle,
-                x: particle.x + Math.cos(angle) * speed * 0.3,
-                y: particle.y + Math.sin(angle) * speed * 0.3,
-                alpha: 0,
-                scale: 0.1,
-                duration: 300,
-                ease: 'Power2',
-                onComplete: () => particle.destroy()
-            });
         }
     }
 

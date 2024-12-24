@@ -70,7 +70,7 @@ export class GameScene1 extends BaseScene {
                 slime.damage(1);
                 
                 // Create hit effect and destroy bullet
-                this.createHitEffect(bullet.x, bullet.y);
+                this.effectsManager.createHitEffect(bullet.x, bullet.y);
                 bullet.destroy();
             }
         }, null, this);
@@ -299,6 +299,7 @@ export class GameScene1 extends BaseScene {
             
             // Add collision between bullets and tile layer
             this.physics.add.collider(this.bullets, this.mapLayer, (bullet) => {
+                this.effectsManager.createHitEffect(bullet.x, bullet.y);
                 this.destroyBullet(bullet);
             }, null, this);
         }
@@ -478,7 +479,7 @@ export class GameScene1 extends BaseScene {
         }
         
         // Create particles at hit location
-        this.createHitEffect(bullet.x, bullet.y);
+        this.effectsManager.createHitEffect(bullet.x, bullet.y);
         
         // Play hit sound and destroy bullet
         this.hitSound.play();
