@@ -7,77 +7,134 @@ export class ControlsSettingsScene extends Scene {
     }
 
     create() {
+        const canvasWidth = this.cameras.main.width;
+        const canvasHeight = this.cameras.main.height;
+
         // Add background
-        this.add.rectangle(0, 0, this.cameras.main.width, this.cameras.main.height, 0x000000, 0.7)
+        const bg = this.add.image(0, 0, 'mainbg');
+        bg.setOrigin(0, 0);
+        bg.setDisplaySize(canvasWidth, canvasHeight);
+
+        // Add semi-transparent overlay
+        this.add.rectangle(0, 0, canvasWidth, canvasHeight, 0x000000, 0.7)
             .setOrigin(0, 0);
 
-        // Add title
-        this.add.text(this.cameras.main.centerX, 100, 'Controls Settings', {
-            fontSize: '32px',
-            fill: '#fff'
-        }).setOrigin(0.5);
+        // Add title with retro style
+        const titleStyle = {
+            fontFamily: 'Retronoid, Arial',
+            fontSize: '92px',
+            color: '#00ffff',
+            align: 'center',
+            stroke: '#ffffff',
+            strokeThickness: 4,
+            shadow: {
+                offsetX: 3,
+                offsetY: 3,
+                color: '#ff00ff',
+                blur: 5,
+                fill: true
+            }
+        };
 
-        // Create container for key binding buttons
-        const container = this.add.container(this.cameras.main.centerX, 200);
+        this.add.text(canvasWidth / 2, 100, 'CONTROLS', titleStyle)
+            .setOrigin(0.5);
+
+        // Button style matching main menu
+        const buttonStyle = {
+            fontFamily: 'Retronoid, Arial',
+            fontSize: '72px',
+            color: '#00ffff',
+            stroke: '#ffffff',
+            strokeThickness: 4,
+            shadow: {
+                offsetX: 3,
+                offsetY: 3,
+                color: '#ff00ff',
+                blur: 5,
+                fill: true
+            }
+        };
+
+        // Create container for control buttons
+        const container = this.add.container(canvasWidth / 2, 250);
         
         // Create temporary PlayerController instance for key bindings
-        const tempController = new PlayerController(this);
+        const controller = new PlayerController(this);
         
+        // Helper function to create interactive buttons
+        const createButton = (text, y) => {
+            const button = this.add.text(0, y, text, buttonStyle)
+                .setOrigin(0.5)
+                .setInteractive({ useHandCursor: true });
+
+            button.on('pointerover', () => {
+                button.setScale(1.2);
+                button.setColor('#ff00ff');
+            });
+
+            button.on('pointerout', () => {
+                button.setScale(1);
+                button.setColor('#00ffff');
+            });
+
+            return button;
+        };
+
         // Create buttons for each control
         const controls = ['up', 'down', 'left', 'right'];
+        const controlButtons = {};
+        
         controls.forEach((action, index) => {
-            const button = this.add.text(0, index * 60, `${action.toUpperCase()}: ${tempController.getKeyName(tempController.keyBindings[action])}`, {
-                fontSize: '24px',
-                fill: '#fff',
-                backgroundColor: '#333',
-                padding: { x: 10, y: 5 }
-            }).setOrigin(0.5);
-
-            button.setInteractive();
-            button.on('pointerdown', () => this.startKeyBinding(button, action, tempController));
+            const yPos = index * 100;
+            const button = createButton(
+                `${action.toUpperCase()}: ${controller.getKeyName(controller.keyBindings[action])}`,
+                yPos
+            );
+            
+            button.on('pointerdown', () => {
+                // Update all button texts to show current bindings
+                controls.forEach(ctrl => {
+                    controlButtons[ctrl].setText(
+                        `${ctrl.toUpperCase()}: ${controller.getKeyName(controller.keyBindings[ctrl])}`
+                    );
+                });
+                
+                // Show 'Press any key' for the selected button
+                button.setText(`${action.toUpperCase()}: PRESS ANY KEY`);
+                
+                const keyHandler = (event) => {
+                    event.preventDefault();
+                    controller.changeKeyBinding(action, event);
+                    button.setText(
+                        `${action.toUpperCase()}: ${controller.getKeyName(controller.keyBindings[action])}`
+                    );
+                    this.input.keyboard.off('keydown', keyHandler);
+                };
+                
+                this.input.keyboard.on('keydown', keyHandler);
+            });
+            
             container.add(button);
+            controlButtons[action] = button;
         });
 
         // Add reset button
-        const resetButton = this.add.text(0, controls.length * 60 + 40, 'Reset to Defaults', {
-            fontSize: '24px',
-            fill: '#fff',
-            backgroundColor: '#660000',
-            padding: { x: 10, y: 5 }
-        }).setOrigin(0.5);
-
-        resetButton.setInteractive();
+        const resetButton = createButton('RESET TO DEFAULT', controls.length * 100 + 50);
         resetButton.on('pointerdown', () => {
-            tempController.resetToDefaults();
-            this.scene.restart();
+            controller.resetToDefaults();
+            controls.forEach(action => {
+                controlButtons[action].setText(
+                    `${action.toUpperCase()}: ${controller.getKeyName(controller.keyBindings[action])}`
+                );
+            });
         });
         container.add(resetButton);
 
         // Add back button
-        const backButton = this.add.text(0, controls.length * 60 + 100, 'Back to Menu', {
-            fontSize: '24px',
-            fill: '#fff',
-            backgroundColor: '#333',
-            padding: { x: 10, y: 5 }
-        }).setOrigin(0.5);
-
-        backButton.setInteractive();
+        const backButton = createButton('BACK', controls.length * 100 + 150);
         backButton.on('pointerdown', () => {
             this.scene.start('MainMenu');
         });
         container.add(backButton);
-    }
-
-    startKeyBinding(button, action, controller) {
-        button.setText('Press any key...');
-        
-        const keyHandler = (event) => {
-            event.preventDefault();
-            controller.changeKeyBinding(action, event);
-            button.setText(`${action.toUpperCase()}: ${controller.getKeyName(event.keyCode)}`);
-            this.input.keyboard.off('keydown', keyHandler);
-        };
-
-        this.input.keyboard.on('keydown', keyHandler);
     }
 }
