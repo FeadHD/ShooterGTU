@@ -43,7 +43,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         bullet.body.setAllowGravity(false);
         bullet.body.setImmovable(true);
         bullet.fire(this.x, this.y, direction);
-        this.scene.laserSound.play();
+        this.scene.effectsManager.playSound('laser');
     }
 
     takeDamage() {
@@ -79,7 +79,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
             }
         });
         
-        this.scene.hitSound.play();
+        this.scene.effectsManager.playSound('hit');
     }
 
     die() {

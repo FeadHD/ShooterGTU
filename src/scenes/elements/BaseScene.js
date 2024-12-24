@@ -21,11 +21,6 @@ export class BaseScene extends Scene {
         
         // Load particle texture
         this.load.image('particle', 'assets/particle.png');
-        
-        // Load sound effects
-        this.load.audio('laser', 'assets/sounds/laser.wav');
-        this.load.audio('hit', 'assets/sounds/hit.wav');
-        this.load.audio('explosion', 'assets/sounds/explosion.wav');
     }
 
     create() {
@@ -60,7 +55,7 @@ export class BaseScene extends Scene {
         this.groundTop = height - 64;
         this.getSpawnHeight = () => this.groundTop - 16;
 
-        // Create particles and sounds
+        // Create particles
         this.hitParticles = this.add.particles({
             key: 'particle',
             config: {
@@ -73,8 +68,6 @@ export class BaseScene extends Scene {
                 emitZone: { type: 'random', source: new Phaser.Geom.Circle(0, 0, 20) }
             }
         });
-        this.laserSound = this.sound.add('laser', { volume: 0.05 });
-        this.hitSound = this.sound.add('hit', { volume: 0.1 });
 
         // Create bullet group with physics
         this.bullets = this.physics.add.group({
@@ -165,7 +158,7 @@ export class BaseScene extends Scene {
         bullet.body.setImmovable(true);
         
         bullet.fire(this.player.x, this.player.y, direction);
-        this.laserSound.play();
+        this.effectsManager.playSound('laser');
     }
 
     destroyBullet(bullet) {
@@ -176,7 +169,7 @@ export class BaseScene extends Scene {
 
     hitEnemyWithBullet(bullet, enemySprite) {
         this.effectsManager.createHitEffect(bullet.x, bullet.y);
-        this.hitSound.play();
+        this.effectsManager.playSound('hit');
         bullet.destroy();
 
         const enemy = [this.enemy1, this.enemy2, this.boss].find(e => e && e.sprite === enemySprite);
