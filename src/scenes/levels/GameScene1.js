@@ -24,7 +24,7 @@ export class GameScene1 extends BaseScene {
         });
 
         // Load tileset
-        this.load.image('megapixel', 'assets/levels/image/Megapixel.png');
+        this.load.image('megapixel', 'assets/levels/image/WannabeeTileset.png');
         
         // Load level data
         this.load.json('level1', 'assets/levels/Json/G1S1v1f.json');
