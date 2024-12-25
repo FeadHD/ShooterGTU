@@ -4,23 +4,27 @@ export class DebugSystem {
         this.graphics = scene.add.graphics();
         this.graphics.setDepth(999);
         this.enabled = false;
-        this.showDebug = false;
+
+        // Initialize debug graphics
+        this.debugGraphics = scene.add.graphics();
+        this.debugGraphics.setDepth(999);
 
         // Add debug toggle key
         this.debugKey = scene.input.keyboard.addKey('E');
         this.debugKey.on('down', () => {
             this.enabled = !this.enabled;
-            this.showDebug = !this.showDebug;
             if (!this.enabled) {
+                // Clear both graphics objects when disabling debug mode
                 this.graphics.clear();
+                this.debugGraphics.clear();
             }
         });
     }
 
     initialize() {
         // Add debug graphics
-        this.debugGraphics = this.scene.add.graphics();
-        this.debugGraphics.setDepth(999);
+        // this.debugGraphics = this.scene.add.graphics();
+        // this.debugGraphics.setDepth(999);
     }
 
     drawPhysicsBounds(gameObject) {
@@ -80,7 +84,11 @@ export class DebugSystem {
     }
 
     clear() {
+        // Clear both graphics objects
         this.graphics.clear();
+        if (this.debugGraphics) {
+            this.debugGraphics.clear();
+        }
         if (this.debugTexts) {
             this.debugTexts.forEach(text => text.destroy());
             this.debugTexts = [];
@@ -88,9 +96,13 @@ export class DebugSystem {
     }
 
     update() {
-        if (!this.enabled) return;
-        
+        // Always clear at the start of update
         this.clear();
+        
+        // Only draw if enabled
+        if (!this.enabled) {
+            return;
+        }
         
         // Draw platform bounds
         if (this.scene.platforms && this.scene.platforms.children) {
@@ -106,6 +118,16 @@ export class DebugSystem {
             this.drawPhysicsBounds(this.scene.player);
         }
 
+        // Draw slime bounds
+        if (this.scene.slimes && this.scene.slimes.children) {
+            this.scene.slimes.children.entries.forEach(slime => {
+                if (slime && slime.active && slime.body) {
+                    this.graphics.lineStyle(1, 0x800080); // Purple for Slimes
+                    this.graphics.strokeRect(slime.body.x, slime.body.y, slime.body.width, slime.body.height);
+                }
+            });
+        }
+
         // Draw enemy bounds
         if (this.scene.enemies && this.scene.enemies.children) {
             this.scene.enemies.children.entries.forEach(enemy => {
@@ -114,8 +136,6 @@ export class DebugSystem {
                 }
             });
         }
-
-        if (!this.showDebug) return;
 
         this.debugGraphics.clear();
         
