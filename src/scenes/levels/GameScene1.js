@@ -2,6 +2,7 @@ import { BaseScene } from '../elements/BaseScene';
 import { GameUI } from '../elements/GameUI';
 import { Slime } from '../../prefabs/Slime';
 import { Bitcoin } from '../../prefabs/Bitcoin';
+import CameraManager from '../../modules/managers/CameraManager';
 
 export class GameScene1 extends BaseScene {
     constructor() {
@@ -53,6 +54,11 @@ export class GameScene1 extends BaseScene {
         // Set up the main game camera
         this.cameras.main.setZoom(1.5);
         this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
+
+        // Initialize camera manager
+        this.cameraManager = new CameraManager(this);
+        this.cameraManager.init(this.player);
+        this.cameraManager.playIntroSequence(this.player);
 
         // Initialize slimes group
         this.slimes = this.physics.add.group({

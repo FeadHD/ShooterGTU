@@ -36,8 +36,11 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
     preUpdate(time, delta) {
         super.preUpdate(time, delta);
 
+        // Get level bounds from physics world
+        const levelWidth = this.scene.physics.world.bounds.width;
+
         // Destroy bullet if it goes off screen
-        if (this.x < -50 || this.x > this.scene.scale.width + 50) {
+        if (this.x < -50 || this.x > levelWidth + 50) {
             this.destroy();
         }
     }
