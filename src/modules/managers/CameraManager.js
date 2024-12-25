@@ -13,12 +13,20 @@ class CameraManager {
         // Level dimensions (same as level 1)
         this.levelWidth = 3840;  // 3840 pixels wide
         this.levelHeight = 1080; // 1080 pixels high
+
+        // Find UI camera if it exists
+        this.uiCamera = scene.cameras.cameras.find(cam => cam !== this.camera);
     }
 
     init(player) {
         this.player = player;
         this.camera.startFollow(player);
         this.camera.setZoom(this.defaultZoom);
+
+        // Make sure UI camera ignores game objects
+        if (this.scene.gameUI) {
+            this.scene.gameUI.updateCameraIgnoreList();
+        }
     }
 
     playIntroSequence(player) {
@@ -36,7 +44,6 @@ class CameraManager {
         const visibleWidth = this.gameWidth / targetZoom;
         
         // Calculate the maximum scroll position
-        // We subtract the visible width to ensure we can see the end of the level
         const maxScrollX = this.levelWidth - visibleWidth;
 
         // Phase 1: Zoom out
@@ -45,11 +52,17 @@ class CameraManager {
             zoom: targetZoom,
             duration: 3000,
             ease: 'Sine.easeOut',
+            onStart: () => {
+                // Update UI camera ignore list at start of sequence
+                if (this.scene.gameUI) {
+                    this.scene.gameUI.updateCameraIgnoreList();
+                }
+            },
             onComplete: () => {
                 // Phase 2: Pan to the right
                 this.scene.tweens.add({
                     targets: this.camera,
-                    scrollX: maxScrollX,  // Pan to show the end of the level
+                    scrollX: maxScrollX,
                     duration: 4000,
                     ease: 'Sine.easeInOut',
                     onComplete: () => {
@@ -65,6 +78,11 @@ class CameraManager {
                                 // Resume following player
                                 this.camera.startFollow(this.player);
                                 this.isIntroPlaying = false;
+                                
+                                // Final UI camera update
+                                if (this.scene.gameUI) {
+                                    this.scene.gameUI.updateCameraIgnoreList();
+                                }
                             }
                         });
                     }
@@ -74,9 +92,7 @@ class CameraManager {
     }
 
     update() {
-        // Add any per-frame camera updates here if needed
         if (!this.isIntroPlaying && this.player) {
-            // Normal camera behavior when not playing intro
             this.camera.startFollow(this.player);
         }
     }
