@@ -22,7 +22,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
             .setCollideWorldBounds(true)
             .setBounce(0.1)
             .setGravityY(300)
-            .setAlpha(1); // Set opacity to 100%
+            .setAlpha(1) // Set opacity to 100%
+            .setDepth(1000); // Set a high depth value to render in front of everything
             
         this.body.setSize(32, 32);
         

@@ -46,8 +46,9 @@ export class GameScene1 extends BaseScene {
         // Set next scene
         this.nextSceneName = 'GameScene2';
         
-        // Set player to left side
+        // Set player position
         this.player.x = width * 0.1;
+        this.player.y = 500;
 
         // Set up the main game camera
         this.cameras.main.setZoom(1.5);
@@ -222,23 +223,19 @@ export class GameScene1 extends BaseScene {
                             this.platforms.add(tileRect);
                         }
 
-                        // Set collision for platform tiles
-                        if (
-                            tile.t === 370 || // Solid tile type
-                            platformTiles.has(`${gridX},${gridY}`) || // Current tile is a platform
-                            platformTiles.has(`${gridX},${gridY-1}`) // Tile below a platform
-                        ) {
+                        // Set collision for tiles with ID between 400 and 500
+                        if (tile.t >= 400 && tile.t <= 500) {
                             placedTile.setCollision(true);
                             
-                            // Create collision rectangle for platform tiles
-                            const platformRect = this.add.rectangle(
+                            // Create collision rectangle for solid tiles
+                            const solidRect = this.add.rectangle(
                                 gridX * megapixelLayer.__gridSize + megapixelLayer.__gridSize/2,
                                 gridY * megapixelLayer.__gridSize + megapixelLayer.__gridSize/2,
                                 megapixelLayer.__gridSize,
                                 megapixelLayer.__gridSize
                             );
-                            this.physics.add.existing(platformRect, true);
-                            this.platforms.add(platformRect);
+                            this.physics.add.existing(solidRect, true);
+                            this.platforms.add(solidRect);
                         }
                         
                         tilesPlaced++;
