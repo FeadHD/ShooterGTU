@@ -11,8 +11,27 @@ export class DebugSystem {
         this.debugKey.on('down', () => {
             this.enabled = !this.enabled;
             this.showDebug = !this.showDebug;
+            
+            // Toggle platform visibility
+            if (this.scene.platforms && this.scene.platforms.children) {
+                this.scene.platforms.children.iterate((platform) => {
+                    if (platform) {
+                        platform.setVisible(this.enabled);
+                    }
+                });
+            }
+            
             if (!this.enabled) {
+                // Clear all debug graphics
                 this.graphics.clear();
+                if (this.debugGraphics) {
+                    this.debugGraphics.clear();
+                }
+                // Clear any debug texts
+                if (this.debugTexts) {
+                    this.debugTexts.forEach(text => text.destroy());
+                    this.debugTexts = [];
+                }
             }
         });
     }
@@ -88,9 +107,13 @@ export class DebugSystem {
     }
 
     update() {
+        // Clear previous frame's debug graphics
+        this.graphics.clear();
+        if (this.debugGraphics) {
+            this.debugGraphics.clear();
+        }
+
         if (!this.enabled) return;
-        
-        this.clear();
         
         // Draw platform bounds
         if (this.scene.platforms && this.scene.platforms.children) {
@@ -117,8 +140,6 @@ export class DebugSystem {
 
         if (!this.showDebug) return;
 
-        this.debugGraphics.clear();
-        
         // Draw physics bounds
         this.drawPhysicsBoundsDebug();
         

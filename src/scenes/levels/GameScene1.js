@@ -258,6 +258,7 @@ export class GameScene1 extends BaseScene {
                                 megapixelLayer.__gridSize,
                                 megapixelLayer.__gridSize
                             );
+                            tileRect.setVisible(false);  // Hide the rectangle by default
                             this.physics.add.existing(tileRect, true);
                             this.platforms.add(tileRect);
                         }
@@ -273,6 +274,7 @@ export class GameScene1 extends BaseScene {
                                 megapixelLayer.__gridSize,
                                 megapixelLayer.__gridSize
                             );
+                            solidRect.setVisible(false);  // Hide the rectangle by default
                             this.physics.add.existing(solidRect, true);
                             this.platforms.add(solidRect);
                         }
