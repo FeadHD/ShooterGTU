@@ -34,6 +34,7 @@ export class GameScene1 extends BaseScene {
     }
 
     create() {
+        // Call parent create first to set up base systems
         super.create();
         
         const { width, height } = this.scale;
@@ -44,9 +45,23 @@ export class GameScene1 extends BaseScene {
                 enabled: false,
                 toggle: () => {
                     this.debugSystem.enabled = !this.debugSystem.enabled;
+                    this.updateDebugVisuals();
                 }
             };
         }
+        
+        // Define initial spawn position (near the left side of the level)
+        const SPAWN_X_PERCENTAGE = 0.1;  // 10% from left edge
+        const SPAWN_Y = 500;             // Fixed height from top
+        
+        // Override base scene's spawn point for this level
+        this.playerSpawnPoint = {
+            x: width * SPAWN_X_PERCENTAGE,
+            y: SPAWN_Y
+        };
+        
+        // Set player position to spawn point
+        this.player.setPosition(this.playerSpawnPoint.x, this.playerSpawnPoint.y);
         
         // Set world bounds to match the level size
         const levelWidth = 3840; // Adjust this to match your level width
@@ -59,10 +74,6 @@ export class GameScene1 extends BaseScene {
         // Set next scene
         this.nextSceneName = 'GameScene2';
         
-        // Set player position
-        this.player.x = width * 0.1;
-        this.player.y = 500;
-
         // Set up the main game camera
         this.cameras.main.setZoom(1.5);
         this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
@@ -309,6 +320,9 @@ export class GameScene1 extends BaseScene {
                 }
             });
         });
+
+        // Create debug graphics
+        this.debugGraphics = this.add.graphics();
     }
 
     setupRestOfScene() {
@@ -570,8 +584,8 @@ export class GameScene1 extends BaseScene {
 
         // Wait a short moment for platforms to be fully set up
         this.time.delayedCall(100, () => {
-            // Use helper method to get correct spawn height
-            const enemyY = this.getSpawnHeight();
+            // Calculate spawn height relative to ground
+            const enemyY = this.groundTop - 16;  // Same calculation as player spawn
 
             // Set up bullet collisions with process callback
             this.physics.add.collider(
@@ -656,6 +670,9 @@ export class GameScene1 extends BaseScene {
     update() {
         super.update();
 
+        // Update debug visuals if enabled
+        this.updateDebugVisuals();
+
         // Check for scene transition
         const reachedEnd = this.player.x > 3740;
         
@@ -684,6 +701,53 @@ export class GameScene1 extends BaseScene {
         // Transition to next scene if player has reached the end and defeated all slimes
         if (reachedEnd && allSlimesDefeated) {
             this.scene.start('GameScene2');
+        }
+    }
+
+    updateDebugVisuals() {
+        // Clear previous debug graphics
+        if (this.debugGraphics) {
+            this.debugGraphics.clear();
+        }
+
+        // Only show debug visuals if debug system is enabled
+        if (this.debugSystem?.enabled) {
+            // Draw spawn point indicator
+            this.debugGraphics.lineStyle(2, 0x00ff00);  // Green outline
+            this.debugGraphics.strokeCircle(this.playerSpawnPoint.x, this.playerSpawnPoint.y, 20);
+            
+            // Draw X in the center
+            this.debugGraphics.lineStyle(2, 0xff0000);  // Red X
+            const x = this.playerSpawnPoint.x;
+            const y = this.playerSpawnPoint.y;
+            this.debugGraphics.beginPath();
+            this.debugGraphics.moveTo(x - 10, y - 10);
+            this.debugGraphics.lineTo(x + 10, y + 10);
+            this.debugGraphics.moveTo(x + 10, y - 10);
+            this.debugGraphics.lineTo(x - 10, y + 10);
+            this.debugGraphics.strokePath();
+            
+            // Add "SPAWN" text
+            const spawnText = this.add.text(x, y - 30, 'SPAWN', {
+                fontSize: '16px',
+                fill: '#00ff00',
+                backgroundColor: '#000000',
+                padding: { x: 4, y: 2 }
+            });
+            spawnText.setOrigin(0.5);
+            spawnText.setScrollFactor(1);
+            
+            // Store the text to remove it later
+            if (this.spawnText) {
+                this.spawnText.destroy();
+            }
+            this.spawnText = spawnText;
+        } else {
+            // Clean up text when debug is disabled
+            if (this.spawnText) {
+                this.spawnText.destroy();
+                this.spawnText = null;
+            }
         }
     }
 }

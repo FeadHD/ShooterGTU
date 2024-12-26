@@ -37,10 +37,6 @@ export class BaseScene extends Scene {
         this.effectsManager = new EffectsManager(this);
         this.enemyManager = new EnemyManager(this);
 
-        // Initialize game state and animations
-        this.stateManager.initializeGameState();
-        this.animationManager.createAllAnimations();
-
         this.input.keyboard.enabled = true;  // Ensure keyboard is enabled on scene start
 
         // Set up world physics
@@ -55,7 +51,16 @@ export class BaseScene extends Scene {
         
         // Store reference for spawning entities
         this.groundTop = height - 64;
-        this.getSpawnHeight = () => this.groundTop - 16;
+        
+        // Default spawn point (can be overridden by child scenes)
+        this.playerSpawnPoint = {
+            x: width * 0.1,
+            y: this.getSpawnHeight()  // Use the method
+        };
+
+        // Initialize game state and animations
+        this.stateManager.initializeGameState();
+        this.animationManager.createAllAnimations();
 
         // Create bullet group with physics
         this.bullets = this.physics.add.group({
@@ -108,7 +113,7 @@ export class BaseScene extends Scene {
 
     createPlayer(width) {
         // Create player using the Player prefab
-        this.player = new Player(this, width * 0.1, this.getSpawnHeight());
+        this.player = new Player(this, width * 0.1, this.playerSpawnPoint.y);
         
         // Add collision with platforms
         this.physics.add.collider(this.player, this.platforms);
@@ -189,8 +194,12 @@ export class BaseScene extends Scene {
     }
 
     handleRespawn() {
-        // Reset player position
-        this.player.setPosition(this.cameras.main.width * 0.1, this.getSpawnHeight());
+        // Get spawn point from current scene if available
+        const currentScene = this.scene.get(this.scene.key);
+        const spawnPoint = currentScene.playerSpawnPoint || this.playerSpawnPoint;
+        
+        // Reset player position using spawn point
+        this.player.setPosition(spawnPoint.x, spawnPoint.y);
         this.player.setVelocity(0, 0);
         
         // Reset player state
@@ -201,6 +210,26 @@ export class BaseScene extends Scene {
         // Reset player HP
         this.stateManager.set('playerHP', 100);
         this.gameUI.updateHP(100);
+        
+        // Add temporary invulnerability
+        this.invulnerableUntil = this.time.now + 2000; // 2 seconds of invulnerability
+        
+        // Flash effect to show invulnerability
+        this.tweens.add({
+            targets: this.player,
+            alpha: 0.5,
+            duration: 200,
+            yoyo: true,
+            repeat: 4,
+            onComplete: () => {
+                this.player.setAlpha(1);
+            }
+        });
+
+        // Reset player animations if needed
+        if (this.player.play) {
+            this.player.play('character_Idle');
+        }
     }
 
     update() {
@@ -272,5 +301,10 @@ export class BaseScene extends Scene {
     shutdown() {
         this.cleanup();
         super.shutdown();
+    }
+
+    // Helper method to get spawn height for entities
+    getSpawnHeight() {
+        return this.groundTop - 16;
     }
 }

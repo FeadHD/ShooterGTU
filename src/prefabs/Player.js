@@ -121,8 +121,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     handleRespawn() {
-        // Reset player position
-        this.setPosition(this.scene.cameras.main.width * 0.1, this.scene.getSpawnHeight());
+        // Use scene's spawn point if available, otherwise use default position
+        const spawnPoint = this.scene.playerSpawnPoint || {
+            x: this.scene.cameras.main.width * 0.1,
+            y: this.scene.groundTop - 16
+        };
+        
+        this.setPosition(spawnPoint.x, spawnPoint.y);
         this.setVelocity(0, 0);
         
         // Reset player state
