@@ -2,6 +2,7 @@ import { BaseScene } from '../elements/BaseScene';
 import { GameUI } from '../elements/GameUI';
 import { Slime } from '../../prefabs/Slime';
 import { Bitcoin } from '../../prefabs/Bitcoin';
+import Drone from '../../prefabs/Drone'; 
 import CameraManager from '../../modules/managers/CameraManager';
 
 export class GameScene1 extends BaseScene {
@@ -9,8 +10,9 @@ export class GameScene1 extends BaseScene {
         super({ key: 'GameScene1' });
         this.tileColliderAdded = false;
         this.messageShown = false;
-        this.totalEnemies = 3; // Set this to match the number of enemies you create
+        this.totalEnemies = 4; // Increased to include drone
         this.remainingEnemies = this.totalEnemies;
+        this.drone = null; // Add drone reference
     }
 
     preload() {
@@ -141,6 +143,16 @@ export class GameScene1 extends BaseScene {
                 bitcoin.collect();
             });
         }
+
+        // Create drones group with consistent physics settings
+        this.drones = this.physics.add.group({
+            runChildUpdate: true,
+            collideWorldBounds: true,
+            dragX: 200,
+            bounceX: 0.2,
+            bounceY: 0.2,
+            gravityY: 1000
+        });
 
         // Debug level data loading
         const levelData = this.cache.json.get('level1');
@@ -307,6 +319,91 @@ export class GameScene1 extends BaseScene {
             }, null, this);
         }
 
+        // Function to find valid spawn points for enemies
+        const findSpawnPoints = () => {
+            const spawnPoints = [];
+            const mapWidth = this.mapLayer.width;
+            const mapHeight = this.mapLayer.height;
+
+            // Scan the map for solid tiles (type 370)
+            for (let x = 0; x < mapWidth; x++) {
+                for (let y = 0; y < mapHeight - 1; y++) {
+                    const tile = this.mapLayer.getTileAt(x, y);
+                    const tileAbove = this.mapLayer.getTileAt(x, y - 1);
+                    
+                    // Check if current tile is solid and tile above is empty
+                    if ((tile && (tile.index === 370 || tile.collides)) && 
+                        (!tileAbove || (!tileAbove.collides && tileAbove.index !== 370))) {
+                        // Position enemy exactly on top of the tile
+                        spawnPoints.push({ 
+                            x: x * 32 + 16, // Center of tile
+                            y: y * 32 - 8   // Just above the tile
+                        });
+                    }
+                }
+            }
+            return spawnPoints;
+        };
+
+        // Create drones group with consistent physics settings
+        this.drones = this.physics.add.group({
+            runChildUpdate: true,
+            collideWorldBounds: true,
+            dragX: 200,
+            bounceX: 0.2,
+            bounceY: 0.2,
+            gravityY: 1000
+        });
+
+        // Spawn drone at the top part of the scene
+        if (this.player) {
+            const enemyY = this.scale.height * 0.2; // Top 20% of the screen
+            const droneX = this.scale.width * 0.6; // Adjust horizontal position as needed
+
+            // Create drone at the spawn point
+            const drone = new Drone(this, droneX, enemyY, {
+                maxHealth: 75,
+                damage: 20,
+                speed: 100,
+                flyingHeight: enemyY,
+                horizontalMovementRange: 100
+            });
+
+            // Add drone to physics group
+            if (drone && drone.sprite) {
+                this.drones.add(drone.sprite);
+                
+                // Set up sprite
+                drone.sprite.setActive(true);
+                drone.sprite.setVisible(true);
+                
+                // Set up physics body
+                if (drone.sprite.body) {
+                    drone.sprite.body.reset(droneX, enemyY);
+                    drone.sprite.body.enable = true;
+                    drone.sprite.body.moves = true;
+                }
+
+                // Add collision with map layer
+                if (this.mapLayer) {
+                    this.physics.add.collider(drone.sprite, this.mapLayer, null, null, this);
+                    this.physics.add.collider(drone.sprite, this.platforms);
+                }
+
+                // Add update callback
+                this.events.on('update', () => {
+                    if (drone && drone.sprite && drone.sprite.active) {
+                        drone.update();
+                    }
+                });
+            }
+
+            // Optional: Collision between drones
+            this.physics.add.collider(this.drones, this.drones, this.handleEnemyCollision, null, this);
+        } else {
+            console.warn('Cannot spawn drone: player not found');
+        }
+
         // Create and set up slimes group with consistent physics settings
         // this.slimes = this.physics.add.group({
         //     runChildUpdate: true,
@@ -334,7 +431,7 @@ export class GameScene1 extends BaseScene {
         this.physics.add.collider(this.slimes, this.platforms);
 
         // Function to find valid spawn points for slimes
-        const findSpawnPoints = () => {
+        const findSpawnPointsForSlimes = () => {
             const spawnPoints = [];
             const mapWidth = this.mapLayer.width;
             const mapHeight = this.mapLayer.height;
@@ -360,7 +457,7 @@ export class GameScene1 extends BaseScene {
         };
 
         // Find valid spawn points
-        const spawnPoints = findSpawnPoints();
+        const spawnPointsForSlimes = findSpawnPointsForSlimes();
 
         // Create all slimes (both random and fixed positions)
         const createAndInitSlime = (x, y) => {
@@ -407,11 +504,11 @@ export class GameScene1 extends BaseScene {
         // Create random position slimes
         const numRandomSlimes = 1; 
         for (let i = 0; i < numRandomSlimes; i++) {
-            if (spawnPoints.length > 0) {
-                const spawnIndex = Math.floor(Math.random() * spawnPoints.length);
-                const spawnPoint = spawnPoints[spawnIndex];
+            if (spawnPointsForSlimes.length > 0) {
+                const spawnIndex = Math.floor(Math.random() * spawnPointsForSlimes.length);
+                const spawnPoint = spawnPointsForSlimes[spawnIndex];
                 createAndInitSlime(spawnPoint.x, spawnPoint.y);
-                spawnPoints.splice(spawnIndex, 1);
+                spawnPointsForSlimes.splice(spawnIndex, 1);
             }
         }
 
@@ -450,7 +547,7 @@ export class GameScene1 extends BaseScene {
         );
 
         // Set initial number of enemies
-        this.remainingEnemies = 3;
+        this.remainingEnemies = 4;
 
         // Wait a short moment for platforms to be fully set up
         this.time.delayedCall(100, () => {
@@ -470,7 +567,7 @@ export class GameScene1 extends BaseScene {
             );
             
             // Set number of enemies
-            this.remainingEnemies = 3;
+            this.remainingEnemies = 4;
         });
     }
 
