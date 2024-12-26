@@ -38,6 +38,16 @@ export class GameScene1 extends BaseScene {
         
         const { width, height } = this.scale;
         
+        // Initialize debug system if not already initialized
+        if (!this.debugSystem) {
+            this.debugSystem = {
+                enabled: false,
+                toggle: () => {
+                    this.debugSystem.enabled = !this.debugSystem.enabled;
+                }
+            };
+        }
+        
         // Set world bounds to match the level size
         const levelWidth = 3840; // Adjust this to match your level width
         const levelHeight = 1080; // Adjust this to match your level height
@@ -151,7 +161,7 @@ export class GameScene1 extends BaseScene {
             dragX: 200,
             bounceX: 0.2,
             bounceY: 0.2,
-            gravityY: 1000
+            gravityY: 0
         });
 
         // Debug level data loading
@@ -352,7 +362,7 @@ export class GameScene1 extends BaseScene {
             dragX: 200,
             bounceX: 0.2,
             bounceY: 0.2,
-            gravityY: 1000
+            gravityY: 0
         });
 
         // Spawn drone at the top part of the scene
@@ -371,9 +381,7 @@ export class GameScene1 extends BaseScene {
 
             // Add drone to physics group
             if (drone && drone.sprite) {
-                this.drones.add(drone.sprite);
-                
-                // Set up sprite
+                // Set up sprite properties
                 drone.sprite.setActive(true);
                 drone.sprite.setVisible(true);
                 
@@ -382,7 +390,18 @@ export class GameScene1 extends BaseScene {
                     drone.sprite.body.reset(droneX, enemyY);
                     drone.sprite.body.enable = true;
                     drone.sprite.body.moves = true;
+                    drone.sprite.body.setAllowGravity(false);
+                    drone.sprite.body.setGravityY(0);
+                    drone.sprite.body.setVelocityY(0);
+                    drone.sprite.body.setImmovable(true);
                 }
+
+                // Set up patrol path
+                const patrolPoints = [
+                    { x: droneX - 200, y: enemyY },  // Left point
+                    { x: droneX + 200, y: enemyY }   // Right point
+                ];
+                drone.setPatrolPath(patrolPoints);
 
                 // Add collision with map layer
                 if (this.mapLayer) {
@@ -390,16 +409,16 @@ export class GameScene1 extends BaseScene {
                     this.physics.add.collider(drone.sprite, this.platforms);
                 }
 
-                // Add update callback
+                // Add to scene update
                 this.events.on('update', () => {
                     if (drone && drone.sprite && drone.sprite.active) {
                         drone.update();
                     }
                 });
-            }
 
-            // Optional: Collision between drones
-            this.physics.add.collider(this.drones, this.drones, this.handleEnemyCollision, null, this);
+                // Store drone reference
+                this.drone = drone;
+            }
         } else {
             console.warn('Cannot spawn drone: player not found');
         }
