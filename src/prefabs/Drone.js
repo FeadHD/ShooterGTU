@@ -9,9 +9,12 @@ export class Drone extends Enemy {
             damage: config.damage || 20
         });
 
-        // Existing properties
+        // Movement properties
+        this.speed = config.speed || 100;
         this.flyingHeight = config.flyingHeight || 100;
         this.horizontalMovementRange = config.horizontalMovementRange || 50;
+        
+        // Weapon properties
         this.laserColor = config.laserColor || 0xff0000;
         this.laserRange = 500;
         this.laserChargeTime = 2000;
@@ -26,12 +29,19 @@ export class Drone extends Enemy {
             { x: x + 200, y: this.flyingHeight }
         ];
         this.currentPatrolIndex = 0;
-        this.patrolWaitTime = config.patrolWaitTime || 2000; // Wait time at each point
+        this.patrolWaitTime = config.patrolWaitTime || 2000;
         this.lastPatrolPointReached = 0;
         this.isWaiting = false;
 
         // Debug graphics
         this.debugGraphics = null;
+
+        // Set up flying properties once sprite is created
+        this.scene.time.addEvent({
+            delay: 100,
+            callback: () => this.setupFlyingProperties(),
+            callbackScope: this
+        });
     }
 
     setupFlyingProperties() {
@@ -40,6 +50,15 @@ export class Drone extends Enemy {
             this.sprite.body.setGravity(0, 0);
             this.sprite.body.setVelocityY(0);
             this.sprite.y = this.flyingHeight;
+            
+            // Set up initial position at flying height
+            this.sprite.setPosition(this.sprite.x, this.flyingHeight);
+            
+            // Update patrol points to match flying height
+            this.patrolPoints = this.patrolPoints.map(point => ({
+                ...point,
+                y: this.flyingHeight
+            }));
         } else {
             // If sprite isn't ready yet, try again in the next frame
             this.scene.time.addEvent({
@@ -105,7 +124,7 @@ export class Drone extends Enemy {
         this.move();
     }
 
-    move(targetX, targetY) {
+    move() {
         if (!this.isAlive || !this.sprite) return;
 
         const currentTarget = this.patrolPoints[this.currentPatrolIndex];
@@ -115,12 +134,6 @@ export class Drone extends Enemy {
             currentTarget.x,
             currentTarget.y
         );
-
-        // Highlight current target point if debug is enabled
-        if (this.debugGraphics && this.scene.debugSystem?.enabled) {
-            this.debugGraphics.fillStyle(0xffff00, 1);
-            this.debugGraphics.fillCircle(currentTarget.x, currentTarget.y, 8);
-        }
 
         // Check if reached patrol point
         if (distanceToTarget < 10) {
@@ -139,17 +152,27 @@ export class Drone extends Enemy {
             return;
         }
 
-        // Move towards patrol point
-        const angle = Math.atan2(
-            currentTarget.y - this.sprite.y,
-            currentTarget.x - this.sprite.x
-        );
+        // Move towards patrol point if not waiting
+        if (!this.isWaiting) {
+            const angle = Math.atan2(
+                currentTarget.y - this.sprite.y,
+                currentTarget.x - this.sprite.x
+            );
 
-        const velocityX = Math.cos(angle) * this.speed;
-        this.sprite.setVelocityX(velocityX);
-        
-        // Face movement direction
-        this.sprite.flipX = velocityX < 0;
+            const velocityX = Math.cos(angle) * this.speed;
+            const velocityY = Math.sin(angle) * this.speed;
+
+            this.sprite.setVelocity(velocityX, velocityY);
+            
+            // Maintain flying height
+            if (Math.abs(this.sprite.y - this.flyingHeight) > 5) {
+                const heightDiff = this.flyingHeight - this.sprite.y;
+                this.sprite.setVelocityY(Math.sign(heightDiff) * this.speed);
+            }
+            
+            // Face movement direction
+            this.sprite.flipX = velocityX < 0;
+        }
     }
 
     checkAndShootLaser() {

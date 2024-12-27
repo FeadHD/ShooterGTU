@@ -421,6 +421,11 @@ export class GameScene1 extends BaseScene {
                     drone.sprite.body.setImmovable(true);
                 }
 
+                // Add drone sprite to the drones group
+                this.drones.add(drone.sprite);
+                // Store the enemy instance on the sprite for debug access
+                drone.sprite.enemy = drone;
+
                 // Set up patrol path
                 const patrolPoints = [
                     { x: droneX - 200, y: enemyY },  // Left point

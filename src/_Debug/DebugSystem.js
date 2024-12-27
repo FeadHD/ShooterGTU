@@ -6,6 +6,9 @@ export class DebugSystem {
         this.enabled = false;
         this.showDebug = false;
         this.slimePathHistory = new Map(); // Store slime movement history
+        this.enemyIds = new Map(); // Store unique IDs for enemies
+        this.nextEnemyId = 1; // Counter for generating unique IDs
+        this.debugTexts = []; // Initialize debugTexts array
 
         // Add debug toggle key
         this.debugKey = scene.input.keyboard.addKey('E');
@@ -90,10 +93,6 @@ export class DebugSystem {
     drawText(x, y, text, color = 0xffffff) {
         if (!this.enabled) return;
 
-        if (!this.debugTexts) {
-            this.debugTexts = [];
-        }
-
         const debugText = this.scene.add.text(x, y, text, {
             fontSize: '12px',
             fill: '#' + color.toString(16).padStart(6, '0')
@@ -110,23 +109,114 @@ export class DebugSystem {
         }
     }
 
-    // initializeFPSCounter() {
-    //     this.fpsCounter = this.scene.add.text(16, 16, 'FPS: 0', {
-    //         fontFamily: 'Retronoid',
-    //         fontSize: '20px',
-    //         fill: '#00ff00',
-    //         backgroundColor: '#000000',
-    //         padding: { x: 10, y: 5 }
-    //     });
-    //     this.fpsCounter.setScrollFactor(0); // Fix to camera
-    //     this.fpsCounter.setDepth(1000);     // Always on top
-    //     this.fpsCounter.setVisible(false);   // Hidden by default
-    // }
+    getEnemyId(enemy) {
+        if (!this.enemyIds.has(enemy)) {
+            this.enemyIds.set(enemy, this.nextEnemyId++);
+        }
+        return this.enemyIds.get(enemy);
+    }
+
+    drawDroneDebug(drone) {
+        if (!this.enabled) return;
+        console.log('Drawing drone debug for:', drone);
+
+        // Get the sprite, either directly or from enemy instance
+        const sprite = drone.sprite || drone;
+        if (!sprite || !sprite.active) {
+            console.log('Invalid sprite for drone debug');
+            return;
+        }
+
+        console.log('Drone sprite position:', sprite.x, sprite.y);
+        console.log('Drone properties:', {
+            laserRange: drone.laserRange,
+            patrolPoints: drone.patrolPoints,
+            isLaserCharging: drone.isLaserCharging,
+            health: drone.health,
+            maxHealth: drone.maxHealth
+        });
+
+        // Draw laser range
+        this.graphics.lineStyle(1, 0xff0000, 0.3);
+        this.graphics.strokeCircle(sprite.x, sprite.y, drone.laserRange || 500);
+
+        // Draw patrol path
+        if (drone.patrolPoints) {
+            this.graphics.lineStyle(2, 0x00ff00, 0.5);
+            for (let i = 0; i < drone.patrolPoints.length; i++) {
+                const startPoint = drone.patrolPoints[i];
+                const endPoint = drone.patrolPoints[(i + 1) % drone.patrolPoints.length];
+                
+                this.graphics.beginPath();
+                this.graphics.moveTo(startPoint.x, startPoint.y);
+                this.graphics.lineTo(endPoint.x, endPoint.y);
+                this.graphics.strokePath();
+                
+                // Draw patrol points
+                this.graphics.fillStyle(0xff0000, 1);
+                this.graphics.fillCircle(startPoint.x, startPoint.y, 5);
+            }
+
+            // Draw current target point with different color
+            if (drone.currentPatrolIndex < drone.patrolPoints.length) {
+                const target = drone.patrolPoints[drone.currentPatrolIndex];
+                this.graphics.fillStyle(0xffff00, 1);
+                this.graphics.fillCircle(target.x, target.y, 7);
+            }
+        }
+
+        // Draw laser charging indicator if charging
+        if (drone.isLaserCharging) {
+            const chargeProgress = drone.laserChargeDuration / drone.laserChargeTime;
+            this.graphics.lineStyle(2, 0xff0000, chargeProgress);
+            this.graphics.strokeCircle(sprite.x, sprite.y, 30);
+        }
+
+        // Draw stats
+        const stats = [
+            `Drone #${this.getEnemyId(drone)}`,
+            `Health: ${drone.health || 0}/${drone.maxHealth || 100}`,
+            `State: ${drone.isWaiting ? 'Waiting' : 'Moving'}`,
+            `Laser: ${drone.isLaserCharging ? 'Charging' : 'Ready'}`
+        ];
+        
+        stats.forEach((text, i) => {
+            const debugText = this.scene.add.text(
+                sprite.x - 50,
+                sprite.y - 80 - (i * 15),
+                text,
+                { 
+                    fontSize: '12px',
+                    fill: '#ffffff',
+                    backgroundColor: '#000000',
+                    padding: { x: 3, y: 3 }
+                }
+            );
+            debugText.setDepth(1000);
+            this.debugTexts.push(debugText);
+        });
+    }
 
     drawSlimeDebug(slime) {
         if (!this.enabled || !slime || !slime.sprite) return;
 
         const sprite = slime.sprite;
+
+        // Draw ID above everything else
+        const enemyId = this.getEnemyId(slime);
+        const idText = this.scene.add.text(
+            sprite.x - 15,
+            sprite.y - 90,
+            `Slime #${enemyId}`,
+            { 
+                fontSize: '14px',
+                fill: '#00ff00',
+                backgroundColor: '#000000',
+                padding: { x: 3, y: 3 }
+            }
+        );
+        idText.setDepth(1000);
+        this.debugTexts.push(idText);
 
         // Draw detection range (outer circle)
         this.graphics.lineStyle(1, 0x00ff00, 0.3);
@@ -213,9 +303,6 @@ export class DebugSystem {
                 }
             );
             debugText.setDepth(1000);
-            if (!this.debugTexts) {
-                this.debugTexts = [];
-            }
             this.debugTexts.push(debugText);
         });
     }
@@ -250,6 +337,26 @@ export class DebugSystem {
                 if (slimeSprite && slimeSprite.active && slimeSprite.enemy) {
                     this.drawPhysicsBounds(slimeSprite);
                     this.drawSlimeDebug(slimeSprite.enemy);
+                }
+            });
+        }
+
+        // Draw drone debug info
+        if (this.scene.drones && this.scene.drones.children) {
+            console.log('Drones group:', this.scene.drones);
+            console.log('Drone children:', this.scene.drones.children.entries);
+            
+            this.scene.drones.children.entries.forEach(droneSprite => {
+                console.log('Drone sprite:', droneSprite);
+                if (droneSprite && droneSprite.active) {
+                    console.log('Drone enemy:', droneSprite.enemy);
+                    this.drawPhysicsBounds(droneSprite);
+                    if (droneSprite.enemy) {
+                        this.drawDroneDebug(droneSprite.enemy);
+                    } else {
+                        // If enemy property doesn't exist, try to use the sprite directly
+                        this.drawDroneDebug(droneSprite);
+                    }
                 }
             });
         }
