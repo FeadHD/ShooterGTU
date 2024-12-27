@@ -434,31 +434,65 @@ export class GameUI {
 
     createFPSCounter(width, height) {
         // Create FPS counter in bottom left
-        this.fpsCounter = this.scene.add.text(16, height - 40, 'FPS: 0', {
+        this.fpsCounter = this.scene.add.text(16, height - 64, 'FPS: 0', {
             fontFamily: 'Retronoid',
             fontSize: '20px',
             fill: '#00ff00',
             stroke: '#000000',
             strokeThickness: 4
         });
+        
+        // Create memory counter below FPS
+        this.memCounter = this.scene.add.text(16, height - 32, 'Memory: 0 MB', {
+            fontFamily: 'Retronoid',
+            fontSize: '20px',
+            fill: '#00ff00',
+            stroke: '#000000',
+            strokeThickness: 4
+        });
+        
         this.fpsCounter.setScrollFactor(0);
-        this.fpsCounter.setVisible(false); // Hidden by default
-        this.container.add(this.fpsCounter);
+        this.memCounter.setScrollFactor(0);
+        this.fpsCounter.setVisible(false);
+        this.memCounter.setVisible(false);
+        this.container.add([this.fpsCounter, this.memCounter]);
     }
 
     update(time) {
-        // Update FPS counter if debug is enabled
+        // Update performance counters if debug is enabled
         if (this.scene.debugSystem?.enabled) {
             this.fpsCounter?.setVisible(true);
+            this.memCounter?.setVisible(true);
+            
             if (time - this.lastFpsUpdate > 500) {
+                // Update FPS
                 const fps = Math.round(this.scene.game.loop.actualFps);
                 if (this.fpsCounter) {
                     this.fpsCounter.setText(`FPS: ${fps}`);
                 }
+                
+                // Update Memory Usage
+                if (this.memCounter && window.performance && window.performance.memory) {
+                    const memoryUsed = Math.round(window.performance.memory.usedJSHeapSize / (1024 * 1024));
+                    const memoryTotal = Math.round(window.performance.memory.totalJSHeapSize / (1024 * 1024));
+                    this.memCounter.setText(`Memory: ${memoryUsed}/${memoryTotal} MB`);
+                    
+                    // Change color based on memory usage
+                    const memoryPercentage = memoryUsed / memoryTotal;
+                    let color = '#00ff00'; // Green
+                    if (memoryPercentage > 0.8) {
+                        color = '#ff0000'; // Red
+                    } else if (memoryPercentage > 0.6) {
+                        color = '#ffff00'; // Yellow
+                    }
+                    this.memCounter.setFill(color);
+                }
+                
                 this.lastFpsUpdate = time;
             }
         } else {
             this.fpsCounter?.setVisible(false);
+            this.memCounter?.setVisible(false);
         }
     }
 
