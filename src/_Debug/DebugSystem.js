@@ -199,24 +199,34 @@ export class DebugSystem {
 
     drawSlimeDebug(slime) {
         if (!this.enabled || !slime || !slime.sprite) return;
+        console.log('Drawing slime debug for:', slime);
+        console.log('Slime ID:', this.getEnemyId(slime));
 
         const sprite = slime.sprite;
 
-        // Draw ID above everything else
-        const enemyId = this.getEnemyId(slime);
-        const idText = this.scene.add.text(
-            sprite.x - 15,
-            sprite.y - 90,
-            `Slime #${enemyId}`,
-            { 
-                fontSize: '14px',
-                fill: '#00ff00',
-                backgroundColor: '#000000',
-                padding: { x: 3, y: 3 }
-            }
-        );
-        idText.setDepth(1000);
-        this.debugTexts.push(idText);
+        // Draw stats first (including ID)
+        const stats = [
+            `Slime #${this.getEnemyId(slime)}`,
+            `Health: ${slime.health}/${slime.maxHealth}`,
+            `Jump Cooldown: ${Math.max(0, slime.jumpCooldown - (this.scene.time.now - slime.lastJumpTime))}ms`,
+            `Speed: ${Math.round(sprite.body.velocity.x)}, ${Math.round(sprite.body.velocity.y)}`
+        ];
+        
+        stats.forEach((text, i) => {
+            const debugText = this.scene.add.text(
+                sprite.x - 50,
+                sprite.y - 90 - (i * 15),
+                text,
+                { 
+                    fontSize: '12px',
+                    fill: '#ffffff',
+                    backgroundColor: '#000000',
+                    padding: { x: 3, y: 3 }
+                }
+            );
+            debugText.setDepth(1000);
+            this.debugTexts.push(debugText);
+        });
 
         // Draw detection range (outer circle)
         this.graphics.lineStyle(1, 0x00ff00, 0.3);
@@ -282,29 +292,6 @@ export class DebugSystem {
                 );
             }
         }
-
-        // Draw stats
-        const stats = [
-            `Health: ${slime.health}/${slime.maxHealth}`,
-            `Jump Cooldown: ${Math.max(0, slime.jumpCooldown - (this.scene.time.now - slime.lastJumpTime))}ms`,
-            `Speed: ${Math.round(sprite.body.velocity.x)}, ${Math.round(sprite.body.velocity.y)}`
-        ];
-        
-        stats.forEach((text, i) => {
-            const debugText = this.scene.add.text(
-                sprite.x - 50,
-                sprite.y - 60 - (i * 15),
-                text,
-                { 
-                    fontSize: '12px',
-                    fill: '#ffffff',
-                    backgroundColor: '#000000',
-                    padding: { x: 3, y: 3 }
-                }
-            );
-            debugText.setDepth(1000);
-            this.debugTexts.push(debugText);
-        });
     }
 
     update(time) {
@@ -333,23 +320,27 @@ export class DebugSystem {
 
         // Draw slime debug info
         if (this.scene.slimes && this.scene.slimes.children) {
+            console.log('Slimes group:', this.scene.slimes);
+            console.log('Slime children:', this.scene.slimes.children.entries);
+            
             this.scene.slimes.children.entries.forEach(slimeSprite => {
-                if (slimeSprite && slimeSprite.active && slimeSprite.enemy) {
+                console.log('Slime sprite:', slimeSprite);
+                if (slimeSprite && slimeSprite.active) {
+                    console.log('Slime enemy:', slimeSprite.enemy);
                     this.drawPhysicsBounds(slimeSprite);
-                    this.drawSlimeDebug(slimeSprite.enemy);
+                    if (slimeSprite.enemy) {
+                        this.drawSlimeDebug(slimeSprite.enemy);
+                    } else {
+                        console.warn('Slime sprite missing enemy reference:', slimeSprite);
+                    }
                 }
             });
         }
 
         // Draw drone debug info
         if (this.scene.drones && this.scene.drones.children) {
-            console.log('Drones group:', this.scene.drones);
-            console.log('Drone children:', this.scene.drones.children.entries);
-            
             this.scene.drones.children.entries.forEach(droneSprite => {
-                console.log('Drone sprite:', droneSprite);
                 if (droneSprite && droneSprite.active) {
-                    console.log('Drone enemy:', droneSprite.enemy);
                     this.drawPhysicsBounds(droneSprite);
                     if (droneSprite.enemy) {
                         this.drawDroneDebug(droneSprite.enemy);
@@ -364,19 +355,6 @@ export class DebugSystem {
         // Draw player bounds
         if (this.scene.player && this.scene.player.body) {
             this.drawPhysicsBounds(this.scene.player);
-        }
-
-        if (!this.showDebug) return;
-
-        // Draw physics bounds
-        this.drawPhysicsBoundsDebug();
-        
-        // Draw platform bounds
-        this.drawPlatformBoundsDebug();
-        
-        // Draw player bounds if it exists
-        if (this.scene.player && this.scene.player.body) {
-            this.drawPlayerBoundsDebug();
         }
     }
 

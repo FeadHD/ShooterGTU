@@ -36,6 +36,11 @@ export class Drone extends Enemy {
         // Debug graphics
         this.debugGraphics = null;
 
+        // Store reference to this enemy instance on the sprite
+        if (this.sprite) {
+            this.sprite.enemy = this;
+        }
+
         // Set up flying properties once sprite is created
         this.scene.time.addEvent({
             delay: 100,

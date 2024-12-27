@@ -7,23 +7,32 @@ class Enemy {
         const groundTop = scene.groundTop || (scene.scale.height - 100);
         y = groundTop - 24; // Ensure enemy spawns above ground
         
-        this.sprite = scene.add.rectangle(x, y, 32, 48, tint);
-        scene.physics.add.existing(this.sprite);
-        this.sprite.setScale(1);  // All enemies have same scale
+        // Only create sprite if not overridden by child class
+        if (!this.sprite) {
+            this.sprite = scene.add.rectangle(x, y, 32, 48, tint);
+            scene.physics.add.existing(this.sprite);
+            this.sprite.setScale(1);  // All enemies have same scale
+            
+            // Store reference to this enemy instance on the sprite
+            this.sprite.enemy = this;
+        }
+        
         this.maxHealth = health;
         this.currentHealth = health;
         
-        // Set up physics properties
-        this.sprite.body.setCollideWorldBounds(true);
-        this.sprite.body.setBounce(0.2);
-        this.sprite.body.setFriction(1);
-        this.sprite.body.setGravityY(800); // Match world gravity
-        this.sprite.body.setDragX(200); // Increased drag for better control
-        this.sprite.body.setMaxVelocity(300, 1000); // Limit maximum velocity
-        
-        // Adjust physics body size and offset for better collisions
-        this.sprite.body.setSize(28, 44); // Slightly smaller for better collision
-        this.sprite.body.setOffset(2, 2); // Center the collision box
+        // Set up physics properties if sprite exists
+        if (this.sprite && this.sprite.body) {
+            this.sprite.body.setCollideWorldBounds(true);
+            this.sprite.body.setBounce(0.2);
+            this.sprite.body.setFriction(1);
+            this.sprite.body.setGravityY(800); // Match world gravity
+            this.sprite.body.setDragX(200); // Increased drag for better control
+            this.sprite.body.setMaxVelocity(300, 1000); // Limit maximum velocity
+            
+            // Adjust physics body size and offset for better collisions
+            this.sprite.body.setSize(28, 44); // Slightly smaller for better collision
+            this.sprite.body.setOffset(2, 2); // Center the collision box
+        }
 
         // Enemy behavior properties
         this.aggroRange = 300; // Distance at which enemy starts chasing player
@@ -37,9 +46,6 @@ class Enemy {
         
         // Set initial velocity for patrol
         this.setVelocityX(this.patrolSpeed * this.direction);
-        
-        // Store reference to this enemy instance on the sprite
-        this.sprite.enemy = this;
         
         // Create health bar after all setup is complete (except for BossEnemy)
         if (!(this instanceof BossEnemy)) {
