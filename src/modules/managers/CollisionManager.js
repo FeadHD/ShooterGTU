@@ -83,13 +83,19 @@ export class CollisionManager {
                 this.scene.physics.add.collider(this.scene.player, this.scene.platforms);
             }
 
+            // Helper function to check if damage can be applied
+            const canApplyDamage = () => {
+                return !this.scene.isDying && 
+                       (!this.scene.invulnerableUntil || this.scene.time.now >= this.scene.invulnerableUntil);
+            };
+
             // Player collision with enemies
             if (this.scene.slimes) {
                 this.scene.physics.add.overlap(
                     this.scene.player,
                     this.scene.slimes,
                     (player, enemySprite) => {
-                        if (enemySprite.enemy && !this.scene.isDying) {
+                        if (enemySprite.enemy && canApplyDamage()) {
                             this.scene.hitEnemy(player, enemySprite);
                         }
                     },
@@ -102,9 +108,9 @@ export class CollisionManager {
                 this.scene.physics.add.overlap(
                     this.scene.player,
                     this.scene.drones,
-                    (player, enemySprite) => {
-                        if (enemySprite.enemy && !this.scene.isDying) {
-                            this.scene.hitEnemy(player, enemySprite);
+                    (player, droneSprite) => {
+                        if (droneSprite.enemy && canApplyDamage()) {
+                            this.scene.hitEnemy(player, droneSprite);
                         }
                     },
                     null,

@@ -139,24 +139,34 @@ export class BaseScene extends Scene {
     }
 
     hitEnemy(player, enemy) {
-        if (player.isDying) return;
+        // Don't process damage if player is already dying or dead
+        if (player.isDying || this.stateManager.get('playerHP') <= 0) {
+            if (!this.isDying) {
+                this.handlePlayerDeath();
+            }
+            return;
+        }
         
-        // Check if player is currently invulnerable
-        if (this.time.now < this.invulnerableUntil) return;
+        // Get current HP before damage
+        const currentHP = this.stateManager.get('playerHP');
+        
+        // Get enemy damage amount
+        const damage = enemy.enemy ? enemy.enemy.damageAmount : 25;
+        
+        // Calculate new HP but don't let it go below 0
+        const newHP = Math.max(0, currentHP - damage);
+        this.stateManager.set('playerHP', newHP);
+        this.gameUI.updateHP(newHP);
 
-        // Use StateManager to decrement player HP
-        const currentHP = this.stateManager.decrement('playerHP', 25);
-        this.gameUI.updateHP(currentHP);
-
-        // Set invulnerability period
-        this.invulnerableUntil = this.time.now + 1000;
+        // Set invulnerability period (2 seconds for all enemies)
+        this.invulnerableUntil = this.time.now + 2000;
         
         // Visual feedback
         this.effectsManager.createFlashEffect(player);
         
         // Check for player death
-        if (currentHP <= 0) {
-            player.die();
+        if (newHP <= 0 && !this.isDying) {
+            this.handlePlayerDeath();
         }
     }
 
