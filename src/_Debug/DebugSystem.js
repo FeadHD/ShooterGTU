@@ -5,6 +5,7 @@ export class DebugSystem {
         this.graphics.setDepth(999);
         this.enabled = false;
         this.showDebug = false;
+        this.slimePathHistory = new Map(); // Store slime movement history
 
         // Add debug toggle key
         this.debugKey = scene.input.keyboard.addKey('E');
@@ -122,15 +123,118 @@ export class DebugSystem {
     //     this.fpsCounter.setVisible(false);   // Hidden by default
     // }
 
+    drawSlimeDebug(slime) {
+        if (!this.enabled || !slime || !slime.sprite) return;
+
+        const sprite = slime.sprite;
+
+        // Draw detection range (outer circle)
+        this.graphics.lineStyle(1, 0x00ff00, 0.3);
+        this.graphics.strokeCircle(sprite.x, sprite.y, slime.detectionRange);
+
+        // Draw aggro range (inner circle)
+        this.graphics.lineStyle(1, 0xff0000, 0.3);
+        this.graphics.strokeCircle(sprite.x, sprite.y, slime.aggroRange);
+
+        // Draw movement direction
+        const directionLength = 30;
+        this.graphics.lineStyle(2, 0xffff00);
+        this.graphics.lineBetween(
+            sprite.x,
+            sprite.y,
+            sprite.x + (slime.direction * directionLength),
+            sprite.y
+        );
+
+        // Store and draw path history
+        if (!this.slimePathHistory.has(sprite)) {
+            this.slimePathHistory.set(sprite, []);
+        }
+        
+        const history = this.slimePathHistory.get(sprite);
+        history.push({ x: sprite.x, y: sprite.y });
+        
+        // Keep only last 50 positions
+        if (history.length > 50) {
+            history.shift();
+        }
+
+        // Draw path
+        if (history.length > 1) {
+            this.graphics.lineStyle(1, 0x00ffff, 0.5);
+            for (let i = 1; i < history.length; i++) {
+                this.graphics.lineBetween(
+                    history[i-1].x,
+                    history[i-1].y,
+                    history[i].x,
+                    history[i].y
+                );
+            }
+        }
+
+        // Draw jump info if slime is jumping
+        if (sprite.body && sprite.body.velocity.y < 0) {
+            this.graphics.lineStyle(1, 0xff00ff);
+            // Draw jump arc
+            const jumpDuration = Math.abs(2 * sprite.body.velocity.y / sprite.body.gravity.y);
+            const points = [];
+            for (let t = 0; t < jumpDuration; t += jumpDuration/10) {
+                const x = sprite.x + (sprite.body.velocity.x * t);
+                const y = sprite.y + (sprite.body.velocity.y * t) + (0.5 * sprite.body.gravity.y * t * t);
+                points.push({ x, y });
+            }
+            for (let i = 1; i < points.length; i++) {
+                this.graphics.lineBetween(
+                    points[i-1].x,
+                    points[i-1].y,
+                    points[i].x,
+                    points[i].y
+                );
+            }
+        }
+
+        // Draw stats
+        const stats = [
+            `Health: ${slime.health}/${slime.maxHealth}`,
+            `Jump Cooldown: ${Math.max(0, slime.jumpCooldown - (this.scene.time.now - slime.lastJumpTime))}ms`,
+            `Speed: ${Math.round(sprite.body.velocity.x)}, ${Math.round(sprite.body.velocity.y)}`
+        ];
+        
+        stats.forEach((text, i) => {
+            const debugText = this.scene.add.text(
+                sprite.x - 50,
+                sprite.y - 60 - (i * 15),
+                text,
+                { 
+                    fontSize: '12px',
+                    fill: '#ffffff',
+                    backgroundColor: '#000000',
+                    padding: { x: 3, y: 3 }
+                }
+            );
+            debugText.setDepth(1000);
+            if (!this.debugTexts) {
+                this.debugTexts = [];
+            }
+            this.debugTexts.push(debugText);
+        });
+    }
+
     update(time) {
         // Clear previous frame's debug graphics
         this.graphics.clear();
         if (this.debugGraphics) {
             this.debugGraphics.clear();
         }
+        
+        // Clear previous debug texts
+        if (this.debugTexts) {
+            this.debugTexts.forEach(text => text.destroy());
+            this.debugTexts = [];
+        }
 
         if (!this.enabled) return;
-        
+
         // Draw platform bounds
         if (this.scene.platforms && this.scene.platforms.children) {
             this.scene.platforms.children.entries.forEach(platform => {
@@ -140,18 +244,19 @@ export class DebugSystem {
             });
         }
 
-        // Draw player bounds
-        if (this.scene.player && this.scene.player.body && this.scene.player.active) {
-            this.drawPhysicsBounds(this.scene.player);
-        }
-
-        // Draw enemy bounds
-        if (this.scene.enemies && this.scene.enemies.children) {
-            this.scene.enemies.children.entries.forEach(enemy => {
-                if (enemy && enemy.active && enemy.body) {
-                    this.drawPhysicsBounds(enemy);
+        // Draw slime debug info
+        if (this.scene.slimes && this.scene.slimes.children) {
+            this.scene.slimes.children.entries.forEach(slimeSprite => {
+                if (slimeSprite && slimeSprite.active && slimeSprite.enemy) {
+                    this.drawPhysicsBounds(slimeSprite);
+                    this.drawSlimeDebug(slimeSprite.enemy);
                 }
             });
+        }
+
+        // Draw player bounds
+        if (this.scene.player && this.scene.player.body) {
+            this.drawPhysicsBounds(this.scene.player);
         }
 
         if (!this.showDebug) return;
