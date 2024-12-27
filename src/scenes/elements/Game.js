@@ -1,4 +1,5 @@
 import { Scene } from 'phaser';
+import { PauseMenu } from './PauseMenu';
 
 export class Game extends Scene {
     constructor() {

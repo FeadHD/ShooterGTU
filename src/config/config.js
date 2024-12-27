@@ -11,6 +11,7 @@ import { Preloader } from '../scenes/elements/Preloader';
 import { TitleScene } from '../scenes/elements/TitleScene';
 import Settings from '../scenes/menus/Settings';
 import { ControlsSettingsScene } from '../scenes/menus/ControlsSettingsScene';
+import { PauseMenu } from '../scenes/elements/PauseMenu';
 
 export const config = {
     type: Phaser.AUTO,
@@ -50,6 +51,7 @@ export const config = {
         Leaderboard,
         GameOver,
         MissionComplete,
-        ControlsSettingsScene
+        ControlsSettingsScene,
+        PauseMenu
     ]
 };

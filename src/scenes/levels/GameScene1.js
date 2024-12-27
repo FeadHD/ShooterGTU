@@ -49,7 +49,16 @@ export class GameScene1 extends BaseScene {
                 }
             };
         }
-        
+
+        // Add ESC key for pause menu
+        this.pauseKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
+        this.pauseKey.on('down', () => {
+            this.pauseGame();
+        });
+
+        // Game paused flag
+        this.isGamePaused = false;
+
         // Define initial spawn position (near the left side of the level)
         const SPAWN_X_PERCENTAGE = 0.1;  // 10% from left edge
         const SPAWN_Y = 500;             // Fixed height from top
@@ -669,8 +678,9 @@ export class GameScene1 extends BaseScene {
         }
     }
 
-    update() {
-        super.update();
+    update(time, delta) {
+        super.update(time, delta);
+        if (this.isGamePaused) return;
 
         // Update debug visuals if enabled
         this.updateDebugVisuals();
@@ -751,5 +761,20 @@ export class GameScene1 extends BaseScene {
                 this.spawnText = null;
             }
         }
+    }
+
+    pauseGame() {
+        if (this.isGamePaused) return;
+        
+        this.isGamePaused = true;
+        this.physics.pause();
+        this.scene.launch('PauseMenu');
+        this.scene.pause();
+    }
+
+    resumeGame() {
+        this.isGamePaused = false;
+        this.physics.resume();
+        this.scene.resume();
     }
 }
