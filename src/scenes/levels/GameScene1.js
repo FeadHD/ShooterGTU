@@ -585,16 +585,12 @@ export class GameScene1 extends BaseScene {
     }
 
     handlePlayerDeath() {
-        if (this.player.lives <= 0) {
+        const lives = this.stateManager.get('lives');
+        if (lives <= 0) {
             // Game Over - stop timer and transition
             this.gameUI.stopTimer();
             this.scene.start('GameOver');
-            return;
         }
-
-        // Reset player position and make them temporarily invulnerable
-        this.player.setPosition(this.spawnPoint.x, this.spawnPoint.y);
-        this.player.setInvulnerable();
     }
 
     findSpawnPointsForSlimes() {
