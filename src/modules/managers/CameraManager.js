@@ -16,6 +16,9 @@ class CameraManager {
 
         // Find UI camera if it exists
         this.uiCamera = scene.cameras.cameras.find(cam => cam !== this.camera);
+
+        // Store active tweens
+        this.introTweens = [];
     }
 
     init(player) {
@@ -27,6 +30,21 @@ class CameraManager {
         if (this.scene.gameUI) {
             this.scene.gameUI.updateCameraIgnoreList();
         }
+    }
+
+    stopIntroSequence() {
+        // Stop all intro tweens
+        this.introTweens.forEach(tween => {
+            if (tween && tween.isPlaying()) {
+                tween.stop();
+            }
+        });
+        this.introTweens = [];
+
+        // Reset camera to follow player
+        this.camera.setZoom(this.defaultZoom);
+        this.camera.startFollow(this.player, true, 0.1, 0.1);
+        this.isIntroPlaying = false;
     }
 
     playIntroSequence(player) {
@@ -47,11 +65,11 @@ class CameraManager {
         const maxScrollX = this.levelWidth - visibleWidth;
 
         // Phase 1: Zoom out
-        this.scene.tweens.add({
+        const zoomTween = this.scene.tweens.add({
             targets: this.camera,
             zoom: targetZoom,
-            duration: 3000,
-            ease: 'Sine.easeOut',
+            duration: 2000,
+            ease: 'Power2',
             onStart: () => {
                 // Update UI camera ignore list at start of sequence
                 if (this.scene.gameUI) {
@@ -59,24 +77,22 @@ class CameraManager {
                 }
             },
             onComplete: () => {
-                // Phase 2: Pan to the right
-                this.scene.tweens.add({
+                // Phase 2: Pan across level
+                const panTween = this.scene.tweens.add({
                     targets: this.camera,
                     scrollX: maxScrollX,
                     duration: 4000,
-                    ease: 'Sine.easeInOut',
+                    ease: 'Power2',
                     onComplete: () => {
-                        // Phase 3: Pan back and zoom in to player
-                        this.scene.tweens.add({
+                        // Phase 3: Return to player
+                        const returnTween = this.scene.tweens.add({
                             targets: this.camera,
-                            scrollX: this.player.x,
-                            scrollY: this.player.y,
                             zoom: this.defaultZoom,
-                            duration: 3000,
-                            ease: 'Sine.easeInOut',
+                            scrollX: this.player.x - (this.gameWidth / (2 * this.defaultZoom)),
+                            duration: 1000,
+                            ease: 'Power2',
                             onComplete: () => {
-                                // Resume following player
-                                this.camera.startFollow(this.player);
+                                this.camera.startFollow(this.player, true, 0.1, 0.1);
                                 this.isIntroPlaying = false;
                                 
                                 // Final UI camera update
@@ -85,10 +101,13 @@ class CameraManager {
                                 }
                             }
                         });
+                        this.introTweens.push(returnTween);
                     }
                 });
+                this.introTweens.push(panTween);
             }
         });
+        this.introTweens.push(zoomTween);
     }
 
     update() {

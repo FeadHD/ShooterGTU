@@ -39,6 +39,9 @@ export class GameScene1 extends BaseScene {
         super.create();
         
         const { width, height } = this.scale;
+
+        // Set initial game state
+        this.gameStarted = false;  // Add flag to track if game has started
         
         // Initialize debug system if not already initialized
         if (!this.debugSystem) {
@@ -124,6 +127,13 @@ export class GameScene1 extends BaseScene {
 
         // Create bitcoin group
         this.bitcoins = this.add.group();
+
+        // Create player if it doesn't exist
+        if (!this.player) {
+            this.createPlayer(this.scale.width);
+            // Disable player controls initially
+            this.player.controller.enabled = false;
+        }
 
         // Debug level data loading
         const levelData = this.cache.json.get('level1');
@@ -276,10 +286,15 @@ export class GameScene1 extends BaseScene {
     }
 
     setupRestOfScene() {
-        // Create player if it doesn't exist
-        if (!this.player) {
-            this.createPlayer(this.scale.width);
-        }
+        // Show start message in GameUI
+        this.gameUI.showStartMessage();
+
+        // Add space key listener for starting the game
+        const spaceKey = this.input.keyboard.addKey('SPACE');
+        spaceKey.once('down', () => {
+            this.gameUI.hideStartMessage();
+            this.startGame();
+        });
 
         // Spawn bitcoins after map is loaded
         const bitcoinSpawnPoints = this.findSpawnPointsForBitcoins();
@@ -420,6 +435,24 @@ export class GameScene1 extends BaseScene {
         });
     }
 
+    startGame() {
+        // Stop intro sequence if it's playing
+        if (this.cameraManager.isIntroPlaying) {
+            this.cameraManager.stopIntroSequence();
+        }
+
+        // Enable player controls
+        if (this.player) {
+            this.player.controller.enabled = true;
+        }
+
+        // Start the timer
+        this.gameUI.startTimer();
+
+        // Set game as started
+        this.gameStarted = true;
+    }
+
     hitEnemyWithBullet(bullet, enemySprite) {
         // Skip if enemy is already being destroyed
         if (!enemySprite.active || !enemySprite.body || !enemySprite.body.enable) {
@@ -463,6 +496,9 @@ export class GameScene1 extends BaseScene {
     }
 
     update(time, delta) {
+        // Only update game elements if the game has started
+        if (!this.gameStarted) return;
+
         super.update(time, delta);
         if (this.isGamePaused) return;
 

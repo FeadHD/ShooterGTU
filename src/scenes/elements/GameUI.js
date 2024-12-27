@@ -24,6 +24,9 @@ export class GameUI {
         // Set up UI elements
         this.setupUI();
 
+        // Create start message (hidden by default)
+        this.createStartMessage();
+
         // Initial camera setup
         this.updateCameraIgnoreList();
 
@@ -245,7 +248,7 @@ export class GameUI {
     createTimer() {
         // Initialize timer variables
         this.elapsedSeconds = 0;
-        this.isTimerRunning = true;
+        this.isTimerRunning = false;  // Start paused
 
         // Create timer text
         this.timerText = this.scene.add.text(16, 144, 'Time: 00:00', {
@@ -258,14 +261,20 @@ export class GameUI {
 
         // Add to container
         this.container.add(this.timerText);
+    }
 
-        // Create timer event
-        this.timerEvent = this.scene.time.addEvent({
-            delay: 1000,
-            callback: this.updateTimer,
-            callbackScope: this,
-            loop: true
-        });
+    startTimer() {
+        this.isTimerRunning = true;
+        
+        // Create timer event if it doesn't exist
+        if (!this.timerEvent) {
+            this.timerEvent = this.scene.time.addEvent({
+                delay: 1000,
+                callback: this.updateTimer,
+                callbackScope: this,
+                loop: true
+            });
+        }
     }
 
     updateTimer() {
@@ -456,6 +465,34 @@ export class GameUI {
         this.fpsCounter.setVisible(false);
         this.memCounter.setVisible(false);
         this.container.add([this.fpsCounter, this.memCounter]);
+    }
+
+    createStartMessage() {
+        const { width, height } = this.scene.scale;
+        this.startMessage = this.scene.add.text(width / 2, height / 2, 'Press SPACE to start', {
+            fontFamily: 'Retronoid',
+            fontSize: '32px',
+            color: '#ffffff',
+            align: 'center',
+            stroke: '#000000',
+            strokeThickness: 4
+        }).setOrigin(0.5);
+        this.startMessage.setScrollFactor(0);
+        this.startMessage.setDepth(1000);
+        this.container.add(this.startMessage);
+        this.startMessage.setVisible(false);
+    }
+
+    showStartMessage() {
+        if (this.startMessage) {
+            this.startMessage.setVisible(true);
+        }
+    }
+
+    hideStartMessage() {
+        if (this.startMessage) {
+            this.startMessage.setVisible(false);
+        }
     }
 
     update(time) {
