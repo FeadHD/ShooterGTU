@@ -18,7 +18,7 @@ export class Bitcoin extends Phaser.Physics.Arcade.Sprite {
 
         // Set up sprite properties
         this.setScale(1.7);
-        this.setDepth(-1); // Set to negative to be behind player (default depth 0)
+        this.setDepth(1000); // Match player's depth to ensure visibility
 
         // Create the bitcoin animation if it doesn't exist
         if (!scene.anims.exists('bitcoin_spin')) {

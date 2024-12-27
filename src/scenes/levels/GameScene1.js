@@ -125,22 +125,6 @@ export class GameScene1 extends BaseScene {
         // Create bitcoin group
         this.bitcoins = this.add.group();
 
-        // Add 10 bitcoins spread across the level
-        const startX = width * 0.2;
-        const endX = width * 0.8;
-        const spacing = (endX - startX) / 9; // 9 spaces for 10 coins
-        const baseY = height - 150; // Base Y position (150px from bottom)
-
-        for (let i = 0; i < 10; i++) {
-            const x = startX + (i * spacing);
-            const y = baseY - Phaser.Math.Between(0, 100); // Random height up to 100px above base
-            const bitcoin = new Bitcoin(this, x, y);
-            this.bitcoins.add(bitcoin);
-            this.physics.add.overlap(this.player, bitcoin, () => {
-                bitcoin.collect();
-            });
-        }
-
         // Debug level data loading
         const levelData = this.cache.json.get('level1');
         
@@ -295,6 +279,20 @@ export class GameScene1 extends BaseScene {
         // Create player if it doesn't exist
         if (!this.player) {
             this.createPlayer(this.scale.width);
+        }
+
+        // Spawn bitcoins after map is loaded
+        const bitcoinSpawnPoints = this.findSpawnPointsForBitcoins();
+        const numBitcoins = Math.min(10, bitcoinSpawnPoints.length);
+
+        // Spawn bitcoins at valid positions
+        for (let i = 0; i < numBitcoins; i++) {
+            const spawnPoint = bitcoinSpawnPoints[i];
+            const bitcoin = new Bitcoin(this, spawnPoint.x, spawnPoint.y);
+            this.bitcoins.add(bitcoin);
+            this.physics.add.overlap(this.player, bitcoin, () => {
+                bitcoin.collect();
+            });
         }
 
         // Spawn drone at the top part of the scene
@@ -616,5 +614,54 @@ export class GameScene1 extends BaseScene {
             }
         }
         return spawnPoints;
+    }
+
+    findSpawnPointsForBitcoins() {
+        const spawnPoints = [];
+        const tileHeight = 32;
+        const levelWidth = this.scale.width;
+        const maxJumpHeight = 5 * tileHeight; // Maximum 5 tiles above platform
+        
+        // Sample points across the level width
+        for (let x = levelWidth * 0.1; x < levelWidth * 0.9; x += 100) {
+            // Find platforms at this x coordinate
+            const platformsAtX = this.platforms.getChildren().filter(platform => {
+                const bounds = platform.getBounds();
+                return x >= bounds.left && x <= bounds.right;
+            });
+
+            if (platformsAtX.length > 0) {
+                // Sort platforms by Y position (top to bottom)
+                platformsAtX.sort((a, b) => a.y - b.y);
+
+                // For each platform, try to place a bitcoin above it
+                for (const platform of platformsAtX) {
+                    const platformTop = platform.getBounds().top;
+                    let validY = null;
+
+                    // Try positions above the platform, within jump height
+                    for (let y = platformTop - tileHeight; y >= platformTop - maxJumpHeight; y -= tileHeight) {
+                        // Check if this position collides with any platform
+                        const hasCollision = this.platforms.getChildren().some(p => {
+                            const bounds = p.getBounds();
+                            return bounds.contains(x, y);
+                        });
+
+                        if (!hasCollision) {
+                            validY = y;
+                            break;
+                        }
+                    }
+
+                    if (validY !== null) {
+                        spawnPoints.push({ x, y: validY });
+                        break; // Only one spawn point per x coordinate
+                    }
+                }
+            }
+        }
+        
+        // Shuffle the spawn points
+        return Phaser.Utils.Array.Shuffle(spawnPoints);
     }
 }
