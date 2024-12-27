@@ -111,6 +111,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     handleGameOver() {
+        // Stop the timer
+        this.scene.gameUI.stopTimer();
+        
         const gameOverElements = this.scene.gameUI.showGameOver();
         this.scene.gameOverElements = gameOverElements;
         this.scene.gameOver = true;

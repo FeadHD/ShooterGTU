@@ -147,6 +147,7 @@ export class GameUI {
         this.createLivesDisplay();
         this.createHPDisplay();
         this.createBitcoinCounter();
+        this.createTimer();
         this.createMusicButton(width);
         this.createWalletDisplay(width);
         this.setupWalletListeners();
@@ -181,7 +182,7 @@ export class GameUI {
         const lives = this.scene.registry.get('lives') || 3;
         
         // Create lives text with consistent styling
-        this.livesText = this.scene.add.text(16, 56, `Lives: ${lives}`, {
+        this.livesText = this.scene.add.text(16, 48, `Lives: ${lives}`, {
             fontFamily: 'Retronoid',
             fontSize: '24px',
             fill: '#ff0000', // Red color
@@ -202,7 +203,7 @@ export class GameUI {
         const hp = this.scene.registry.get('playerHP') || this.scene.playerHP || 100;
         
         // Create HP text with consistent styling
-        this.hpText = this.scene.add.text(16, 96, `HP: ${hp}`, {
+        this.hpText = this.scene.add.text(16, 80, `HP: ${hp}`, {
             fontFamily: 'Retronoid',
             fontSize: '24px',
             fill: '#00ff00', // Green color
@@ -221,21 +222,88 @@ export class GameUI {
     createBitcoinCounter() {
         // Get current bitcoin count from registry
         const currentBitcoins = this.scene.registry.get('bitcoins') || 0;
-
+        
         // Create bitcoin text
-        this.bitcoinText = this.scene.add.text(16, 136, `Bitcoin: ${currentBitcoins}`, {
+        this.bitcoinText = this.scene.add.text(16, 112, `Bitcoin: ${currentBitcoins}`, {
             fontFamily: 'Retronoid',
             fontSize: '24px',
             fill: '#FFD700', // Gold color
             stroke: '#000000',
             strokeThickness: 4
         });
+        
         this.container.add(this.bitcoinText);
 
         // Listen for bitcoin count changes
         this.scene.registry.events.on('changedata-bitcoins', (parent, value) => {
             this.bitcoinText.setText(`Bitcoin: ${value}`);
         });
+    }
+
+    createTimer() {
+        // Initialize timer variables
+        this.elapsedSeconds = 0;
+        this.isTimerRunning = true;
+
+        // Create timer text
+        this.timerText = this.scene.add.text(16, 144, 'Time: 00:00', {
+            fontFamily: 'Retronoid',
+            fontSize: '24px',
+            fill: '#00ffff', // Cyan color
+            stroke: '#000000',
+            strokeThickness: 4
+        });
+
+        // Add to container
+        this.container.add(this.timerText);
+
+        // Create timer event
+        this.timerEvent = this.scene.time.addEvent({
+            delay: 1000,
+            callback: this.updateTimer,
+            callbackScope: this,
+            loop: true
+        });
+    }
+
+    updateTimer() {
+        if (!this.isTimerRunning) return;
+        
+        this.elapsedSeconds++;
+        const minutes = Math.floor(this.elapsedSeconds / 60);
+        const seconds = this.elapsedSeconds % 60;
+        
+        // Update timer text with leading zeros
+        this.timerText.setText(`Time: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+    }
+
+    stopTimer() {
+        this.isTimerRunning = false;
+        if (this.timerEvent) {
+            this.timerEvent.destroy();
+            this.timerEvent = null;
+        }
+    }
+
+    resetTimer() {
+        // Destroy existing timer event if it exists
+        if (this.timerEvent) {
+            this.timerEvent.destroy();
+            this.timerEvent = null;
+        }
+        
+        this.elapsedSeconds = 0;
+        this.isTimerRunning = true;
+        
+        // Create new timer event
+        this.timerEvent = this.scene.time.addEvent({
+            delay: 1000,
+            callback: this.updateTimer,
+            callbackScope: this,
+            loop: true
+        });
+        
+        this.updateTimer();
     }
 
     createMusicButton(width) {
@@ -478,22 +546,18 @@ export class GameUI {
     }
 
     destroy() {
-        // Remove registry event listeners
-        if (this.scene && this.scene.registry) {
-            this.scene.registry.events.off('changedata-score');
-            this.scene.registry.events.off('changedata-lives');
-            this.scene.registry.events.off('changedata-playerHP');
-            this.scene.registry.events.off('changedata-bitcoins');
-            this.scene.registry.events.off('changedata-musicEnabled');
+        // Stop and clean up timer
+        if (this.timerEvent) {
+            this.timerEvent.destroy();
+            this.timerEvent = null;
         }
         
-        // Destroy container and all its children
+        // Clean up other resources
         if (this.container) {
-            this.container.destroy(true);
+            this.container.destroy();
             this.container = null;
         }
         
-        // Destroy UI camera if it exists
         if (this.uiCamera) {
             this.scene.cameras.remove(this.uiCamera);
             this.uiCamera = null;

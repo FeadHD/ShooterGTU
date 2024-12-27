@@ -777,4 +777,32 @@ export class GameScene1 extends BaseScene {
         this.physics.resume();
         this.scene.resume();
     }
+
+    gameOver() {
+        this.gameUI.stopTimer(); // Stop the timer
+        this.scene.start('GameOver');
+    }
+
+    returnToMainMenu() {
+        this.gameUI.stopTimer(); // Stop the timer
+        this.scene.start('MainMenu');
+    }
+
+    quitGame() {
+        this.gameUI.stopTimer(); // Stop the timer
+        window.close();
+    }
+
+    handlePlayerDeath() {
+        if (this.player.lives <= 0) {
+            // Game Over - stop timer and transition
+            this.gameUI.stopTimer();
+            this.scene.start('GameOver');
+            return;
+        }
+
+        // Reset player position and make them temporarily invulnerable
+        this.player.setPosition(this.spawnPoint.x, this.spawnPoint.y);
+        this.player.setInvulnerable();
+    }
 }
