@@ -12,6 +12,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.movementSpeed = 300;
         this.jumpSpeed = -450;
         this.playerHP = scene.registry.get('playerHP') || 100;
+        this.lastDamageTaken = 0; // Track last damage taken
         
         // Add sprite to scene and enable physics
         scene.add.existing(this);
@@ -53,7 +54,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         // Check invulnerability
         if (this.scene.time.now < this.invulnerableUntil) return;
 
-        this.playerHP -= 25;
+        this.lastDamageTaken = 25; // Store the damage amount
+        this.playerHP -= this.lastDamageTaken;
         this.scene.registry.set('playerHP', this.playerHP);
         this.scene.gameUI.updateHP(this.playerHP);
 
@@ -140,8 +142,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.controller.enabled = true;  // Re-enable controls
         
         // Reset player HP
-        this.scene.stateManager.set('playerHP', 100);
-        this.scene.gameUI.updateHP(100);
+        this.playerHP = 100;  // Update the player's own HP property
+        this.lastDamageTaken = 0;  // Reset last damage taken
+        this.scene.stateManager.set('playerHP', this.playerHP);
+        this.scene.gameUI.updateHP(this.playerHP);
     }
 
     update() {

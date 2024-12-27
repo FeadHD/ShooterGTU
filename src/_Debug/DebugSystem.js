@@ -294,6 +294,63 @@ export class DebugSystem {
         }
     }
 
+    drawPlayerDebug(player) {
+        if (!this.enabled || !player) return;
+
+        // Draw player stats
+        const stats = [
+            `Player #1`,
+            `Health: ${player.playerHP}/100`,
+            `Last Damage: ${player.lastDamageTaken}`,
+            `Speed: ${Math.round(player.body.velocity.x)}, ${Math.round(player.body.velocity.y)}`,
+            `Jumps: ${player.jumpsAvailable}/2`,
+            `Status: ${player.isDying ? 'Dying' : (Date.now() < player.invulnerableUntil ? 'Invulnerable' : 'Normal')}`
+        ];
+        
+        stats.forEach((text, i) => {
+            const debugText = this.scene.add.text(
+                player.x - 50,
+                player.y - 90 - (i * 15),
+                text,
+                { 
+                    fontSize: '12px',
+                    fill: '#ffffff',
+                    backgroundColor: '#000000',
+                    padding: { x: 3, y: 3 }
+                }
+            );
+            debugText.setDepth(1000);
+            this.debugTexts.push(debugText);
+        });
+
+        // Draw player bounds
+        this.graphics.lineStyle(2, 0x00ff00);
+        this.graphics.strokeRect(player.x - player.width/2, player.y - player.height/2, player.width, player.height);
+
+        // Draw jump range
+        if (player.jumpsAvailable > 0) {
+            this.graphics.lineStyle(1, 0x00ff00, 0.3);
+            this.graphics.strokeCircle(player.x, player.y, Math.abs(player.jumpSpeed) / 10);
+        }
+
+        // Draw damage indicator if recently damaged
+        if (player.lastDamageTaken > 0 && Date.now() < player.invulnerableUntil) {
+            this.graphics.lineStyle(2, 0xff0000, 0.5);
+            this.graphics.strokeCircle(player.x, player.y, 30);
+        }
+
+        // Draw movement direction indicator
+        const direction = player.body.velocity.x !== 0 ? Math.sign(player.body.velocity.x) : (player.flipX ? -1 : 1);
+        const directionLength = 30;
+        this.graphics.lineStyle(2, 0xffff00);
+        this.graphics.lineBetween(
+            player.x,
+            player.y,
+            player.x + (direction * directionLength),
+            player.y
+        );
+    }
+
     update(time) {
         // Clear previous frame's debug graphics
         this.graphics.clear();
@@ -316,6 +373,11 @@ export class DebugSystem {
                     this.drawPlatformBounds(platform);
                 }
             });
+        }
+
+        // Draw player debug info
+        if (this.scene.player) {
+            this.drawPlayerDebug(this.scene.player);
         }
 
         // Draw slime debug info
