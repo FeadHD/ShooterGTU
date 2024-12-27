@@ -14,8 +14,8 @@ export class EnemyManager {
     }
 
     handleBulletHit(bullet, enemySprite) {
-        const enemy = this.enemies.get(enemySprite);
-        if (!enemy) return;
+        const enemyData = this.enemies.get(enemySprite);
+        if (!enemyData) return;
 
         // Play effects
         this.scene.effectsManager.createHitEffect(bullet.x, bullet.y);
@@ -23,17 +23,29 @@ export class EnemyManager {
         bullet.destroy();
 
         // Update enemy health
-        enemy.currentHealth--;
-        console.log('Enemy hit, health:', enemy.currentHealth);
+        enemyData.currentHealth--;
+        enemyData.instance.currentHealth = enemyData.currentHealth;
+        // Also update health for Slime class compatibility
+        if (typeof enemyData.instance.health !== 'undefined') {
+            enemyData.instance.health = enemyData.currentHealth;
+        }
+        console.log('Enemy hit, health:', enemyData.currentHealth);
 
-        if (enemy.currentHealth <= 0) {
-            enemySprite.destroy();
+        // Update health bar if enemy has one
+        if (enemyData.instance.updateHealthBar) {
+            enemyData.instance.updateHealthBar();
+        }
+
+        if (enemyData.currentHealth <= 0) {
+            if (enemyData.instance.die) {
+                enemyData.instance.die();
+            }
             this.enemies.delete(enemySprite);
             this.remainingEnemies--;
             console.log('Enemy defeated, remaining:', this.remainingEnemies);
             
             // Award points
-            const points = enemy.instance.isBoss ? 50 : 10;
+            const points = enemyData.instance.isBoss ? 50 : 10;
             this.scene.stateManager.increment('score', points);
             
             this.checkLevelComplete();

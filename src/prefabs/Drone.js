@@ -5,7 +5,7 @@ export class Drone extends Enemy {
         super(scene, x, y, {
             ...config,
             spriteKey: 'Bot1v1',
-            maxHealth: config.maxHealth || 75,
+            maxHealth: 3,
             damage: config.damage || 20
         });
 

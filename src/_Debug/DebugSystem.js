@@ -175,7 +175,7 @@ export class DebugSystem {
         // Draw stats
         const stats = [
             `Drone #${this.getEnemyId(drone)}`,
-            `Health: ${drone.health || 0}/${drone.maxHealth || 100}`,
+            `Health: ${drone.currentHealth || 0}/${drone.maxHealth || 3}`,
             `State: ${drone.isWaiting ? 'Waiting' : 'Moving'}`,
             `Laser: ${drone.isLaserCharging ? 'Charging' : 'Ready'}`
         ];

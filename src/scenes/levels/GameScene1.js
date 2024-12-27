@@ -2,8 +2,9 @@ import { BaseScene } from '../elements/BaseScene';
 import { GameUI } from '../elements/GameUI';
 import { Slime } from '../../prefabs/Slime';
 import { Bitcoin } from '../../prefabs/Bitcoin';
-import Drone from '../../prefabs/Drone'; 
+import Drone from '../../prefabs/Drone';
 import CameraManager from '../../modules/managers/CameraManager';
+import { CollisionManager } from '../../modules/managers/CollisionManager';
 
 export class GameScene1 extends BaseScene {
     constructor() {
@@ -92,6 +93,9 @@ export class GameScene1 extends BaseScene {
         this.cameraManager.init(this.player);
         this.cameraManager.playIntroSequence(this.player);
 
+        // Initialize collision manager
+        this.collisionManager = new CollisionManager(this);
+
         // Initialize slimes group
         this.slimes = this.physics.add.group({
             collideWorldBounds: true,
@@ -100,53 +104,16 @@ export class GameScene1 extends BaseScene {
             dragX: 200
         });
 
-        // Add collision between bullets and slimes
-        this.physics.add.collider(this.bullets, this.slimes, (bullet, slimeSprite) => {
-            // Get the slime instance from the sprite
-            const slime = slimeSprite.enemy;
-            if (slime) {
-                // Damage the slime
-                slime.damage(1);
-                
-                // Create hit effect and destroy bullet
-                this.effectsManager.createHitEffect(bullet.x, bullet.y);
-                bullet.destroy();
-            }
-        }, null, this);
-
-        // Hide the scene initially
-        this.cameras.main.setAlpha(0);
-
-        // Set up UI
-        this.gameUI = new GameUI(this);
-        
-        // Make sure UI stays fixed
-        this.gameUI.container.setScrollFactor(0);
-        
-        // Debug UI visibility
-        console.log('GameScene1 UI Setup:', {
-            container: {
-                x: this.gameUI.container.x,
-                y: this.gameUI.container.y,
-                visible: this.gameUI.container.visible,
-                alpha: this.gameUI.container.alpha,
-                children: this.gameUI.container.length
-            },
-            camera: {
-                visible: this.gameUI.uiCamera.visible,
-                active: this.gameUI.uiCamera.active,
-                viewport: this.gameUI.uiCamera.viewport,
-                scroll: {
-                    x: this.gameUI.uiCamera.scrollX,
-                    y: this.gameUI.uiCamera.scrollY
-                },
-                zoom: this.gameUI.uiCamera.zoom
-            }
+        // Initialize drones group with consistent physics settings
+        this.drones = this.physics.add.group({
+            runChildUpdate: true,
+            collideWorldBounds: true,
+            dragX: 200,
+            bounceX: 0.2,
+            bounceY: 0.2,
+            gravityY: 0
         });
 
-        // Update camera ignore lists
-        this.gameUI.updateCameraIgnoreList();
-        
         // Create enemy group
         this.enemies = this.physics.add.group({
             collideWorldBounds: true,
@@ -173,16 +140,6 @@ export class GameScene1 extends BaseScene {
                 bitcoin.collect();
             });
         }
-
-        // Create drones group with consistent physics settings
-        this.drones = this.physics.add.group({
-            runChildUpdate: true,
-            collideWorldBounds: true,
-            dragX: 200,
-            bounceX: 0.2,
-            bounceY: 0.2,
-            gravityY: 0
-        });
 
         // Debug level data loading
         const levelData = this.cache.json.get('level1');
@@ -313,10 +270,8 @@ export class GameScene1 extends BaseScene {
 
         // Wait for all tiles to be placed before showing the scene
         placeTilesPromise.then(() => {
-            // Add collision between player and tile layer
-            if (this.player && this.mapLayer) {
-                this.physics.add.collider(this.player, this.mapLayer);
-            }
+            // Set up all collisions using CollisionManager
+            this.collisionManager.setupCollisions();
 
             console.log('All tiles placed, showing scene');
             // Fade in the scene
@@ -342,54 +297,6 @@ export class GameScene1 extends BaseScene {
             this.createPlayer(this.scale.width);
         }
 
-        // Set up collisions with tile layer if not already done
-        if (this.player && this.mapLayer && !this.tileColliderAdded) {
-            this.physics.add.collider(this.player, this.mapLayer);
-            this.tileColliderAdded = true;
-            
-            // Add collision between bullets and tile layer
-            this.physics.add.collider(this.bullets, this.mapLayer, (bullet) => {
-                this.effectsManager.createHitEffect(bullet.x, bullet.y);
-                this.destroyBullet(bullet);
-            }, null, this);
-        }
-
-        // Function to find valid spawn points for enemies
-        const findSpawnPoints = () => {
-            const spawnPoints = [];
-            const mapWidth = this.mapLayer.width;
-            const mapHeight = this.mapLayer.height;
-
-            // Scan the map for solid tiles (type 370)
-            for (let x = 0; x < mapWidth; x++) {
-                for (let y = 0; y < mapHeight - 1; y++) {
-                    const tile = this.mapLayer.getTileAt(x, y);
-                    const tileAbove = this.mapLayer.getTileAt(x, y - 1);
-                    
-                    // Check if current tile is solid and tile above is empty
-                    if ((tile && (tile.index === 370 || tile.collides)) && 
-                        (!tileAbove || (!tileAbove.collides && tileAbove.index !== 370))) {
-                        // Position enemy exactly on top of the tile
-                        spawnPoints.push({ 
-                            x: x * 32 + 16, // Center of tile
-                            y: y * 32 - 8   // Just above the tile
-                        });
-                    }
-                }
-            }
-            return spawnPoints;
-        };
-
-        // Create drones group with consistent physics settings
-        this.drones = this.physics.add.group({
-            runChildUpdate: true,
-            collideWorldBounds: true,
-            dragX: 200,
-            bounceX: 0.2,
-            bounceY: 0.2,
-            gravityY: 0
-        });
-
         // Spawn drone at the top part of the scene
         if (this.player) {
             const enemyY = this.scale.height * 0.2; // Top 20% of the screen
@@ -404,109 +311,34 @@ export class GameScene1 extends BaseScene {
                 horizontalMovementRange: 100
             });
 
-            // Add drone to physics group
-            if (drone && drone.sprite) {
-                // Set up sprite properties
-                drone.sprite.setActive(true);
-                drone.sprite.setVisible(true);
-                
-                // Set up physics body
-                if (drone.sprite.body) {
-                    drone.sprite.body.reset(droneX, enemyY);
-                    drone.sprite.body.enable = true;
-                    drone.sprite.body.moves = true;
-                    drone.sprite.body.setAllowGravity(false);
-                    drone.sprite.body.setGravityY(0);
-                    drone.sprite.body.setVelocityY(0);
-                    drone.sprite.body.setImmovable(true);
+            // Add drone sprite to the drones group
+            this.drones.add(drone.sprite);
+
+            // Add drone to enemy manager
+            this.enemyManager.addEnemy(drone, drone.sprite, drone.maxHealth);
+
+            // Set up patrol path
+            const patrolPoints = [
+                { x: droneX - 200, y: enemyY },  // Left point
+                { x: droneX + 200, y: enemyY }   // Right point
+            ];
+            drone.setPatrolPath(patrolPoints);
+
+            // Add to scene update
+            this.events.on('update', () => {
+                if (drone && drone.sprite && drone.sprite.active) {
+                    drone.update();
                 }
+            });
 
-                // Add drone sprite to the drones group
-                this.drones.add(drone.sprite);
-
-                // Set up patrol path
-                const patrolPoints = [
-                    { x: droneX - 200, y: enemyY },  // Left point
-                    { x: droneX + 200, y: enemyY }   // Right point
-                ];
-                drone.setPatrolPath(patrolPoints);
-
-                // Add collision with map layer
-                if (this.mapLayer) {
-                    this.physics.add.collider(drone.sprite, this.mapLayer, null, null, this);
-                    this.physics.add.collider(drone.sprite, this.platforms);
-                }
-
-                // Add to scene update
-                this.events.on('update', () => {
-                    if (drone && drone.sprite && drone.sprite.active) {
-                        drone.update();
-                    }
-                });
-
-                // Store drone reference
-                this.drone = drone;
-            }
+            // Store drone reference
+            this.drone = drone;
         } else {
             console.warn('Cannot spawn drone: player not found');
         }
 
-        // Create and set up slimes group with consistent physics settings
-        // this.slimes = this.physics.add.group({
-        //     runChildUpdate: true,
-        //     collideWorldBounds: true,
-        //     dragX: 200,
-        //     bounceX: 0.2,
-        //     bounceY: 0.2,
-        //     gravityY: 1000
-        // });
-
-        // Add collision between slimes and tile layer
-        if (this.mapLayer) {
-            // Set up tile collision properties
-            this.mapLayer.setCollisionByProperty({ collides: true });
-            this.mapLayer.setCollision(370); // Solid tile type
-
-            // Add collider between slimes and map layer
-            this.physics.add.collider(this.slimes, this.mapLayer, null, null, this);
-            
-            // Add collider between slimes and platforms
-            this.physics.add.collider(this.slimes, this.platforms);
-        }
-
-        // Add collider between slimes and platforms
-        this.physics.add.collider(this.slimes, this.platforms);
-
-        // Function to find valid spawn points for slimes
-        const findSpawnPointsForSlimes = () => {
-            const spawnPoints = [];
-            const mapWidth = this.mapLayer.width;
-            const mapHeight = this.mapLayer.height;
-
-            // Scan the map for solid tiles (type 370)
-            for (let x = 0; x < mapWidth; x++) {
-                for (let y = 0; y < mapHeight - 1; y++) {
-                    const tile = this.mapLayer.getTileAt(x, y);
-                    const tileAbove = this.mapLayer.getTileAt(x, y - 1);
-                    
-                    // Check if current tile is solid and tile above is empty
-                    if ((tile && (tile.index === 370 || tile.collides)) && 
-                        (!tileAbove || (!tileAbove.collides && tileAbove.index !== 370))) {
-                        // Position slime exactly on top of the tile
-                        spawnPoints.push({ 
-                            x: x * 32 + 16, // Center of tile
-                            y: y * 32 - 8   // Just above the tile
-                        });
-                    }
-                }
-            }
-            return spawnPoints;
-        };
-
-        // Find valid spawn points
-        const spawnPointsForSlimes = findSpawnPointsForSlimes();
-
-        // Create all slimes (both random and fixed positions)
+        // Create fixed position slimes
+        const enemyY = this.scale.height * 0.7;
         const createAndInitSlime = (x, y) => {
             const slime = new Slime(this, x, y);
             if (slime && slime.sprite) {
@@ -523,6 +355,9 @@ export class GameScene1 extends BaseScene {
                     slime.sprite.body.enable = true;
                     slime.sprite.body.moves = true;
                 }
+                
+                // Add to enemy manager
+                this.enemyManager.addEnemy(slime, slime.sprite, slime.maxHealth);
                 
                 // Create health bar
                 slime.createHealthBar();
@@ -543,14 +378,13 @@ export class GameScene1 extends BaseScene {
             return null;
         };
 
-        // Create fixed position slimes
-        const enemyY = this.scale.height * 0.7;
         this.enemy1 = createAndInitSlime(this.scale.width * 0.3, enemyY);
         this.enemy2 = createAndInitSlime(this.scale.width * 0.7, enemyY);
 
         // Create random position slimes
         const numRandomSlimes = 1; 
         for (let i = 0; i < numRandomSlimes; i++) {
+            const spawnPointsForSlimes = this.findSpawnPointsForSlimes();
             if (spawnPointsForSlimes.length > 0) {
                 const spawnIndex = Math.floor(Math.random() * spawnPointsForSlimes.length);
                 const spawnPoint = spawnPointsForSlimes[spawnIndex];
@@ -558,24 +392,6 @@ export class GameScene1 extends BaseScene {
                 spawnPointsForSlimes.splice(spawnIndex, 1);
             }
         }
-
-        // Set up collisions between slimes
-        this.physics.add.collider(this.slimes, this.slimes);
-
-        // Set up bullet collisions
-        this.physics.add.collider(
-            this.bullets, 
-            this.slimes, 
-            this.hitEnemyWithBullet, 
-            (bullet, enemySprite) => {
-                return enemySprite.enemy && !enemySprite.enemy.isInvincible;
-            },
-            this
-        );
-
-        // Create camera bounds
-        this.cameras.main.setBounds(0, 0, 3840, 1080);
-        this.cameras.main.startFollow(this.player);
 
         // Set up player-enemy collision for damage
         this.physics.add.overlap(this.player, this.slimes, (player, enemySprite) => {
@@ -601,18 +417,6 @@ export class GameScene1 extends BaseScene {
             // Calculate spawn height relative to ground
             const enemyY = this.groundTop - 16;  // Same calculation as player spawn
 
-            // Set up bullet collisions with process callback
-            this.physics.add.collider(
-                this.bullets, 
-                this.slimes, 
-                this.hitEnemyWithBullet, 
-                (bullet, enemySprite) => {
-                    // Only process collision if enemy is not invincible
-                    return enemySprite.enemy && !enemySprite.enemy.isInvincible;
-                },
-                this
-            );
-            
             // Set number of enemies
             this.remainingEnemies = 4;
         });
@@ -625,32 +429,11 @@ export class GameScene1 extends BaseScene {
             return;
         }
         
-        // Create particles at hit location
-        this.effectsManager.createHitEffect(bullet.x, bullet.y);
-        
-        // Play hit sound and destroy bullet
-        this.hitSound.play();
+        // Destroy the bullet first
         bullet.destroy();
         
-        // Get the enemy instance directly from the sprite
-        const enemy = enemySprite.enemy;
-        if (enemy && !enemy.isInvincible) {
-            // If enemy dies from this hit
-            if (enemy.damage(1)) {
-                // Add points before destroying the enemy
-                this.addPoints(10);
-                this.remainingEnemies--;
-                
-                // Log enemy death
-                console.log(`Enemy defeated! Remaining enemies: ${this.remainingEnemies}`);
-                
-                // Check if level is complete
-                if (this.remainingEnemies <= 0) {
-                    console.log('All enemies defeated! You can now proceed.');
-                    this.checkLevelComplete();
-                }
-            }
-        }
+        // Use the EnemyManager to handle the bullet hit
+        this.enemyManager.handleBulletHit(bullet, enemySprite);
     }
 
     handleEnemyCollision(enemy1, enemy2) {
@@ -812,5 +595,30 @@ export class GameScene1 extends BaseScene {
         // Reset player position and make them temporarily invulnerable
         this.player.setPosition(this.spawnPoint.x, this.spawnPoint.y);
         this.player.setInvulnerable();
+    }
+
+    findSpawnPointsForSlimes() {
+        const spawnPoints = [];
+        const mapWidth = this.mapLayer.width;
+        const mapHeight = this.mapLayer.height;
+
+        // Scan the map for solid tiles (type 370)
+        for (let x = 0; x < mapWidth; x++) {
+            for (let y = 0; y < mapHeight - 1; y++) {
+                const tile = this.mapLayer.getTileAt(x, y);
+                const tileAbove = this.mapLayer.getTileAt(x, y - 1);
+                
+                // Check if current tile is solid and tile above is empty
+                if ((tile && (tile.index === 370 || tile.collides)) && 
+                    (!tileAbove || (!tileAbove.collides && tileAbove.index !== 370))) {
+                    // Position slime exactly on top of the tile
+                    spawnPoints.push({ 
+                        x: x * 32 + 16, // Center of tile
+                        y: y * 32 - 8   // Just above the tile
+                    });
+                }
+            }
+        }
+        return spawnPoints;
     }
 }
