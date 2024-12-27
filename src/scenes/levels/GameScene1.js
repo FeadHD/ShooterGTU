@@ -682,6 +682,11 @@ export class GameScene1 extends BaseScene {
         super.update(time, delta);
         if (this.isGamePaused) return;
 
+        // Update game UI
+        if (this.gameUI) {
+            this.gameUI.update(time);
+        }
+
         // Update debug visuals if enabled
         this.updateDebugVisuals();
 

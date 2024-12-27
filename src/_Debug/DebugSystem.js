@@ -34,6 +34,9 @@ export class DebugSystem {
                 }
             }
         });
+
+        // Initialize FPS counter
+        // this.initializeFPSCounter();
     }
 
     initialize() {
@@ -106,7 +109,20 @@ export class DebugSystem {
         }
     }
 
-    update() {
+    // initializeFPSCounter() {
+    //     this.fpsCounter = this.scene.add.text(16, 16, 'FPS: 0', {
+    //         fontFamily: 'Retronoid',
+    //         fontSize: '20px',
+    //         fill: '#00ff00',
+    //         backgroundColor: '#000000',
+    //         padding: { x: 10, y: 5 }
+    //     });
+    //     this.fpsCounter.setScrollFactor(0); // Fix to camera
+    //     this.fpsCounter.setDepth(1000);     // Always on top
+    //     this.fpsCounter.setVisible(false);   // Hidden by default
+    // }
+
+    update(time) {
         // Clear previous frame's debug graphics
         this.graphics.clear();
         if (this.debugGraphics) {
@@ -184,5 +200,8 @@ export class DebugSystem {
         if (this.debugGraphics) {
             this.debugGraphics.destroy();
         }
+        // if (this.fpsCounter) {
+        //     this.fpsCounter.destroy();
+        // }
     }
 }

@@ -11,6 +11,7 @@ export class GameUI {
         // Create main UI container
         this.container = this.scene.add.container(0, 0);
         this.container.setDepth(100);
+        this.lastFpsUpdate = 0;
         
         // Create UI camera that stays fixed
         const { width, height } = scene.scale;
@@ -151,6 +152,7 @@ export class GameUI {
         this.createMusicButton(width);
         this.createWalletDisplay(width);
         this.setupWalletListeners();
+        this.createFPSCounter(width, height);
 
         // Update camera ignore list
         this.updateCameraIgnoreList();
@@ -427,6 +429,36 @@ export class GameUI {
                     this.walletText.setText('Wallet: Not Connected');
                 }
             });
+        }
+    }
+
+    createFPSCounter(width, height) {
+        // Create FPS counter in bottom left
+        this.fpsCounter = this.scene.add.text(16, height - 40, 'FPS: 0', {
+            fontFamily: 'Retronoid',
+            fontSize: '20px',
+            fill: '#00ff00',
+            stroke: '#000000',
+            strokeThickness: 4
+        });
+        this.fpsCounter.setScrollFactor(0);
+        this.fpsCounter.setVisible(false); // Hidden by default
+        this.container.add(this.fpsCounter);
+    }
+
+    update(time) {
+        // Update FPS counter if debug is enabled
+        if (this.scene.debugSystem?.enabled) {
+            this.fpsCounter?.setVisible(true);
+            if (time - this.lastFpsUpdate > 500) {
+                const fps = Math.round(this.scene.game.loop.actualFps);
+                if (this.fpsCounter) {
+                    this.fpsCounter.setText(`FPS: ${fps}`);
+                }
+                this.lastFpsUpdate = time;
+            }
+        } else {
+            this.fpsCounter?.setVisible(false);
         }
     }
 
