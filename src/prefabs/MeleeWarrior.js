@@ -1,11 +1,12 @@
 import Enemy from './Enemy';
+import { PathFinder } from '../modules/pathfinding/PathFinder';
 
 class MeleeWarrior extends Enemy {
     constructor(scene, x, y, config = {}) {
         super(scene, x, y, {
             ...config,
-            spriteKey: 'enemymeleewarrior_IDLE',  // Updated to match uppercase filename
-            maxHealth: 3, // Set to match slime's health
+            spriteKey: 'enemymeleewarrior_IDLE',
+            maxHealth: 3,
             damage: config.damage || 30,
             type: 'ground'
         });
@@ -18,42 +19,43 @@ class MeleeWarrior extends Enemy {
         this.speed = config.speed || 150;
         this.detectionRange = config.detectionRange || 300;
         this.attackRange = config.attackRange || 50;
-        this.attackCooldown = config.attackCooldown || 1000; // 1 second
+        this.attackCooldown = config.attackCooldown || 1000;
         this.lastAttackTime = 0;
         this.isAttacking = false;
-        this.direction = 1; // 1 for right, -1 for left
+        this.direction = 1;
+
+        // Pathfinding properties
+        this.pathFinder = new PathFinder(scene);
+        this.currentPath = null;
+        this.pathUpdateCooldown = 500; // Update path every 500ms
+        this.lastPathUpdate = 0;
+        this.currentPathIndex = 0;
+
+        // Initialize pathfinding grid
+        this.scene.events.once('create', () => {
+            this.pathFinder.initializeGrid();
+        });
 
         // Adjust sprite size and physics body
         if (this.sprite) {
-            // Calculate scale to make height 128px (doubled from 64px)
             const targetHeight = 128;
             const scale = targetHeight / this.sprite.height;
             const scaledWidth = this.sprite.width * scale;
-            
-            // Set display size maintaining aspect ratio
             this.sprite.setDisplaySize(scaledWidth, targetHeight);
             
-            // Enable physics and set up collision body
             this.sprite.body.setCollideWorldBounds(true);
             this.sprite.body.setBounce(0.2);
             this.sprite.body.setDrag(200);
             
-            // Set collision box to be 32x32 while keeping sprite size large
-            this.sprite.body.setSize(32, 32); // Height reduced to 32px
-            
-            // Position the hitbox with specific offsets:
-            // - 32px from the left
-            // - 28px from top (4px higher than before)
+            this.sprite.body.setSize(32, 32);
             const offsetX = 32;
-            const offsetY = 28; // Moved up by 4px from previous position
+            const offsetY = 28;
             this.sprite.body.setOffset(offsetX, offsetY);
             
-            // Add to enemies group if it exists
             if (this.scene.enemies) {
                 this.scene.enemies.add(this.sprite);
             }
             
-            // Set data for debug display
             this.sprite.setData('type', 'warrior');
             this.sprite.setData('health', this.health);
             this.sprite.setData('maxHealth', this.maxHealth);
@@ -61,10 +63,7 @@ class MeleeWarrior extends Enemy {
             this.sprite.setData('detectionRange', this.detectionRange);
             this.sprite.setData('attackRange', this.attackRange);
             this.sprite.setData('isAttacking', this.isAttacking);
-            this.sprite.setData('warrior', this);  // Store reference to this warrior
-
-            // Start playing idle animation
-            this.sprite.play('enemymeleewarrior-idle');
+            this.sprite.setData('warrior', this);
         }
     }
 
@@ -77,11 +76,9 @@ class MeleeWarrior extends Enemy {
         this.sprite.setData('speed', Math.abs(this.sprite.body.velocity.x));
         this.sprite.setData('state', this.isAttacking ? 'Attack' : (Math.abs(this.sprite.body.velocity.x) > 0 ? 'Run' : 'Idle'));
 
-        // Get player reference
         const player = this.scene.player;
         if (!player || !player.active) return;
 
-        // Calculate distance to player
         const distanceToPlayer = Phaser.Math.Distance.Between(
             this.sprite.x,
             this.sprite.y,
@@ -89,43 +86,66 @@ class MeleeWarrior extends Enemy {
             player.y
         );
 
-        // Check if player is within detection range
         if (distanceToPlayer <= this.detectionRange) {
-            // Move towards player if not in attack range
-            if (distanceToPlayer > this.attackRange && !this.isAttacking) {
-                // Calculate direction to player
-                const angle = Phaser.Math.Angle.Between(
+            const currentTime = this.scene.time.now;
+
+            // Update path periodically
+            if (currentTime - this.lastPathUpdate >= this.pathUpdateCooldown) {
+                this.currentPath = this.pathFinder.findPath(
                     this.sprite.x,
                     this.sprite.y,
                     player.x,
                     player.y
                 );
+                this.currentPathIndex = 0;
+                this.lastPathUpdate = currentTime;
+            }
 
-                // Set velocity based on angle
-                this.sprite.setVelocityX(Math.cos(angle) * this.speed);
-                
-                // Update sprite direction
-                this.direction = this.sprite.x < player.x ? 1 : -1;
-                this.sprite.setFlipX(this.direction === -1);
-
-                // Play run animation
-                if (!this.sprite.anims.isPlaying || this.sprite.anims.currentAnim.key !== 'enemymeleewarrior-run') {
-                    this.sprite.play('enemymeleewarrior-run');
-                }
-            } else {
-                // Stop moving when in attack range or attacking
+            if (distanceToPlayer <= this.attackRange && !this.isAttacking) {
+                // Stop and attack
                 this.sprite.setVelocityX(0);
-
-                // Attack if cooldown is over and not already attacking
-                const currentTime = this.scene.time.now;
-                if (!this.isAttacking && currentTime - this.lastAttackTime >= this.attackCooldown) {
+                if (currentTime - this.lastAttackTime >= this.attackCooldown) {
                     this.attack();
                     this.lastAttackTime = currentTime;
                 }
+            } else if (!this.isAttacking && this.currentPath && this.currentPath.length > 0) {
+                // Follow path
+                const targetPoint = this.currentPath[this.currentPathIndex];
+                const distanceToPoint = Phaser.Math.Distance.Between(
+                    this.sprite.x,
+                    this.sprite.y,
+                    targetPoint.x,
+                    targetPoint.y
+                );
+
+                if (distanceToPoint < 10) {
+                    // Move to next point in path
+                    this.currentPathIndex++;
+                    if (this.currentPathIndex >= this.currentPath.length) {
+                        this.currentPath = null;
+                    }
+                } else {
+                    // Move towards current target point
+                    const angle = Phaser.Math.Angle.Between(
+                        this.sprite.x,
+                        this.sprite.y,
+                        targetPoint.x,
+                        targetPoint.y
+                    );
+
+                    this.sprite.setVelocityX(Math.cos(angle) * this.speed);
+                    this.direction = this.sprite.x < targetPoint.x ? 1 : -1;
+                    this.sprite.setFlipX(this.direction === -1);
+
+                    if (!this.sprite.anims.isPlaying || this.sprite.anims.currentAnim.key !== 'enemymeleewarrior-run') {
+                        this.sprite.play('enemymeleewarrior-run');
+                    }
+                }
             }
         } else {
-            // Return to idle state when player is out of range
+            // Return to idle when player is out of range
             this.sprite.setVelocityX(0);
+            this.currentPath = null;
             if (!this.isAttacking && (!this.sprite.anims.isPlaying || this.sprite.anims.currentAnim.key !== 'enemymeleewarrior-idle')) {
                 this.sprite.play('enemymeleewarrior-idle');
             }
@@ -136,17 +156,13 @@ class MeleeWarrior extends Enemy {
         if (!this.sprite || this.isAttacking) return;
 
         this.isAttacking = true;
-        
-        // Play attack animation
         this.sprite.play('enemymeleewarrior-attack');
         
-        // Deal damage to player if in range
         const player = this.scene.player;
         if (player && Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, player.x, player.y) <= this.attackRange) {
             player.takeDamage(this.damage);
         }
 
-        // Reset attack state after animation
         this.sprite.once('animationcomplete', () => {
             this.isAttacking = false;
             this.sprite.play('enemymeleewarrior-idle');
