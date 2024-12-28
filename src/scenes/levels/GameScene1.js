@@ -5,13 +5,14 @@ import { Bitcoin } from '../../prefabs/Bitcoin';
 import Drone from '../../prefabs/Drone';
 import CameraManager from '../../modules/managers/CameraManager';
 import { CollisionManager } from '../../modules/managers/CollisionManager';
+import MeleeWarrior from '../../prefabs/MeleeWarrior';
 
 export class GameScene1 extends BaseScene {
     constructor() {
         super({ key: 'GameScene1' });
         this.tileColliderAdded = false;
         this.messageShown = false;
-        this.totalEnemies = 4; // Increased to include drone
+        this.totalEnemies = 7; // Increased to include drone and melee warriors
         this.remainingEnemies = this.totalEnemies;
         this.drone = null; // Add drone reference
     }
@@ -377,6 +378,41 @@ export class GameScene1 extends BaseScene {
 
         // Create fixed position slimes
         const enemyY = this.scale.height * 0.7;
+
+        // Add three melee warriors at different positions
+        const warriorPositions = [
+            { x: 800, y: enemyY },   // First warrior near the start
+            { x: 1600, y: enemyY },  // Second warrior in the middle
+            { x: 2400, y: enemyY }   // Third warrior near the end
+        ];
+
+        warriorPositions.forEach((pos, index) => {
+            const warrior = new MeleeWarrior(this, pos.x, pos.y, {
+                maxHealth: 100 + (index * 20),  // Each warrior gets progressively tougher
+                damage: 30 + (index * 5),       // And deals more damage
+                speed: 150,
+                detectionRange: 300,
+                attackRange: 50,
+                attackCooldown: 1000
+            });
+
+            // Add warrior sprite to enemies group
+            this.enemies.add(warrior.sprite);
+            warrior.sprite.setData('type', 'ground');  // Set type for debug system
+            warrior.sprite.setData('enemy', warrior);  // Store reference to warrior
+
+            // Add to enemy manager
+            this.enemyManager.addEnemy(warrior, warrior.sprite, warrior.maxHealth);
+            
+            // Add collision with platforms
+            this.physics.add.collider(warrior.sprite, this.platforms);
+            
+            // Add collision with other enemies
+            this.physics.add.collider(warrior.sprite, this.enemies, this.handleEnemyCollision, null, this);
+
+            console.log(`Melee Warrior ${index + 1} created at:`, pos);
+        });
+
         const createAndInitSlime = (x, y) => {
             const slime = new Slime(this, x, y);
             if (slime && slime.sprite) {
@@ -448,7 +484,7 @@ export class GameScene1 extends BaseScene {
         );
 
         // Set initial number of enemies
-        this.remainingEnemies = 4;
+        this.remainingEnemies = 7;
 
         // Wait a short moment for platforms to be fully set up
         this.time.delayedCall(100, () => {
@@ -456,7 +492,7 @@ export class GameScene1 extends BaseScene {
             const enemyY = this.groundTop - 16;  // Same calculation as player spawn
 
             // Set number of enemies
-            this.remainingEnemies = 4;
+            this.remainingEnemies = 7;
         });
     }
 

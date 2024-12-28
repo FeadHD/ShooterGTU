@@ -302,6 +302,71 @@ export class DebugSystem {
         }
     }
 
+    drawWarriorDebug(sprite) {
+        if (!this.enabled || !sprite) return;
+        console.log('Drawing warrior debug for:', sprite);
+
+        const warrior = sprite.getData('enemy');
+        if (!warrior) {
+            console.warn('No warrior data found for sprite:', sprite);
+            return;
+        }
+
+        // Draw physics bounds
+        this.drawPhysicsBounds(sprite);
+
+        // Get warrior stats
+        const stats = [
+            `Warrior #${this.getEnemyId(warrior)}`,
+            `Health: ${warrior.health}/${warrior.maxHealth}`,
+            `State: ${warrior.isAttacking ? 'Attacking' : 'Idle'}`,
+            `Speed: ${Math.round(sprite.body.velocity.x)}, ${Math.round(sprite.body.velocity.y)}`
+        ];
+
+        // Draw stats with same style as slime
+        stats.forEach((text, i) => {
+            const debugText = this.scene.add.text(
+                sprite.x - 50,
+                sprite.y - 90 - (i * 15),
+                text,
+                { 
+                    fontSize: '12px',
+                    fill: '#ffffff',
+                    backgroundColor: '#000000',
+                    padding: { x: 3, y: 3 }
+                }
+            );
+            debugText.setDepth(1000);
+            this.debugTexts.push(debugText);
+        });
+
+        // Draw detection range (outer circle)
+        this.graphics.lineStyle(1, 0xff6600, 0.3);
+        this.graphics.strokeCircle(
+            sprite.x,
+            sprite.y,
+            warrior.detectionRange || 300
+        );
+
+        // Draw attack range (inner circle)
+        this.graphics.lineStyle(1, 0xff0000, 0.3);
+        this.graphics.strokeCircle(
+            sprite.x,
+            sprite.y,
+            warrior.attackRange || 50
+        );
+
+        // Draw movement direction
+        const directionLength = 30;
+        this.graphics.lineStyle(2, 0xffff00);
+        this.graphics.lineBetween(
+            sprite.x,
+            sprite.y,
+            sprite.x + (warrior.direction * directionLength),
+            sprite.y
+        );
+    }
+
     drawPlayerDebug(player) {
         if (!this.enabled || !player) return;
 
@@ -388,20 +453,22 @@ export class DebugSystem {
             this.drawPlayerDebug(this.scene.player);
         }
 
+        // Draw warrior debug info
+        if (this.scene.enemies) {
+            this.scene.enemies.getChildren().forEach(enemySprite => {
+                if (enemySprite && enemySprite.active && enemySprite.getData('type') === 'ground') {
+                    this.drawWarriorDebug(enemySprite);
+                }
+            });
+        }
+
         // Draw slime debug info
         if (this.scene.slimes && this.scene.slimes.children) {
-            console.log('Slimes group:', this.scene.slimes);
-            console.log('Slime children:', this.scene.slimes.children.entries);
-            
             this.scene.slimes.children.entries.forEach(slimeSprite => {
-                console.log('Slime sprite:', slimeSprite);
                 if (slimeSprite && slimeSprite.active) {
-                    console.log('Slime enemy:', slimeSprite.enemy);
                     this.drawPhysicsBounds(slimeSprite);
                     if (slimeSprite.enemy) {
                         this.drawSlimeDebug(slimeSprite.enemy);
-                    } else {
-                        console.warn('Slime sprite missing enemy reference:', slimeSprite);
                     }
                 }
             });
@@ -415,7 +482,6 @@ export class DebugSystem {
                     if (droneSprite.enemy) {
                         this.drawDroneDebug(droneSprite.enemy);
                     } else {
-                        // If enemy property doesn't exist, try to use the sprite directly
                         this.drawDroneDebug(droneSprite);
                     }
                 }

@@ -175,6 +175,47 @@ export class Preloader extends Scene {
             margin: 0        // Adjust if there's margin around frames
         });
         
+        // Load enemy melee warrior sprite sheets
+        const meleeWarriorConfig = {
+            frameWidth: 96,
+            frameHeight: 84,
+            spacing: 0,
+            margin: 0,
+            startFrame: 0,
+            endFrame: 5  // We'll adjust this for each animation
+        };
+
+        // Load all sprite sheets with the same config
+        this.load.spritesheet('enemymeleewarrior_IDLE', '/assets/enemys/warrior/IDLE.png', {
+            ...meleeWarriorConfig,
+            endFrame: 5  // Adjust based on actual frames in IDLE animation
+        });
+        this.load.spritesheet('enemymeleewarrior_WALK', '/assets/enemys/warrior/WALK.png', {
+            ...meleeWarriorConfig,
+            endFrame: 7  // Adjust based on actual frames in WALK animation
+        });
+        this.load.spritesheet('enemymeleewarrior_ATTACK', '/assets/enemys/warrior/ATTACK 1.png', {
+            ...meleeWarriorConfig,
+            endFrame: 6  // Adjust based on actual frames in ATTACK animation
+        });
+        this.load.spritesheet('enemymeleewarrior_DEATH', '/assets/enemys/warrior/DEATH.png', {
+            ...meleeWarriorConfig,
+            endFrame: 8  // Adjust based on actual frames in DEATH animation
+        });
+
+        // Debug log when warrior sprite sheets are loaded
+        ['IDLE', 'WALK', 'ATTACK', 'DEATH'].forEach(animation => {
+            this.load.on(`filecomplete-spritesheet-enemymeleewarrior_${animation}`, (key) => {
+                const texture = this.textures.get(key);
+                console.log(`Enemy melee warrior ${animation} sprite sheet loaded:`, {
+                    key: key,
+                    frameCount: texture.frameTotal,
+                    width: texture.source[0].width,
+                    height: texture.source[0].height
+                });
+            });
+        });
+
         // Load sound effects
         this.load.audio('laser', './assets/sounds/laser.wav');
         this.load.audio('bgMusic', './assets/sounds/background_music.mp3');
