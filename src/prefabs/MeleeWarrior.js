@@ -21,8 +21,8 @@ class MeleeWarrior extends Enemy {
 
         // Adjust sprite size and physics body
         if (this.sprite) {
-            // Calculate scale to make height 64px
-            const targetHeight = 64;
+            // Calculate scale to make height 128px (doubled from 64px)
+            const targetHeight = 128;
             const scale = targetHeight / this.sprite.height;
             const scaledWidth = this.sprite.width * scale;
             
@@ -34,12 +34,15 @@ class MeleeWarrior extends Enemy {
             this.sprite.body.setBounce(0.2);
             this.sprite.body.setDrag(200);
             
-            // Set collision box to be 32x64
-            this.sprite.body.setSize(32, 64);
+            // Set collision box to be 32x32 while keeping sprite size large
+            this.sprite.body.setSize(32, 32); // Height reduced to 32px
             
-            // Center the hitbox horizontally
-            const offsetX = (scaledWidth - 32) / 2;
-            this.sprite.body.setOffset(offsetX, 0);
+            // Position the hitbox with specific offsets:
+            // - 32px from the left
+            // - Adjusted for 32px height
+            const offsetX = 32;
+            const offsetY = 32; // Position to start at top third of sprite
+            this.sprite.body.setOffset(offsetX, offsetY);
             
             // Add to enemies group if it exists
             if (this.scene.enemies) {
