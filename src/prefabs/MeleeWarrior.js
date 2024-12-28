@@ -5,10 +5,14 @@ class MeleeWarrior extends Enemy {
         super(scene, x, y, {
             ...config,
             spriteKey: 'enemymeleewarrior_IDLE',  // Updated to match uppercase filename
-            maxHealth: config.maxHealth || 100,
+            maxHealth: 3, // Set to match slime's health
             damage: config.damage || 30,
             type: 'ground'
         });
+
+        // Initialize health
+        this.health = 3;
+        this.maxHealth = 3;
 
         // Movement properties
         this.speed = config.speed || 150;
