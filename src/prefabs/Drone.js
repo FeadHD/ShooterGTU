@@ -117,7 +117,10 @@ export class Drone extends Enemy {
     }
 
     update() {
-        if (!this.isAlive || !this.sprite) return;
+        if (!this.sprite || !this.isAlive) return;
+
+        // Update health bar position
+        this.updateHealthBar();
 
         // Update debug visualization
         this.updateDebugPath();
@@ -193,22 +196,59 @@ export class Drone extends Enemy {
 
         // Check if player is in range
         if (distanceToPlayer <= this.laserRange) {
-            if (!this.isLaserCharging) {
-                // Start charging laser
-                this.isLaserCharging = true;
-                this.laserChargeDuration = 0;
-                
-                // Create charging effect (red glow)
-                this.sprite.setTint(0xff0000);
-            } else {
-                // Increment charge duration
-                this.laserChargeDuration += this.scene.game.loop.delta;
+            // Check if there are walls between drone and player
+            const ray = this.scene.raycaster.createRay({
+                origin: {
+                    x: this.sprite.x,
+                    y: this.sprite.y
+                }
+            });
 
-                // Check if laser is fully charged
-                if (this.laserChargeDuration >= this.laserChargeTime) {
-                    this.shootLaser();
-                    this.isLaserCharging = false;
+            // Get all platforms/walls in the scene
+            const platforms = this.scene.platforms ? this.scene.platforms.getChildren() : [];
+            
+            // Check if ray hits any platform before reaching player
+            const hasLineOfSight = !platforms.some(platform => {
+                const bounds = platform.getBounds();
+                return ray.cast({
+                    x: this.scene.player.x,
+                    y: this.scene.player.y,
+                    obstacles: [{
+                        x: bounds.x,
+                        y: bounds.y,
+                        width: bounds.width,
+                        height: bounds.height
+                    }]
+                }).hasHit;
+            });
+
+            if (hasLineOfSight) {
+                if (!this.isLaserCharging) {
+                    // Start charging laser
+                    this.isLaserCharging = true;
                     this.laserChargeDuration = 0;
+                    
+                    // Create charging effect (red glow)
+                    this.sprite.setTint(0xff0000);
+                } else {
+                    // Increment charge duration
+                    this.laserChargeDuration += this.scene.game.loop.delta;
+
+                    // Check if laser is fully charged
+                    if (this.laserChargeDuration >= this.laserChargeTime) {
+                        this.shootLaser();
+                        this.isLaserCharging = false;
+                        this.laserChargeDuration = 0;
+                    }
+                }
+            } else {
+                // Reset laser state if line of sight is blocked
+                this.isLaserCharging = false;
+                this.laserChargeDuration = 0;
+                this.sprite.clearTint();
+                if (this.laserLine) {
+                    this.laserLine.destroy();
+                    this.laserLine = null;
                 }
             }
         } else {
@@ -231,11 +271,43 @@ export class Drone extends Enemy {
             this.laserLine.destroy();
         }
 
+        // Calculate direction to player
+        const angle = Phaser.Math.Angle.Between(
+            this.sprite.x, this.sprite.y,
+            this.scene.player.x, this.scene.player.y
+        );
+
+        // Cast a ray to find the first collision point
+        let endX = this.scene.player.x;
+        let endY = this.scene.player.y;
+        let hitWall = false;
+
+        // Get all platforms/walls
+        const platforms = this.scene.platforms ? this.scene.platforms.getChildren() : [];
+        
+        // Check each platform for intersection
+        platforms.forEach(platform => {
+            const bounds = platform.getBounds();
+            const intersection = this.raycastLine(
+                this.sprite.x, this.sprite.y,
+                endX, endY,
+                bounds.x, bounds.y,
+                bounds.width, bounds.height
+            );
+            
+            if (intersection) {
+                hitWall = true;
+                endX = intersection.x;
+                endY = intersection.y;
+            }
+        });
+
+        // Draw laser line only to the collision point
         this.laserLine = this.scene.add.graphics();
         this.laserLine.lineStyle(2, this.laserColor, 1);
         this.laserLine.beginPath();
         this.laserLine.moveTo(this.sprite.x, this.sprite.y);
-        this.laserLine.lineTo(this.scene.player.x, this.scene.player.y);
+        this.laserLine.lineTo(endX, endY);
         this.laserLine.strokePath();
 
         // Play laser sound if available
@@ -243,8 +315,8 @@ export class Drone extends Enemy {
             this.scene.sound.play('laser');
         }
 
-        // Damage player
-        if (this.scene.player.takeDamage) {
+        // Only damage player if laser reaches them
+        if (!hitWall && this.scene.player.takeDamage) {
             this.scene.player.takeDamage(this.damage);
         }
 
@@ -256,6 +328,53 @@ export class Drone extends Enemy {
             }
             this.sprite.clearTint();
         });
+    }
+
+    raycastLine(x1, y1, x2, y2, rx, ry, rw, rh) {
+        // Check intersection with each edge of the rectangle
+        const edges = [
+            { x1: rx, y1: ry, x2: rx + rw, y2: ry },         // Top
+            { x1: rx + rw, y1: ry, x2: rx + rw, y2: ry + rh }, // Right
+            { x1: rx, y1: ry + rh, x2: rx + rw, y2: ry + rh }, // Bottom
+            { x1: rx, y1: ry, x2: rx, y2: ry + rh }          // Left
+        ];
+
+        let closestIntersection = null;
+        let minDistance = Infinity;
+
+        edges.forEach(edge => {
+            const intersection = this.lineIntersection(
+                x1, y1, x2, y2,
+                edge.x1, edge.y1, edge.x2, edge.y2
+            );
+
+            if (intersection) {
+                const distance = Phaser.Math.Distance.Between(x1, y1, intersection.x, intersection.y);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestIntersection = intersection;
+                }
+            }
+        });
+
+        return closestIntersection;
+    }
+
+    lineIntersection(x1, y1, x2, y2, x3, y3, x4, y4) {
+        const denominator = ((x2 - x1) * (y4 - y3)) - ((y2 - y1) * (x4 - x3));
+        if (denominator === 0) return null;
+
+        const ua = (((x4 - x3) * (y1 - y3)) - ((y4 - y3) * (x1 - x3))) / denominator;
+        const ub = (((x2 - x1) * (y1 - y3)) - ((y2 - y1) * (x1 - x3))) / denominator;
+
+        if (ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1) {
+            return {
+                x: x1 + (ua * (x2 - x1)),
+                y: y1 + (ua * (y2 - y1))
+            };
+        }
+
+        return null;
     }
 
     setPatrolPath(points) {

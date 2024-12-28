@@ -142,7 +142,7 @@ export class PlayerController {
     }
 
     isJumping() {
-        return this.enabled && this.controls.up.isDown;
+        return this.enabled && Phaser.Input.Keyboard.JustDown(this.controls.up);
     }
 
     destroy() {

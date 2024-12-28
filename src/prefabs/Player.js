@@ -6,11 +6,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         super(scene, x, y, 'character_idle');
         
         this.scene = scene;
-        this.jumpsAvailable = 2;
+        this.maxJumps = 2;        // Maximum number of jumps allowed
+        this.jumpsAvailable = this.maxJumps;  // Start with max jumps
         this.isDying = false;
         this.invulnerableUntil = 0;
         this.movementSpeed = 300;
-        this.jumpSpeed = -450;
+        this.jumpSpeed = -450;    // First jump speed
+        this.doubleJumpSpeed = -400;  // Second jump slightly weaker
         this.playerHP = scene.registry.get('playerHP') || 100;
         this.lastDamageTaken = 0; // Track last damage taken
         
@@ -150,6 +152,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     update() {
         if (this.body && !this.isDying) {  
+            // Reset jumps when landing
+            if (this.body.onFloor()) {
+                this.jumpsAvailable = this.maxJumps;
+            }
+
             // Handle horizontal movement
             if (this.controller.isMovingLeft()) {
                 this.setVelocityX(-this.movementSpeed);
@@ -170,16 +177,24 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
                 }
             }
 
-            // Handle jumping
-            if (this.controller.isJumping() && this.jumpsAvailable > 0) {
-                this.setVelocityY(this.jumpSpeed);
-                this.jumpsAvailable--;
+            // Always show jump animation when in the air
+            if (!this.body.onFloor()) {
                 this.play('character_Jump', true);
             }
 
-            // Reset jump ability when landing
-            if (this.body.onFloor()) {
-                this.jumpsAvailable = 2;
+            // Handle jumping
+            if (this.controller.isJumping()) {
+                if (this.body.onFloor() && this.jumpsAvailable === this.maxJumps) {
+                    // First jump
+                    this.setVelocityY(this.jumpSpeed);
+                    this.jumpsAvailable--;
+                    this.play('character_Jump', true);
+                } else if (this.jumpsAvailable > 0) {
+                    // Double jump
+                    this.setVelocityY(this.doubleJumpSpeed);
+                    this.jumpsAvailable--;
+                    this.play('character_Jump', true);
+                }
             }
 
             // Update bullet group

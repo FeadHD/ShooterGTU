@@ -49,10 +49,35 @@ export class GameScene1 extends BaseScene {
                 enabled: false,
                 toggle: () => {
                     this.debugSystem.enabled = !this.debugSystem.enabled;
-                    this.updateDebugVisuals();
                 }
             };
         }
+
+        // Create raycaster for laser collision detection
+        this.raycaster = {
+            createRay: (config) => {
+                return {
+                    cast: (target) => {
+                        const start = config.origin;
+                        const end = { x: target.x, y: target.y };
+                        const obstacles = target.obstacles;
+
+                        // Check if line intersects with any obstacle
+                        for (const obstacle of obstacles) {
+                            if (this.lineIntersectsRect(
+                                start.x, start.y,
+                                end.x, end.y,
+                                obstacle.x, obstacle.y,
+                                obstacle.width, obstacle.height
+                            )) {
+                                return { hasHit: true };
+                            }
+                        }
+                        return { hasHit: false };
+                    }
+                };
+            }
+        };
 
         // Add ESC key for pause menu
         this.pauseKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
@@ -699,5 +724,23 @@ export class GameScene1 extends BaseScene {
         
         // Shuffle the spawn points
         return Phaser.Utils.Array.Shuffle(spawnPoints);
+    }
+
+    lineIntersectsRect(x1, y1, x2, y2, rx, ry, rw, rh) {
+        // Check if line intersects with any of the rectangle's edges
+        return this.lineIntersectsLine(x1, y1, x2, y2, rx, ry, rx + rw, ry) ||          // Top edge
+               this.lineIntersectsLine(x1, y1, x2, y2, rx + rw, ry, rx + rw, ry + rh) || // Right edge
+               this.lineIntersectsLine(x1, y1, x2, y2, rx, ry + rh, rx + rw, ry + rh) || // Bottom edge
+               this.lineIntersectsLine(x1, y1, x2, y2, rx, ry, rx, ry + rh);             // Left edge
+    }
+
+    lineIntersectsLine(x1, y1, x2, y2, x3, y3, x4, y4) {
+        const denominator = ((x2 - x1) * (y4 - y3)) - ((y2 - y1) * (x4 - x3));
+        if (denominator === 0) return false;
+
+        const ua = (((x4 - x3) * (y1 - y3)) - ((y4 - y3) * (x1 - x3))) / denominator;
+        const ub = (((x2 - x1) * (y1 - y3)) - ((y2 - y1) * (x1 - x3))) / denominator;
+
+        return (ua >= 0 && ua <= 1) && (ub >= 0 && ub <= 1);
     }
 }
