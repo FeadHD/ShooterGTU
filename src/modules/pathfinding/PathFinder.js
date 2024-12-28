@@ -1,4 +1,5 @@
-import { PathfindingDebug } from '../debug/PathfindingDebug';
+// Remove PathfindingDebug import since we're not using it
+// import { PathfindingDebug } from '../debug/PathfindingDebug';
 
 class PathNode {
     constructor(x, y, walkable = true) {
