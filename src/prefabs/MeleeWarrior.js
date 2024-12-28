@@ -39,9 +39,9 @@ class MeleeWarrior extends Enemy {
             
             // Position the hitbox with specific offsets:
             // - 32px from the left
-            // - Adjusted for 32px height
+            // - 28px from top (4px higher than before)
             const offsetX = 32;
-            const offsetY = 32; // Position to start at top third of sprite
+            const offsetY = 28; // Moved up by 4px from previous position
             this.sprite.body.setOffset(offsetX, offsetY);
             
             // Add to enemies group if it exists
