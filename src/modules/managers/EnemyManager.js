@@ -22,7 +22,16 @@ export class EnemyManager {
         this.scene.effectsManager.playSound('hit');
         bullet.destroy();
 
-        // Update enemy health
+        // Get enemy instance
+        const enemy = enemyData.instance;
+
+        // If it's a warrior, call takeDamage directly
+        if (enemy && enemySprite.getData('type') === 'warrior') {
+            enemy.takeDamage(1);
+            return;
+        }
+
+        // For other enemies, update health normally
         enemyData.currentHealth--;
         enemyData.instance.currentHealth = enemyData.currentHealth;
         // Also update health for Slime class compatibility

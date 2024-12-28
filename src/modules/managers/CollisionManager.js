@@ -136,6 +136,15 @@ export class CollisionManager {
             bullet.destroy();
             return;
         }
+
+        // Store bullet hit position for warrior defense behavior
+        if (enemySprite.getData('type') === 'warrior') {
+            const warrior = enemySprite.getData('enemy');
+            if (warrior) {
+                warrior.lastBulletHitPos = { x: bullet.x, y: bullet.y };
+            }
+        }
+
         bullet.destroy();
         this.scene.enemyManager.handleBulletHit(bullet, enemySprite);
     }

@@ -3,15 +3,24 @@ import { PlatformPathFinder } from '../modules/pathfinding/PathFinder';
 
 class MeleeWarrior extends Enemy {
     constructor(scene, x, y, config = {}) {
+        const maxHealth = config.maxHealth || 3;
         super(scene, x, y, {
             ...config,
             spriteKey: 'enemymeleewarrior_IDLE',
-            maxHealth: 3,
+            maxHealth: maxHealth,
+            currentHealth: maxHealth,
+            health: maxHealth,
             damage: config.damage || 30,
             type: 'ground'
         });
 
-        // Health is handled by parent Enemy class, no need to set it here
+        // Store health properties locally
+        this.maxHealth = maxHealth;
+        this.currentHealth = maxHealth;
+        this.health = maxHealth;
+
+        // Combat properties
+        this.damage = config.damage || 30;
 
         // Movement properties
         this.speed = config.speed || 150;
@@ -21,6 +30,12 @@ class MeleeWarrior extends Enemy {
         this.lastAttackTime = 0;
         this.isAttacking = false;
         this.direction = 1;
+
+        // Defense properties
+        this.isDefending = false;
+        this.defenseTimer = 0;
+        this.defenseDuration = 3000; // 3 seconds
+        this.lastBulletHitPos = null;
 
         // Auto movement properties
         this.startTime = null;  // Will be set when movement begins
@@ -77,6 +92,12 @@ class MeleeWarrior extends Enemy {
             const offsetY = 28;
             this.sprite.body.setOffset(offsetX, offsetY);
             
+            // Set initial sprite data for debug display
+            this.sprite.setData('health', this.currentHealth);
+            this.sprite.setData('maxHealth', this.maxHealth);
+            this.sprite.setData('type', 'warrior');
+            this.sprite.setData('enemy', this);
+            
             if (this.scene.enemies) {
                 this.scene.enemies.add(this.sprite);
             }
@@ -85,6 +106,13 @@ class MeleeWarrior extends Enemy {
 
     update(time, delta) {
         if (!this.sprite || !this.sprite.active) return;
+
+        // Always update sprite data at the start of update
+        if (this.sprite) {
+            this.sprite.setData('health', this.currentHealth);
+            this.sprite.setData('maxHealth', this.maxHealth);
+            this.sprite.setData('type', 'warrior');
+        }
 
         // Initialize movement if not started
         if (!this.movementStarted) {
@@ -101,6 +129,26 @@ class MeleeWarrior extends Enemy {
             Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, player.x, player.y) : 
             Infinity;
         
+        // If in defense mode, face the last bullet hit position or player if in range
+        if (this.isDefending) {
+            if (distanceToPlayer <= this.attackRange) {
+                // If player is in range while defending, face and attack them
+                this.direction = this.sprite.x < player.x ? 1 : -1;
+                this.sprite.flipX = this.direction < 0;
+                this.attack();
+            } else if (this.lastBulletHitPos) {
+                // Otherwise face the direction of the last bullet hit
+                this.direction = this.sprite.x < this.lastBulletHitPos.x ? 1 : -1;
+                this.sprite.flipX = this.direction < 0;
+            }
+
+            // Check if we should exit defense mode
+            if (this.scene.time.now - this.defenseTimer >= this.defenseDuration) {
+                this.exitDefenseMode();
+            }
+            return; // Don't move while defending unless attacking player
+        }
+
         if (player && distanceToPlayer < this.detectionRange) {
             // Player detected - use pathfinding
             if (currentTime - this.lastPathUpdate > this.pathUpdateCooldown) {
@@ -264,8 +312,6 @@ class MeleeWarrior extends Enemy {
         }
 
         // Update sprite data for debug display
-        this.sprite.setData('health', this.currentHealth);
-        this.sprite.setData('maxHealth', this.maxHealth);
         this.sprite.setData('speed', Math.abs(this.sprite.body.velocity.x));
         this.sprite.setData('state', this.isAttacking ? 'Attack' : 
             (distanceToPlayer < this.detectionRange ? 'Chase' :
@@ -279,6 +325,8 @@ class MeleeWarrior extends Enemy {
                 this.lastAttackTime = currentTime;
             }
         }
+        
+        // Update health data continuously
     }
 
     attack() {
@@ -316,10 +364,21 @@ class MeleeWarrior extends Enemy {
     }
 
     takeDamage(amount) {
-        if (!this.isAlive) return;
+        if (this.isDefending || !this.isAlive) return;
 
-        super.takeDamage(amount);
+        // Update health
+        this.currentHealth = Math.max(0, this.currentHealth - amount);
+        this.health = this.currentHealth; // Keep both in sync
         
+        // Update sprite data immediately
+        if (this.sprite) {
+            this.sprite.setData('health', this.currentHealth);
+            this.sprite.setData('maxHealth', this.maxHealth);
+        }
+
+        // Enter defense mode when hit
+        this.enterDefenseMode();
+
         // Flash red when taking damage
         if (this.sprite) {
             this.scene.tweens.add({
@@ -331,6 +390,28 @@ class MeleeWarrior extends Enemy {
                     this.sprite.setTint(0xffffff);
                 }
             });
+        }
+
+        // Check for death
+        if (this.currentHealth <= 0) {
+            this.die();
+        }
+    }
+
+    enterDefenseMode() {
+        this.isDefending = true;
+        this.defenseTimer = this.scene.time.now;
+        
+        // Play defense animation if available
+        if (this.sprite) {
+            this.sprite.play('enemymeleewarrior-defend', true);
+        }
+    }
+
+    exitDefenseMode() {
+        this.isDefending = false;
+        if (this.sprite) {
+            this.sprite.play('enemymeleewarrior-idle', true);
         }
     }
 
