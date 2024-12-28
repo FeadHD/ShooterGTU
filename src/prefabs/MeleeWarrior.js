@@ -68,94 +68,85 @@ class MeleeWarrior extends Enemy {
         }
     }
 
-    update(time, delta) {
+    update() {
         if (!this.sprite || !this.sprite.active) return;
 
-        // Update debug data
+        // Update sprite data for debug display
         this.sprite.setData('health', this.health);
-        this.sprite.setData('isAttacking', this.isAttacking);
-        this.sprite.setData('direction', this.direction);
-
-        super.update(time, delta);
-
-        if (!this.isAlive || this.isAttacking) return;
+        this.sprite.setData('maxHealth', this.maxHealth);
+        this.sprite.setData('speed', Math.abs(this.sprite.body.velocity.x));
+        this.sprite.setData('state', this.isAttacking ? 'Attack' : (Math.abs(this.sprite.body.velocity.x) > 0 ? 'Run' : 'Idle'));
 
         // Get player reference
         const player = this.scene.player;
-        if (!player) return;
+        if (!player || !player.active) return;
 
         // Calculate distance to player
         const distanceToPlayer = Phaser.Math.Distance.Between(
-            this.sprite.x, this.sprite.y,
-            player.x, player.y
+            this.sprite.x,
+            this.sprite.y,
+            player.x,
+            player.y
         );
 
-        // Update direction based on player position
-        this.direction = player.x > this.sprite.x ? 1 : -1;
-        this.sprite.setFlipX(this.direction === -1);
+        // Check if player is within detection range
+        if (distanceToPlayer <= this.detectionRange) {
+            // Move towards player if not in attack range
+            if (distanceToPlayer > this.attackRange && !this.isAttacking) {
+                // Calculate direction to player
+                const angle = Phaser.Math.Angle.Between(
+                    this.sprite.x,
+                    this.sprite.y,
+                    player.x,
+                    player.y
+                );
 
-        if (distanceToPlayer <= this.attackRange && time > this.lastAttackTime + this.attackCooldown) {
-            // Attack if in range and cooldown is over
-            this.attack(player);
-        } else if (distanceToPlayer <= this.detectionRange) {
-            // Move towards player if within detection range
-            const angle = Phaser.Math.Angle.Between(
-                this.sprite.x, this.sprite.y,
-                player.x, player.y
-            );
-            
-            const velocityX = Math.cos(angle) * this.speed;
-            const velocityY = Math.sin(angle) * this.speed;
-            
-            this.sprite.setVelocity(velocityX, velocityY);
-            
-            // Try to play walk animation
-            try {
-                if (this.sprite.anims && (!this.sprite.anims.isPlaying || this.sprite.anims.currentAnim.key !== 'enemymeleewarrior-walk')) {
-                    const walkAnim = this.scene.anims.get('enemymeleewarrior-walk');
-                    if (walkAnim) {
-                        this.sprite.play('enemymeleewarrior-walk');
-                    }
+                // Set velocity based on angle
+                this.sprite.setVelocityX(Math.cos(angle) * this.speed);
+                
+                // Update sprite direction
+                this.direction = this.sprite.x < player.x ? 1 : -1;
+                this.sprite.setFlipX(this.direction === -1);
+
+                // Play run animation
+                if (!this.sprite.anims.isPlaying || this.sprite.anims.currentAnim.key !== 'enemymeleewarrior-run') {
+                    this.sprite.play('enemymeleewarrior-run');
                 }
-            } catch (error) {
-                console.warn('Error playing walk animation:', error);
+            } else {
+                // Stop moving when in attack range or attacking
+                this.sprite.setVelocityX(0);
+
+                // Attack if cooldown is over and not already attacking
+                const currentTime = this.scene.time.now;
+                if (!this.isAttacking && currentTime - this.lastAttackTime >= this.attackCooldown) {
+                    this.attack();
+                    this.lastAttackTime = currentTime;
+                }
             }
         } else {
-            // Stop and try to play idle animation
-            this.sprite.setVelocity(0, 0);
-            try {
-                if (this.sprite.anims && (!this.sprite.anims.isPlaying || this.sprite.anims.currentAnim.key !== 'enemymeleewarrior-idle')) {
-                    const idleAnim = this.scene.anims.get('enemymeleewarrior-idle');
-                    if (idleAnim) {
-                        this.sprite.play('enemymeleewarrior-idle');
-                    }
-                }
-            } catch (error) {
-                console.warn('Error playing idle animation:', error);
+            // Return to idle state when player is out of range
+            this.sprite.setVelocityX(0);
+            if (!this.isAttacking && (!this.sprite.anims.isPlaying || this.sprite.anims.currentAnim.key !== 'enemymeleewarrior-idle')) {
+                this.sprite.play('enemymeleewarrior-idle');
             }
         }
     }
 
-    attack(target) {
-        if (!this.isAlive || this.isAttacking) return;
+    attack() {
+        if (!this.sprite || this.isAttacking) return;
 
         this.isAttacking = true;
-        this.lastAttackTime = this.scene.time.now;
-        
-        // Stop movement during attack
-        this.sprite.setVelocity(0, 0);
         
         // Play attack animation
         this.sprite.play('enemymeleewarrior-attack');
         
-        // Deal damage halfway through the animation
-        this.scene.time.delayedCall(500, () => {
-            if (this.isAlive && target.takeDamage) {
-                target.takeDamage(this.damage);
-            }
-        });
-        
-        // Reset attacking state when animation completes
+        // Deal damage to player if in range
+        const player = this.scene.player;
+        if (player && Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, player.x, player.y) <= this.attackRange) {
+            player.takeDamage(this.damage);
+        }
+
+        // Reset attack state after animation
         this.sprite.once('animationcomplete', () => {
             this.isAttacking = false;
             this.sprite.play('enemymeleewarrior-idle');
