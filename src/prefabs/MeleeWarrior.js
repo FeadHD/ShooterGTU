@@ -62,80 +62,9 @@ class MeleeWarrior extends Enemy {
             this.sprite.setData('attackRange', this.attackRange);
             this.sprite.setData('isAttacking', this.isAttacking);
             this.sprite.setData('warrior', this);  // Store reference to this warrior
-        }
 
-        // Create animations once scene is ready
-        if (this.scene.events) {
-            this.scene.events.once('create', () => {
-                this.createAnimations();
-            });
-        }
-    }
-
-    createAnimations() {
-        console.log('Creating melee warrior animations...');
-        
-        try {
-            // Animation configurations with correct frame counts
-            const animConfigs = {
-                'IDLE': { endFrame: 5, repeat: -1, frameRate: 8 },
-                'WALK': { endFrame: 7, repeat: -1, frameRate: 8 },
-                'ATTACK': { endFrame: 6, repeat: 0, frameRate: 12, spriteKey: 'enemymeleewarrior_ATTACK 1' },
-                'DEATH': { endFrame: 8, repeat: 0, frameRate: 8 },
-                'HURT': { endFrame: 3, repeat: 0, frameRate: 10 },
-                'DEFEND': { endFrame: 3, repeat: 0, frameRate: 8 },
-                'RUN': { endFrame: 7, repeat: -1, frameRate: 12 },
-                'JUMP': { endFrame: 3, repeat: 0, frameRate: 8 }
-            };
-            
-            // Log available textures
-            console.log('Available textures:', this.scene.textures.list);
-            
-            // Create animations based on configs
-            Object.entries(animConfigs).forEach(([key, config]) => {
-                const spriteKey = config.spriteKey || `enemymeleewarrior_${key}`;
-                const animKey = `enemymeleewarrior-${key.toLowerCase()}`;
-                const texture = this.scene.textures.get(spriteKey);
-                
-                if (texture) {
-                    console.log(`${spriteKey} texture:`, {
-                        frameTotal: texture.frameTotal,
-                        width: texture.source[0].width,
-                        height: texture.source[0].height
-                    });
-                    
-                    if (!this.scene.anims.exists(animKey)) {
-                        console.log(`Creating animation: ${animKey} with ${config.endFrame + 1} frames`);
-                        this.scene.anims.create({
-                            key: animKey,
-                            frames: this.scene.anims.generateFrameNumbers(spriteKey, { 
-                                start: 0, 
-                                end: config.endFrame
-                            }),
-                            frameRate: config.frameRate,
-                            repeat: config.repeat
-                        });
-                    }
-                } else {
-                    console.error(`${spriteKey} texture not found!`);
-                }
-            });
-
-            // Start idle animation if sprite exists
-            if (this.sprite && this.sprite.active) {
-                console.log('Starting idle animation');
-                const idleAnim = this.scene.anims.get('enemymeleewarrior-idle');
-                if (idleAnim) {
-                    this.sprite.play('enemymeleewarrior-idle');
-                } else {
-                    console.error('Idle animation not found');
-                }
-            } else {
-                console.warn('Sprite not ready for animation');
-            }
-        } catch (error) {
-            console.error('Error creating animations:', error);
-            console.error('Error stack:', error.stack);
+            // Start playing idle animation
+            this.sprite.play('enemymeleewarrior-idle');
         }
     }
 

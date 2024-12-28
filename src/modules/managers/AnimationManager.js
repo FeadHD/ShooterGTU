@@ -99,10 +99,42 @@ export class AnimationManager {
         }
     }
 
+    createWarriorAnimations() {
+        const animConfigs = {
+            'IDLE': { endFrame: 5, repeat: -1, frameRate: 8 },
+            'WALK': { endFrame: 7, repeat: -1, frameRate: 8 },
+            'ATTACK': { endFrame: 6, repeat: 0, frameRate: 12, spriteKey: 'enemymeleewarrior_ATTACK 1' },
+            'DEATH': { endFrame: 8, repeat: 0, frameRate: 8 },
+            'HURT': { endFrame: 3, repeat: 0, frameRate: 10 },
+            'DEFEND': { endFrame: 3, repeat: 0, frameRate: 8 },
+            'RUN': { endFrame: 7, repeat: -1, frameRate: 12 },
+            'JUMP': { endFrame: 3, repeat: 0, frameRate: 8 }
+        };
+
+        Object.entries(animConfigs).forEach(([key, config]) => {
+            const spriteKey = config.spriteKey || `enemymeleewarrior_${key}`;
+            const animKey = `enemymeleewarrior-${key.toLowerCase()}`;
+
+            if (!this.scene.anims.exists(animKey)) {
+                this.scene.anims.create({
+                    key: animKey,
+                    frames: this.scene.anims.generateFrameNumbers(spriteKey, {
+                        start: 0,
+                        end: config.endFrame
+                    }),
+                    frameRate: config.frameRate,
+                    repeat: config.repeat
+                });
+                console.log(`Created warrior animation: ${animKey}`);
+            }
+        });
+    }
+
     createAllAnimations() {
         this.createBulletAnimation();
         this.createHitEffectAnimation();
         this.createCharacterAnimations();
         this.createEnemyAnimations();
+        this.createWarriorAnimations();
     }
 }
