@@ -11,9 +11,7 @@ class MeleeWarrior extends Enemy {
             type: 'ground'
         });
 
-        // Initialize health
-        this.health = 3;
-        this.maxHealth = 3;
+        // Health is handled by parent Enemy class, no need to set it here
 
         // Movement properties
         this.speed = config.speed || 150;
@@ -51,6 +49,18 @@ class MeleeWarrior extends Enemy {
             }
         });
 
+        // Set up sprite data
+        if (this.sprite) {
+            this.sprite.setData('type', 'warrior');
+            this.sprite.setData('health', this.currentHealth);
+            this.sprite.setData('maxHealth', this.maxHealth);
+            this.sprite.setData('speed', this.speed);
+            this.sprite.setData('detectionRange', this.detectionRange);
+            this.sprite.setData('attackRange', this.attackRange);
+            this.sprite.setData('isAttacking', this.isAttacking);
+            this.sprite.setData('warrior', this);
+        }
+
         // Adjust sprite size and physics body
         if (this.sprite) {
             const targetHeight = 128;
@@ -70,15 +80,6 @@ class MeleeWarrior extends Enemy {
             if (this.scene.enemies) {
                 this.scene.enemies.add(this.sprite);
             }
-            
-            this.sprite.setData('type', 'warrior');
-            this.sprite.setData('health', this.health);
-            this.sprite.setData('maxHealth', this.maxHealth);
-            this.sprite.setData('speed', this.speed);
-            this.sprite.setData('detectionRange', this.detectionRange);
-            this.sprite.setData('attackRange', this.attackRange);
-            this.sprite.setData('isAttacking', this.isAttacking);
-            this.sprite.setData('warrior', this);
         }
     }
 
@@ -263,7 +264,7 @@ class MeleeWarrior extends Enemy {
         }
 
         // Update sprite data for debug display
-        this.sprite.setData('health', this.health);
+        this.sprite.setData('health', this.currentHealth);
         this.sprite.setData('maxHealth', this.maxHealth);
         this.sprite.setData('speed', Math.abs(this.sprite.body.velocity.x));
         this.sprite.setData('state', this.isAttacking ? 'Attack' : 

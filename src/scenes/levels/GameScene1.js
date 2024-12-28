@@ -356,6 +356,9 @@ export class GameScene1 extends BaseScene {
                     warrior.sprite.setData('detectionRange', warrior.detectionRange);
                     warrior.sprite.setData('attackRange', warrior.attackRange);
                     
+                    // Add warrior to enemy manager
+                    this.enemyManager.addEnemy(warrior, warrior.sprite, warrior.maxHealth);
+                    
                     return warrior;
                 }
                 return null;

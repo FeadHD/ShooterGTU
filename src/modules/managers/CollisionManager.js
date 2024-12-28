@@ -72,6 +72,17 @@ export class CollisionManager {
                     this
                 );
             }
+
+            // Melee Warriors
+            if (this.scene.enemies) {
+                this.scene.physics.add.overlap(
+                    this.scene.bullets,
+                    this.scene.enemies,
+                    this.handleBulletHit,
+                    this.canHitEnemy,
+                    this
+                );
+            }
         }
     }
 
