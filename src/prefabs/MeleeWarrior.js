@@ -229,8 +229,12 @@ class MeleeWarrior extends Enemy {
 
                 // Handle movement and jumping
                 if (currentTime - this.lastJumpTime > this.jumpCooldown) {
-                    if (hitObstacle) {
-                        // Jump over obstacle
+                    // Check for tall walls first
+                    if (this.checkForTallWall()) {
+                        // If there's a tall wall, reverse direction
+                        this.reverseDirection();
+                    } else if (hitObstacle) {
+                        // Jump over obstacle only if it's not a tall wall
                         this.sprite.setVelocityY(this.jumpForce);
                         this.lastJumpTime = currentTime;
                     } else if (!hasGround) {
@@ -242,7 +246,7 @@ class MeleeWarrior extends Enemy {
                             this.lastJumpTime = currentTime;
                         } else {
                             // If no platform found, reverse direction
-                            this.direction *= -1;
+                            this.reverseDirection();
                         }
                     }
                 }
@@ -375,6 +379,31 @@ class MeleeWarrior extends Enemy {
         const ub = (((x2 - x1) * (y1 - y3)) - ((y2 - y1) * (x1 - x3))) / denominator;
         
         return (ua >= 0 && ua <= 1) && (ub >= 0 && ub <= 1);
+    }
+
+    // Helper method to check for tall walls
+    checkForTallWall() {
+        const rayStartX = this.sprite.x + (this.direction * 32);
+        const rayStartY = this.sprite.y - 32; // Start from character's head level
+        
+        // Cast multiple rays vertically to check wall height
+        for (let i = 0; i < 2; i++) { // Check 2 blocks high
+            const rayEndX = rayStartX;
+            const rayEndY = rayStartY - (i * 32); // Check each block level
+            
+            const obstacles = this.scene.platforms.getChildren();
+            for (const obstacle of obstacles) {
+                if (this.lineIntersectsRect(
+                    rayStartX, rayEndY,
+                    rayEndX, rayEndY + 32,
+                    obstacle.x, obstacle.y,
+                    obstacle.width, obstacle.height
+                )) {
+                    return true; // Found a wall at this height
+                }
+            }
+        }
+        return false;
     }
 
     reverseDirection() {
