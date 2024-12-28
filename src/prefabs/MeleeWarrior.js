@@ -21,12 +21,30 @@ class MeleeWarrior extends Enemy {
 
         // Adjust sprite size and physics body
         if (this.sprite) {
-            // Set display size to match other entities
-            this.sprite.setDisplaySize(64, 64);
+            // Calculate scale to make height 64px
+            const targetHeight = 64;
+            const scale = targetHeight / this.sprite.height;
+            const scaledWidth = this.sprite.width * scale;
             
-            // Adjust physics body size and offset
-            this.sprite.body.setSize(48, 64);  // Smaller hitbox width for better collisions
-            this.sprite.body.setOffset(24, 10); // Center the hitbox and raise it a bit
+            // Set display size maintaining aspect ratio
+            this.sprite.setDisplaySize(scaledWidth, targetHeight);
+            
+            // Enable physics and set up collision body
+            this.sprite.body.setCollideWorldBounds(true);
+            this.sprite.body.setBounce(0.2);
+            this.sprite.body.setDrag(200);
+            
+            // Set collision box to be 32x64
+            this.sprite.body.setSize(32, 64);
+            
+            // Center the hitbox horizontally
+            const offsetX = (scaledWidth - 32) / 2;
+            this.sprite.body.setOffset(offsetX, 0);
+            
+            // Add to enemies group if it exists
+            if (this.scene.enemies) {
+                this.scene.enemies.add(this.sprite);
+            }
             
             // Set data for debug display
             this.sprite.setData('type', 'warrior');
@@ -55,8 +73,12 @@ class MeleeWarrior extends Enemy {
             const animConfigs = {
                 'IDLE': { endFrame: 5, repeat: -1, frameRate: 8 },
                 'WALK': { endFrame: 7, repeat: -1, frameRate: 8 },
-                'ATTACK': { endFrame: 6, repeat: 0, frameRate: 12 },
-                'DEATH': { endFrame: 8, repeat: 0, frameRate: 8 }
+                'ATTACK': { endFrame: 6, repeat: 0, frameRate: 12, spriteKey: 'enemymeleewarrior_ATTACK 1' },
+                'DEATH': { endFrame: 8, repeat: 0, frameRate: 8 },
+                'HURT': { endFrame: 3, repeat: 0, frameRate: 10 },
+                'DEFEND': { endFrame: 3, repeat: 0, frameRate: 8 },
+                'RUN': { endFrame: 7, repeat: -1, frameRate: 12 },
+                'JUMP': { endFrame: 3, repeat: 0, frameRate: 8 }
             };
             
             // Log available textures
@@ -64,7 +86,7 @@ class MeleeWarrior extends Enemy {
             
             // Create animations based on configs
             Object.entries(animConfigs).forEach(([key, config]) => {
-                const spriteKey = `enemymeleewarrior_${key}`;
+                const spriteKey = config.spriteKey || `enemymeleewarrior_${key}`;
                 const animKey = `enemymeleewarrior-${key.toLowerCase()}`;
                 const texture = this.scene.textures.get(spriteKey);
                 
@@ -111,15 +133,16 @@ class MeleeWarrior extends Enemy {
     }
 
     update(time, delta) {
-        super.update(time, delta);
-
-        if (!this.isAlive || !this.sprite || this.isAttacking) return;
+        if (!this.sprite || !this.sprite.active) return;
 
         // Update debug data
-        if (this.sprite) {
-            this.sprite.setData('health', this.health);
-            this.sprite.setData('isAttacking', this.isAttacking);
-        }
+        this.sprite.setData('health', this.health);
+        this.sprite.setData('isAttacking', this.isAttacking);
+        this.sprite.setData('direction', this.direction);
+
+        super.update(time, delta);
+
+        if (!this.isAlive || this.isAttacking) return;
 
         // Get player reference
         const player = this.scene.player;

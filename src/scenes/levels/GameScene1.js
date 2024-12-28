@@ -151,6 +151,19 @@ export class GameScene1 extends BaseScene {
             dragX: 200
         });
 
+        // Set up collisions between enemies and platforms
+        this.physics.add.collider(this.enemies, this.platforms);
+        
+        // Set up collisions between enemies and each other
+        this.physics.add.collider(this.enemies, this.enemies, this.handleEnemyCollision, null, this);
+        
+        // Set up collisions between enemies and player
+        this.physics.add.overlap(this.enemies, this.player, (enemySprite, player) => {
+            if (enemySprite.enemy && !this.isDying) {
+                this.hitEnemy(player, enemySprite);
+            }
+        }, null, this);
+
         // Create bitcoin group
         this.bitcoins = this.add.group();
 
@@ -322,6 +335,46 @@ export class GameScene1 extends BaseScene {
             this.startGame();
         });
 
+        // Calculate proper spawn height
+        const spawnHeight = this.getSpawnHeight();
+
+        // Create and initialize warriors at proper height
+        const createAndInitWarrior = (x) => {
+            const warrior = new MeleeWarrior(this, x, spawnHeight);
+            if (warrior && warrior.sprite) {
+                this.enemies.add(warrior.sprite);
+                warrior.sprite.setData('type', 'warrior');
+                warrior.sprite.setData('enemy', warrior);
+                
+                // Add warrior-specific debug data
+                warrior.sprite.setData('health', warrior.maxHealth);
+                warrior.sprite.setData('maxHealth', warrior.maxHealth);
+                warrior.sprite.setData('isAttacking', false);
+                warrior.sprite.setData('direction', warrior.direction);
+                warrior.sprite.setData('detectionRange', warrior.detectionRange);
+                warrior.sprite.setData('attackRange', warrior.attackRange);
+                
+                return warrior;
+            }
+            return null;
+        };
+
+        // Spawn warriors at different x positions
+        const warrior1 = createAndInitWarrior(this.scale.width * 0.4);
+        const warrior2 = createAndInitWarrior(this.scale.width * 0.6);
+
+        // Create random position warriors
+        const numRandomWarriors = 1;
+        for (let i = 0; i < numRandomWarriors; i++) {
+            const spawnPointsForWarriors = this.findSpawnPointsForSlimes(); // Reuse slime spawn point logic
+            if (spawnPointsForWarriors.length > 0) {
+                const spawnIndex = Math.floor(Math.random() * spawnPointsForWarriors.length);
+                const spawnPoint = spawnPointsForWarriors[spawnIndex];
+                createAndInitWarrior(spawnPoint.x);
+                spawnPointsForWarriors.splice(spawnIndex, 1);
+            }
+        }
+
         // Spawn bitcoins after map is loaded
         const bitcoinSpawnPoints = this.findSpawnPointsForBitcoins();
         const numBitcoins = Math.min(10, bitcoinSpawnPoints.length);
@@ -378,40 +431,6 @@ export class GameScene1 extends BaseScene {
 
         // Create fixed position slimes
         const enemyY = this.scale.height * 0.7;
-
-        // Add three melee warriors at different positions
-        const warriorPositions = [
-            { x: 800, y: enemyY },   // First warrior near the start
-            { x: 1600, y: enemyY },  // Second warrior in the middle
-            { x: 2400, y: enemyY }   // Third warrior near the end
-        ];
-
-        warriorPositions.forEach((pos, index) => {
-            const warrior = new MeleeWarrior(this, pos.x, pos.y, {
-                maxHealth: 100 + (index * 20),  // Each warrior gets progressively tougher
-                damage: 30 + (index * 5),       // And deals more damage
-                speed: 150,
-                detectionRange: 300,
-                attackRange: 50,
-                attackCooldown: 1000
-            });
-
-            // Add warrior sprite to enemies group
-            this.enemies.add(warrior.sprite);
-            warrior.sprite.setData('type', 'ground');  // Set type for debug system
-            warrior.sprite.setData('enemy', warrior);  // Store reference to warrior
-
-            // Add to enemy manager
-            this.enemyManager.addEnemy(warrior, warrior.sprite, warrior.maxHealth);
-            
-            // Add collision with platforms
-            this.physics.add.collider(warrior.sprite, this.platforms);
-            
-            // Add collision with other enemies
-            this.physics.add.collider(warrior.sprite, this.enemies, this.handleEnemyCollision, null, this);
-
-            console.log(`Melee Warrior ${index + 1} created at:`, pos);
-        });
 
         const createAndInitSlime = (x, y) => {
             const slime = new Slime(this, x, y);

@@ -181,30 +181,45 @@ export class Preloader extends Scene {
             frameHeight: 84,
             spacing: 0,
             margin: 0,
-            startFrame: 0,
-            endFrame: 5  // We'll adjust this for each animation
+            startFrame: 0
         };
 
         // Load all sprite sheets with the same config
         this.load.spritesheet('enemymeleewarrior_IDLE', '/assets/enemys/warrior/IDLE.png', {
             ...meleeWarriorConfig,
-            endFrame: 5  // Adjust based on actual frames in IDLE animation
+            endFrame: 5
         });
         this.load.spritesheet('enemymeleewarrior_WALK', '/assets/enemys/warrior/WALK.png', {
             ...meleeWarriorConfig,
-            endFrame: 7  // Adjust based on actual frames in WALK animation
+            endFrame: 7
         });
-        this.load.spritesheet('enemymeleewarrior_ATTACK', '/assets/enemys/warrior/ATTACK 1.png', {
+        this.load.spritesheet('enemymeleewarrior_ATTACK 1', '/assets/enemys/warrior/ATTACK 1.png', {
             ...meleeWarriorConfig,
-            endFrame: 6  // Adjust based on actual frames in ATTACK animation
+            endFrame: 6
         });
         this.load.spritesheet('enemymeleewarrior_DEATH', '/assets/enemys/warrior/DEATH.png', {
             ...meleeWarriorConfig,
-            endFrame: 8  // Adjust based on actual frames in DEATH animation
+            endFrame: 8
+        });
+        this.load.spritesheet('enemymeleewarrior_HURT', '/assets/enemys/warrior/HURT.png', {
+            ...meleeWarriorConfig,
+            endFrame: 3
+        });
+        this.load.spritesheet('enemymeleewarrior_DEFEND', '/assets/enemys/warrior/DEFEND.png', {
+            ...meleeWarriorConfig,
+            endFrame: 3
+        });
+        this.load.spritesheet('enemymeleewarrior_RUN', '/assets/enemys/warrior/RUN.png', {
+            ...meleeWarriorConfig,
+            endFrame: 7
+        });
+        this.load.spritesheet('enemymeleewarrior_JUMP', '/assets/enemys/warrior/JUMP.png', {
+            ...meleeWarriorConfig,
+            endFrame: 3
         });
 
         // Debug log when warrior sprite sheets are loaded
-        ['IDLE', 'WALK', 'ATTACK', 'DEATH'].forEach(animation => {
+        ['IDLE', 'WALK', 'ATTACK 1', 'DEATH', 'HURT', 'DEFEND', 'RUN', 'JUMP'].forEach(animation => {
             this.load.on(`filecomplete-spritesheet-enemymeleewarrior_${animation}`, (key) => {
                 const texture = this.textures.get(key);
                 console.log(`Enemy melee warrior ${animation} sprite sheet loaded:`, {

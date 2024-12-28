@@ -456,7 +456,7 @@ export class DebugSystem {
         // Draw warrior debug info
         if (this.scene.enemies) {
             this.scene.enemies.getChildren().forEach(enemySprite => {
-                if (enemySprite && enemySprite.active && enemySprite.getData('type') === 'ground') {
+                if (enemySprite && enemySprite.active && enemySprite.getData('type') === 'warrior') {
                     this.drawWarriorDebug(enemySprite);
                 }
             });
