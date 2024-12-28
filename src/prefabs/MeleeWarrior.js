@@ -1,5 +1,5 @@
 import Enemy from './Enemy';
-import { PathFinder } from '../modules/pathfinding/PathFinder';
+import { PlatformPathFinder } from '../modules/pathfinding/PathFinder';
 
 class MeleeWarrior extends Enemy {
     constructor(scene, x, y, config = {}) {
@@ -35,7 +35,7 @@ class MeleeWarrior extends Enemy {
         this.movementStarted = false;  // New flag to track if movement has started
 
         // Pathfinding properties
-        this.pathFinder = new PathFinder(scene);
+        this.pathFinder = new PlatformPathFinder(scene);
         this.currentPath = null;
         this.pathUpdateCooldown = 5000; // Increased to 5 seconds
         this.lastPathUpdate = 0;

@@ -1,19 +1,20 @@
-// Remove PathfindingDebug import since we're not using it
-// import { PathfindingDebug } from '../debug/PathfindingDebug';
-
 class PathNode {
     constructor(x, y, walkable = true) {
         this.x = x;
         this.y = y;
         this.walkable = walkable;
-        this.g = 0; // Cost from start to this node
-        this.h = 0; // Estimated cost from this node to end
-        this.f = 0; // Total cost (g + h)
+        this.g = 0;
+        this.h = 0;
+        this.f = 0;
         this.parent = null;
+        this.jumpNode = false;  // Indicates if this node requires jumping to reach
+        this.fallNode = false;  // Indicates if this node requires falling to reach
+        this.jumpHeight = 4;    // Maximum jump height in grid cells
+        this.maxFallHeight = 8; // Maximum safe fall height in grid cells
     }
 }
 
-export class PathFinder {
+export class PlatformPathFinder {
     constructor(scene, gridSize = 32) {
         this.scene = scene;
         this.gridSize = gridSize;
@@ -21,6 +22,7 @@ export class PathFinder {
         this.openList = [];
         this.closedList = [];
         this.debugGraphics = this.scene.debugSystem ? this.scene.debugSystem.debugGraphics : null;
+        this.gravity = true;    // Enable gravity-based movement constraints
     }
 
     initializeGrid() {
@@ -46,185 +48,303 @@ export class PathFinder {
                 }
             });
         }
+
+        // Mark platforms and identify jump/fall points
+        this.analyzePlatforms();
     }
 
-    debugDrawGrid() {
-        if (!this.debugGraphics || !this.scene.debugSystem?.showDebug) return;
-
-        // Draw grid cells
+    analyzePlatforms() {
         for (let y = 0; y < this.grid.length; y++) {
             for (let x = 0; x < this.grid[y].length; x++) {
                 const node = this.grid[y][x];
-                const cellX = x * this.gridSize;
-                const cellY = y * this.gridSize;
+                if (!node.walkable) continue;
 
-                // Draw cell outline
-                this.debugGraphics.lineStyle(1, 0x00ff00, 0.3);
-                this.debugGraphics.strokeRect(cellX, cellY, this.gridSize, this.gridSize);
-
-                // Fill unwalkable cells
-                if (!node.walkable) {
-                    this.debugGraphics.fillStyle(0xff0000, 0.3);
-                    this.debugGraphics.fillRect(cellX, cellY, this.gridSize, this.gridSize);
-                }
-
-                // Highlight open and closed list cells
-                if (this.openList.includes(node)) {
-                    this.debugGraphics.fillStyle(0x00ff00, 0.3);
-                    this.debugGraphics.fillRect(cellX, cellY, this.gridSize, this.gridSize);
-                    
-                    // Draw f-score
-                    const text = this.scene.add.text(
-                        cellX + this.gridSize/2, 
-                        cellY + this.gridSize/2, 
-                        Math.floor(node.f).toString(),
-                        { fontSize: '12px', color: '#ffffff' }
-                    ).setOrigin(0.5);
-                    this.scene.debugSystem.debugTexts.push(text);
-                } else if (this.closedList.includes(node)) {
-                    this.debugGraphics.fillStyle(0x0000ff, 0.3);
-                    this.debugGraphics.fillRect(cellX, cellY, this.gridSize, this.gridSize);
+                // Check if node is a platform (walkable with solid ground below)
+                const isOnPlatform = this.isGrounded(x, y);
+                
+                // Identify potential jump points
+                if (isOnPlatform) {
+                    this.markJumpNodes(x, y);
+                    this.markFallNodes(x, y);
                 }
             }
         }
     }
 
-    debugDrawPath(path) {
-        if (!this.debugGraphics || !this.scene.debugSystem?.showDebug || !path) return;
+    isGrounded(x, y) {
+        return y + 1 < this.grid.length && !this.grid[y + 1][x].walkable;
+    }
 
-        // Draw path line
-        this.debugGraphics.lineStyle(3, 0xffff00, 1);
-        this.debugGraphics.beginPath();
-        this.debugGraphics.moveTo(path[0].x, path[0].y);
-        
-        for (let i = 1; i < path.length; i++) {
-            this.debugGraphics.lineTo(path[i].x, path[i].y);
+    markJumpNodes(x, y) {
+        // Check for reachable platforms within jump height
+        for (let jumpY = y - 1; jumpY >= Math.max(0, y - this.grid[y][x].jumpHeight); jumpY--) {
+            for (let jumpX = x - 2; jumpX <= x + 2; jumpX++) {
+                if (jumpX < 0 || jumpX >= this.grid[0].length) continue;
+                if (this.grid[jumpY][jumpX].walkable && this.isGrounded(jumpX, jumpY)) {
+                    this.grid[jumpY][jumpX].jumpNode = true;
+                }
+            }
         }
-        
-        this.debugGraphics.strokePath();
+    }
 
-        // Draw points
-        this.debugGraphics.fillStyle(0xff0000, 1);
-        path.forEach(point => {
-            this.debugGraphics.fillCircle(point.x, point.y, 4);
-        });
+    markFallNodes(x, y) {
+        // Check for safe landing spots within fall height
+        for (let fallY = y + 1; fallY <= Math.min(this.grid.length - 1, y + this.grid[y][x].maxFallHeight); fallY++) {
+            for (let fallX = x - 2; fallX <= x + 2; fallX++) {
+                if (fallX < 0 || fallX >= this.grid[0].length) continue;
+                if (this.grid[fallY][fallX].walkable && this.isGrounded(fallX, fallY)) {
+                    this.grid[fallY][fallX].fallNode = true;
+                }
+            }
+        }
     }
 
     getNeighbors(node) {
         const neighbors = [];
-        const directions = [
-            { x: 0, y: -1 }, // Up
-            { x: 1, y: 0 },  // Right
-            { x: 0, y: 1 },  // Down
+        
+        // Standard horizontal movement
+        const horizontalDirs = [
             { x: -1, y: 0 }, // Left
+            { x: 1, y: 0 }   // Right
         ];
 
-        for (const dir of directions) {
+        for (const dir of horizontalDirs) {
             const newX = node.x + dir.x;
-            const newY = node.y + dir.y;
+            const newY = node.y;
 
-            // Check bounds
-            if (newY >= 0 && newY < this.grid.length && 
-                newX >= 0 && newX < this.grid[0].length) {
+            if (this.isValidPosition(newX, newY)) {
                 const neighbor = this.grid[newY][newX];
-                if (neighbor.walkable) {
+                if (neighbor.walkable && this.isGrounded(newX, newY)) {
                     neighbors.push(neighbor);
                 }
             }
         }
 
+        // Jump movements
+        if (this.isGrounded(node.x, node.y)) {
+            this.addJumpNeighbors(node, neighbors);
+        }
+
+        // Fall movements
+        this.addFallNeighbors(node, neighbors);
+
         return neighbors;
     }
 
+    addJumpNeighbors(node, neighbors) {
+        const jumpHeight = node.jumpHeight;
+        
+        // Check potential jump destinations
+        for (let y = 1; y <= jumpHeight; y++) {
+            const jumpY = node.y - y;
+            if (jumpY < 0) break;
+
+            // Check jump arcs (wider at apex)
+            const horizontalRange = Math.min(2, Math.ceil(y / 2));
+            for (let x = -horizontalRange; x <= horizontalRange; x++) {
+                const jumpX = node.x + x;
+                if (!this.isValidPosition(jumpX, jumpY)) continue;
+
+                const jumpNode = this.grid[jumpY][jumpX];
+                if (jumpNode.walkable && jumpNode.jumpNode && 
+                    this.hasValidJumpPath(node, jumpNode)) {
+                    neighbors.push(jumpNode);
+                }
+            }
+        }
+    }
+
+    addFallNeighbors(node, neighbors) {
+        const maxFallHeight = node.maxFallHeight;
+        
+        // Check potential fall destinations
+        for (let y = 1; y <= maxFallHeight; y++) {
+            const fallY = node.y + y;
+            if (fallY >= this.grid.length) break;
+
+            // Check fall trajectories (wider as falling)
+            const horizontalRange = Math.min(2, Math.ceil(y / 2));
+            for (let x = -horizontalRange; x <= horizontalRange; x++) {
+                const fallX = node.x + x;
+                if (!this.isValidPosition(fallX, fallY)) continue;
+
+                const fallNode = this.grid[fallY][fallX];
+                if (fallNode.walkable && fallNode.fallNode && 
+                    this.hasValidFallPath(node, fallNode)) {
+                    neighbors.push(fallNode);
+                }
+            }
+        }
+    }
+
+    hasValidJumpPath(startNode, endNode) {
+        // Simple line of sight check for jump path
+        const dx = endNode.x - startNode.x;
+        const dy = endNode.y - startNode.y;
+        const steps = Math.max(Math.abs(dx), Math.abs(dy));
+        
+        for (let i = 1; i < steps; i++) {
+            const x = Math.floor(startNode.x + (dx * i) / steps);
+            const y = Math.floor(startNode.y + (dy * i) / steps);
+            
+            if (!this.isValidPosition(x, y) || !this.grid[y][x].walkable) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+
+    hasValidFallPath(startNode, endNode) {
+        // Similar to jump path check but for falling
+        return this.hasValidJumpPath(startNode, endNode);
+    }
+
+    isValidPosition(x, y) {
+        return y >= 0 && y < this.grid.length && x >= 0 && x < this.grid[0].length;
+    }
+
+    // Override the heuristic to account for vertical movement
     heuristic(nodeA, nodeB) {
-        // Manhattan distance
-        return Math.abs(nodeA.x - nodeB.x) + Math.abs(nodeA.y - nodeB.y);
+        const dx = Math.abs(nodeA.x - nodeB.x);
+        const dy = Math.abs(nodeA.y - nodeB.y);
+        
+        // Penalize vertical movement slightly to prefer horizontal paths when possible
+        return dx + (dy * 1.5);
     }
 
     findPath(startX, startY, endX, endY) {
-        if (this.debugGraphics && this.scene.debugSystem?.showDebug) {
-            this.debugGraphics.clear();
-        }
-
+        // Convert pixel coordinates to grid coordinates
         const gridStartX = Math.floor(startX / this.gridSize);
         const gridStartY = Math.floor(startY / this.gridSize);
         const gridEndX = Math.floor(endX / this.gridSize);
         const gridEndY = Math.floor(endY / this.gridSize);
 
-        this.openList = [];
-        this.closedList = [];
-
-        const startNode = this.grid[gridStartY][gridStartX];
-        const endNode = this.grid[gridEndY][gridEndX];
-
-        startNode.g = 0;
-        startNode.h = this.heuristic(startNode, endNode);
-        startNode.f = startNode.g + startNode.h;
-        
-        this.openList.push(startNode);
-
-        if (this.scene.debugSystem?.showDebug) {
-            this.debugDrawGrid();
+        // Validate grid coordinates
+        if (!this.isValidPosition(gridStartX, gridStartY) || !this.isValidPosition(gridEndX, gridEndY)) {
+            return null;
         }
 
+        // Reset lists
+        this.openList = [];
+        this.closedList = [];
+        
+        // Get start and end nodes
+        const startNode = this.grid[gridStartY][gridStartX];
+        const endNode = this.grid[gridEndY][gridEndX];
+        
+        if (!startNode || !endNode || !startNode.walkable || !endNode.walkable) {
+            return null;
+        }
+        
+        // Add start node to open list
+        this.openList.push(startNode);
+        
         while (this.openList.length > 0) {
+            // Get node with lowest f cost
             const currentNode = this.openList.reduce((min, node) => 
                 node.f < min.f ? node : min, this.openList[0]);
-
+            
+            // Remove current node from open list and add to closed list
             this.openList = this.openList.filter(node => node !== currentNode);
             this.closedList.push(currentNode);
-
-            if (this.scene.debugSystem?.showDebug) {
-                this.debugDrawGrid();
-            }
-
+            
+            // Found path
             if (currentNode === endNode) {
-                const path = this.reconstructPath(endNode);
-                if (this.scene.debugSystem?.showDebug) {
-                    this.debugDrawPath(path);
-                }
-                return path;
+                return this.reconstructPath(endNode);
             }
-
-            for (const neighbor of this.getNeighbors(currentNode)) {
+            
+            // Check neighbors
+            const neighbors = this.getNeighbors(currentNode);
+            for (const neighbor of neighbors) {
                 if (this.closedList.includes(neighbor)) {
                     continue;
                 }
-
-                const tentativeG = currentNode.g + 1;
-
-                if (!this.openList.includes(neighbor)) {
-                    this.openList.push(neighbor);
-                } else if (tentativeG >= neighbor.g) {
-                    continue;
-                }
-
-                neighbor.parent = currentNode;
-                neighbor.g = tentativeG;
-                neighbor.h = this.heuristic(neighbor, endNode);
-                neighbor.f = neighbor.g + neighbor.h;
-
-                if (this.scene.debugSystem?.showDebug) {
-                    this.debugDrawGrid();
+                
+                const gCost = currentNode.g + this.getMovementCost(currentNode, neighbor);
+                
+                if (!this.openList.includes(neighbor) || gCost < neighbor.g) {
+                    neighbor.g = gCost;
+                    neighbor.h = this.heuristic(neighbor, endNode);
+                    neighbor.f = neighbor.g + neighbor.h;
+                    neighbor.parent = currentNode;
+                    
+                    if (!this.openList.includes(neighbor)) {
+                        this.openList.push(neighbor);
+                    }
                 }
             }
         }
-
-        return null;
+        
+        return null; // No path found
     }
-
+    
     reconstructPath(endNode) {
         const path = [];
         let currentNode = endNode;
-
+        
         while (currentNode) {
             path.unshift({
-                x: currentNode.x * this.gridSize + this.gridSize / 2,
-                y: currentNode.y * this.gridSize + this.gridSize / 2
+                x: currentNode.x * this.gridSize,
+                y: currentNode.y * this.gridSize,
+                jumpNode: currentNode.jumpNode,
+                fallNode: currentNode.fallNode
             });
             currentNode = currentNode.parent;
         }
-
+        
         return path;
+    }
+    
+    getMovementCost(nodeA, nodeB) {
+        // Base movement cost
+        const dx = Math.abs(nodeA.x - nodeB.x);
+        const dy = Math.abs(nodeA.y - nodeB.y);
+        let cost = Math.sqrt(dx * dx + dy * dy);
+        
+        // Additional cost for vertical movement
+        if (nodeB.jumpNode) {
+            cost *= 1.5; // Jumping is more costly
+        }
+        if (nodeB.fallNode) {
+            cost *= 1.2; // Falling has a moderate cost
+        }
+        
+        return cost;
+    }
+
+    debugDrawGrid() {
+        if (!this.debugGraphics) return;
+        
+        this.debugGraphics.clear();
+        
+        // Draw grid
+        for (let y = 0; y < this.grid.length; y++) {
+            for (let x = 0; x < this.grid[y].length; x++) {
+                const node = this.grid[y][x];
+                const color = node.walkable ? 0x00ff00 : 0xff0000;
+                this.debugGraphics.lineStyle(1, color, 0.3);
+                this.debugGraphics.strokeRect(
+                    x * this.gridSize, 
+                    y * this.gridSize, 
+                    this.gridSize, 
+                    this.gridSize
+                );
+            }
+        }
+    }
+    
+    debugDrawPath(path) {
+        if (!this.debugGraphics || !path) return;
+        
+        this.debugGraphics.lineStyle(3, 0x00ff00, 1);
+        for (let i = 0; i < path.length - 1; i++) {
+            this.debugGraphics.lineBetween(
+                path[i].x + this.gridSize / 2,
+                path[i].y + this.gridSize / 2,
+                path[i + 1].x + this.gridSize / 2,
+                path[i + 1].y + this.gridSize / 2
+            );
+        }
     }
 }
