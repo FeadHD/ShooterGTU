@@ -10,6 +10,10 @@ export class DebugSystem {
         this.nextEnemyId = 1; // Counter for generating unique IDs
         this.debugTexts = []; // Initialize debugTexts array
 
+        // Initialize debug graphics
+        this.debugGraphics = scene.add.graphics();
+        this.debugGraphics.setDepth(999);
+
         // Add debug toggle key
         this.debugKey = scene.input.keyboard.addKey('E');
         this.debugKey.on('down', () => {
@@ -45,8 +49,8 @@ export class DebugSystem {
 
     initialize() {
         // Add debug graphics
-        this.debugGraphics = this.scene.add.graphics();
-        this.debugGraphics.setDepth(999);
+        // this.debugGraphics = this.scene.add.graphics();
+        // this.debugGraphics.setDepth(999);
     }
 
     drawPhysicsBounds(gameObject) {
@@ -102,7 +106,11 @@ export class DebugSystem {
     }
 
     clear() {
+        // Clear both graphics objects
         this.graphics.clear();
+        if (this.debugGraphics) {
+            this.debugGraphics.clear();
+        }
         if (this.debugTexts) {
             this.debugTexts.forEach(text => text.destroy());
             this.debugTexts = [];
