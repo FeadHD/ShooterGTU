@@ -340,23 +340,26 @@ export class GameScene1 extends BaseScene {
 
         // Create and initialize warriors at proper height
         const createAndInitWarrior = (x) => {
-            const warrior = new MeleeWarrior(this, x, spawnHeight);
-            if (warrior && warrior.sprite) {
-                this.enemies.add(warrior.sprite);
-                warrior.sprite.setData('type', 'warrior');
-                warrior.sprite.setData('enemy', warrior);
-                
-                // Add warrior-specific debug data
-                warrior.sprite.setData('health', warrior.maxHealth);
-                warrior.sprite.setData('maxHealth', warrior.maxHealth);
-                warrior.sprite.setData('isAttacking', false);
-                warrior.sprite.setData('direction', warrior.direction);
-                warrior.sprite.setData('detectionRange', warrior.detectionRange);
-                warrior.sprite.setData('attackRange', warrior.attackRange);
-                
-                return warrior;
+            const spawnHeight = this.getSpawnHeight();
+            if (spawnHeight !== null) {
+                const warrior = new MeleeWarrior(this, x, spawnHeight);
+                if (warrior && warrior.sprite) {
+                    this.enemies.add(warrior.sprite);
+                    warrior.sprite.setData('type', 'warrior');
+                    warrior.sprite.setData('enemy', warrior);
+                    
+                    // Add warrior-specific debug data
+                    warrior.sprite.setData('health', warrior.maxHealth);
+                    warrior.sprite.setData('maxHealth', warrior.maxHealth);
+                    warrior.sprite.setData('isAttacking', false);
+                    warrior.sprite.setData('direction', warrior.direction);
+                    warrior.sprite.setData('detectionRange', warrior.detectionRange);
+                    warrior.sprite.setData('attackRange', warrior.attackRange);
+                    
+                    return warrior;
+                }
+                return null;
             }
-            return null;
         };
 
         // Spawn warriors at different x positions
@@ -581,6 +584,18 @@ export class GameScene1 extends BaseScene {
 
         super.update(time, delta);
         if (this.isGamePaused) return;
+
+        // Update all enemies
+        if (this.enemies) {
+            this.enemies.getChildren().forEach(enemySprite => {
+                if (enemySprite.getData('type') === 'warrior') {
+                    const warrior = enemySprite.getData('enemy');
+                    if (warrior) {
+                        warrior.update(time, delta);
+                    }
+                }
+            });
+        }
 
         // Update game UI
         if (this.gameUI) {
