@@ -236,6 +236,12 @@ export class Preloader extends Scene {
         this.load.audio('bgMusic', './assets/sounds/background_music.mp3');
         this.load.audio('hit', './assets/sounds/hit.wav');
         this.load.audio('bitcoin_collect', './assets/sounds/bitcoin_collect.mp3');
+        this.load.audio('thezucc', './assets/sounds/thezucc.wav');
+        
+        // Add error handler for audio loading
+        this.load.on('loaderror', (file) => {
+            console.error('Error loading audio file:', file.key);
+        });
         
         // Load bitcoin animation frames
         for (let i = 1; i <= 8; i++) {
