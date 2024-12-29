@@ -173,15 +173,44 @@ export class Matrix640x360 extends BaseScene{
         this.LEVEL_WIDTH = 640;
         this.LEVEL_HEIGHT = 360;
 
+        // Get the actual screen dimensions
+        const screenWidth = window.innerWidth;
+        const screenHeight = window.innerHeight;
+
+        // Calculate scale to fit screen while maintaining aspect ratio
+        const scaleX = screenWidth / this.LEVEL_WIDTH;
+        const scaleY = screenHeight / this.LEVEL_HEIGHT;
+        const scale = Math.min(scaleX, scaleY);
+
+        // Calculate centered position
+        const offsetX = (screenWidth - (this.LEVEL_WIDTH * scale)) / 2;
+        const offsetY = (screenHeight - (this.LEVEL_HEIGHT * scale)) / 2;
+
         // Set world bounds
         this.physics.world.setBounds(0, 0, this.LEVEL_WIDTH, this.LEVEL_HEIGHT);
         
-        // Configure the main camera to show only the 640x360 area
+        // Configure the main camera to show full screen
         const mainCam = this.cameras.main;
-        mainCam.setViewport(0, 0, this.LEVEL_WIDTH, this.LEVEL_HEIGHT);
+        mainCam.setViewport(offsetX, offsetY, this.LEVEL_WIDTH * scale, this.LEVEL_HEIGHT * scale);
         mainCam.setBounds(0, 0, this.LEVEL_WIDTH, this.LEVEL_HEIGHT);
         mainCam.setBackgroundColor('#000000');
-        mainCam.setZoom(1);
+        mainCam.setZoom(scale);
+
+        // Add resize listener to handle window resizing
+        window.addEventListener('resize', () => {
+            const newWidth = window.innerWidth;
+            const newHeight = window.innerHeight;
+            
+            const newScaleX = newWidth / this.LEVEL_WIDTH;
+            const newScaleY = newHeight / this.LEVEL_HEIGHT;
+            const newScale = Math.min(newScaleX, newScaleY);
+            
+            const newOffsetX = (newWidth - (this.LEVEL_WIDTH * newScale)) / 2;
+            const newOffsetY = (newHeight - (this.LEVEL_HEIGHT * newScale)) / 2;
+            
+            mainCam.setViewport(newOffsetX, newOffsetY, this.LEVEL_WIDTH * newScale, this.LEVEL_HEIGHT * newScale);
+            mainCam.setZoom(newScale);
+        });
 
         // Store player spawn point (near the left side, above ground)
         const SPAWN_X = 100;
