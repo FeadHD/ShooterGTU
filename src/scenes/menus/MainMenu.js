@@ -156,6 +156,7 @@ export class MainMenu extends Scene {
         const settingsButton = createButton('SETTINGS', canvasHeight * 0.65);
         const leaderboardButton = createButton('LEADERBOARD', canvasHeight * 0.75);
         const rulesButton = createButton('RULES', canvasHeight * 0.85);
+        const theZuccButton = createButton('THE ZUCC', canvasHeight * 0.95);
 
         // Add click handlers
         startButton.on('pointerdown', () => {
