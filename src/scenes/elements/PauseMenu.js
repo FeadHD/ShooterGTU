@@ -4,6 +4,9 @@ export class PauseMenu extends Phaser.Scene {
     }
 
     create() {
+        // Store the key of the scene that launched the pause menu
+        this.parentSceneKey = this.scene.get('Matrix640x360') ? 'Matrix640x360' : 'GameScene1';
+        
         const { width, height } = this.scale;
 
         // Add semi-transparent background
@@ -54,7 +57,7 @@ export class PauseMenu extends Phaser.Scene {
     }
 
     resumeGame() {
-        const gameScene = this.scene.get('GameScene1');
+        const gameScene = this.scene.get(this.parentSceneKey);
         if (gameScene) {
             gameScene.resumeGame();
         }
@@ -63,13 +66,13 @@ export class PauseMenu extends Phaser.Scene {
 
     restartGame() {
         this.scene.stop();
-        this.scene.stop('GameScene1');
-        this.scene.start('GameScene1');
+        this.scene.stop(this.parentSceneKey);
+        this.scene.start(this.parentSceneKey);
     }
 
     goToMainMenu() {
         this.scene.stop();
-        this.scene.stop('GameScene1');
+        this.scene.stop(this.parentSceneKey);
         this.scene.start('MainMenu');
     }
 

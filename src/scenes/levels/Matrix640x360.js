@@ -283,7 +283,9 @@ export class Matrix640x360 extends BaseScene{
         // Add ESC key for pause menu
         this.pauseKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
         this.pauseKey.on('down', () => {
-            this.pauseGame();
+            if (!this.isGamePaused) {
+                this.pauseGame();
+            }
         });
 
         // Ensure UI camera is properly set up
@@ -529,11 +531,14 @@ export class Matrix640x360 extends BaseScene{
             this.player.controller.enabled = false;
         }
         
+        // Launch pause menu
         this.scene.launch('PauseMenu');
         this.scene.pause();
     }
 
     resumeGame() {
+        if (!this.isGamePaused) return;
+        
         this.isGamePaused = false;
         this.physics.resume();
         
