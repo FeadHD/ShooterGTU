@@ -1,8 +1,8 @@
 import { Scene } from 'phaser';
 
-export class MainMenu extends Scene {
+export class TheZucc extends Scene {
     constructor() {
-        super('MainMenu');
+        super('TheZucc');
     }
 
     async create() {
@@ -12,12 +12,6 @@ export class MainMenu extends Scene {
     }
 
     async createScene() {
-        // Reset all game state
-        this.registry.set('lives', 3);
-        this.registry.set('playerHP', 100);
-        this.registry.set('score', 0);
-        this.registry.set('bitcoins', 0);
-        
         // Enable input system
         this.input.keyboard.enabled = true;
         this.input.mouse.enabled = true;
@@ -26,174 +20,110 @@ export class MainMenu extends Scene {
         this.input.keyboard.removeAllKeys();
         this.input.removeAllListeners();
 
-        // Debug background color to see canvas size
-        this.cameras.main.setBackgroundColor('#000000');
+        // Set background color
+        this.cameras.main.setBackgroundColor('#2c3e50');
 
-        // Get the canvas dimensions
-        const canvasWidth = this.cameras.main.width;
-        const canvasHeight = this.cameras.main.height;
+        // Add title
+        const title = this.add.text(this.cameras.main.centerX, 50, 'Developer Testing Menu', {
+            fontSize: '32px',
+            fill: '#fff',
+            fontFamily: 'Arial'
+        }).setOrigin(0.5);
 
-        // Add and center the background image first
-        const bg = this.add.image(0, 0, 'mainbg');
-        bg.setOrigin(0, 0);
-        bg.setDisplaySize(canvasWidth, canvasHeight);
+        // Define scene categories and their scenes
+        const sceneCategories = {
+            'Levels': [
+                'GameScene1',
+                'GameScene2',
+                'GameScene3',
+                'GameScene4',
+                'GameScene5',
+                'Matrix640x360'
+            ],
+            'Menus': [
+                'MainMenu',
+                'Settings',
+                'ControlsSettingsScene',
+                'Leaderboard',
+                'MissionComplete'
+            ],
+            'Other': [
+                'Boot',
+                'Preloader',
+                'TitleScene'
+            ]
+        };
 
-        // Handle music
-        let bgMusic = this.sound.get('bgMusic');
-        const musicEnabled = this.registry.get('musicEnabled');
+        let yOffset = 120;
+        const buttonStyle = {
+            fontSize: '16px',
+            fill: '#fff',
+            backgroundColor: '#34495e',
+            padding: { x: 10, y: 5 }
+        };
 
-        // Only create new music if it doesn't exist
-        if (!bgMusic) {
-            bgMusic = this.sound.add('bgMusic', {
-                volume: 0.15,
-                loop: true
+        // Create buttons for each category
+        for (const [category, scenes] of Object.entries(sceneCategories)) {
+            // Add category title
+            this.add.text(50, yOffset, category, {
+                fontSize: '24px',
+                fill: '#fff',
+                fontFamily: 'Arial'
             });
             
-            // Only play if music was enabled
-            if (musicEnabled !== false) {
-                bgMusic.play();
-            }
+            yOffset += 40;
+            let xOffset = 50;
+            
+            // Create buttons for each scene in the category
+            scenes.forEach((sceneName, index) => {
+                const button = this.add.text(xOffset, yOffset, sceneName, buttonStyle)
+                    .setInteractive()
+                    .setPadding(10)
+                    .setBackgroundColor('#34495e')
+                    .on('pointerover', () => button.setBackgroundColor('#2980b9'))
+                    .on('pointerout', () => button.setBackgroundColor('#34495e'))
+                    .on('pointerdown', () => {
+                        console.log(`Launching scene: ${sceneName}`);
+                        this.scene.start(sceneName);
+                    });
+
+                xOffset += button.width + 20;
+                
+                // New row after 3 buttons
+                if ((index + 1) % 3 === 0) {
+                    xOffset = 50;
+                    yOffset += 40;
+                }
+            });
+            
+            yOffset += 60;
         }
 
-        // Create title and buttons first
-        this.createTitle(canvasWidth, canvasHeight);
-        this.createGameButtons(canvasWidth, canvasHeight);
-
-        // Store canvas dimensions for wallet initialization
-        this.canvasWidth = canvasWidth;
-        this.canvasHeight = canvasHeight;
-    }
-
-    createTitle(canvasWidth, canvasHeight) {
-        // Add shadow layers for 3D effect
-        const shadowOffset = 4;
-        const numLayers = 5;
-        
-        for (let i = numLayers; i >= 0; i--) {
-            const layerColor = i === 0 ? '#4400ff' : '#ff00ff';
-            this.add.text(canvasWidth/2 + (i * shadowOffset), canvasHeight * 0.15 + (i * shadowOffset), 'GOOD TIME UNIVERSE', {
-                fontFamily: 'Retronoid, Arial',
-                fontSize: '100px',
-                color: layerColor,
-                align: 'center',
-            }).setOrigin(0.5);
-        }
-
-        // Add main title text with glow effect
-        this.add.text(canvasWidth/2, canvasHeight * 0.15, 'GOOD TIME UNIVERSE', {
-            fontFamily: 'Retronoid, Arial',
-            fontSize: '100px',
-            color: '#00ffff',
-            align: 'center',
-            stroke: '#ffffff',
-            strokeThickness: 2,
-            shadow: {
-                offsetX: 2,
-                offsetY: 2,
-                color: '#ff00ff',
-                blur: 8,
-                fill: true
+        // Add a reset button at the bottom
+        const resetButton = this.add.text(
+            this.cameras.main.centerX,
+            yOffset,
+            'Reset Game State',
+            {
+                fontSize: '20px',
+                fill: '#fff',
+                backgroundColor: '#c0392b',
+                padding: { x: 15, y: 10 }
             }
-        }).setOrigin(0.5);
-
-        // Add mission title with similar style but smaller
-        this.add.text(canvasWidth/2, canvasHeight * 0.25, 'MISSION ONE: LEDGER HEIST', {
-            fontFamily: 'Retronoid, Arial',
-            fontSize: '48px',
-            color: '#00ffff',
-            align: 'center',
-            stroke: '#ffffff',
-            strokeThickness: 1,
-            shadow: {
-                offsetX: 1,
-                offsetY: 1,
-                color: '#ff00ff',
-                blur: 4,
-                fill: true
-            }
-        }).setOrigin(0.5);
-    }
-
-    createGameButtons(canvasWidth, canvasHeight) {
-        // Create retro-style buttons
-        const buttonStyle = {
-            fontFamily: 'Retronoid, Arial',
-            fontSize: '72px',
-            color: '#00ffff',
-            stroke: '#ffffff',
-            strokeThickness: 4,
-            shadow: {
-                offsetX: 3,
-                offsetY: 3,
-                color: '#ff00ff',
-                blur: 5,
-                fill: true
-            }
-        };
-
-        // Helper function to create buttons
-        const createButton = (text, y) => {
-            const button = this.add.text(canvasWidth / 2, y, text, buttonStyle)
-                .setOrigin(0.5)
-                .setInteractive({ useHandCursor: true });
-
-            button.on('pointerover', () => {
-                button.setScale(1.2);
-                button.setColor('#ff00ff');
-            });
-
-            button.on('pointerout', () => {
-                button.setScale(1);
-                button.setColor('#00ffff');
-            });
-
-            return button;
-        };
-
-        // Create menu buttons - moved up for better spacing
-        const startButton = createButton('START', canvasHeight * 0.45);
-        const controlsButton = createButton('CONTROLS', canvasHeight * 0.55);
-        const settingsButton = createButton('SETTINGS', canvasHeight * 0.65);
-        const leaderboardButton = createButton('LEADERBOARD', canvasHeight * 0.75);
-        const rulesButton = createButton('RULES', canvasHeight * 0.85);
-        const theZuccButton = createButton('THE ZUCC', canvasHeight * 0.95);
-
-        // Add click handlers
-        startButton.on('pointerdown', () => {
-            // Reset game state
-            this.registry.set('score', 0);
+        )
+        .setOrigin(0.5)
+        .setInteractive()
+        .setPadding(10)
+        .setBackgroundColor('#c0392b')
+        .on('pointerover', () => resetButton.setBackgroundColor('#e74c3c'))
+        .on('pointerout', () => resetButton.setBackgroundColor('#c0392b'))
+        .on('pointerdown', () => {
+            // Reset all game state
             this.registry.set('lives', 3);
             this.registry.set('playerHP', 100);
+            this.registry.set('score', 0);
             this.registry.set('bitcoins', 0);
-
-            // Clean up scene before starting game
-            this.input.keyboard.removeAllKeys();
-            this.input.removeAllListeners();
-            
-            // Stop any existing scenes
-            this.scene.stop('GameScene1');
-            this.scene.stop('GameScene2');
-            this.scene.stop('GameScene3');
-            this.scene.stop('GameScene4');
-            this.scene.stop('GameScene5');
-
-            // Start first level
-            this.scene.start('GameScene1');
-        });
-        controlsButton.on('pointerdown', () => {
-            this.scene.start('ControlsSettingsScene');
-        });
-        settingsButton.on('pointerdown', () => {
-            this.scene.start('Settings');
-        });
-        leaderboardButton.on('pointerdown', () => {
-            this.scene.start('Leaderboard');
-        });
-        rulesButton.on('pointerdown', () => {
-            // Add rules functionality here
-        });
-        theZuccButton.on('pointerdown', () => {
-            this.scene.start('TheZucc');
+            console.log('Game state reset');
         });
     }
 
@@ -201,7 +131,7 @@ export class MainMenu extends Scene {
         let connectButton;
         try {
             // Add MetaMask connect button with retro style
-            connectButton = this.add.text(this.canvasWidth - 30, 30, 'Connect Wallet', {
+            connectButton = this.add.text(this.cameras.main.width - 30, 30, 'Connect Wallet', {
                 fontFamily: 'Retronoid, Arial',
                 fontSize: '32px',
                 color: '#00ffff',

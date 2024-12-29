@@ -7,9 +7,9 @@ import CameraManager from '../../modules/managers/CameraManager';
 import { CollisionManager } from '../../modules/managers/CollisionManager';
 import MeleeWarrior from '../../prefabs/MeleeWarrior';
 
-export class GameScene1 extends BaseScene {
+export class Matrix640x360 extends BaseScene{
     constructor() {
-        super({ key: 'GameScene1' });
+        super({ key: 'Matrix640x360' });
         this.tileColliderAdded = false;
         this.messageShown = false;
         this.totalEnemies = 7; // Increased to include drone and melee warriors

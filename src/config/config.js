@@ -4,6 +4,7 @@ import { GameScene2 } from '../scenes/levels/GameScene2';
 import { GameScene3 } from '../scenes/levels/GameScene3';
 import { GameScene4 } from '../scenes/levels/GameScene4';
 import { GameScene5 } from '../scenes/levels/GameScene5';
+import { Matrix640x360 } from '../scenes/levels/Matrix640x360';
 import { Leaderboard } from '../scenes/menus/Leaderboard';
 import { MainMenu } from '../scenes/menus/MainMenu';
 import { MissionComplete } from '../scenes/menus/MissionComplete';
@@ -12,6 +13,7 @@ import { TitleScene } from '../scenes/elements/TitleScene';
 import Settings from '../scenes/menus/Settings';
 import { ControlsSettingsScene } from '../scenes/menus/ControlsSettingsScene';
 import { PauseMenu } from '../scenes/elements/PauseMenu';
+import { TheZucc } from '../scenes/menus/TheZucc';
 
 export const config = {
     type: Phaser.AUTO,
@@ -47,11 +49,13 @@ export const config = {
         GameScene3,
         GameScene4,
         GameScene5,
+        Matrix640x360,
         Settings,
         Leaderboard,
-        GameOver,
         MissionComplete,
         ControlsSettingsScene,
-        PauseMenu
+        PauseMenu,
+        GameOver,
+        TheZucc
     ]
 };
