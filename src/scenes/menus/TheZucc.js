@@ -102,6 +102,11 @@ export class TheZucc extends Scene {
                 scenes: ['Matrix640x360'],
                 showConfig: true  // Flag to show enemy config
             },
+            'PROCEDURAL SCENE': {
+                scenes: ['Matrix640x360'],
+                showConfig: false,
+                showProcedural: true  // Flag to show procedural config
+            },
             'Levels': {
                 scenes: [
                     'GameScene1',
@@ -179,6 +184,12 @@ export class TheZucc extends Scene {
                 yOffset += 40;  // Add some space before the config section
                 yOffset = this.createEnemyConfigSection(yOffset);
             }
+
+            // Add procedural configuration section if this category needs it
+            if (config.showProcedural) {
+                yOffset += 40;  // Add some space before the config section
+                yOffset = this.createProceduralSection(yOffset);
+            }
             
             yOffset += 60;  // Space between categories
         }
@@ -200,6 +211,33 @@ export class TheZucc extends Scene {
             this.scene.stop('TheZucc');
             this.scene.start('MainMenu');
         });
+    }
+
+    createProceduralSection(yOffset) {
+        const labelStyle = {
+            fontSize: '18px',
+            fill: '#fff',
+            fontFamily: 'Arial'
+        };
+
+        const buttonStyle = {
+            fontSize: '16px',
+            fill: '#fff',
+            backgroundColor: '#34495e',
+            padding: { x: 10, y: 5 }
+        };
+
+        // Add section title
+        this.add.text(50, yOffset, 'Procedural Configuration:', labelStyle);
+        yOffset += 40;
+
+        // Add description
+        this.add.text(50, yOffset, 'Configure procedural scene generation:', labelStyle);
+        yOffset += 30;
+
+        // We'll add the actual configuration controls in the next step
+        // For now, just return the updated yOffset
+        return yOffset;
     }
 
     async initializeWallet() {
