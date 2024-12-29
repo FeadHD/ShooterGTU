@@ -3,9 +3,15 @@ import { GameUI } from '../elements/GameUI';
 import { Slime } from '../../prefabs/Slime';
 import { Bitcoin } from '../../prefabs/Bitcoin';
 import Drone from '../../prefabs/Drone';
-import CameraManager from '../../modules/managers/CameraManager';
 import { CollisionManager } from '../../modules/managers/CollisionManager';
 import MeleeWarrior from '../../prefabs/MeleeWarrior';
+import { AnimationManager } from '../../modules/managers/AnimationManager';
+import { StateManager } from '../../modules/managers/StateManager';
+import { DebugSystem } from '../../_Debug/DebugSystem';
+import { SceneBoundaryManager } from '../../modules/managers/BoundaryManager';
+import { EffectsManager } from '../../modules/managers/EffectsManager';
+import { EnemyManager } from '../../modules/managers/EnemyManager';
+import { Bullet } from '../../prefabs/Bullet';
 
 export class Matrix640x360 extends BaseScene{
     constructor() {
@@ -36,14 +42,49 @@ export class Matrix640x360 extends BaseScene{
     }
 
     create() {
-        // Call parent create first to set up base systems
-        super.create();
+        // Set up scene-specific scaling
+        this.scale.setGameSize(640, 360);
+        this.scale.setMode(Phaser.Scale.FIT);
+        this.scale.setZoom(1);
+
+        // Initialize registry values
+        this.registry.set('playerHP', 100);
+        this.registry.set('lives', 3);
+        this.registry.set('score', 0);
+        this.registry.set('bitcoins', 0);
+
+        // Initialize managers
+        this.stateManager = new StateManager(this);
+        this.animationManager = new AnimationManager(this);
+        this.debugSystem = new DebugSystem(this);
+        this.boundaryManager = new SceneBoundaryManager(this);
+        this.effectsManager = new EffectsManager(this);
+        this.enemyManager = new EnemyManager(this);
+
+        // Initialize game UI
+        this.gameUI = new GameUI(this);
+
+        // Initialize bullets group
+        this.bullets = this.physics.add.group({
+            classType: Bullet,
+            maxSize: 10,
+            runChildUpdate: true
+        });
+
+        this.input.keyboard.enabled = true;  // Ensure keyboard is enabled on scene start
+
+        // Set up world physics
+        this.physics.world.gravity.y = 800;
+        this.physics.world.setBounds(0, 0, this.LEVEL_WIDTH, this.LEVEL_HEIGHT);
+
+        // Create platforms group for collision
+        this.platforms = this.physics.add.staticGroup();
         
+        // Set initial game state and enable controls immediately
+        this.gameStarted = true;
+
         const { width, height } = this.scale;
 
-        // Set initial game state
-        this.gameStarted = false;  // Add flag to track if game has started
-        
         // Initialize debug system if not already initialized
         if (!this.debugSystem) {
             this.debugSystem = {
@@ -91,37 +132,34 @@ export class Matrix640x360 extends BaseScene{
 
         // Define initial spawn position (near the left side of the level)
         const SPAWN_X_PERCENTAGE = 0.1;  // 10% from left edge
-        const SPAWN_Y = 500;             // Fixed height from top
+        const SPAWN_Y = this.LEVEL_HEIGHT * 0.8;  // 80% down from top
         
         // Override base scene's spawn point for this level
         this.playerSpawnPoint = {
-            x: width * SPAWN_X_PERCENTAGE,
+            x: this.LEVEL_WIDTH * SPAWN_X_PERCENTAGE,
             y: SPAWN_Y
         };
+
+        // Create player if it doesn't exist
+        if (!this.player) {
+            this.createPlayer(this.scale.width);
+            // Enable player controls immediately
+            this.player.controller.enabled = true;
+        }
         
         // Set player position to spawn point
         this.player.setPosition(this.playerSpawnPoint.x, this.playerSpawnPoint.y);
         
-        // Set world bounds to match the level size
-        const levelWidth = 3840; // Adjust this to match your level width
-        const levelHeight = 1080; // Adjust this to match your level height
-        this.physics.world.setBounds(0, 0, levelWidth, levelHeight);
+        // Set world bounds to match the exact level size
+        this.physics.world.setBounds(0, 0, this.LEVEL_WIDTH, this.LEVEL_HEIGHT);
         
-        // Set camera bounds to match world bounds
-        this.cameras.main.setBounds(0, 0, levelWidth, levelHeight);
+        // Set camera bounds to match world bounds exactly
+        this.cameras.main.setBounds(0, 0, this.LEVEL_WIDTH, this.LEVEL_HEIGHT);
         
-        // Set next scene
-        this.nextSceneName = 'GameScene2';
+        // Set up the main game camera - fixed position, centered
+        this.cameras.main.setZoom(1);
+        this.cameras.main.centerOn(this.LEVEL_WIDTH/2, this.LEVEL_HEIGHT/2);
         
-        // Set up the main game camera
-        this.cameras.main.setZoom(1.5);
-        this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
-
-        // Initialize camera manager
-        this.cameraManager = new CameraManager(this);
-        this.cameraManager.init(this.player);
-        this.cameraManager.playIntroSequence(this.player);
-
         // Initialize collision manager
         this.collisionManager = new CollisionManager(this);
 
@@ -166,13 +204,6 @@ export class Matrix640x360 extends BaseScene{
 
         // Create bitcoin group
         this.bitcoins = this.add.group();
-
-        // Create player if it doesn't exist
-        if (!this.player) {
-            this.createPlayer(this.scale.width);
-            // Disable player controls initially
-            this.player.controller.enabled = false;
-        }
 
         // Debug level data loading
         const levelData = this.cache.json.get('level1');
@@ -315,7 +346,7 @@ export class Matrix640x360 extends BaseScene{
                 ease: 'Linear',
                 onComplete: () => {
                     // Continue with the rest of the scene setup
-                    this.setupRestOfScene();
+                    this.initializeGameElements();
                 }
             });
         });
@@ -324,50 +355,22 @@ export class Matrix640x360 extends BaseScene{
         this.debugGraphics = this.add.graphics();
     }
 
-    setupRestOfScene() {
-        // Show start message in GameUI
-        this.gameUI.showStartMessage();
-
-        // Add space key listener for starting the game
-        const spaceKey = this.input.keyboard.addKey('SPACE');
-        spaceKey.once('down', () => {
-            this.gameUI.hideStartMessage();
-            this.startGame();
+    initializeGameElements() {
+        // Initialize game elements without animations or delays
+        const spawnPoints = this.findSpawnPointsForSlimes();
+        spawnPoints.forEach(point => {
+            this.createAndInitSlime(point.x, point.y);
         });
 
-        // Calculate proper spawn height
-        const spawnHeight = this.getSpawnHeight();
-
-        // Create and initialize warriors at proper height
-        const createAndInitWarrior = (x) => {
-            const spawnHeight = this.getSpawnHeight();
-            if (spawnHeight !== null) {
-                const warrior = new MeleeWarrior(this, x, spawnHeight);
-                if (warrior && warrior.sprite) {
-                    this.enemies.add(warrior.sprite);
-                    warrior.sprite.setData('type', 'warrior');
-                    warrior.sprite.setData('enemy', warrior);
-                    
-                    // Add warrior-specific debug data
-                    warrior.sprite.setData('health', warrior.maxHealth);
-                    warrior.sprite.setData('maxHealth', warrior.maxHealth);
-                    warrior.sprite.setData('isAttacking', false);
-                    warrior.sprite.setData('direction', warrior.direction);
-                    warrior.sprite.setData('detectionRange', warrior.detectionRange);
-                    warrior.sprite.setData('attackRange', warrior.attackRange);
-                    
-                    // Add warrior to enemy manager
-                    this.enemyManager.addEnemy(warrior, warrior.sprite, warrior.maxHealth);
-                    
-                    return warrior;
-                }
-                return null;
-            }
-        };
+        const bitcoinSpawnPoints = this.findSpawnPointsForBitcoins();
+        bitcoinSpawnPoints.forEach(point => {
+            const bitcoin = new Bitcoin(this, point.x, point.y);
+            this.bitcoins.add(bitcoin);
+        });
 
         // Spawn warriors at different x positions
-        const warrior1 = createAndInitWarrior(this.scale.width * 0.4);
-        const warrior2 = createAndInitWarrior(this.scale.width * 0.6);
+        const warrior1 = this.createAndInitWarrior(this.scale.width * 0.4);
+        const warrior2 = this.createAndInitWarrior(this.scale.width * 0.6);
 
         // Create random position warriors
         const numRandomWarriors = 1;
@@ -376,23 +379,9 @@ export class Matrix640x360 extends BaseScene{
             if (spawnPointsForWarriors.length > 0) {
                 const spawnIndex = Math.floor(Math.random() * spawnPointsForWarriors.length);
                 const spawnPoint = spawnPointsForWarriors[spawnIndex];
-                createAndInitWarrior(spawnPoint.x);
+                this.createAndInitWarrior(spawnPoint.x);
                 spawnPointsForWarriors.splice(spawnIndex, 1);
             }
-        }
-
-        // Spawn bitcoins after map is loaded
-        const bitcoinSpawnPoints = this.findSpawnPointsForBitcoins();
-        const numBitcoins = Math.min(10, bitcoinSpawnPoints.length);
-
-        // Spawn bitcoins at valid positions
-        for (let i = 0; i < numBitcoins; i++) {
-            const spawnPoint = bitcoinSpawnPoints[i];
-            const bitcoin = new Bitcoin(this, spawnPoint.x, spawnPoint.y);
-            this.bitcoins.add(bitcoin);
-            this.physics.add.overlap(this.player, bitcoin, () => {
-                bitcoin.collect();
-            });
         }
 
         // Spawn drone at the top part of the scene
@@ -435,63 +424,6 @@ export class Matrix640x360 extends BaseScene{
             console.warn('Cannot spawn drone: player not found');
         }
 
-        // Create fixed position slimes
-        const enemyY = this.scale.height * 0.7;
-
-        const createAndInitSlime = (x, y) => {
-            const slime = new Slime(this, x, y);
-            if (slime && slime.sprite) {
-                // Add to physics group
-                this.slimes.add(slime.sprite);
-                
-                // Set up sprite
-                slime.sprite.setActive(true);
-                slime.sprite.setVisible(true);
-                
-                // Set up physics body
-                if (slime.sprite.body) {
-                    slime.sprite.body.reset(x, y);
-                    slime.sprite.body.enable = true;
-                    slime.sprite.body.moves = true;
-                }
-                
-                // Add to enemy manager
-                this.enemyManager.addEnemy(slime, slime.sprite, slime.maxHealth);
-                
-                // Create health bar
-                slime.createHealthBar();
-                
-                // Start movement
-                slime.initializeMovement();
-                
-                // Add update callback
-                this.events.on('update', () => {
-                    if (slime && slime.sprite && slime.sprite.active) {
-                        slime.update();
-                        slime.updateHealthBar();
-                    }
-                });
-                
-                return slime;
-            }
-            return null;
-        };
-
-        this.enemy1 = createAndInitSlime(this.scale.width * 0.3, enemyY);
-        this.enemy2 = createAndInitSlime(this.scale.width * 0.7, enemyY);
-
-        // Create random position slimes
-        const numRandomSlimes = 1; 
-        for (let i = 0; i < numRandomSlimes; i++) {
-            const spawnPointsForSlimes = this.findSpawnPointsForSlimes();
-            if (spawnPointsForSlimes.length > 0) {
-                const spawnIndex = Math.floor(Math.random() * spawnPointsForSlimes.length);
-                const spawnPoint = spawnPointsForSlimes[spawnIndex];
-                createAndInitSlime(spawnPoint.x, spawnPoint.y);
-                spawnPointsForSlimes.splice(spawnIndex, 1);
-            }
-        }
-
         // Set up player-enemy collision for damage
         this.physics.add.overlap(this.player, this.slimes, (player, enemySprite) => {
             if (enemySprite.enemy && !this.isDying) {
@@ -511,22 +443,76 @@ export class Matrix640x360 extends BaseScene{
         // Set initial number of enemies
         this.remainingEnemies = 7;
 
-        // Wait a short moment for platforms to be fully set up
-        this.time.delayedCall(100, () => {
-            // Calculate spawn height relative to ground
-            const enemyY = this.groundTop - 16;  // Same calculation as player spawn
+        // Start game immediately
+        this.startGame();
+    }
 
-            // Set number of enemies
-            this.remainingEnemies = 7;
-        });
+    createAndInitSlime(x, y) {
+        const slime = new Slime(this, x, y);
+        if (slime && slime.sprite) {
+            // Add to physics group
+            this.slimes.add(slime.sprite);
+            
+            // Set up sprite
+            slime.sprite.setActive(true);
+            slime.sprite.setVisible(true);
+            
+            // Set up physics body
+            if (slime.sprite.body) {
+                slime.sprite.body.reset(x, y);
+                slime.sprite.body.enable = true;
+                slime.sprite.body.moves = true;
+            }
+            
+            // Add to enemy manager
+            this.enemyManager.addEnemy(slime, slime.sprite, slime.maxHealth);
+            
+            // Create health bar
+            slime.createHealthBar();
+            
+            // Start movement
+            slime.initializeMovement();
+            
+            // Add update callback
+            this.events.on('update', () => {
+                if (slime && slime.sprite && slime.sprite.active) {
+                    slime.update();
+                    slime.updateHealthBar();
+                }
+            });
+            
+            return slime;
+        }
+        return null;
+    }
+
+    createAndInitWarrior(x) {
+        const spawnHeight = this.getSpawnHeight();
+        if (spawnHeight !== null) {
+            const warrior = new MeleeWarrior(this, x, spawnHeight);
+            if (warrior && warrior.sprite) {
+                this.enemies.add(warrior.sprite);
+                warrior.sprite.setData('type', 'warrior');
+                warrior.sprite.setData('enemy', warrior);
+                
+                // Add warrior-specific debug data
+                warrior.sprite.setData('health', warrior.maxHealth);
+                warrior.sprite.setData('maxHealth', warrior.maxHealth);
+                warrior.sprite.setData('isAttacking', false);
+                warrior.sprite.setData('direction', warrior.direction);
+                warrior.sprite.setData('detectionRange', warrior.detectionRange);
+                warrior.sprite.setData('attackRange', warrior.attackRange);
+                
+                // Add warrior to enemy manager
+                this.enemyManager.addEnemy(warrior, warrior.sprite, warrior.maxHealth);
+                
+                return warrior;
+            }
+            return null;
+        }
     }
 
     startGame() {
-        // Stop intro sequence if it's playing
-        if (this.cameraManager.isIntroPlaying) {
-            this.cameraManager.stopIntroSequence();
-        }
-
         // Enable player controls
         if (this.player) {
             this.player.controller.enabled = true;
@@ -585,7 +571,6 @@ export class Matrix640x360 extends BaseScene{
         // Only update game elements if the game has started
         if (!this.gameStarted) return;
 
-        super.update(time, delta);
         if (this.isGamePaused) return;
 
         // Update all enemies
