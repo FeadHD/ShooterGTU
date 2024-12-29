@@ -57,6 +57,9 @@ export class Matrix640x360 extends BaseScene{
     }
 
     create() {
+        // Call parent create first to set up base systems
+        super.create();
+        
         // Set up world bounds and physics
         this.physics.world.setBounds(0, 0, 640, 360);
         
@@ -67,6 +70,15 @@ export class Matrix640x360 extends BaseScene{
         const bg = this.add.rectangle(320, 180, 640, 360, 0xFFFFFF);
         bg.setAlpha(0.5);  // 50% transparency
         bg.setDepth(-1);   // Keep it at the back
+
+        // Add debug text for camera info
+        this.debugText = this.add.text(10, 10, '', { 
+            font: '16px Arial', 
+            fill: '#ff0000',
+            backgroundColor: '#ffffff' 
+        });
+        this.debugText.setScrollFactor(0);  // Fix to camera
+        this.debugText.setDepth(1000);      // Keep on top
 
         // Load level data from LDtk
         const levelData = this.cache.json.get('matrix');
@@ -145,30 +157,6 @@ export class Matrix640x360 extends BaseScene{
         this.map = map;
         this.mapLayer = layer;
 
-        // Initialize registry values
-        this.registry.set('playerHP', 100);
-        this.registry.set('lives', 3);
-        this.registry.set('score', 0);
-        this.registry.set('bitcoins', 0);
-
-        // Initialize managers
-        this.stateManager = new StateManager(this);
-        this.animationManager = new AnimationManager(this);
-        this.debugSystem = new DebugSystem(this);
-        this.boundaryManager = new SceneBoundaryManager(this);
-        this.effectsManager = new EffectsManager(this);
-        this.enemyManager = new EnemyManager(this);
-
-        // Initialize game UI
-        this.gameUI = new GameUI(this);
-
-        // Initialize bullets group
-        this.bullets = this.physics.add.group({
-            classType: Bullet,
-            maxSize: 10,
-            runChildUpdate: true
-        });
-
         // Set up game dimensions
         this.LEVEL_WIDTH = 640;
         this.LEVEL_HEIGHT = 360;
@@ -186,9 +174,6 @@ export class Matrix640x360 extends BaseScene{
         const offsetX = (screenWidth - (this.LEVEL_WIDTH * scale)) / 2;
         const offsetY = (screenHeight - (this.LEVEL_HEIGHT * scale)) / 2;
 
-        // Set world bounds
-        this.physics.world.setBounds(0, 0, this.LEVEL_WIDTH, this.LEVEL_HEIGHT);
-        
         // Configure the main camera to show full screen
         const mainCam = this.cameras.main;
         mainCam.setViewport(offsetX, offsetY, this.LEVEL_WIDTH * scale, this.LEVEL_HEIGHT * scale);
@@ -196,151 +181,23 @@ export class Matrix640x360 extends BaseScene{
         mainCam.setBackgroundColor('#000000');
         mainCam.setZoom(scale);
 
-        // Add resize listener to handle window resizing
-        window.addEventListener('resize', () => {
-            const newWidth = window.innerWidth;
-            const newHeight = window.innerHeight;
-            
-            const newScaleX = newWidth / this.LEVEL_WIDTH;
-            const newScaleY = newHeight / this.LEVEL_HEIGHT;
-            const newScale = Math.min(newScaleX, newScaleY);
-            
-            const newOffsetX = (newWidth - (this.LEVEL_WIDTH * newScale)) / 2;
-            const newOffsetY = (newHeight - (this.LEVEL_HEIGHT * newScale)) / 2;
-            
-            mainCam.setViewport(newOffsetX, newOffsetY, this.LEVEL_WIDTH * newScale, this.LEVEL_HEIGHT * newScale);
-            mainCam.setZoom(newScale);
-        });
-
         // Store player spawn point (near the left side, above ground)
-        const SPAWN_X = 100;
-        const SPAWN_Y = 280; // Adjust this based on your ground level
+        this.playerSpawnPoint = {
+            x: 100,
+            y: 280  // Adjust this based on your ground level
+        };
+
+        // Create player using BaseScene's method
+        this.createPlayer(this.LEVEL_WIDTH);
         
-        // Add debug visualization for spawn point (before creating player)
-        this.debugSpawnPoint = this.add.graphics();
-        this.debugSpawnPoint.lineStyle(2, 0xff0000);
-        this.debugSpawnPoint.strokeCircle(SPAWN_X, SPAWN_Y, 10);
-        this.debugSpawnPoint.lineStyle(2, 0x00ff00);
-        this.debugSpawnPoint.lineBetween(SPAWN_X - 15, SPAWN_Y, SPAWN_X + 15, SPAWN_Y);
-        this.debugSpawnPoint.lineBetween(SPAWN_X, SPAWN_Y - 15, SPAWN_X, SPAWN_Y + 15);
-
-        // Add debug text for camera info
-        this.debugText = this.add.text(10, 10, '', { 
-            font: '16px Arial', 
-            fill: '#ff0000',
-            backgroundColor: '#ffffff' 
-        });
-        this.debugText.setScrollFactor(0);  // Fix to camera
-
-        // Set up world physics
-        this.physics.world.gravity.y = 800;
-        
-        // Create platforms group for collision
-        this.platforms = this.physics.add.staticGroup();
-
-        // Create raycaster for laser collision detection
-        this.raycaster = {
-            createRay: (config) => {
-                return {
-                    cast: (target) => {
-                        const start = config.origin;
-                        const end = { x: target.x, y: target.y };
-                        const obstacles = target.obstacles;
-
-                        // Check if line intersects with any obstacle
-                        for (const obstacle of obstacles) {
-                            if (this.lineIntersectsRect(
-                                start.x, start.y,
-                                end.x, end.y,
-                                obstacle.x, obstacle.y,
-                                obstacle.width, obstacle.height
-                            )) {
-                                return { hasHit: true };
-                            }
-                        }
-                        return { hasHit: false };
-                    }
-                };
-            }
-        };
-
-        this.lineIntersectsRect = (x1, y1, x2, y2, rectX, rectY, rectWidth, rectHeight) => {
-            // Helper function to check if a line segment intersects with a rectangle
-            const left = rectX;
-            const right = rectX + rectWidth;
-            const top = rectY;
-            const bottom = rectY + rectHeight;
-
-            // Check if the line intersects with any of the rectangle's edges
-            return (
-                this.lineIntersectsLine(x1, y1, x2, y2, left, top, right, top) ||      // Top edge
-                this.lineIntersectsLine(x1, y1, x2, y2, right, top, right, bottom) ||  // Right edge
-                this.lineIntersectsLine(x1, y1, x2, y2, left, bottom, right, bottom) || // Bottom edge
-                this.lineIntersectsLine(x1, y1, x2, y2, left, top, left, bottom)       // Left edge
-            );
-        };
-
-        this.lineIntersectsLine = (x1, y1, x2, y2, x3, y3, x4, y4) => {
-            // Helper function to check if two line segments intersect
-            const denominator = ((x2 - x1) * (y4 - y3)) - ((y2 - y1) * (x4 - x3));
-            if (denominator === 0) return false;
-
-            const ua = (((x4 - x3) * (y1 - y3)) - ((y4 - y3) * (x1 - x3))) / denominator;
-            const ub = (((x2 - x1) * (y1 - y3)) - ((y2 - y1) * (x1 - x3))) / denominator;
-
-            return (ua >= 0 && ua <= 1) && (ub >= 0 && ub <= 1);
-        };
-
-        // Create animations
-        this.anims.create({
-            key: 'character_Idle',
-            frames: this.anims.generateFrameNumbers('character_Idle', { start: 0, end: 3 }),
-            frameRate: 8,
-            repeat: -1
-        });
-
-        this.anims.create({
-            key: 'character_Walking',
-            frames: this.anims.generateFrameNumbers('character_Walking', { start: 0, end: 5 }),
-            frameRate: 10,
-            repeat: -1
-        });
-
-        this.anims.create({
-            key: 'character_Jump',
-            frames: this.anims.generateFrameNumbers('character_Jump', { start: 0, end: 0 }),
-            frameRate: 1,
-            repeat: 0
-        });
-
-        this.anims.create({
-            key: 'character_Fall',
-            frames: this.anims.generateFrameNumbers('character_Fall', { start: 0, end: 0 }),
-            frameRate: 1,
-            repeat: 0
-        });
-
-        // Create player at spawn point
-        this.player = new Player(this, SPAWN_X, SPAWN_Y);
-        this.physics.add.existing(this.player);
+        // Ensure player has proper physics and collision
         this.player.setCollideWorldBounds(true);
+        this.physics.add.collider(this.player, layer);
 
-        // Add collision between player and platforms
-        this.physics.add.collider(this.player, this.platforms);
-
-        // Enable player controller
+        // Make sure player controller is enabled
         if (this.player.controller) {
             this.player.controller.enabled = true;
         }
-
-        // Store player spawn point for respawning
-        this.playerSpawnPoint = {
-            x: SPAWN_X,
-            y: SPAWN_Y
-        };
-
-        // Enable keyboard input
-        this.input.keyboard.enabled = true;
 
         // Add ESC key for pause menu
         this.pauseKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
@@ -352,18 +209,20 @@ export class Matrix640x360 extends BaseScene{
         this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
         this.cameras.main.setFollowOffset(0, 0);
         
+        // Update debug text with initial values
+        if (this.debugText) {
+            this.debugText.setText(
+                `Camera: ${Math.floor(this.cameras.main.scrollX)},${Math.floor(this.cameras.main.scrollY)}\n` +
+                `Player: ${Math.floor(this.player.x)},${Math.floor(this.player.y)}\n` +
+                `World Bounds: ${this.LEVEL_WIDTH}x${this.LEVEL_HEIGHT}`
+            );
+        }
+        
         // Debug rectangle to show level bounds
         this.debugBounds = this.add.graphics();
         this.debugBounds.lineStyle(2, 0x00ff00);
         this.debugBounds.strokeRect(0, 0, this.LEVEL_WIDTH, this.LEVEL_HEIGHT);
         
-        // Update debug text
-        this.debugText.setText(
-            `Camera: ${Math.floor(this.cameras.main.scrollX)},${Math.floor(this.cameras.main.scrollY)}\n` +
-            `Player: ${Math.floor(this.player.x)},${Math.floor(this.player.y)}\n` +
-            `World Bounds: ${this.LEVEL_WIDTH}x${this.LEVEL_HEIGHT}`
-        );
-
         // Initialize collision manager
         this.collisionManager = new CollisionManager(this);
 
@@ -728,6 +587,8 @@ export class Matrix640x360 extends BaseScene{
     }
 
     update(time, delta) {
+        super.update(time, delta);
+
         // Only update game elements if the game has started
         if (!this.gameStarted) return;
 
@@ -747,6 +608,15 @@ export class Matrix640x360 extends BaseScene{
 
         // Update debug visuals if enabled
         this.updateDebugVisuals();
+
+        // Update debug text if it exists
+        if (this.debugText) {
+            this.debugText.setText(
+                `Camera: ${Math.floor(this.cameras.main.scrollX)},${Math.floor(this.cameras.main.scrollY)}\n` +
+                `Player: ${Math.floor(this.player.x)},${Math.floor(this.player.y)}\n` +
+                `World Bounds: ${this.LEVEL_WIDTH}x${this.LEVEL_HEIGHT}`
+            );
+        }
 
         // Check for active slimes based on their health
         const activeSlimes = this.slimes.getChildren().filter(slime => 
