@@ -3,6 +3,11 @@ import { Scene } from 'phaser';
 export class TheZucc extends Scene {
     constructor() {
         super('TheZucc');
+        this.enemyConfig = {
+            'Slime': 0,
+            'Drone': 0,
+            'MeleeWarrior': 0
+        };
     }
 
     async create() {
@@ -11,71 +16,139 @@ export class TheZucc extends Scene {
         await this.initializeWallet();
     }
 
-    async createScene() {
-        // Enable input system
-        this.input.keyboard.enabled = true;
-        this.input.mouse.enabled = true;
-        
-        // Remove any existing input listeners
-        this.input.keyboard.removeAllKeys();
-        this.input.removeAllListeners();
-
-        // Set background color
-        this.cameras.main.setBackgroundColor('#2c3e50');
-
-        // Add title
-        const title = this.add.text(this.cameras.main.centerX, 50, 'Developer Testing Menu', {
-            fontSize: '32px',
+    createEnemyConfigSection(yOffset) {
+        const sectionX = 50;
+        const labelStyle = {
+            fontSize: '18px',
             fill: '#fff',
             fontFamily: 'Arial'
-        }).setOrigin(0.5);
+        };
+        const inputStyle = {
+            fontSize: '16px',
+            fill: '#000',
+            backgroundColor: '#fff',
+            padding: { x: 5, y: 5 },
+            fixedWidth: 40
+        };
+
+        // Add section title
+        this.add.text(sectionX, yOffset, 'Enemy Configuration:', labelStyle);
+        yOffset += 30;
+
+        // Create input fields for each enemy type
+        Object.keys(this.enemyConfig).forEach((enemyType, index) => {
+            // Enemy label
+            this.add.text(sectionX, yOffset + (index * 35), `${enemyType}:`, labelStyle);
+            
+            // Create input field
+            const input = this.add.text(sectionX + 150, yOffset + (index * 35), '0', inputStyle)
+                .setInteractive()
+                .setPadding(5)
+                .setBackgroundColor('#ffffff');
+
+            // Add + button
+            const plusBtn = this.add.text(sectionX + 200, yOffset + (index * 35), '+', labelStyle)
+                .setInteractive()
+                .setPadding(5)
+                .on('pointerdown', () => {
+                    const currentValue = parseInt(input.text);
+                    if (currentValue < 10) {
+                        input.setText((currentValue + 1).toString());
+                        this.enemyConfig[enemyType] = currentValue + 1;
+                    }
+                });
+
+            // Add - button
+            const minusBtn = this.add.text(sectionX + 230, yOffset + (index * 35), '-', labelStyle)
+                .setInteractive()
+                .setPadding(5)
+                .on('pointerdown', () => {
+                    const currentValue = parseInt(input.text);
+                    if (currentValue > 0) {
+                        input.setText((currentValue - 1).toString());
+                        this.enemyConfig[enemyType] = currentValue - 1;
+                    }
+                });
+
+            // Add hover effects
+            [plusBtn, minusBtn].forEach(btn => {
+                btn.on('pointerover', () => btn.setBackgroundColor('#2980b9'))
+                   .on('pointerout', () => btn.setBackgroundColor(null));
+            });
+        });
+
+        return yOffset + (Object.keys(this.enemyConfig).length * 35) + 20;
+    }
+
+    async createScene() {
+        const { width, height } = this.scale;
+
+        // Add background
+        const bg = this.add.rectangle(0, 0, width, height, 0x000000);
+        bg.setOrigin(0);
+
+        // Add title
+        const titleStyle = {
+            fontSize: '32px',
+            fill: '#fff',
+            fontFamily: 'Arial',
+            align: 'center'
+        };
+        this.add.text(width / 2, 50, 'THE ZUCC', titleStyle).setOrigin(0.5);
 
         // Define scene categories and their scenes
         const sceneCategories = {
-            'Levels': [
-                'GameScene1',
-                'GameScene2',
-                'GameScene3',
-                'GameScene4',
-                'GameScene5',
-                'Matrix640x360'
-            ],
-            'Menus': [
-                'MainMenu',
-                'Settings',
-                'ControlsSettingsScene',
-                'Leaderboard',
-                'MissionComplete'
-            ],
-            'Other': [
-                'Boot',
-                'Preloader',
-                'TitleScene'
-            ]
+            'ZUCC TESTING': {
+                scenes: ['Matrix640x360'],
+                showConfig: true  // Flag to show enemy config
+            },
+            'Levels': {
+                scenes: [
+                    'GameScene1',
+                    'GameScene2',
+                    'GameScene3',
+                    'GameScene4',
+                    'GameScene5'
+                ],
+                showConfig: false
+            },
+            'Menus': {
+                scenes: [
+                    'MainMenu',
+                    'Credits'
+                ],
+                showConfig: false
+            }
         };
 
-        let yOffset = 120;
+        // Style for category headers
+        const categoryStyle = {
+            fontSize: '24px',
+            fill: '#fff',
+            fontFamily: 'Arial'
+        };
+
+        // Style for scene buttons
         const buttonStyle = {
-            fontSize: '16px',
+            fontSize: '18px',
             fill: '#fff',
             backgroundColor: '#34495e',
             padding: { x: 10, y: 5 }
         };
 
-        // Create buttons for each category
-        for (const [category, scenes] of Object.entries(sceneCategories)) {
-            // Add category title
-            this.add.text(50, yOffset, category, {
-                fontSize: '24px',
-                fill: '#fff',
-                fontFamily: 'Arial'
-            });
-            
+        let yOffset = 120;
+
+        // Create sections for each category
+        for (const [category, config] of Object.entries(sceneCategories)) {
+            // Add category header
+            this.add.text(50, yOffset, category, categoryStyle);
             yOffset += 40;
+
+            // Add scene buttons
             let xOffset = 50;
-            
-            // Create buttons for each scene in the category
-            scenes.forEach((sceneName, index) => {
+            const maxWidth = width - 100;
+
+            config.scenes.forEach(sceneName => {
                 const button = this.add.text(xOffset, yOffset, sceneName, buttonStyle)
                     .setInteractive()
                     .setPadding(10)
@@ -84,46 +157,48 @@ export class TheZucc extends Scene {
                     .on('pointerout', () => button.setBackgroundColor('#34495e'))
                     .on('pointerdown', () => {
                         console.log(`Launching scene: ${sceneName}`);
-                        this.scene.start(sceneName);
+                        if (sceneName === 'Matrix640x360') {
+                            // Pass enemy configuration to the Matrix scene
+                            this.scene.start(sceneName, { enemyConfig: this.enemyConfig });
+                        } else {
+                            this.scene.start(sceneName);
+                        }
                     });
 
                 xOffset += button.width + 20;
-                
-                // New row after 3 buttons
-                if ((index + 1) % 3 === 0) {
+
+                // Move to next row if we exceed max width
+                if (xOffset > maxWidth) {
                     xOffset = 50;
                     yOffset += 40;
                 }
             });
             
-            yOffset += 60;
+            // Add enemy configuration section if this category needs it
+            if (config.showConfig) {
+                yOffset += 40;  // Add some space before the config section
+                yOffset = this.createEnemyConfigSection(yOffset);
+            }
+            
+            yOffset += 60;  // Space between categories
         }
 
-        // Add a reset button at the bottom
-        const resetButton = this.add.text(
-            this.cameras.main.centerX,
-            yOffset,
-            'Reset Game State',
-            {
-                fontSize: '20px',
-                fill: '#fff',
-                backgroundColor: '#c0392b',
-                padding: { x: 15, y: 10 }
-            }
-        )
+        // Add back button at the bottom
+        const backButton = this.add.text(width / 2, height - 50, 'BACK TO MAIN MENU', {
+            fontSize: '24px',
+            fill: '#fff',
+            backgroundColor: '#c0392b',
+            padding: { x: 15, y: 10 }
+        })
         .setOrigin(0.5)
         .setInteractive()
         .setPadding(10)
         .setBackgroundColor('#c0392b')
-        .on('pointerover', () => resetButton.setBackgroundColor('#e74c3c'))
-        .on('pointerout', () => resetButton.setBackgroundColor('#c0392b'))
+        .on('pointerover', () => backButton.setBackgroundColor('#e74c3c'))
+        .on('pointerout', () => backButton.setBackgroundColor('#c0392b'))
         .on('pointerdown', () => {
-            // Reset all game state
-            this.registry.set('lives', 3);
-            this.registry.set('playerHP', 100);
-            this.registry.set('score', 0);
-            this.registry.set('bitcoins', 0);
-            console.log('Game state reset');
+            this.scene.stop('TheZucc');
+            this.scene.start('MainMenu');
         });
     }
 
