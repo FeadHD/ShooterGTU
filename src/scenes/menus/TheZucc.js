@@ -2,11 +2,21 @@ import { Scene } from 'phaser';
 
 export class TheZucc extends Scene {
     constructor() {
-        super('TheZucc');
+        super({ key: 'TheZucc' });
         this.enemyConfig = {
             'Slime': 0,
             'Drone': 0,
             'MeleeWarrior': 0
+        };
+        // Add procedural configuration
+        this.proceduralConfig = {
+            gridWidth: 20,
+            gridHeight: 12,
+            minPlatformWidth: 3,
+            maxPlatformWidth: 8,
+            platformDensity: 0.6,
+            minGapWidth: 3, // In tiles
+            maxGapWidth: 5  // In tiles
         };
     }
 
@@ -188,7 +198,7 @@ export class TheZucc extends Scene {
             // Add procedural configuration section if this category needs it
             if (config.showProcedural) {
                 yOffset += 40;  // Add some space before the config section
-                yOffset = this.createProceduralSection(yOffset);
+                yOffset = this.addProceduralControls(yOffset);
             }
             
             yOffset += 60;  // Space between categories
@@ -213,9 +223,9 @@ export class TheZucc extends Scene {
         });
     }
 
-    createProceduralSection(yOffset) {
+    addProceduralControls(yOffset) {
         const labelStyle = {
-            fontSize: '18px',
+            fontSize: '20px',
             fill: '#fff',
             fontFamily: 'Arial'
         };
@@ -227,17 +237,136 @@ export class TheZucc extends Scene {
             padding: { x: 10, y: 5 }
         };
 
-        // Add section title
-        this.add.text(50, yOffset, 'Procedural Configuration:', labelStyle);
+        this.add.text(50, yOffset, 'Procedural Level Settings:', labelStyle);
         yOffset += 40;
 
-        // Add description
-        this.add.text(50, yOffset, 'Configure procedural scene generation:', labelStyle);
-        yOffset += 30;
+        // Platform Width Controls
+        this.add.text(50, yOffset, 'Min Platform Width:', labelStyle);
+        const minPlatformText = this.add.text(250, yOffset, this.proceduralConfig.minPlatformWidth.toString(), buttonStyle)
+            .setInteractive()
+            .setPadding(10);
 
-        // We'll add the actual configuration controls in the next step
-        // For now, just return the updated yOffset
-        return yOffset;
+        this.add.text(350, yOffset, '+', buttonStyle)
+            .setInteractive()
+            .setPadding(10)
+            .on('pointerdown', () => {
+                if (this.proceduralConfig.minPlatformWidth < this.proceduralConfig.maxPlatformWidth - 1) {
+                    this.proceduralConfig.minPlatformWidth++;
+                    minPlatformText.setText(this.proceduralConfig.minPlatformWidth.toString());
+                }
+            });
+
+        this.add.text(400, yOffset, '-', buttonStyle)
+            .setInteractive()
+            .setPadding(10)
+            .on('pointerdown', () => {
+                if (this.proceduralConfig.minPlatformWidth > 2) {
+                    this.proceduralConfig.minPlatformWidth--;
+                    minPlatformText.setText(this.proceduralConfig.minPlatformWidth.toString());
+                }
+            });
+        yOffset += 40;
+
+        // Max Platform Width Controls
+        this.add.text(50, yOffset, 'Max Platform Width:', labelStyle);
+        const maxPlatformText = this.add.text(250, yOffset, this.proceduralConfig.maxPlatformWidth.toString(), buttonStyle)
+            .setInteractive()
+            .setPadding(10);
+
+        this.add.text(350, yOffset, '+', buttonStyle)
+            .setInteractive()
+            .setPadding(10)
+            .on('pointerdown', () => {
+                if (this.proceduralConfig.maxPlatformWidth < 12) {
+                    this.proceduralConfig.maxPlatformWidth++;
+                    maxPlatformText.setText(this.proceduralConfig.maxPlatformWidth.toString());
+                }
+            });
+
+        this.add.text(400, yOffset, '-', buttonStyle)
+            .setInteractive()
+            .setPadding(10)
+            .on('pointerdown', () => {
+                if (this.proceduralConfig.maxPlatformWidth > this.proceduralConfig.minPlatformWidth + 1) {
+                    this.proceduralConfig.maxPlatformWidth--;
+                    maxPlatformText.setText(this.proceduralConfig.maxPlatformWidth.toString());
+                }
+            });
+        yOffset += 40;
+
+        // Platform Density Controls
+        this.add.text(50, yOffset, 'Platform Density:', labelStyle);
+        const densityText = this.add.text(250, yOffset, this.proceduralConfig.platformDensity.toFixed(1), buttonStyle)
+            .setInteractive()
+            .setPadding(10);
+
+        this.add.text(350, yOffset, '+', buttonStyle)
+            .setInteractive()
+            .setPadding(10)
+            .on('pointerdown', () => {
+                if (this.proceduralConfig.platformDensity < 0.9) {
+                    this.proceduralConfig.platformDensity += 0.1;
+                    densityText.setText(this.proceduralConfig.platformDensity.toFixed(1));
+                }
+            });
+
+        this.add.text(400, yOffset, '-', buttonStyle)
+            .setInteractive()
+            .setPadding(10)
+            .on('pointerdown', () => {
+                if (this.proceduralConfig.platformDensity > 0.2) {
+                    this.proceduralConfig.platformDensity -= 0.1;
+                    densityText.setText(this.proceduralConfig.platformDensity.toFixed(1));
+                }
+            });
+        yOffset += 40;
+
+        // Gap Width Controls
+        this.add.text(50, yOffset, 'Min Gap Width:', labelStyle);
+        const minGapText = this.add.text(250, yOffset, this.proceduralConfig.minGapWidth.toString(), buttonStyle)
+            .setInteractive()
+            .setPadding(10);
+
+        this.add.text(350, yOffset, '+', buttonStyle)
+            .setInteractive()
+            .setPadding(10)
+            .on('pointerdown', () => {
+                if (this.proceduralConfig.minGapWidth < this.proceduralConfig.maxGapWidth - 1) {
+                    this.proceduralConfig.minGapWidth++;
+                    minGapText.setText(this.proceduralConfig.minGapWidth.toString());
+                }
+            });
+
+        this.add.text(400, yOffset, '-', buttonStyle)
+            .setInteractive()
+            .setPadding(10)
+            .on('pointerdown', () => {
+                if (this.proceduralConfig.minGapWidth > 2) {
+                    this.proceduralConfig.minGapWidth--;
+                    minGapText.setText(this.proceduralConfig.minGapWidth.toString());
+                }
+            });
+        yOffset += 40;
+
+        // Test Button
+        const testButton = this.add.text(50, yOffset, 'Test Procedural Level', {
+            fontSize: '24px',
+            fill: '#fff',
+            backgroundColor: '#2ecc71',
+            padding: { x: 15, y: 10 }
+        })
+        .setInteractive()
+        .setPadding(10)
+        .on('pointerdown', () => {
+            console.log('Starting procedural level with config:', this.proceduralConfig);
+            this.scene.start('Matrix640x360', { 
+                procedural: true,
+                proceduralConfig: this.proceduralConfig,
+                enemyConfig: this.enemyConfig 
+            });
+        });
+
+        return yOffset + 60;
     }
 
     async initializeWallet() {

@@ -12,6 +12,7 @@ import { EffectsManager } from '../../modules/managers/EffectsManager';
 import { EnemyManager } from '../../modules/managers/EnemyManager';
 import { Bullet } from '../../prefabs/Bullet';
 import { Player } from '../../prefabs/Player'; // Changed to named import
+import { ProceduralGenerator } from '../../scripts/ProceduralGenerator';
 
 export class Matrix640x360 extends BaseScene{
     constructor() {
@@ -56,7 +57,6 @@ export class Matrix640x360 extends BaseScene{
     }
 
     create() {
-        // Call parent create first to set up base systems
         super.create();
         
         // Set up world bounds and physics
@@ -94,9 +94,25 @@ export class Matrix640x360 extends BaseScene{
         this.slimes = this.add.group();
         this.drones = this.add.group();
         this.bitcoins = this.add.group();
+        this.bullets = this.physics.add.group({
+            classType: Bullet,
+            maxSize: 10,
+            runChildUpdate: true
+        });
 
         // Initialize collision manager
         this.collisionManager = new CollisionManager(this);
+
+        // Set up animation manager and create all animations
+        this.animationManager = new AnimationManager(this);
+        this.animationManager.createAllAnimations();
+
+        // Check if we should generate a procedural level
+        if (this.scene.settings.data && this.scene.settings.data.procedural) {
+            this.createProceduralLevel(this.scene.settings.data.proceduralConfig);
+        } else {
+            this.createStaticLevel();
+        }
 
         // Add debug text for camera info
         this.debugText = this.add.text(10, 10, '', { 
@@ -310,6 +326,98 @@ export class Matrix640x360 extends BaseScene{
         this.debugGraphics = this.add.graphics();
     }
 
+    createProceduralLevel(config) {
+        // Create procedural generator
+        const generator = new ProceduralGenerator(config);
+        const level = generator.generateLevel();
+
+        // Create tilemap for the procedural level
+        const map = this.make.tilemap({
+            width: config.gridWidth,
+            height: config.gridHeight,
+            tileWidth: 32,
+            tileHeight: 32
+        });
+
+        // Add the tileset
+        const tileset = map.addTilesetImage('megapixel');
+        const layer = map.createBlankLayer('level', tileset);
+
+        // Place tiles according to the generated grid
+        for (let y = 0; y < config.gridHeight; y++) {
+            for (let x = 0; x < config.gridWidth; x++) {
+                const tileIndex = generator.grid[y][x];
+                if (tileIndex !== 0) {
+                    const tile = layer.putTileAt(tileIndex, x, y);
+                    if (tile) {
+                        tile.setCollision(true);
+                    }
+                }
+            }
+        }
+
+        // Get spawn and end points
+        const spawnPoint = generator.getSpawnPoint(level.platforms);
+        const endPoint = generator.getEndPoint(level.platforms);
+
+        // Create player at spawn point
+        this.player = new Player(this, spawnPoint.x * 32, spawnPoint.y * 32);
+
+        // Generate enemy positions
+        const enemyPositions = generator.generateEnemyPositions(level.platforms, spawnPoint, endPoint);
+
+        // Place enemies
+        enemyPositions.forEach(pos => {
+            const x = pos.x * 32;
+            const y = pos.y * 32;
+            switch (pos.type) {
+                case 'slime':
+                    this.createAndInitSlime(x, y);
+                    break;
+                case 'drone':
+                    this.createAndInitDrone(x, y);
+                    break;
+                case 'warrior':
+                    this.createAndInitWarrior(x, y);
+                    break;
+            }
+        });
+
+        // Set up collisions
+        if (this.collisionManager) {
+            this.physics.add.collider(this.player, layer);
+            this.physics.add.collider(this.enemies, layer);
+            this.physics.add.collider(this.enemies, this.enemies);
+            
+            // Set up player-enemy collision
+            this.physics.add.overlap(this.player, this.enemies, (player, enemy) => {
+                if (enemy.getData('enemy') && !this.isDying) {
+                    this.hitEnemy(player, enemy);
+                }
+            }, null, this);
+            
+            // Set up bullet-enemy collision
+            this.physics.add.overlap(this.bullets, this.enemies, (bullet, enemySprite) => {
+                const enemy = enemySprite.getData('enemy');
+                if (enemy && enemy.takeDamage) {
+                    enemy.takeDamage(1);
+                    bullet.destroy();
+                }
+            }, null, this);
+        }
+
+        // Set camera bounds
+        this.cameras.main.setBounds(0, 0, config.gridWidth * 32, config.gridHeight * 32);
+        this.cameras.main.startFollow(this.player);
+
+        // Start the game
+        this.startGame();
+    }
+
+    createStaticLevel() {
+        // Existing static level creation code...
+    }
+
     initializeGameElements() {
         // Get enemy configuration from scene data
         const enemyConfig = this.scene.settings.data?.enemyConfig || {
@@ -367,34 +475,39 @@ export class Matrix640x360 extends BaseScene{
 
     createAndInitSlime(x, y) {
         const slime = new Slime(this, x, y);
-        this.slimes.add(slime);
-        this.enemies.add(slime);
-        
-        // Set up slime physics
-        slime.setCollideWorldBounds(true);
-        slime.setBounce(0.2);
-        slime.setGravityY(300);
-        
+        if (slime.sprite) {
+            this.slimes.add(slime.sprite);
+            this.enemies.add(slime.sprite);
+            slime.sprite.setData('enemy', slime);
+        }
         return slime;
+    }
+
+    createAndInitDrone(x, y) {
+        const drone = new Drone(this, x, y);
+        if (drone.sprite) {
+            this.drones.add(drone.sprite);
+            this.enemies.add(drone.sprite);
+            drone.sprite.setData('enemy', drone);
+        }
+        return drone;
     }
 
     createAndInitWarrior(x, y) {
         const warrior = new MeleeWarrior(this, x, y);
-        this.enemies.add(warrior);
-        warrior.setData('type', 'warrior');
-        warrior.setData('enemy', warrior);
-        
-        // Add warrior-specific debug data
-        warrior.setData('health', warrior.maxHealth);
-        warrior.setData('maxHealth', warrior.maxHealth);
-        warrior.setData('isAttacking', false);
-        warrior.setData('direction', warrior.direction);
-        warrior.setData('detectionRange', warrior.detectionRange);
-        warrior.setData('attackRange', warrior.attackRange);
-        
-        // Add warrior to enemy manager
-        this.enemyManager.addEnemy(warrior, warrior, warrior.maxHealth);
-
+        if (warrior.sprite) {
+            this.enemies.add(warrior.sprite);
+            warrior.sprite.setData('type', 'warrior');
+            warrior.sprite.setData('enemy', warrior);
+            
+            // Add warrior-specific debug data
+            warrior.sprite.setData('health', warrior.maxHealth);
+            warrior.sprite.setData('maxHealth', warrior.maxHealth);
+            warrior.sprite.setData('isAttacking', false);
+            warrior.sprite.setData('direction', warrior.direction);
+            warrior.sprite.setData('detectionRange', warrior.detectionRange);
+            warrior.sprite.setData('attackRange', warrior.attackRange);
+        }
         return warrior;
     }
 

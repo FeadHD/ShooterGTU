@@ -6,22 +6,23 @@ export class ProceduralGenerator {
     constructor(config = {}) {
         // Default configuration
         this.config = {
-            width: 640,
-            height: 360,
-            minPlatformWidth: 64,
-            maxPlatformWidth: 160,
+            gridWidth: 20,
+            gridHeight: 12,
+            minPlatformWidth: 3,
+            maxPlatformWidth: 8,
             minGapWidth: 96,
             maxGapWidth: 160,
             minPlatformHeight: 32,
             platformDensity: 0.6,
+            // WannabeeTileset solid tiles (these are the solid platform tiles)
+            solidTileIndices: [26, 27, 28, 29, 30, 31], // Add all solid tile indices from WannabeeTileset
             ...config
         };
 
         // Grid system for level generation (32x32 tiles)
-        this.gridSize = 32;
-        this.gridWidth = Math.ceil(this.config.width / this.gridSize);
-        this.gridHeight = Math.ceil(this.config.height / this.gridSize);
-        this.grid = Array(this.gridHeight).fill().map(() => Array(this.gridWidth).fill(0));
+        this.grid = Array(this.config.gridHeight).fill().map(() => 
+            Array(this.config.gridWidth).fill(0)
+        );
     }
 
     /**
@@ -31,14 +32,16 @@ export class ProceduralGenerator {
      */
     generateLevel(params = {}) {
         // Reset grid
-        this.grid = Array(this.gridHeight).fill().map(() => Array(this.gridWidth).fill(0));
+        this.grid = Array(this.config.gridHeight).fill().map(() => 
+            Array(this.config.gridWidth).fill(0)
+        );
         
         // Generate base platforms
         const platforms = this.generatePlatforms();
         
         // Generate spawn and end points
-        const spawnPoint = this.findSpawnPoint(platforms);
-        const endPoint = this.findEndPoint(platforms, spawnPoint);
+        const spawnPoint = this.getSpawnPoint(platforms);
+        const endPoint = this.getEndPoint(platforms);
         
         // Generate enemy spawn positions
         const enemyPositions = this.generateEnemyPositions(platforms, spawnPoint, endPoint);
@@ -63,13 +66,13 @@ export class ProceduralGenerator {
         // Always add a starting platform
         platforms.push({
             x: 0,
-            y: this.config.height - this.config.minPlatformHeight * 2,
+            y: this.config.gridHeight - 2,
             width: this.config.minPlatformWidth,
             height: this.config.minPlatformHeight
         });
 
         // Generate platforms until we reach the level width
-        while (currentX < this.config.width) {
+        while (currentX < this.config.gridWidth) {
             // Generate platform
             const platformWidth = Math.floor(
                 Math.random() * (this.config.maxPlatformWidth - this.config.minPlatformWidth) + 
@@ -78,20 +81,20 @@ export class ProceduralGenerator {
             
             // Random height but ensure it's jumpable
             const platformHeight = Math.floor(
-                Math.random() * (this.config.height / 3) + 
-                this.config.height / 2
+                Math.random() * (this.config.gridHeight / 3) + 
+                this.config.gridHeight / 2
             );
 
             // Add gap between platforms
             const gapWidth = Math.floor(
-                Math.random() * (this.config.maxGapWidth - this.config.minGapWidth) + 
-                this.config.minGapWidth
+                Math.random() * (this.config.maxGapWidth / 32 - this.config.minGapWidth / 32) + 
+                this.config.minGapWidth / 32
             );
 
             currentX += gapWidth;
 
             // Add platform if it fits
-            if (currentX + platformWidth <= this.config.width) {
+            if (currentX + platformWidth <= this.config.gridWidth) {
                 platforms.push({
                     x: currentX,
                     y: platformHeight,
@@ -100,7 +103,7 @@ export class ProceduralGenerator {
                 });
 
                 // Update grid
-                this.updateGrid(currentX, platformHeight, platformWidth, this.config.minPlatformHeight);
+                this.addPlatform(currentX, platformHeight, platformWidth, this.config.minPlatformHeight);
             }
 
             currentX += platformWidth;
@@ -109,73 +112,69 @@ export class ProceduralGenerator {
         return platforms;
     }
 
-    /**
-     * Updates the grid with platform positions
-     */
-    updateGrid(x, y, width, height) {
-        const startX = Math.floor(x / this.gridSize);
-        const startY = Math.floor(y / this.gridSize);
-        const endX = Math.ceil((x + width) / this.gridSize);
-        const endY = Math.ceil((y + height) / this.gridSize);
+    addPlatform(startX, startY, width, height) {
+        const endX = Math.min(startX + width, this.config.gridWidth);
+        const endY = Math.min(startY + height, this.config.gridHeight);
 
-        for (let gridY = startY; gridY < endY && gridY < this.gridHeight; gridY++) {
-            for (let gridX = startX; gridX < endX && gridX < this.gridWidth; gridX++) {
-                this.grid[gridY][gridX] = 1;
+        for (let gridY = startY; gridY < endY && gridY < this.config.gridHeight; gridY++) {
+            for (let gridX = startX; gridX < endX && gridX < this.config.gridWidth; gridX++) {
+                // Randomly select a solid tile index from our list
+                const randomSolidTileIndex = this.config.solidTileIndices[
+                    Math.floor(Math.random() * this.config.solidTileIndices.length)
+                ];
+                this.grid[gridY][gridX] = randomSolidTileIndex;
             }
         }
     }
 
-    /**
-     * Finds a suitable spawn point for the player
-     */
-    findSpawnPoint(platforms) {
-        // Usually the first platform is a good spawn point
+    getSpawnPoint(platforms) {
+        // Get the first platform as the spawn platform
         const startPlatform = platforms[0];
         return {
-            x: startPlatform.x + startPlatform.width / 4,
-            y: startPlatform.y - this.gridSize
+            x: startPlatform.x + 2, // Place player near the start of the platform
+            y: startPlatform.y - 2  // Place player above the platform
         };
     }
 
-    /**
-     * Finds a suitable end point for the level
-     */
-    findEndPoint(platforms, spawnPoint) {
-        // Usually the last platform is a good end point
+    getEndPoint(platforms) {
+        // Get the last platform as the end platform
         const endPlatform = platforms[platforms.length - 1];
         return {
-            x: endPlatform.x + endPlatform.width / 2,
-            y: endPlatform.y - this.gridSize
+            x: endPlatform.x + Math.floor(endPlatform.width / 2), // Place end point in middle of platform
+            y: endPlatform.y - 2  // Place end point above the platform
         };
     }
 
-    /**
-     * Generates positions for enemy spawns
-     */
+    getRandomEnemyType() {
+        const types = ['slime', 'drone', 'warrior'];
+        return types[Math.floor(Math.random() * types.length)];
+    }
+
     generateEnemyPositions(platforms, spawnPoint, endPoint) {
         const enemyPositions = [];
-        const minDistanceFromSpawn = 200; // Minimum distance from spawn point
+        const minDistanceFromSpawn = 5; // Minimum distance in tiles from spawn point
 
         platforms.forEach((platform, index) => {
-            // Skip the first and last platforms
-            if (index === 0 || index === platforms.length - 1) return;
+            // Skip the first and last platforms (spawn and end platforms)
+            if (index === 0 || index === platforms.length - 1) {
+                return;
+            }
 
-            // Calculate distance from spawn
-            const distanceFromSpawn = Math.sqrt(
-                Math.pow(platform.x - spawnPoint.x, 2) + 
-                Math.pow(platform.y - spawnPoint.y, 2)
-            );
+            // Calculate distance from spawn point
+            const distanceFromSpawn = Math.abs(platform.x - spawnPoint.x);
 
             // Only place enemies if platform is far enough from spawn
             if (distanceFromSpawn > minDistanceFromSpawn) {
                 // Add 1-2 enemies per platform based on platform width
-                const enemyCount = Math.floor(platform.width / (this.gridSize * 3));
-                
+                const maxEnemies = Math.min(Math.floor(platform.width / 3), 2);
+                const enemyCount = Math.max(1, maxEnemies);
+
                 for (let i = 0; i < enemyCount; i++) {
-                    const x = platform.x + (platform.width / (enemyCount + 1)) * (i + 1);
+                    // Space enemies evenly across the platform
+                    const x = platform.x + Math.floor((platform.width * (i + 1)) / (enemyCount + 1));
                     enemyPositions.push({
-                        x,
-                        y: platform.y - this.gridSize,
+                        x: x,
+                        y: platform.y - 1,
                         type: this.getRandomEnemyType()
                     });
                 }
@@ -183,16 +182,6 @@ export class ProceduralGenerator {
         });
 
         return enemyPositions;
-    }
-
-    /**
-     * Returns a random enemy type based on predefined probabilities
-     */
-    getRandomEnemyType() {
-        const rand = Math.random();
-        if (rand < 0.4) return 'Slime';
-        if (rand < 0.7) return 'Drone';
-        return 'MeleeWarrior';
     }
 
     /**
@@ -210,5 +199,12 @@ export class ProceduralGenerator {
         if (platforms.length < 3) return false;
 
         return true;
+    }
+
+    checkCollision(x, y) {
+        if (x < 0 || x >= this.config.gridWidth || y < 0 || y >= this.config.gridHeight) {
+            return true;
+        }
+        return this.grid[y][x] !== 0;
     }
 }
