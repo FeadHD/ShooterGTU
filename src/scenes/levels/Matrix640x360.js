@@ -13,6 +13,7 @@ import { EnemyManager } from '../../modules/managers/EnemyManager';
 import { Bullet } from '../../prefabs/Bullet';
 import { Player } from '../../prefabs/Player'; // Changed to named import
 import { ProceduralGenerator } from '../../scripts/ProceduralGenerator';
+import { GameUI } from '../elements/GameUI';
 
 export class Matrix640x360 extends BaseScene{
     constructor() {
@@ -28,6 +29,11 @@ export class Matrix640x360 extends BaseScene{
     }
 
     preload() {
+        super.preload();
+
+        // Load fonts
+        this.load.script('webfont', 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js');
+        
         // Load tileset as spritesheet
         this.load.spritesheet('megapixel', '/assets/levels/image/WannabeeTileset.png', {
             frameWidth: 32,
@@ -57,273 +63,286 @@ export class Matrix640x360 extends BaseScene{
     }
 
     create() {
-        super.create();
-        
-        // Set up world bounds and physics
-        this.physics.world.setBounds(0, 0, 640, 360);
-        
-        // Set scene background color
-        this.cameras.main.setBackgroundColor('#ffffff');
-        
-        // Add semi-transparent white background
-        const bg = this.add.rectangle(320, 180, 640, 360, 0xFFFFFF);
-        bg.setAlpha(0.5);  // 50% transparency
-        bg.setDepth(-1);   // Keep it at the back
-
-        // Define spawn position constants
-        const SPAWN_X_PERCENTAGE = 0.1;  // 10% from left edge
-        const SPAWN_Y = 100;             // Higher up to avoid tiles
-        
-        // Set spawn point for this level
-        this.playerSpawnPoint = {
-            x: this.scale.width * SPAWN_X_PERCENTAGE,
-            y: SPAWN_Y
-        };
-        
-        // Move player to spawn point
-        if (this.player) {
-            this.player.setPosition(this.playerSpawnPoint.x, this.playerSpawnPoint.y);
-            this.player.setVelocity(0, 0);  // Ensure player starts stationary
-        }
-
-        // Create debug graphics for spawn point visualization
-        this.debugGraphics = this.add.graphics();
-        
-        // Initialize groups
-        this.enemies = this.add.group();
-        this.slimes = this.add.group();
-        this.drones = this.add.group();
-        this.bitcoins = this.add.group();
-        this.bullets = this.physics.add.group({
-            classType: Bullet,
-            maxSize: 10,
-            runChildUpdate: true
-        });
-
-        // Initialize collision manager
-        this.collisionManager = new CollisionManager(this);
-
-        // Set up animation manager and create all animations
-        this.animationManager = new AnimationManager(this);
-        this.animationManager.createAllAnimations();
-
-        // Check if we should generate a procedural level
-        if (this.scene.settings.data && this.scene.settings.data.procedural) {
-            this.createProceduralLevel(this.scene.settings.data.proceduralConfig);
-        } else {
-            this.createStaticLevel();
-        }
-
-        // Add debug text for camera info
-        this.debugText = this.add.text(10, 10, '', { 
-            font: '16px Arial', 
-            fill: '#ff0000',
-            backgroundColor: '#ffffff' 
-        });
-        this.debugText.setScrollFactor(0);  // Fix to camera
-        this.debugText.setDepth(1000);      // Keep on top
-
-        // Load level data from LDtk
-        const levelData = this.cache.json.get('matrix');
-        
-        if (!levelData || !levelData.layerInstances) {
-            console.error('Invalid level data:', levelData);
-            return;
-        }
-
-        // Get the layer instance for WannabeeTileset layer
-        const tileLayer = levelData.layerInstances.find(layer => layer.__identifier === "WannabeeTileset");
-        
-        if (!tileLayer) {
-            console.error('WannabeeTileset layer not found');
-            return;
-        }
-
-        // Create a tilemap for collision handling
-        const map = this.make.tilemap({
-            width: Math.ceil(levelData.pxWid / tileLayer.__gridSize),
-            height: Math.ceil(levelData.pxHei / tileLayer.__gridSize),
-            tileWidth: tileLayer.__gridSize,
-            tileHeight: tileLayer.__gridSize
-        });
-
-        // Add the tileset image to the map
-        const tileset = map.addTilesetImage('megapixel');
-        
-        // Create a static layer for collisions
-        const layer = map.createBlankLayer('collision', tileset);
-        if (!layer) {
-            console.error('Failed to create collision layer');
-            return;
-        }
-
-        // Create a group for visual tiles
-        this.tileLayer = this.add.group();
-
-        // Helper function to convert source coordinates to frame index
-        const getFrameFromSrc = (src) => {
-            const tilesPerRow = 25; // Number of tiles per row in the tileset
-            const tileX = src[0] / tileLayer.__gridSize;
-            const tileY = src[1] / tileLayer.__gridSize;
-            return tileY * tilesPerRow + tileX;
-        };
-
-        // Place tiles according to the LDtk data
-        if (tileLayer.gridTiles) {
-            const placeTilesPromise = Promise.all(tileLayer.gridTiles.map(tile => {
-                const frameIndex = getFrameFromSrc(tile.src);
+        // Load fonts before initializing UI
+        WebFont.load({
+            google: {
+                families: ['Press Start 2P']
+            },
+            active: () => {
+                // Don't call super.create() since we'll handle player creation ourselves
+                // super.create();
                 
-                // Create visual sprite
-                const tileSprite = this.add.sprite(
-                    tile.px[0],  // x position
-                    tile.px[1],  // y position
-                    'megapixel',
-                    frameIndex
-                );
-                tileSprite.setOrigin(0);
-                this.tileLayer.add(tileSprite);
+                // Set up world bounds and physics
+                this.physics.world.setBoundsCollision(true, true, true, true);
+                
+                // Set scene background color
+                this.cameras.main.setBackgroundColor('#ffffff');
+                
+                // Add semi-transparent white background
+                const bg = this.add.rectangle(320, 180, 640, 360, 0xFFFFFF);
+                bg.setAlpha(0.5);  // 50% transparency
+                bg.setDepth(-1);   // Keep it at the back
 
-                // Add collision tile
-                const tileX = Math.floor(tile.px[0] / tileLayer.__gridSize);
-                const tileY = Math.floor(tile.px[1] / tileLayer.__gridSize);
-                const collisionTile = layer.putTileAt(frameIndex, tileX, tileY);
-                if (collisionTile) {
-                    collisionTile.setCollision(true);
+                // Initialize groups
+                this.enemies = this.add.group();
+                this.slimes = this.add.group();
+                this.drones = this.add.group();
+                this.bitcoins = this.add.group();
+                this.bullets = this.physics.add.group({
+                    classType: Bullet,
+                    maxSize: 10,
+                    runChildUpdate: true
+                });
+
+                // Initialize managers
+                this.collisionManager = new CollisionManager(this);
+                this.animationManager = new AnimationManager(this);
+                this.effectsManager = new EffectsManager(this);
+                this.stateManager = new StateManager(this);
+                this.animationManager.createAllAnimations();
+
+                // Initialize game state
+                this.stateManager.set('playerHP', 100);
+                this.stateManager.set('score', 0);
+                this.stateManager.set('bitcoins', 0);
+
+                // Initialize UI
+                this.gameUI = new GameUI(this);
+
+                // Define spawn position constants
+                const SPAWN_X_PERCENTAGE = 0.1;  // 10% from left edge
+                const SPAWN_Y = 100;             // Higher up to avoid tiles
+                
+                // Set spawn point for this level
+                this.playerSpawnPoint = {
+                    x: this.scale.width * SPAWN_X_PERCENTAGE,
+                    y: SPAWN_Y
+                };
+
+                // Create the player
+                this.player = new Player(this, this.playerSpawnPoint.x, this.playerSpawnPoint.y);
+                this.player.setPosition(this.playerSpawnPoint.x, this.playerSpawnPoint.y);
+                this.player.setVelocity(0, 0);  // Ensure player starts stationary
+
+                // Check if we should generate a procedural level
+                if (this.scene.settings.data && this.scene.settings.data.procedural) {
+                    this.createProceduralLevel(this.scene.settings.data.proceduralConfig);
+                } else {
+                    this.createStaticLevel();
                 }
-                return Promise.resolve();
-            }));
 
-            // Wait for all tiles to be placed before showing the scene
-            placeTilesPromise.then(() => {
-                // Set up all collisions
-                if (this.collisionManager) {
-                    // Set up basic collisions with the player from BaseScene
-                    this.physics.add.collider(this.player, layer);
-                    this.physics.add.collider(this.enemies, layer);
-                    this.physics.add.collider(this.enemies, this.enemies);
-                    
-                    // Set up player-enemy collision
-                    this.physics.add.overlap(this.player, this.enemies, (player, enemy) => {
-                        if (enemy.getData('enemy') && !this.isDying) {
-                            this.hitEnemy(player, enemy);
+                // Add debug text for camera info
+                this.debugText = this.add.text(10, 10, '', { 
+                    font: '16px Arial', 
+                    fill: '#ff0000',
+                    backgroundColor: '#ffffff' 
+                });
+                this.debugText.setScrollFactor(0);  // Fix to camera
+                this.debugText.setDepth(1000);      // Keep on top
+
+                // Load level data from LDtk
+                const levelData = this.cache.json.get('matrix');
+        
+                if (!levelData || !levelData.layerInstances) {
+                    console.error('Invalid level data:', levelData);
+                    return;
+                }
+
+                // Get the layer instance for WannabeeTileset layer
+                const tileLayer = levelData.layerInstances.find(layer => layer.__identifier === "WannabeeTileset");
+        
+                if (!tileLayer) {
+                    console.error('WannabeeTileset layer not found');
+                    return;
+                }
+
+                // Create a tilemap for collision handling
+                const map = this.make.tilemap({
+                    width: Math.ceil(levelData.pxWid / tileLayer.__gridSize),
+                    height: Math.ceil(levelData.pxHei / tileLayer.__gridSize),
+                    tileWidth: tileLayer.__gridSize,
+                    tileHeight: tileLayer.__gridSize
+                });
+
+                // Add the tileset image to the map
+                const tileset = map.addTilesetImage('megapixel');
+        
+                // Create a static layer for collisions
+                const layer = map.createBlankLayer('collision', tileset);
+                if (!layer) {
+                    console.error('Failed to create collision layer');
+                    return;
+                }
+
+                // Create a group for visual tiles
+                this.tileLayer = this.add.group();
+
+                // Helper function to convert source coordinates to frame index
+                const getFrameFromSrc = (src) => {
+                    const tilesPerRow = 25; // Number of tiles per row in the tileset
+                    const tileX = src[0] / tileLayer.__gridSize;
+                    const tileY = src[1] / tileLayer.__gridSize;
+                    return tileY * tilesPerRow + tileX;
+                };
+
+                // Place tiles according to the LDtk data
+                if (tileLayer.gridTiles) {
+                    const placeTilesPromise = Promise.all(tileLayer.gridTiles.map(tile => {
+                        const frameIndex = getFrameFromSrc(tile.src);
+        
+                        // Create visual sprite
+                        const tileSprite = this.add.sprite(
+                            tile.px[0],  // x position
+                            tile.px[1],  // y position
+                            'megapixel',
+                            frameIndex
+                        );
+                        tileSprite.setOrigin(0);
+                        this.tileLayer.add(tileSprite);
+
+                        // Add collision tile
+                        const tileX = Math.floor(tile.px[0] / tileLayer.__gridSize);
+                        const tileY = Math.floor(tile.px[1] / tileLayer.__gridSize);
+                        const collisionTile = layer.putTileAt(frameIndex, tileX, tileY);
+                        if (collisionTile) {
+                            collisionTile.setCollision(true);
                         }
-                    }, null, this);
+                        return Promise.resolve();
+                    }));
+
+                    // Wait for all tiles to be placed before showing the scene
+                    placeTilesPromise.then(() => {
+                        // Set up all collisions
+                        if (this.collisionManager) {
+                            // Set up basic collisions with the player from BaseScene
+                            this.physics.add.collider(this.player, layer);
+                            this.physics.add.collider(this.enemies, layer);
+                            this.physics.add.collider(this.enemies, this.enemies);
+        
+                            // Set up player-enemy collision
+                            this.physics.add.overlap(this.player, this.enemies, (player, enemy) => {
+                                if (enemy.getData('enemy') && !this.isDying) {
+                                    this.hitEnemy(player, enemy);
+                                }
+                            }, null, this);
+                        }
+
+                        // Initialize game elements
+                        this.initializeGameElements();
+        
+                        // Make sure camera follows the player from BaseScene
+                        this.cameras.main.startFollow(this.player);
+        
+                        console.log('Matrix640x360 scene setup complete');
+                    });
                 }
 
-                // Initialize game elements
-                this.initializeGameElements();
-                
-                // Make sure camera follows the player from BaseScene
-                this.cameras.main.startFollow(this.player);
-                
-                console.log('Matrix640x360 scene setup complete');
-            });
-        }
+                // Set up game dimensions
+                this.LEVEL_WIDTH = 640;
+                this.LEVEL_HEIGHT = 360;
 
-        // Set up game dimensions
-        this.LEVEL_WIDTH = 640;
-        this.LEVEL_HEIGHT = 360;
+                // Get the actual screen dimensions
+                const screenWidth = window.innerWidth;
+                const screenHeight = window.innerHeight;
 
-        // Get the actual screen dimensions
-        const screenWidth = window.innerWidth;
-        const screenHeight = window.innerHeight;
+                // Calculate scale to fit screen while maintaining aspect ratio
+                const scaleX = screenWidth / this.LEVEL_WIDTH;
+                const scaleY = screenHeight / this.LEVEL_HEIGHT;
+                const scale = Math.min(scaleX, scaleY);
 
-        // Calculate scale to fit screen while maintaining aspect ratio
-        const scaleX = screenWidth / this.LEVEL_WIDTH;
-        const scaleY = screenHeight / this.LEVEL_HEIGHT;
-        const scale = Math.min(scaleX, scaleY);
+                // Calculate centered position
+                const offsetX = (screenWidth - (this.LEVEL_WIDTH * scale)) / 2;
+                const offsetY = (screenHeight - (this.LEVEL_HEIGHT * scale)) / 2;
 
-        // Calculate centered position
-        const offsetX = (screenWidth - (this.LEVEL_WIDTH * scale)) / 2;
-        const offsetY = (screenHeight - (this.LEVEL_HEIGHT * scale)) / 2;
+                // Configure the main camera to show full screen
+                const mainCam = this.cameras.main;
+                mainCam.setViewport(offsetX, offsetY, this.LEVEL_WIDTH * scale, this.LEVEL_HEIGHT * scale);
+                mainCam.setBounds(0, 0, this.LEVEL_WIDTH, this.LEVEL_HEIGHT);
+                mainCam.setBackgroundColor('#000000');
+                mainCam.setZoom(scale);
 
-        // Configure the main camera to show full screen
-        const mainCam = this.cameras.main;
-        mainCam.setViewport(offsetX, offsetY, this.LEVEL_WIDTH * scale, this.LEVEL_HEIGHT * scale);
-        mainCam.setBounds(0, 0, this.LEVEL_WIDTH, this.LEVEL_HEIGHT);
-        mainCam.setBackgroundColor('#000000');
-        mainCam.setZoom(scale);
+                // Ensure player has proper physics and collision
+                this.player.setCollideWorldBounds(true);
+                this.physics.add.collider(this.player, layer);
 
-        // Ensure player has proper physics and collision
-        this.player.setCollideWorldBounds(true);
-        this.physics.add.collider(this.player, layer);
+                // Make sure player controller is enabled
+                if (this.player.controller) {
+                    this.player.controller.enabled = true;
+                }
 
-        // Make sure player controller is enabled
-        if (this.player.controller) {
-            this.player.controller.enabled = true;
-        }
+                // Reset and set up camera AFTER player creation
+                this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
+                this.cameras.main.setFollowOffset(0, 0);
 
-        // Reset and set up camera AFTER player creation
-        this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
-        this.cameras.main.setFollowOffset(0, 0);
+                // Initialize slimes group
+                this.slimes = this.physics.add.group({
+                    collideWorldBounds: true,
+                    bounceX: 0.5,
+                    bounceY: 0.2,
+                    dragX: 200
+                });
 
-        // Initialize slimes group
-        this.slimes = this.physics.add.group({
-            collideWorldBounds: true,
-            bounceX: 0.5,
-            bounceY: 0.2,
-            dragX: 200
-        });
+                // Initialize drones group with consistent physics settings
+                this.drones = this.physics.add.group({
+                    runChildUpdate: true,
+                    collideWorldBounds: true,
+                    dragX: 200,
+                    bounceX: 0.2,
+                    bounceY: 0.2,
+                    gravityY: 0
+                });
 
-        // Initialize drones group with consistent physics settings
-        this.drones = this.physics.add.group({
-            runChildUpdate: true,
-            collideWorldBounds: true,
-            dragX: 200,
-            bounceX: 0.2,
-            bounceY: 0.2,
-            gravityY: 0
-        });
+                // Create enemy group
+                this.enemies = this.physics.add.group({
+                    collideWorldBounds: true,
+                    bounceX: 0.5,
+                    bounceY: 0.2,
+                    dragX: 200
+                });
 
-        // Create enemy group
-        this.enemies = this.physics.add.group({
-            collideWorldBounds: true,
-            bounceX: 0.5,
-            bounceY: 0.2,
-            dragX: 200
-        });
-
-        // Set up collisions between enemies and platforms
-        this.physics.add.collider(this.enemies, layer);
+                // Set up collisions between enemies and platforms
+                this.physics.add.collider(this.enemies, layer);
         
-        // Set up collisions between enemies and each other
-        this.physics.add.collider(this.enemies, this.enemies, this.handleEnemyCollision, null, this);
+                // Set up collisions between enemies and each other
+                this.physics.add.collider(this.enemies, this.enemies, this.handleEnemyCollision, null, this);
         
-        // Set up collisions between enemies and player
-        this.physics.add.overlap(this.enemies, this.player, (enemySprite, player) => {
-            if (enemySprite.getData('enemy') && !this.isDying) {
-                this.hitEnemy(player, enemySprite);
-            }
-        }, null, this);
+                // Set up collisions between enemies and player
+                this.physics.add.overlap(this.enemies, this.player, (enemySprite, player) => {
+                    if (enemySprite.getData('enemy') && !this.isDying) {
+                        this.hitEnemy(player, enemySprite);
+                    }
+                }, null, this);
 
-        // Add ESC key for pause menu
-        this.pauseKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
-        this.pauseKey.on('down', () => {
-            if (!this.isGamePaused) {
-                this.pauseGame();
+                // Add ESC key for pause menu
+                this.pauseKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
+                this.pauseKey.on('down', () => {
+                    if (!this.isGamePaused) {
+                        this.pauseGame();
+                    }
+                });
+
+                // Ensure UI camera is properly set up
+                if (this.gameUI) {
+                    this.gameUI.updateCameraIgnoreList();
+                }
+
+                // Debug level data loading
+                if (!this.cache.json.get('matrix')) {
+                    console.error('Failed to load level data');
+                    return;
+                }
+
+                // Get the layer instance for Megapixel layer
+                const megapixelLayer = levelData.layerInstances[0];  // First layer is our Megapixel layer
+                if (!megapixelLayer) {
+                    console.error('Megapixel layer not found');
+                    return;
+                }
+
+                // Create debug graphics
+                this.debugGraphics = this.add.graphics();
             }
         });
-
-        // Ensure UI camera is properly set up
-        if (this.gameUI) {
-            this.gameUI.updateCameraIgnoreList();
-        }
-
-        // Debug level data loading
-        if (!this.cache.json.get('matrix')) {
-            console.error('Failed to load level data');
-            return;
-        }
-
-        // Get the layer instance for Megapixel layer
-        const megapixelLayer = levelData.layerInstances[0];  // First layer is our Megapixel layer
-        if (!megapixelLayer) {
-            console.error('Megapixel layer not found');
-            return;
-        }
-
-        // Create debug graphics
-        this.debugGraphics = this.add.graphics();
     }
 
     createProceduralLevel(config) {
