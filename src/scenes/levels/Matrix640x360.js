@@ -40,10 +40,10 @@ export class Matrix640x360 extends BaseScene{
         this.load.json('matrix', '/assets/levels/Json/Matrix_640w_360h.json');
 
         // Load player sprites
-        this.load.spritesheet('character_idle', '/assets/player/idle.png', { frameWidth: 32, frameHeight: 32 });
-        this.load.spritesheet('character_run', '/assets/player/run.png', { frameWidth: 32, frameHeight: 32 });
-        this.load.spritesheet('character_jump', '/assets/player/jump.png', { frameWidth: 32, frameHeight: 32 });
-        this.load.spritesheet('character_fall', '/assets/player/fall.png', { frameWidth: 32, frameHeight: 32 });
+        this.load.spritesheet('character_Idle', '/assets/player/idle.png', { frameWidth: 32, frameHeight: 32 });
+        this.load.spritesheet('character_Walking', '/assets/player/run.png', { frameWidth: 32, frameHeight: 32 });
+        this.load.spritesheet('character_Jump', '/assets/player/jump.png', { frameWidth: 32, frameHeight: 32 });
+        this.load.spritesheet('character_Fall', '/assets/player/fall.png', { frameWidth: 32, frameHeight: 32 });
 
         // Load all audio files
         this.load.audio('laser', '/assets/sounds/laser.wav');
@@ -238,12 +238,102 @@ export class Matrix640x360 extends BaseScene{
         // Create platforms group for collision
         this.platforms = this.physics.add.staticGroup();
 
+        // Create raycaster for laser collision detection
+        this.raycaster = {
+            createRay: (config) => {
+                return {
+                    cast: (target) => {
+                        const start = config.origin;
+                        const end = { x: target.x, y: target.y };
+                        const obstacles = target.obstacles;
+
+                        // Check if line intersects with any obstacle
+                        for (const obstacle of obstacles) {
+                            if (this.lineIntersectsRect(
+                                start.x, start.y,
+                                end.x, end.y,
+                                obstacle.x, obstacle.y,
+                                obstacle.width, obstacle.height
+                            )) {
+                                return { hasHit: true };
+                            }
+                        }
+                        return { hasHit: false };
+                    }
+                };
+            }
+        };
+
+        this.lineIntersectsRect = (x1, y1, x2, y2, rectX, rectY, rectWidth, rectHeight) => {
+            // Helper function to check if a line segment intersects with a rectangle
+            const left = rectX;
+            const right = rectX + rectWidth;
+            const top = rectY;
+            const bottom = rectY + rectHeight;
+
+            // Check if the line intersects with any of the rectangle's edges
+            return (
+                this.lineIntersectsLine(x1, y1, x2, y2, left, top, right, top) ||      // Top edge
+                this.lineIntersectsLine(x1, y1, x2, y2, right, top, right, bottom) ||  // Right edge
+                this.lineIntersectsLine(x1, y1, x2, y2, left, bottom, right, bottom) || // Bottom edge
+                this.lineIntersectsLine(x1, y1, x2, y2, left, top, left, bottom)       // Left edge
+            );
+        };
+
+        this.lineIntersectsLine = (x1, y1, x2, y2, x3, y3, x4, y4) => {
+            // Helper function to check if two line segments intersect
+            const denominator = ((x2 - x1) * (y4 - y3)) - ((y2 - y1) * (x4 - x3));
+            if (denominator === 0) return false;
+
+            const ua = (((x4 - x3) * (y1 - y3)) - ((y4 - y3) * (x1 - x3))) / denominator;
+            const ub = (((x2 - x1) * (y1 - y3)) - ((y2 - y1) * (x1 - x3))) / denominator;
+
+            return (ua >= 0 && ua <= 1) && (ub >= 0 && ub <= 1);
+        };
+
+        // Create animations
+        this.anims.create({
+            key: 'character_Idle',
+            frames: this.anims.generateFrameNumbers('character_Idle', { start: 0, end: 3 }),
+            frameRate: 8,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'character_Walking',
+            frames: this.anims.generateFrameNumbers('character_Walking', { start: 0, end: 5 }),
+            frameRate: 10,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'character_Jump',
+            frames: this.anims.generateFrameNumbers('character_Jump', { start: 0, end: 0 }),
+            frameRate: 1,
+            repeat: 0
+        });
+
+        this.anims.create({
+            key: 'character_Fall',
+            frames: this.anims.generateFrameNumbers('character_Fall', { start: 0, end: 0 }),
+            frameRate: 1,
+            repeat: 0
+        });
+
         // Create player at spawn point
         this.player = new Player(this, SPAWN_X, SPAWN_Y);
         this.physics.add.existing(this.player);
         this.player.setCollideWorldBounds(true);
-        
-        // Store spawn point for respawning
+
+        // Add collision between player and platforms
+        this.physics.add.collider(this.player, this.platforms);
+
+        // Enable player controller
+        if (this.player.controller) {
+            this.player.controller.enabled = true;
+        }
+
+        // Store player spawn point for respawning
         this.playerSpawnPoint = {
             x: SPAWN_X,
             y: SPAWN_Y
@@ -251,6 +341,12 @@ export class Matrix640x360 extends BaseScene{
 
         // Enable keyboard input
         this.input.keyboard.enabled = true;
+
+        // Add ESC key for pause menu
+        this.pauseKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
+        this.pauseKey.on('down', () => {
+            this.pauseGame();
+        });
 
         // Reset and set up camera AFTER player creation
         this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
@@ -434,40 +530,33 @@ export class Matrix640x360 extends BaseScene{
     }
 
     initializeGameElements() {
+        // Get enemy configuration from scene data
+        const enemyConfig = this.scene.settings.data?.enemyConfig || {
+            'Slime': 3,
+            'Drone': 1,
+            'MeleeWarrior': 3
+        };
+
         // Initialize game elements without animations or delays
         const spawnPoints = this.findSpawnPointsForSlimes();
-        spawnPoints.forEach(point => {
+        
+        // Spawn Slimes
+        for (let i = 0; i < enemyConfig.Slime && i < spawnPoints.length; i++) {
+            const point = spawnPoints[i];
             this.createAndInitSlime(point.x, point.y);
-        });
-
-        const bitcoinSpawnPoints = this.findSpawnPointsForBitcoins();
-        bitcoinSpawnPoints.forEach(point => {
-            const bitcoin = new Bitcoin(this, point.x, point.y);
-            this.bitcoins.add(bitcoin);
-        });
-
-        // Spawn warriors at different x positions
-        const warrior1 = this.createAndInitWarrior(this.scale.width * 0.4);
-        const warrior2 = this.createAndInitWarrior(this.scale.width * 0.6);
-
-        // Create random position warriors
-        const numRandomWarriors = 1;
-        for (let i = 0; i < numRandomWarriors; i++) {
-            const spawnPointsForWarriors = this.findSpawnPointsForSlimes(); // Reuse slime spawn point logic
-            if (spawnPointsForWarriors.length > 0) {
-                const spawnIndex = Math.floor(Math.random() * spawnPointsForWarriors.length);
-                const spawnPoint = spawnPointsForWarriors[spawnIndex];
-                this.createAndInitWarrior(spawnPoint.x);
-                spawnPointsForWarriors.splice(spawnIndex, 1);
-            }
         }
 
-        // Spawn drone at the top part of the scene
-        if (this.player) {
-            const enemyY = this.scale.height * 0.2; // Top 20% of the screen
-            const droneX = this.scale.width * 0.6; // Adjust horizontal position as needed
+        // Spawn MeleeWarriors
+        for (let i = 0; i < enemyConfig.MeleeWarrior; i++) {
+            const x = this.scale.width * (0.3 + (0.4 * (i / enemyConfig.MeleeWarrior)));
+            this.createAndInitWarrior(x);
+        }
 
-            // Create drone at the spawn point
+        // Spawn Drones
+        for (let i = 0; i < enemyConfig.Drone; i++) {
+            const droneX = this.scale.width * (0.4 + (0.2 * i));
+            const enemyY = this.scale.height * 0.2;
+
             const drone = new Drone(this, droneX, enemyY, {
                 maxHealth: 75,
                 damage: 20,
@@ -476,31 +565,27 @@ export class Matrix640x360 extends BaseScene{
                 horizontalMovementRange: 100
             });
 
-            // Add drone sprite to the drones group
             this.drones.add(drone.sprite);
-
-            // Add drone to enemy manager
             this.enemyManager.addEnemy(drone, drone.sprite, drone.maxHealth);
 
-            // Set up patrol path
             const patrolPoints = [
-                { x: droneX - 200, y: enemyY },  // Left point
-                { x: droneX + 200, y: enemyY }   // Right point
+                { x: droneX - 200, y: enemyY },
+                { x: droneX + 200, y: enemyY }
             ];
             drone.setPatrolPath(patrolPoints);
 
-            // Add to scene update
             this.events.on('update', () => {
                 if (drone && drone.sprite && drone.sprite.active) {
                     drone.update();
                 }
             });
-
-            // Store drone reference
-            this.drone = drone;
-        } else {
-            console.warn('Cannot spawn drone: player not found');
         }
+
+        const bitcoinSpawnPoints = this.findSpawnPointsForBitcoins();
+        bitcoinSpawnPoints.forEach(point => {
+            const bitcoin = new Bitcoin(this, point.x, point.y);
+            this.bitcoins.add(bitcoin);
+        });
 
         // Set up player-enemy collision for damage
         this.physics.add.overlap(this.player, this.slimes, (player, enemySprite) => {
@@ -519,7 +604,7 @@ export class Matrix640x360 extends BaseScene{
         );
 
         // Set initial number of enemies
-        this.remainingEnemies = 7;
+        this.remainingEnemies = Object.values(enemyConfig).reduce((a, b) => a + b, 0);
 
         // Start game immediately
         this.startGame();
@@ -596,9 +681,6 @@ export class Matrix640x360 extends BaseScene{
             this.player.controller.enabled = true;
         }
 
-        // Start the timer
-        this.gameUI.startTimer();
-
         // Set game as started
         this.gameStarted = true;
     }
@@ -661,11 +743,6 @@ export class Matrix640x360 extends BaseScene{
                     }
                 }
             });
-        }
-
-        // Update game UI
-        if (this.gameUI) {
-            this.gameUI.update(time);
         }
 
         // Update debug visuals if enabled
@@ -741,6 +818,12 @@ export class Matrix640x360 extends BaseScene{
         
         this.isGamePaused = true;
         this.physics.pause();
+        
+        // Disable player controller
+        if (this.player && this.player.controller) {
+            this.player.controller.enabled = false;
+        }
+        
         this.scene.launch('PauseMenu');
         this.scene.pause();
     }
@@ -748,21 +831,24 @@ export class Matrix640x360 extends BaseScene{
     resumeGame() {
         this.isGamePaused = false;
         this.physics.resume();
+        
+        // Re-enable player controller
+        if (this.player && this.player.controller) {
+            this.player.controller.enabled = true;
+        }
+        
         this.scene.resume();
     }
 
     gameOver() {
-        this.gameUI.stopTimer(); // Stop the timer
         this.scene.start('GameOver');
     }
 
     returnToMainMenu() {
-        this.gameUI.stopTimer(); // Stop the timer
         this.scene.start('MainMenu');
     }
 
     quitGame() {
-        this.gameUI.stopTimer(); // Stop the timer
         window.close();
     }
 
@@ -770,7 +856,6 @@ export class Matrix640x360 extends BaseScene{
         const lives = this.stateManager.get('lives');
         if (lives <= 0) {
             // Game Over - stop timer and transition
-            this.gameUI.stopTimer();
             this.scene.start('GameOver');
         }
     }
@@ -849,15 +934,24 @@ export class Matrix640x360 extends BaseScene{
         return Phaser.Utils.Array.Shuffle(spawnPoints);
     }
 
-    lineIntersectsRect(x1, y1, x2, y2, rx, ry, rw, rh) {
-        // Check if line intersects with any of the rectangle's edges
-        return this.lineIntersectsLine(x1, y1, x2, y2, rx, ry, rx + rw, ry) ||          // Top edge
-               this.lineIntersectsLine(x1, y1, x2, y2, rx + rw, ry, rx + rw, ry + rh) || // Right edge
-               this.lineIntersectsLine(x1, y1, x2, y2, rx, ry + rh, rx + rw, ry + rh) || // Bottom edge
-               this.lineIntersectsLine(x1, y1, x2, y2, rx, ry, rx, ry + rh);             // Left edge
+    lineIntersectsRect(x1, y1, x2, y2, rectX, rectY, rectWidth, rectHeight) {
+        // Helper function to check if a line segment intersects with a rectangle
+        const left = rectX;
+        const right = rectX + rectWidth;
+        const top = rectY;
+        const bottom = rectY + rectHeight;
+
+        // Check if the line intersects with any of the rectangle's edges
+        return (
+            this.lineIntersectsLine(x1, y1, x2, y2, left, top, right, top) ||      // Top edge
+            this.lineIntersectsLine(x1, y1, x2, y2, right, top, right, bottom) ||  // Right edge
+            this.lineIntersectsLine(x1, y1, x2, y2, left, bottom, right, bottom) || // Bottom edge
+            this.lineIntersectsLine(x1, y1, x2, y2, left, top, left, bottom)       // Left edge
+        );
     }
 
     lineIntersectsLine(x1, y1, x2, y2, x3, y3, x4, y4) {
+        // Helper function to check if two line segments intersect
         const denominator = ((x2 - x1) * (y4 - y3)) - ((y2 - y1) * (x4 - x3));
         if (denominator === 0) return false;
 
@@ -865,5 +959,49 @@ export class Matrix640x360 extends BaseScene{
         const ub = (((x2 - x1) * (y1 - y3)) - ((y2 - y1) * (x1 - x3))) / denominator;
 
         return (ua >= 0 && ua <= 1) && (ub >= 0 && ub <= 1);
+    }
+
+    shutdown() {
+        // Clean up physics
+        if (this.physics.world) {
+            this.physics.world.shutdown();
+        }
+
+        // Clean up any running timers
+        this.time.removeAllEvents();
+
+        // Destroy all game objects
+        this.children.removeAll(true);
+        
+        // Clean up any event listeners
+        this.events.removeAllListeners();
+        
+        // Clean up any custom properties
+        if (this.player) {
+            this.player.destroy();
+            this.player = null;
+        }
+        
+        if (this.enemies) {
+            this.enemies.clear(true, true);
+            this.enemies = null;
+        }
+        
+        if (this.platforms) {
+            this.platforms.clear(true, true);
+            this.platforms = null;
+        }
+        
+        if (this.drones) {
+            this.drones.clear(true, true);
+            this.drones = null;
+        }
+
+        // Reset game state
+        this.gameStarted = false;
+        this.isGamePaused = false;
+        
+        // Call parent shutdown
+        super.shutdown();
     }
 }
