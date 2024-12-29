@@ -18,9 +18,33 @@ export class TheZucc extends Scene {
             minGapWidth: 3, // In tiles
             maxGapWidth: 5  // In tiles
         };
+        this.backgroundMusic = null;
+    }
+
+    preload() {
+        console.log('TheZucc preload - Checking audio cache');
+        if (!this.cache.audio.exists('thezucc')) {
+            console.log('TheZucc preload - Audio not in cache, loading...');
+            this.load.audio('thezucc', './assets/sounds/thezucc.wav');
+            this.load.on('filecomplete-audio-thezucc', () => {
+                console.log('TheZucc preload - Audio loaded successfully');
+            });
+            this.load.on('loaderror', (file) => {
+                console.error('TheZucc preload - Error loading audio:', file.key, file.url);
+            });
+        } else {
+            console.log('TheZucc preload - Audio already in cache');
+        }
     }
 
     async create() {
+        console.log('TheZucc create - Starting');
+        // Stop any existing background music and play thezucc
+        if (this.sound.get('bgMusic')) {
+            this.sound.get('bgMusic').stop();
+        }
+        this.sound.play('thezucc', { loop: true });
+
         // Create the scene first before checking wallet
         await this.createScene();
         await this.initializeWallet();
@@ -171,9 +195,13 @@ export class TheZucc extends Scene {
                     .on('pointerover', () => button.setBackgroundColor('#2980b9'))
                     .on('pointerout', () => button.setBackgroundColor('#34495e'))
                     .on('pointerdown', () => {
-                        console.log(`Launching scene: ${sceneName}`);
-                        if (sceneName === 'Matrix640x360') {
-                            // Pass enemy configuration to the Matrix scene
+                        // Stop the music before starting the scene
+                        const music = this.sound.get('thezucc');
+                        if (music) {
+                            music.stop();
+                        }
+                        
+                        if (config.showConfig) {
                             this.scene.start(sceneName, { enemyConfig: this.enemyConfig });
                         } else {
                             this.scene.start(sceneName);
@@ -218,6 +246,11 @@ export class TheZucc extends Scene {
         .on('pointerover', () => backButton.setBackgroundColor('#e74c3c'))
         .on('pointerout', () => backButton.setBackgroundColor('#c0392b'))
         .on('pointerdown', () => {
+            // Stop the music before going back to main menu
+            const music = this.sound.get('thezucc');
+            if (music) {
+                music.stop();
+            }
             this.scene.stop('TheZucc');
             this.scene.start('MainMenu');
         });
@@ -367,6 +400,15 @@ export class TheZucc extends Scene {
         });
 
         return yOffset + 60;
+    }
+
+    shutdown() {
+        // Stop the thezucc music when leaving the scene
+        const music = this.sound.get('thezucc');
+        if (music) {
+            music.stop();
+        }
+        super.shutdown();
     }
 
     async initializeWallet() {

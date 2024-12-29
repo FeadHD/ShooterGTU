@@ -240,7 +240,16 @@ export class Preloader extends Scene {
         
         // Add error handler for audio loading
         this.load.on('loaderror', (file) => {
-            console.error('Error loading audio file:', file.key);
+            if (file.type === 'audio') {
+                console.error('Preloader - Error loading audio file:', file.key, file.url);
+            }
+        });
+
+        // Add success handler for audio loading
+        this.load.on('filecomplete', (key, type) => {
+            if (type === 'audio') {
+                console.log('Preloader - Successfully loaded audio:', key);
+            }
         });
         
         // Load bitcoin animation frames

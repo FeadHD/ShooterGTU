@@ -55,6 +55,7 @@ export class Matrix640x360 extends BaseScene{
         this.load.audio('laser', '/assets/sounds/laser.wav');
         this.load.audio('hit', '/assets/sounds/hit.wav');
         this.load.audio('victoryMusic', '/assets/sounds/congratulations');
+        this.load.audio('thezucc', '/assets/sounds/thezucc.wav'); // Load thezucc audio
 
         // Load tileset with error handling
         this.load.on('loaderror', (file) => {
@@ -63,6 +64,12 @@ export class Matrix640x360 extends BaseScene{
     }
 
     create() {
+        // Stop any existing background music and play thezucc
+        if (this.sound.get('bgMusic')) {
+            this.sound.get('bgMusic').stop();
+        }
+        this.sound.play('thezucc', { loop: true });
+
         // Load fonts before initializing UI
         WebFont.load({
             google: {
