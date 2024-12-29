@@ -76,8 +76,10 @@ export class Matrix640x360 extends BaseScene{
                 families: ['Press Start 2P']
             },
             active: () => {
-                // Don't call super.create() since we'll handle player creation ourselves
-                // super.create();
+                // Initialize managers and UI first
+                this.stateManager = new StateManager(this);
+                this.effectsManager = new EffectsManager(this);
+                this.gameUI = new GameUI(this);
                 
                 // Set up world bounds and physics
                 this.physics.world.setBoundsCollision(true, true, true, true);
@@ -104,8 +106,6 @@ export class Matrix640x360 extends BaseScene{
                 // Initialize managers
                 this.collisionManager = new CollisionManager(this);
                 this.animationManager = new AnimationManager(this);
-                this.effectsManager = new EffectsManager(this);
-                this.stateManager = new StateManager(this);
                 this.enemyManager = new EnemyManager(this); // Initialize EnemyManager
                 this.animationManager.createAllAnimations();
 
@@ -121,7 +121,7 @@ export class Matrix640x360 extends BaseScene{
                     },
                     active: () => {
                         // Initialize UI after font is loaded
-                        this.gameUI = new GameUI(this);
+                        // this.gameUI = new GameUI(this);
                     }
                 });
 
