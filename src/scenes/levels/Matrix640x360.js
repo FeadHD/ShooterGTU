@@ -213,13 +213,10 @@ export class Matrix640x360 extends BaseScene{
 
                     // Wait for all tiles to be placed before showing the scene
                     placeTilesPromise.then(() => {
-                        // Set up all collisions
+                        // Set up all collisions using CollisionManager
                         if (this.collisionManager) {
-                            // Set up basic collisions with the player from BaseScene
-                            this.physics.add.collider(this.player, layer);
-                            this.physics.add.collider(this.enemies, layer);
-                            this.physics.add.collider(this.enemies, this.enemies);
-        
+                            this.collisionManager.setupCollisions();
+                            
                             // Set up player-enemy collision
                             this.physics.add.overlap(this.player, this.enemies, (player, enemy) => {
                                 if (enemy.getData('enemy') && !this.isDying) {
