@@ -107,8 +107,16 @@ export class Matrix640x360 extends BaseScene{
                 this.stateManager.set('score', 0);
                 this.stateManager.set('bitcoins', 0);
 
-                // Initialize UI
-                this.gameUI = new GameUI(this);
+                // Wait for font to load before creating UI
+                WebFont.load({
+                    google: {
+                        families: ['Retronoid']
+                    },
+                    active: () => {
+                        // Initialize UI after font is loaded
+                        this.gameUI = new GameUI(this);
+                    }
+                });
 
                 // Define spawn position constants
                 const SPAWN_X_PERCENTAGE = 0.1;  // 10% from left edge
@@ -500,6 +508,7 @@ export class Matrix640x360 extends BaseScene{
             this.slimes.add(slime.sprite);
             this.enemies.add(slime.sprite);
             this.enemyManager.addEnemy(slime, slime.sprite, slime.health);
+            slime.initializeMovement(); // Initialize movement
         }
         return slime;
     }
