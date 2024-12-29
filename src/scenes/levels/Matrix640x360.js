@@ -1,5 +1,4 @@
 import { BaseScene } from '../elements/BaseScene';
-import { GameUI } from '../elements/GameUI';
 import { Slime } from '../../prefabs/Slime';
 import { Bitcoin } from '../../prefabs/Bitcoin';
 import Drone from '../../prefabs/Drone';
@@ -71,6 +70,34 @@ export class Matrix640x360 extends BaseScene{
         bg.setAlpha(0.5);  // 50% transparency
         bg.setDepth(-1);   // Keep it at the back
 
+        // Define spawn position constants
+        const SPAWN_X_PERCENTAGE = 0.1;  // 10% from left edge
+        const SPAWN_Y = 100;             // Higher up to avoid tiles
+        
+        // Set spawn point for this level
+        this.playerSpawnPoint = {
+            x: this.scale.width * SPAWN_X_PERCENTAGE,
+            y: SPAWN_Y
+        };
+        
+        // Move player to spawn point
+        if (this.player) {
+            this.player.setPosition(this.playerSpawnPoint.x, this.playerSpawnPoint.y);
+            this.player.setVelocity(0, 0);  // Ensure player starts stationary
+        }
+
+        // Create debug graphics for spawn point visualization
+        this.debugGraphics = this.add.graphics();
+        
+        // Initialize groups
+        this.enemies = this.add.group();
+        this.slimes = this.add.group();
+        this.drones = this.add.group();
+        this.bitcoins = this.add.group();
+
+        // Initialize collision manager
+        this.collisionManager = new CollisionManager(this);
+
         // Add debug text for camera info
         this.debugText = this.add.text(10, 10, '', { 
             font: '16px Arial', 
@@ -127,7 +154,7 @@ export class Matrix640x360 extends BaseScene{
 
         // Place tiles according to the LDtk data
         if (tileLayer.gridTiles) {
-            tileLayer.gridTiles.forEach(tile => {
+            const placeTilesPromise = Promise.all(tileLayer.gridTiles.map(tile => {
                 const frameIndex = getFrameFromSrc(tile.src);
                 
                 // Create visual sprite
@@ -147,15 +174,35 @@ export class Matrix640x360 extends BaseScene{
                 if (collisionTile) {
                     collisionTile.setCollision(true);
                 }
+                return Promise.resolve();
+            }));
+
+            // Wait for all tiles to be placed before showing the scene
+            placeTilesPromise.then(() => {
+                // Set up all collisions
+                if (this.collisionManager) {
+                    // Set up basic collisions with the player from BaseScene
+                    this.physics.add.collider(this.player, layer);
+                    this.physics.add.collider(this.enemies, layer);
+                    this.physics.add.collider(this.enemies, this.enemies);
+                    
+                    // Set up player-enemy collision
+                    this.physics.add.overlap(this.player, this.enemies, (player, enemy) => {
+                        if (enemy.getData('enemy') && !this.isDying) {
+                            this.hitEnemy(player, enemy);
+                        }
+                    }, null, this);
+                }
+
+                // Initialize game elements
+                this.initializeGameElements();
+                
+                // Make sure camera follows the player from BaseScene
+                this.cameras.main.startFollow(this.player);
+                
+                console.log('Matrix640x360 scene setup complete');
             });
         }
-
-        // Enable collision on the layer
-        layer.setCollisionByProperty({ collides: true });
-        
-        // Store references
-        this.map = map;
-        this.mapLayer = layer;
 
         // Set up game dimensions
         this.LEVEL_WIDTH = 640;
@@ -181,15 +228,6 @@ export class Matrix640x360 extends BaseScene{
         mainCam.setBackgroundColor('#000000');
         mainCam.setZoom(scale);
 
-        // Store player spawn point (near the left side, above ground)
-        this.playerSpawnPoint = {
-            x: 100,
-            y: 280  // Adjust this based on your ground level
-        };
-
-        // Create player using BaseScene's method
-        this.createPlayer(this.LEVEL_WIDTH);
-        
         // Ensure player has proper physics and collision
         this.player.setCollideWorldBounds(true);
         this.physics.add.collider(this.player, layer);
@@ -199,32 +237,9 @@ export class Matrix640x360 extends BaseScene{
             this.player.controller.enabled = true;
         }
 
-        // Add ESC key for pause menu
-        this.pauseKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
-        this.pauseKey.on('down', () => {
-            this.pauseGame();
-        });
-
         // Reset and set up camera AFTER player creation
         this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
         this.cameras.main.setFollowOffset(0, 0);
-        
-        // Update debug text with initial values
-        if (this.debugText) {
-            this.debugText.setText(
-                `Camera: ${Math.floor(this.cameras.main.scrollX)},${Math.floor(this.cameras.main.scrollY)}\n` +
-                `Player: ${Math.floor(this.player.x)},${Math.floor(this.player.y)}\n` +
-                `World Bounds: ${this.LEVEL_WIDTH}x${this.LEVEL_HEIGHT}`
-            );
-        }
-        
-        // Debug rectangle to show level bounds
-        this.debugBounds = this.add.graphics();
-        this.debugBounds.lineStyle(2, 0x00ff00);
-        this.debugBounds.strokeRect(0, 0, this.LEVEL_WIDTH, this.LEVEL_HEIGHT);
-        
-        // Initialize collision manager
-        this.collisionManager = new CollisionManager(this);
 
         // Initialize slimes group
         this.slimes = this.physics.add.group({
@@ -253,20 +268,28 @@ export class Matrix640x360 extends BaseScene{
         });
 
         // Set up collisions between enemies and platforms
-        this.physics.add.collider(this.enemies, this.platforms);
+        this.physics.add.collider(this.enemies, layer);
         
         // Set up collisions between enemies and each other
         this.physics.add.collider(this.enemies, this.enemies, this.handleEnemyCollision, null, this);
         
         // Set up collisions between enemies and player
         this.physics.add.overlap(this.enemies, this.player, (enemySprite, player) => {
-            if (enemySprite.enemy && !this.isDying) {
+            if (enemySprite.getData('enemy') && !this.isDying) {
                 this.hitEnemy(player, enemySprite);
             }
         }, null, this);
 
-        // Create bitcoin group
-        this.bitcoins = this.add.group();
+        // Add ESC key for pause menu
+        this.pauseKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
+        this.pauseKey.on('down', () => {
+            this.pauseGame();
+        });
+
+        // Ensure UI camera is properly set up
+        if (this.gameUI) {
+            this.gameUI.updateCameraIgnoreList();
+        }
 
         // Debug level data loading
         if (!this.cache.json.get('matrix')) {
@@ -280,109 +303,6 @@ export class Matrix640x360 extends BaseScene{
             console.error('Megapixel layer not found');
             return;
         }
-
-        // Create a promise to track tile placement
-        const placeTilesPromise = new Promise((resolve) => {
-            if (megapixelLayer.gridTiles && megapixelLayer.gridTiles.length > 0) {
-                let tilesPlaced = 0;
-                const totalTiles = megapixelLayer.gridTiles.length;
-                const totalRows = Math.ceil(levelData.pxHei / megapixelLayer.__gridSize);
-
-                // Create a map to track platform tiles
-                const platformTiles = new Set();
-
-                // First pass: identify platform tiles
-                megapixelLayer.gridTiles.forEach((tile) => {
-                    const gridX = Math.floor(tile.px[0] / megapixelLayer.__gridSize);
-                    const gridY = Math.floor(tile.px[1] / megapixelLayer.__gridSize);
-                    if (gridY === 8 || tile.t === 370) { // Platform height or solid tile type
-                        platformTiles.add(`${gridX},${gridY}`);
-                    }
-                });
-
-                // Second pass: place tiles and set up collisions
-                megapixelLayer.gridTiles.forEach((tile) => {
-                    const gridX = Math.floor(tile.px[0] / megapixelLayer.__gridSize);
-                    const gridY = Math.floor(tile.px[1] / megapixelLayer.__gridSize);
-                    
-                    try {
-                        // Place the tile at the grid coordinates
-                        const placedTile = layer.putTileAt(tile.t, gridX, gridY);
-                        
-                        // Check if this tile is in the bottom two rows
-                        if (gridY >= totalRows - 2) {
-                            // Add collision for bottom tiles
-                            placedTile.setCollision(true);
-                            
-                            // Create collision rectangle for this tile
-                            const tileRect = this.add.rectangle(
-                                gridX * megapixelLayer.__gridSize + megapixelLayer.__gridSize/2,
-                                gridY * megapixelLayer.__gridSize + megapixelLayer.__gridSize/2,
-                                megapixelLayer.__gridSize,
-                                megapixelLayer.__gridSize
-                            );
-                            tileRect.setVisible(false);  // Hide the rectangle by default
-                            this.physics.add.existing(tileRect, true);
-                            this.platforms.add(tileRect);
-                        }
-
-                        // Set collision for tiles with ID between 400 and 500
-                        if (tile.t >= 400 && tile.t <= 500) {
-                            placedTile.setCollision(true);
-                            
-                            // Create collision rectangle for solid tiles
-                            const solidRect = this.add.rectangle(
-                                gridX * megapixelLayer.__gridSize + megapixelLayer.__gridSize/2,
-                                gridY * megapixelLayer.__gridSize + megapixelLayer.__gridSize/2,
-                                megapixelLayer.__gridSize,
-                                megapixelLayer.__gridSize
-                            );
-                            solidRect.setVisible(false);  // Hide the rectangle by default
-                            this.physics.add.existing(solidRect, true);
-                            this.platforms.add(solidRect);
-                        }
-                        
-                        tilesPlaced++;
-                        
-                        if (tilesPlaced === totalTiles) {
-                            resolve();
-                        }
-                    } catch (error) {
-                        console.error('Error placing tile:', {
-                            gridX, gridY,
-                            px: tile.px,
-                            tileId: tile.t,
-                            error: error.message
-                        });
-                        tilesPlaced++;
-                        if (tilesPlaced === totalTiles) {
-                            resolve();
-                        }
-                    }
-                });
-            } else {
-                resolve();
-            }
-        });
-
-        // Wait for all tiles to be placed before showing the scene
-        placeTilesPromise.then(() => {
-            // Set up all collisions using CollisionManager
-            this.collisionManager.setupCollisions();
-
-            console.log('All tiles placed, showing scene');
-            // Fade in the scene
-            this.tweens.add({
-                targets: this.cameras.main,
-                alpha: 1,
-                duration: 500,
-                ease: 'Linear',
-                onComplete: () => {
-                    // Continue with the rest of the scene setup
-                    this.initializeGameElements();
-                }
-            });
-        });
 
         // Create debug graphics
         this.debugGraphics = this.add.graphics();
@@ -407,131 +327,73 @@ export class Matrix640x360 extends BaseScene{
 
         // Spawn MeleeWarriors
         for (let i = 0; i < enemyConfig.MeleeWarrior; i++) {
-            const x = this.scale.width * (0.3 + (0.4 * (i / enemyConfig.MeleeWarrior)));
-            this.createAndInitWarrior(x);
+            const x = this.LEVEL_WIDTH * (0.3 + (0.4 * (i / Math.max(1, enemyConfig.MeleeWarrior - 1))));
+            const y = this.LEVEL_HEIGHT - 64;
+            this.createAndInitWarrior(x, y);
         }
 
         // Spawn Drones
         for (let i = 0; i < enemyConfig.Drone; i++) {
-            const droneX = this.scale.width * (0.4 + (0.2 * i));
-            const enemyY = this.scale.height * 0.2;
-
-            const drone = new Drone(this, droneX, enemyY, {
-                maxHealth: 75,
-                damage: 20,
-                speed: 100,
-                flyingHeight: enemyY,
-                horizontalMovementRange: 100
-            });
-
-            this.drones.add(drone.sprite);
-            this.enemyManager.addEnemy(drone, drone.sprite, drone.maxHealth);
-
-            const patrolPoints = [
-                { x: droneX - 200, y: enemyY },
-                { x: droneX + 200, y: enemyY }
-            ];
-            drone.setPatrolPath(patrolPoints);
-
-            this.events.on('update', () => {
-                if (drone && drone.sprite && drone.sprite.active) {
-                    drone.update();
-                }
-            });
+            const x = this.LEVEL_WIDTH * (0.4 + (0.2 * i));
+            const y = this.LEVEL_HEIGHT * 0.3;
+            const drone = new Drone(this, x, y);
+            this.drones.add(drone);
+            this.enemies.add(drone);
         }
 
-        const bitcoinSpawnPoints = this.findSpawnPointsForBitcoins();
-        bitcoinSpawnPoints.forEach(point => {
-            const bitcoin = new Bitcoin(this, point.x, point.y);
-            this.bitcoins.add(bitcoin);
-        });
+        // Start the game
+        this.gameStarted = true;
+    }
 
-        // Set up player-enemy collision for damage
-        this.physics.add.overlap(this.player, this.slimes, (player, enemySprite) => {
-            if (enemySprite.enemy && !this.isDying) {
-                this.hitEnemy(player, enemySprite);
-            }
-        }, null, this);
+    findSpawnPointsForSlimes() {
+        const spawnPoints = [];
+        const TILE_SIZE = 32;
+        const mapWidth = Math.floor(this.LEVEL_WIDTH / TILE_SIZE);
+        const mapHeight = Math.floor(this.LEVEL_HEIGHT / TILE_SIZE);
 
-        // Add collisions between enemies with increased bounce
-        this.physics.add.collider(
-            this.slimes,
-            this.slimes,
-            this.handleEnemyCollision,
-            null,
-            this
-        );
+        // Define fixed spawn points for the Matrix level
+        const fixedSpawnPoints = [
+            { x: 100, y: this.LEVEL_HEIGHT - 64 },  // Left side
+            { x: this.LEVEL_WIDTH * 0.3, y: this.LEVEL_HEIGHT - 64 }, // Left-center
+            { x: this.LEVEL_WIDTH * 0.5, y: this.LEVEL_HEIGHT - 64 }, // Center
+            { x: this.LEVEL_WIDTH * 0.7, y: this.LEVEL_HEIGHT - 64 }, // Right-center
+            { x: this.LEVEL_WIDTH - 100, y: this.LEVEL_HEIGHT - 64 }  // Right side
+        ];
 
-        // Set initial number of enemies
-        this.remainingEnemies = Object.values(enemyConfig).reduce((a, b) => a + b, 0);
-
-        // Start game immediately
-        this.startGame();
+        return fixedSpawnPoints;
     }
 
     createAndInitSlime(x, y) {
         const slime = new Slime(this, x, y);
-        if (slime && slime.sprite) {
-            // Add to physics group
-            this.slimes.add(slime.sprite);
-            
-            // Set up sprite
-            slime.sprite.setActive(true);
-            slime.sprite.setVisible(true);
-            
-            // Set up physics body
-            if (slime.sprite.body) {
-                slime.sprite.body.reset(x, y);
-                slime.sprite.body.enable = true;
-                slime.sprite.body.moves = true;
-            }
-            
-            // Add to enemy manager
-            this.enemyManager.addEnemy(slime, slime.sprite, slime.maxHealth);
-            
-            // Create health bar
-            slime.createHealthBar();
-            
-            // Start movement
-            slime.initializeMovement();
-            
-            // Add update callback
-            this.events.on('update', () => {
-                if (slime && slime.sprite && slime.sprite.active) {
-                    slime.update();
-                    slime.updateHealthBar();
-                }
-            });
-            
-            return slime;
-        }
-        return null;
+        this.slimes.add(slime);
+        this.enemies.add(slime);
+        
+        // Set up slime physics
+        slime.setCollideWorldBounds(true);
+        slime.setBounce(0.2);
+        slime.setGravityY(300);
+        
+        return slime;
     }
 
-    createAndInitWarrior(x) {
-        const spawnHeight = this.getSpawnHeight();
-        if (spawnHeight !== null) {
-            const warrior = new MeleeWarrior(this, x, spawnHeight);
-            if (warrior && warrior.sprite) {
-                this.enemies.add(warrior.sprite);
-                warrior.sprite.setData('type', 'warrior');
-                warrior.sprite.setData('enemy', warrior);
-                
-                // Add warrior-specific debug data
-                warrior.sprite.setData('health', warrior.maxHealth);
-                warrior.sprite.setData('maxHealth', warrior.maxHealth);
-                warrior.sprite.setData('isAttacking', false);
-                warrior.sprite.setData('direction', warrior.direction);
-                warrior.sprite.setData('detectionRange', warrior.detectionRange);
-                warrior.sprite.setData('attackRange', warrior.attackRange);
-                
-                // Add warrior to enemy manager
-                this.enemyManager.addEnemy(warrior, warrior.sprite, warrior.maxHealth);
+    createAndInitWarrior(x, y) {
+        const warrior = new MeleeWarrior(this, x, y);
+        this.enemies.add(warrior);
+        warrior.setData('type', 'warrior');
+        warrior.setData('enemy', warrior);
+        
+        // Add warrior-specific debug data
+        warrior.setData('health', warrior.maxHealth);
+        warrior.setData('maxHealth', warrior.maxHealth);
+        warrior.setData('isAttacking', false);
+        warrior.setData('direction', warrior.direction);
+        warrior.setData('detectionRange', warrior.detectionRange);
+        warrior.setData('attackRange', warrior.attackRange);
+        
+        // Add warrior to enemy manager
+        this.enemyManager.addEnemy(warrior, warrior, warrior.maxHealth);
 
-                return warrior;
-            }
-            return null;
-        }
+        return warrior;
     }
 
     startGame() {
@@ -606,15 +468,15 @@ export class Matrix640x360 extends BaseScene{
             });
         }
 
-        // Update debug visuals if enabled
+        // Update debug visuals
         this.updateDebugVisuals();
 
-        // Update debug text if it exists
-        if (this.debugText) {
+        // Update debug text with current information
+        if (this.debugText && this.player) {
             this.debugText.setText(
-                `Camera: ${Math.floor(this.cameras.main.scrollX)},${Math.floor(this.cameras.main.scrollY)}\n` +
-                `Player: ${Math.floor(this.player.x)},${Math.floor(this.player.y)}\n` +
-                `World Bounds: ${this.LEVEL_WIDTH}x${this.LEVEL_HEIGHT}`
+                `Player: (${Math.floor(this.player.x)}, ${Math.floor(this.player.y)})\n` +
+                `Spawn: (${Math.floor(this.playerSpawnPoint.x)}, ${Math.floor(this.playerSpawnPoint.y)})\n` +
+                `Camera: (${Math.floor(this.cameras.main.scrollX)}, ${Math.floor(this.cameras.main.scrollY)})`
             );
         }
 
@@ -638,49 +500,22 @@ export class Matrix640x360 extends BaseScene{
 
     updateDebugVisuals() {
         // Clear previous debug graphics
-        if (this.debugGraphics) {
-            this.debugGraphics.clear();
-        }
+        this.debugGraphics.clear();
 
-        // Only show debug visuals if debug system is enabled
-        if (this.debugSystem?.enabled) {
-            // Draw spawn point indicator
-            this.debugGraphics.lineStyle(2, 0x00ff00);  // Green outline
-            this.debugGraphics.strokeCircle(this.playerSpawnPoint.x, this.playerSpawnPoint.y, 20);
-            
-            // Draw X in the center
-            this.debugGraphics.lineStyle(2, 0xff0000);  // Red X
-            const x = this.playerSpawnPoint.x;
-            const y = this.playerSpawnPoint.y;
-            this.debugGraphics.beginPath();
-            this.debugGraphics.moveTo(x - 10, y - 10);
-            this.debugGraphics.lineTo(x + 10, y + 10);
-            this.debugGraphics.moveTo(x + 10, y - 10);
-            this.debugGraphics.lineTo(x - 10, y + 10);
-            this.debugGraphics.strokePath();
-            
-            // Add "SPAWN" text
-            const spawnText = this.add.text(x, y - 30, 'SPAWN', {
-                fontSize: '16px',
-                fill: '#00ff00',
-                backgroundColor: '#000000',
-                padding: { x: 4, y: 2 }
-            });
-            spawnText.setOrigin(0.5);
-            spawnText.setScrollFactor(1);
-            
-            // Store the text to remove it later
-            if (this.spawnText) {
-                this.spawnText.destroy();
-            }
-            this.spawnText = spawnText;
-        } else {
-            // Clean up text when debug is disabled
-            if (this.spawnText) {
-                this.spawnText.destroy();
-                this.spawnText = null;
-            }
-        }
+        // Draw spawn point visualization
+        this.debugGraphics.lineStyle(2, 0x00ff00);  // Green outline
+        this.debugGraphics.strokeCircle(this.playerSpawnPoint.x, this.playerSpawnPoint.y, 20);
+        
+        // Draw X in the center
+        this.debugGraphics.lineStyle(2, 0xff0000);  // Red X
+        const x = this.playerSpawnPoint.x;
+        const y = this.playerSpawnPoint.y;
+        this.debugGraphics.beginPath();
+        this.debugGraphics.moveTo(x - 10, y - 10);
+        this.debugGraphics.lineTo(x + 10, y + 10);
+        this.debugGraphics.moveTo(x + 10, y - 10);
+        this.debugGraphics.lineTo(x - 10, y + 10);
+        this.debugGraphics.strokePath();
     }
 
     pauseGame() {
@@ -728,31 +563,6 @@ export class Matrix640x360 extends BaseScene{
             // Game Over - stop timer and transition
             this.scene.start('GameOver');
         }
-    }
-
-    findSpawnPointsForSlimes() {
-        const spawnPoints = [];
-        const mapWidth = this.mapLayer.width;
-        const mapHeight = this.mapLayer.height;
-
-        // Scan the map for solid tiles (type 370)
-        for (let x = 0; x < mapWidth; x++) {
-            for (let y = 0; y < mapHeight - 1; y++) {
-                const tile = this.mapLayer.getTileAt(x, y);
-                const tileAbove = this.mapLayer.getTileAt(x, y - 1);
-                
-                // Check if current tile is solid and tile above is empty
-                if ((tile && (tile.index === 370 || tile.collides)) && 
-                    (!tileAbove || (!tileAbove.collides && tileAbove.index !== 370))) {
-                    // Position slime exactly on top of the tile
-                    spawnPoints.push({ 
-                        x: x * 32 + 16, // Center of tile
-                        y: y * 32 - 8   // Just above the tile
-                    });
-                }
-            }
-        }
-        return spawnPoints;
     }
 
     findSpawnPointsForBitcoins() {
