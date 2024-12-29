@@ -391,6 +391,11 @@ export class TheZucc extends Scene {
         .setInteractive()
         .setPadding(10)
         .on('pointerdown', () => {
+            // Stop the music before starting the procedural level
+            const music = this.sound.get('thezucc');
+            if (music) {
+                music.stop();
+            }
             console.log('Starting procedural level with config:', this.proceduralConfig);
             this.scene.start('Matrix640x360', { 
                 procedural: true,
