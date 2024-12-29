@@ -12,10 +12,14 @@ import { SceneBoundaryManager } from '../../modules/managers/BoundaryManager';
 import { EffectsManager } from '../../modules/managers/EffectsManager';
 import { EnemyManager } from '../../modules/managers/EnemyManager';
 import { Bullet } from '../../prefabs/Bullet';
+import { Player } from '../../prefabs/Player'; // Changed to named import
 
 export class Matrix640x360 extends BaseScene{
     constructor() {
-        super({ key: 'Matrix640x360' });
+        super({ 
+            key: 'Matrix640x360',
+            backgroundColor: '#ffffff'  // Set white background
+        });
         this.tileColliderAdded = false;
         this.messageShown = false;
         this.totalEnemies = 7; // Increased to include drone and melee warriors
@@ -24,28 +28,122 @@ export class Matrix640x360 extends BaseScene{
     }
 
     preload() {
+        // Load tileset as spritesheet
+        this.load.spritesheet('megapixel', '/assets/levels/image/WannabeeTileset.png', {
+            frameWidth: 32,
+            frameHeight: 32,
+            spacing: 0,
+            margin: 0
+        });
+        
+        // Load LDtk level data
+        this.load.json('matrix', '/assets/levels/Json/Matrix_640w_360h.json');
+
+        // Load player sprites
+        this.load.spritesheet('character_idle', '/assets/player/idle.png', { frameWidth: 32, frameHeight: 32 });
+        this.load.spritesheet('character_run', '/assets/player/run.png', { frameWidth: 32, frameHeight: 32 });
+        this.load.spritesheet('character_jump', '/assets/player/jump.png', { frameWidth: 32, frameHeight: 32 });
+        this.load.spritesheet('character_fall', '/assets/player/fall.png', { frameWidth: 32, frameHeight: 32 });
+
         // Load all audio files
-        this.load.audio('laser', 'assets/sounds/laser.wav');
-        this.load.audio('hit', 'assets/sounds/hit.wav');
-        this.load.audio('victoryMusic', 'assets/sounds/congratulations');
+        this.load.audio('laser', '/assets/sounds/laser.wav');
+        this.load.audio('hit', '/assets/sounds/hit.wav');
+        this.load.audio('victoryMusic', '/assets/sounds/congratulations');
 
         // Load tileset with error handling
         this.load.on('loaderror', (file) => {
             console.error('Error loading file:', file.src);
         });
-
-        // Load tileset
-        this.load.image('megapixel', 'assets/levels/image/WannabeeTileset.png');
-        
-        // Load level data
-        this.load.json('level1', 'assets/levels/Json/Matrix_640w_360h.json');
     }
 
     create() {
-        // Set up scene-specific scaling
-        this.scale.setGameSize(640, 360);
-        this.scale.setMode(Phaser.Scale.FIT);
-        this.scale.setZoom(1);
+        // Set up world bounds and physics
+        this.physics.world.setBounds(0, 0, 640, 360);
+        
+        // Set scene background color
+        this.cameras.main.setBackgroundColor('#ffffff');
+        
+        // Add semi-transparent white background
+        const bg = this.add.rectangle(320, 180, 640, 360, 0xFFFFFF);
+        bg.setAlpha(0.5);  // 50% transparency
+        bg.setDepth(-1);   // Keep it at the back
+
+        // Load level data from LDtk
+        const levelData = this.cache.json.get('matrix');
+        
+        if (!levelData || !levelData.layerInstances) {
+            console.error('Invalid level data:', levelData);
+            return;
+        }
+
+        // Get the layer instance for WannabeeTileset layer
+        const tileLayer = levelData.layerInstances.find(layer => layer.__identifier === "WannabeeTileset");
+        
+        if (!tileLayer) {
+            console.error('WannabeeTileset layer not found');
+            return;
+        }
+
+        // Create a tilemap for collision handling
+        const map = this.make.tilemap({
+            width: Math.ceil(levelData.pxWid / tileLayer.__gridSize),
+            height: Math.ceil(levelData.pxHei / tileLayer.__gridSize),
+            tileWidth: tileLayer.__gridSize,
+            tileHeight: tileLayer.__gridSize
+        });
+
+        // Add the tileset image to the map
+        const tileset = map.addTilesetImage('megapixel');
+        
+        // Create a static layer for collisions
+        const layer = map.createBlankLayer('collision', tileset);
+        if (!layer) {
+            console.error('Failed to create collision layer');
+            return;
+        }
+
+        // Create a group for visual tiles
+        this.tileLayer = this.add.group();
+
+        // Helper function to convert source coordinates to frame index
+        const getFrameFromSrc = (src) => {
+            const tilesPerRow = 25; // Number of tiles per row in the tileset
+            const tileX = src[0] / tileLayer.__gridSize;
+            const tileY = src[1] / tileLayer.__gridSize;
+            return tileY * tilesPerRow + tileX;
+        };
+
+        // Place tiles according to the LDtk data
+        if (tileLayer.gridTiles) {
+            tileLayer.gridTiles.forEach(tile => {
+                const frameIndex = getFrameFromSrc(tile.src);
+                
+                // Create visual sprite
+                const tileSprite = this.add.sprite(
+                    tile.px[0],  // x position
+                    tile.px[1],  // y position
+                    'megapixel',
+                    frameIndex
+                );
+                tileSprite.setOrigin(0);
+                this.tileLayer.add(tileSprite);
+
+                // Add collision tile
+                const tileX = Math.floor(tile.px[0] / tileLayer.__gridSize);
+                const tileY = Math.floor(tile.px[1] / tileLayer.__gridSize);
+                const collisionTile = layer.putTileAt(frameIndex, tileX, tileY);
+                if (collisionTile) {
+                    collisionTile.setCollision(true);
+                }
+            });
+        }
+
+        // Enable collision on the layer
+        layer.setCollisionByProperty({ collides: true });
+        
+        // Store references
+        this.map = map;
+        this.mapLayer = layer;
 
         // Initialize registry values
         this.registry.set('playerHP', 100);
@@ -71,95 +169,76 @@ export class Matrix640x360 extends BaseScene{
             runChildUpdate: true
         });
 
-        this.input.keyboard.enabled = true;  // Ensure keyboard is enabled on scene start
+        // Set up game dimensions
+        this.LEVEL_WIDTH = 640;
+        this.LEVEL_HEIGHT = 360;
+
+        // Set world bounds
+        this.physics.world.setBounds(0, 0, this.LEVEL_WIDTH, this.LEVEL_HEIGHT);
+        
+        // Configure the main camera to show only the 640x360 area
+        const mainCam = this.cameras.main;
+        mainCam.setViewport(0, 0, this.LEVEL_WIDTH, this.LEVEL_HEIGHT);
+        mainCam.setBounds(0, 0, this.LEVEL_WIDTH, this.LEVEL_HEIGHT);
+        mainCam.setBackgroundColor('#000000');
+        mainCam.setZoom(1);
+
+        // Store player spawn point (near the left side, above ground)
+        const SPAWN_X = 100;
+        const SPAWN_Y = 280; // Adjust this based on your ground level
+        
+        // Add debug visualization for spawn point (before creating player)
+        this.debugSpawnPoint = this.add.graphics();
+        this.debugSpawnPoint.lineStyle(2, 0xff0000);
+        this.debugSpawnPoint.strokeCircle(SPAWN_X, SPAWN_Y, 10);
+        this.debugSpawnPoint.lineStyle(2, 0x00ff00);
+        this.debugSpawnPoint.lineBetween(SPAWN_X - 15, SPAWN_Y, SPAWN_X + 15, SPAWN_Y);
+        this.debugSpawnPoint.lineBetween(SPAWN_X, SPAWN_Y - 15, SPAWN_X, SPAWN_Y + 15);
+
+        // Add debug text for camera info
+        this.debugText = this.add.text(10, 10, '', { 
+            font: '16px Arial', 
+            fill: '#ff0000',
+            backgroundColor: '#ffffff' 
+        });
+        this.debugText.setScrollFactor(0);  // Fix to camera
 
         // Set up world physics
         this.physics.world.gravity.y = 800;
-        this.physics.world.setBounds(0, 0, this.LEVEL_WIDTH, this.LEVEL_HEIGHT);
-
+        
         // Create platforms group for collision
         this.platforms = this.physics.add.staticGroup();
+
+        // Create player at spawn point
+        this.player = new Player(this, SPAWN_X, SPAWN_Y);
+        this.physics.add.existing(this.player);
+        this.player.setCollideWorldBounds(true);
         
-        // Set initial game state and enable controls immediately
-        this.gameStarted = true;
-
-        const { width, height } = this.scale;
-
-        // Initialize debug system if not already initialized
-        if (!this.debugSystem) {
-            this.debugSystem = {
-                enabled: false,
-                toggle: () => {
-                    this.debugSystem.enabled = !this.debugSystem.enabled;
-                }
-            };
-        }
-
-        // Create raycaster for laser collision detection
-        this.raycaster = {
-            createRay: (config) => {
-                return {
-                    cast: (target) => {
-                        const start = config.origin;
-                        const end = { x: target.x, y: target.y };
-                        const obstacles = target.obstacles;
-
-                        // Check if line intersects with any obstacle
-                        for (const obstacle of obstacles) {
-                            if (this.lineIntersectsRect(
-                                start.x, start.y,
-                                end.x, end.y,
-                                obstacle.x, obstacle.y,
-                                obstacle.width, obstacle.height
-                            )) {
-                                return { hasHit: true };
-                            }
-                        }
-                        return { hasHit: false };
-                    }
-                };
-            }
-        };
-
-        // Add ESC key for pause menu
-        this.pauseKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
-        this.pauseKey.on('down', () => {
-            this.pauseGame();
-        });
-
-        // Game paused flag
-        this.isGamePaused = false;
-
-        // Define initial spawn position (near the left side of the level)
-        const SPAWN_X_PERCENTAGE = 0.1;  // 10% from left edge
-        const SPAWN_Y = this.LEVEL_HEIGHT * 0.8;  // 80% down from top
-        
-        // Override base scene's spawn point for this level
+        // Store spawn point for respawning
         this.playerSpawnPoint = {
-            x: this.LEVEL_WIDTH * SPAWN_X_PERCENTAGE,
+            x: SPAWN_X,
             y: SPAWN_Y
         };
 
-        // Create player if it doesn't exist
-        if (!this.player) {
-            this.createPlayer(this.scale.width);
-            // Enable player controls immediately
-            this.player.controller.enabled = true;
-        }
+        // Enable keyboard input
+        this.input.keyboard.enabled = true;
+
+        // Reset and set up camera AFTER player creation
+        this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
+        this.cameras.main.setFollowOffset(0, 0);
         
-        // Set player position to spawn point
-        this.player.setPosition(this.playerSpawnPoint.x, this.playerSpawnPoint.y);
+        // Debug rectangle to show level bounds
+        this.debugBounds = this.add.graphics();
+        this.debugBounds.lineStyle(2, 0x00ff00);
+        this.debugBounds.strokeRect(0, 0, this.LEVEL_WIDTH, this.LEVEL_HEIGHT);
         
-        // Set world bounds to match the exact level size
-        this.physics.world.setBounds(0, 0, this.LEVEL_WIDTH, this.LEVEL_HEIGHT);
-        
-        // Set camera bounds to match world bounds exactly
-        this.cameras.main.setBounds(0, 0, this.LEVEL_WIDTH, this.LEVEL_HEIGHT);
-        
-        // Set up the main game camera - fixed position, centered
-        this.cameras.main.setZoom(1);
-        this.cameras.main.centerOn(this.LEVEL_WIDTH/2, this.LEVEL_HEIGHT/2);
-        
+        // Update debug text
+        this.debugText.setText(
+            `Camera: ${Math.floor(this.cameras.main.scrollX)},${Math.floor(this.cameras.main.scrollY)}\n` +
+            `Player: ${Math.floor(this.player.x)},${Math.floor(this.player.y)}\n` +
+            `World Bounds: ${this.LEVEL_WIDTH}x${this.LEVEL_HEIGHT}`
+        );
+
         // Initialize collision manager
         this.collisionManager = new CollisionManager(this);
 
@@ -206,9 +285,7 @@ export class Matrix640x360 extends BaseScene{
         this.bitcoins = this.add.group();
 
         // Debug level data loading
-        const levelData = this.cache.json.get('level1');
-        
-        if (!levelData) {
+        if (!this.cache.json.get('matrix')) {
             console.error('Failed to load level data');
             return;
         }
@@ -219,34 +296,6 @@ export class Matrix640x360 extends BaseScene{
             console.error('Megapixel layer not found');
             return;
         }
-
-        // Create tilemap from JSON using level dimensions
-        const map = this.make.tilemap({ 
-            width: Math.ceil(levelData.pxWid / megapixelLayer.__gridSize),
-            height: Math.ceil(levelData.pxHei / megapixelLayer.__gridSize),
-            tileWidth: megapixelLayer.__gridSize,
-            tileHeight: megapixelLayer.__gridSize
-        });
-        
-        // Add tileset to map
-        const tileset = map.addTilesetImage('megapixel', 'megapixel', 32, 32, 0, 0);
-        
-        if (!tileset) {
-            console.error('Failed to create tileset');
-            return;
-        }
-        
-        // Create layer from LDtk data
-        const layer = map.createBlankLayer('Megapixel', tileset, 0, 0);
-        
-        if (!layer) {
-            console.error('Failed to create layer');
-            return;
-        }
-
-        // Store layer and map references
-        this.mapLayer = layer;
-        this.map = map;
 
         // Create a promise to track tile placement
         const placeTilesPromise = new Promise((resolve) => {
@@ -505,7 +554,7 @@ export class Matrix640x360 extends BaseScene{
                 
                 // Add warrior to enemy manager
                 this.enemyManager.addEnemy(warrior, warrior.sprite, warrior.maxHealth);
-                
+
                 return warrior;
             }
             return null;
@@ -593,35 +642,22 @@ export class Matrix640x360 extends BaseScene{
         // Update debug visuals if enabled
         this.updateDebugVisuals();
 
-        // Check for scene transition
-        const reachedEnd = this.player.x > 3740;
-        
         // Check for active slimes based on their health
         const activeSlimes = this.slimes.getChildren().filter(slime => 
             slime.enemy && slime.enemy.health > 0
         );
         const activeSlimeCount = activeSlimes.length;
-        const allSlimesDefeated = activeSlimeCount === 0;
 
         // Debug info
         console.log({
-            reachedEnd,
             playerX: this.player.x,
-            endX: 3740,
-            mapWidth: 3840,
             activeSlimeCount,
-            allSlimesDefeated,
             slimeDetails: activeSlimes.map(slime => ({
                 health: slime.enemy?.health,
                 active: slime.active,
                 visible: slime.visible
             }))
         });
-
-        // Transition to next scene if player has reached the end and defeated all slimes
-        if (reachedEnd && allSlimesDefeated) {
-            this.scene.start('GameScene2');
-        }
     }
 
     updateDebugVisuals() {
