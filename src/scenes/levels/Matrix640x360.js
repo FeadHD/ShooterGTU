@@ -9,7 +9,7 @@ import { StateManager } from '../../modules/managers/StateManager';
 import { DebugSystem } from '../../_Debug/DebugSystem';
 import { SceneBoundaryManager } from '../../modules/managers/BoundaryManager';
 import { EffectsManager } from '../../modules/managers/EffectsManager';
-import { EnemyManager } from '../../modules/managers/EnemyManager';
+import { EnemyManager } from '../../modules/managers/EnemyManager'; // Import EnemyManager
 import { Bullet } from '../../prefabs/Bullet';
 import { Player } from '../../prefabs/Player'; // Changed to named import
 import { ProceduralGenerator } from '../../scripts/ProceduralGenerator';
@@ -99,6 +99,7 @@ export class Matrix640x360 extends BaseScene{
                 this.animationManager = new AnimationManager(this);
                 this.effectsManager = new EffectsManager(this);
                 this.stateManager = new StateManager(this);
+                this.enemyManager = new EnemyManager(this); // Initialize EnemyManager
                 this.animationManager.createAllAnimations();
 
                 // Initialize game state
@@ -501,7 +502,7 @@ export class Matrix640x360 extends BaseScene{
         if (slime.sprite) {
             this.slimes.add(slime.sprite);
             this.enemies.add(slime.sprite);
-            slime.sprite.setData('enemy', slime);
+            this.enemyManager.addEnemy(slime, slime.sprite, slime.health);
         }
         return slime;
     }
@@ -545,16 +546,7 @@ export class Matrix640x360 extends BaseScene{
     }
 
     hitEnemyWithBullet(bullet, enemySprite) {
-        // Skip if enemy is already being destroyed
-        if (!enemySprite.active || !enemySprite.body || !enemySprite.body.enable) {
-            bullet.destroy();
-            return;
-        }
-        
-        // Destroy the bullet first
-        bullet.destroy();
-        
-        // Use the EnemyManager to handle the bullet hit
+        // Use EnemyManager to handle bullet hits
         this.enemyManager.handleBulletHit(bullet, enemySprite);
     }
 
