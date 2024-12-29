@@ -24,11 +24,11 @@ export class Slime extends Enemy {
             // Set up physics with rectangular hitbox for better collisions
             this.sprite.body.setSize(28, 22); // Make hitbox more square
             this.sprite.body.setOffset(2, 2); // Center the hitbox
-            this.sprite.body.setGravityY(1000);
+            this.sprite.body.setGravityY(500); // Slightly heavier than player
             this.sprite.body.setCollideWorldBounds(true);
             this.sprite.body.setBounce(0.2); // Reduced bounce for more stable movement
             this.sprite.body.setFriction(1);
-            this.sprite.body.setDragX(200); // Increased drag for better control
+            this.sprite.body.setDrag(100); // Increased drag for better control
             this.sprite.body.setMaxVelocity(300, 1000); // Limit maximum velocity
             this.sprite.body.setImmovable(false);
             this.sprite.body.setAllowGravity(true);

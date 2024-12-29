@@ -11,8 +11,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.isDying = false;
         this.invulnerableUntil = 0;
         this.movementSpeed = 300;
-        this.jumpSpeed = -450;    // First jump speed
-        this.doubleJumpSpeed = -400;  // Second jump slightly weaker
+        this.jumpSpeed = -350;    // Reduced jump speed for lower gravity
+        this.doubleJumpSpeed = -300;  // Second jump slightly weaker
         this.playerHP = scene.registry.get('playerHP') || 100;
         this.lastDamageTaken = 0; // Track last damage taken
         
@@ -24,7 +24,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.setScale(2)
             .setCollideWorldBounds(true)
             .setBounce(0.1)
-            .setGravityY(300)
+            .setGravityY(400)  // Match world gravity
             .setAlpha(1) // Set opacity to 100%
             .setDepth(1000); // Set a high depth value to render in front of everything
             

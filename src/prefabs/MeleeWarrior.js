@@ -85,7 +85,8 @@ class MeleeWarrior extends Enemy {
             
             this.sprite.body.setCollideWorldBounds(true);
             this.sprite.body.setBounce(0.2);
-            this.sprite.body.setDrag(200);
+            this.sprite.body.setGravityY(600);  // Heavier than player but not too heavy
+            this.sprite.body.setDrag(100);
             
             this.sprite.body.setSize(32, 32);
             const offsetX = 32;

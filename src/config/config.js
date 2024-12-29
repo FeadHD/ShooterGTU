@@ -31,8 +31,9 @@ export const config = {
     physics: {
         default: 'arcade',
         arcade: {
-            gravity: { y: 0 },
-            debug: false
+            debug: false,
+            gravity: { y: 400 },  
+            tileBias: 32,
         }
     },
     input: {

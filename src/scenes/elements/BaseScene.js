@@ -40,7 +40,6 @@ export class BaseScene extends Scene {
         this.input.keyboard.enabled = true;  // Ensure keyboard is enabled on scene start
 
         // Set up world physics
-        this.physics.world.gravity.y = 800;
         this.physics.world.setBounds(0, 0, width, height);
 
         // Create parallax background first, before other elements
