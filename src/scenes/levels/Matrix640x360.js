@@ -341,6 +341,10 @@ export class Matrix640x360 extends BaseScene{
 
                 // Create debug graphics
                 this.debugGraphics = this.add.graphics();
+                
+                // Initialize debug system
+                this.debugSystem = new DebugSystem(this);
+                
             }
         });
     }
@@ -602,16 +606,9 @@ export class Matrix640x360 extends BaseScene{
             });
         }
 
-        // Update debug visuals
-        this.updateDebugVisuals();
-
-        // Update debug text with current information
-        if (this.debugText && this.player) {
-            this.debugText.setText(
-                `Player: (${Math.floor(this.player.x)}, ${Math.floor(this.player.y)})\n` +
-                `Spawn: (${Math.floor(this.playerSpawnPoint.x)}, ${Math.floor(this.playerSpawnPoint.y)})\n` +
-                `Camera: (${Math.floor(this.cameras.main.scrollX)}, ${Math.floor(this.cameras.main.scrollY)})`
-            );
+        // Update debug system
+        if (this.debugSystem) {
+            this.debugSystem.update();
         }
 
         // Check for active slimes based on their health
@@ -630,26 +627,54 @@ export class Matrix640x360 extends BaseScene{
                 visible: slime.visible
             }))
         });
+
+        // Update debug visuals
+        this.updateDebugVisuals();
     }
 
     updateDebugVisuals() {
         // Clear previous debug graphics
         this.debugGraphics.clear();
 
-        // Draw spawn point visualization
-        this.debugGraphics.lineStyle(2, 0x00ff00);  // Green outline
-        this.debugGraphics.strokeCircle(this.playerSpawnPoint.x, this.playerSpawnPoint.y, 20);
-        
-        // Draw X in the center
-        this.debugGraphics.lineStyle(2, 0xff0000);  // Red X
-        const x = this.playerSpawnPoint.x;
-        const y = this.playerSpawnPoint.y;
-        this.debugGraphics.beginPath();
-        this.debugGraphics.moveTo(x - 10, y - 10);
-        this.debugGraphics.lineTo(x + 10, y + 10);
-        this.debugGraphics.moveTo(x + 10, y - 10);
-        this.debugGraphics.lineTo(x - 10, y + 10);
-        this.debugGraphics.strokePath();
+        // Only show debug visuals if debug system is enabled
+        if (this.debugSystem?.enabled) {
+            // Draw spawn point indicator
+            this.debugGraphics.lineStyle(2, 0x00ff00);  // Green outline
+            this.debugGraphics.strokeCircle(this.playerSpawnPoint.x, this.playerSpawnPoint.y, 20);
+            
+            // Draw X in the center
+            this.debugGraphics.lineStyle(2, 0xff0000);  // Red X
+            const x = this.playerSpawnPoint.x;
+            const y = this.playerSpawnPoint.y;
+            this.debugGraphics.beginPath();
+            this.debugGraphics.moveTo(x - 10, y - 10);
+            this.debugGraphics.lineTo(x + 10, y + 10);
+            this.debugGraphics.moveTo(x + 10, y - 10);
+            this.debugGraphics.lineTo(x - 10, y + 10);
+            this.debugGraphics.strokePath();
+            
+            // Add "SPAWN" text
+            const spawnText = this.add.text(x, y - 30, 'SPAWN', {
+                fontSize: '16px',
+                fill: '#00ff00',
+                backgroundColor: '#000000',
+                padding: { x: 4, y: 2 }
+            });
+            spawnText.setOrigin(0.5);
+            spawnText.setScrollFactor(1);
+            
+            // Store the text to remove it later
+            if (this.spawnText) {
+                this.spawnText.destroy();
+            }
+            this.spawnText = spawnText;
+        } else {
+            // Clean up text when debug is disabled
+            if (this.spawnText) {
+                this.spawnText.destroy();
+                this.spawnText = null;
+            }
+        }
     }
 
     pauseGame() {
