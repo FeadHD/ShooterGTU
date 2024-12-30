@@ -251,7 +251,9 @@ class MeleeWarrior extends Enemy {
                 };
 
                 // Cast rays using Phaser's ray casting
-                const obstacles = this.scene.platforms.getChildren();
+                const obstacles = this.scene.platforms ? 
+                    this.scene.platforms.getChildren() : 
+                    (this.scene.mapLayer ? [this.scene.mapLayer] : []);
                 let hitObstacle = false;
                 let hasGround = false;
 

@@ -28,6 +28,11 @@ export class EnemyManager {
         // If it's a warrior, call takeDamage directly
         if (enemy && enemySprite.getData('type') === 'warrior') {
             enemy.takeDamage(1);
+            enemyData.currentHealth = enemy.currentHealth;
+            enemySprite.setData('health', enemy.currentHealth);
+            if (enemy.updateHealthBar) {
+                enemy.updateHealthBar();
+            }
             return;
         }
 
