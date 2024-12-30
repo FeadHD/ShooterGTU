@@ -134,16 +134,48 @@ export class Matrix640x360 extends BaseScene{
                 this.player.setPosition(this.playerSpawnPoint.x, this.playerSpawnPoint.y);
                 this.player.setVelocity(0, 0);  // Ensure player starts stationary
 
-                // Create alarm triggers after player
+                // Create platforms
+                this.platforms = this.physics.add.staticGroup();
+                
+                // Load level data
+                const levelData = this.cache.json.get('matrix');
+                
+                // Create platforms from level data
+                const platformLayer = levelData.layerInstances.find(layer => layer.__identifier === "WannabeeTileset");
+                if (platformLayer && platformLayer.gridTiles) {
+                    platformLayer.gridTiles.forEach(tile => {
+                        const x = tile.px[0] + 16; // Center of tile
+                        const y = tile.px[1] + 16;
+                        const platform = this.platforms.create(x, y, 'megapixel');
+                        platform.setImmovable(true);
+                    });
+                }
+
+                // Initialize alarm triggers group
                 this.alarmTriggers = this.physics.add.staticGroup({
                     classType: AlarmTrigger,
                     runChildUpdate: true
                 });
                 
-                // Create an alarm trigger
-                const alarm1 = this.alarmTriggers.create(320, 180, null, false);
-                alarm1.setSize(32, 32);
+                // Find valid spawn points for alarms after platforms are created
+                const alarmSpawnPoints = this.findSpawnPointsForAlarms();
                 
+                // Create alarm triggers at random valid positions
+                if (alarmSpawnPoints.length > 0) {
+                    // Get number of alarms to create from trapConfig
+                    const numAlarms = this.trapConfig?.AlarmTrigger || 1;
+                    
+                    // Shuffle spawn points
+                    Phaser.Utils.Array.Shuffle(alarmSpawnPoints);
+                    
+                    // Create alarm triggers up to the configured amount or available spawn points
+                    for (let i = 0; i < Math.min(numAlarms, alarmSpawnPoints.length); i++) {
+                        const spawnPoint = alarmSpawnPoints[i];
+                        const alarm = this.alarmTriggers.create(spawnPoint.x, spawnPoint.y, null, false);
+                        alarm.setSize(32, 32);
+                    }
+                }
+
                 // Set up alarm trigger collision after both player and triggers exist
                 this.physics.add.overlap(
                     this.player,
@@ -152,52 +184,6 @@ export class Matrix640x360 extends BaseScene{
                         trap.triggerAlarm();
                     }
                 );
-
-                // Initialize managers
-                this.collisionManager = new CollisionManager(this);
-                this.animationManager = new AnimationManager(this);
-                this.enemyManager = new EnemyManager(this); // Initialize EnemyManager
-                this.animationManager.createAllAnimations();
-
-                // Initialize game state
-                this.stateManager.set('playerHP', 100);
-                this.stateManager.set('score', 0);
-                this.stateManager.set('bitcoins', 0);
-
-                // Wait for font to load before creating UI
-                WebFont.load({
-                    google: {
-                        families: ['Retronoid']
-                    },
-                    active: () => {
-                        // Initialize UI after font is loaded
-                        // this.gameUI = new GameUI(this);
-                    }
-                });
-
-                // Check if we should generate a procedural level
-                if (this.scene.settings.data && this.scene.settings.data.procedural) {
-                    this.createProceduralLevel(this.scene.settings.data.proceduralConfig);
-                } else {
-                    this.createStaticLevel();
-                }
-
-                // Add debug text for camera info
-                this.debugText = this.add.text(10, 10, '', { 
-                    font: '16px Arial', 
-                    fill: '#ff0000',
-                    backgroundColor: '#ffffff' 
-                });
-                this.debugText.setScrollFactor(0);  // Fix to camera
-                this.debugText.setDepth(1000);      // Keep on top
-
-                // Load level data from LDtk
-                const levelData = this.cache.json.get('matrix');
-        
-                if (!levelData || !levelData.layerInstances) {
-                    console.error('Invalid level data:', levelData);
-                    return;
-                }
 
                 // Get the layer instance for WannabeeTileset layer
                 const tileLayer = levelData.layerInstances.find(layer => layer.__identifier === "WannabeeTileset");
@@ -395,6 +381,45 @@ export class Matrix640x360 extends BaseScene{
                 
             }
         });
+    }
+
+    findSpawnPointsForAlarms() {
+        const spawnPoints = [];
+        const tileWidth = 32;
+        const tileHeight = 32;
+        const numColumns = Math.floor(this.scale.width / tileWidth);
+        const numRows = Math.floor(this.scale.height / tileHeight);
+
+        // Check each column
+        for (let col = 0; col < numColumns; col++) {
+            // Start from second row from top to leave room for alarm
+            for (let row = 1; row < numRows; row++) {
+                const x = col * tileWidth + tileWidth / 2;
+                const y = row * tileHeight;
+
+                // Check if there's a platform at this position
+                const hasPlatform = this.platforms.getChildren().some(platform => {
+                    const bounds = platform.getBounds();
+                    return bounds.contains(x, y);
+                });
+
+                // Check if there's a platform below but not above
+                const hasPlatformAbove = this.platforms.getChildren().some(platform => {
+                    const bounds = platform.getBounds();
+                    return bounds.contains(x, y - tileHeight);
+                });
+
+                // If we found a platform and the space above is empty
+                if (hasPlatform && !hasPlatformAbove) {
+                    spawnPoints.push({
+                        x: x,
+                        y: y - tileHeight + tileHeight / 2 // Position alarm in center of tile above
+                    });
+                }
+            }
+        }
+
+        return spawnPoints;
     }
 
     createProceduralLevel(config) {
@@ -794,55 +819,6 @@ export class Matrix640x360 extends BaseScene{
             // Game Over - stop timer and transition
             this.scene.start('GameOver');
         }
-    }
-
-    findSpawnPointsForBitcoins() {
-        const spawnPoints = [];
-        const tileHeight = 32;
-        const levelWidth = this.scale.width;
-        const maxJumpHeight = 5 * tileHeight; // Maximum 5 tiles above platform
-        
-        // Sample points across the level width
-        for (let x = levelWidth * 0.1; x < levelWidth * 0.9; x += 100) {
-            // Find platforms at this x coordinate
-            const platformsAtX = this.platforms.getChildren().filter(platform => {
-                const bounds = platform.getBounds();
-                return x >= bounds.left && x <= bounds.right;
-            });
-
-            if (platformsAtX.length > 0) {
-                // Sort platforms by Y position (top to bottom)
-                platformsAtX.sort((a, b) => a.y - b.y);
-
-                // For each platform, try to place a bitcoin above it
-                for (const platform of platformsAtX) {
-                    const platformTop = platform.getBounds().top;
-                    let validY = null;
-
-                    // Try positions above the platform, within jump height
-                    for (let y = platformTop - tileHeight; y >= platformTop - maxJumpHeight; y -= tileHeight) {
-                        // Check if this position collides with any platform
-                        const hasCollision = this.platforms.getChildren().some(p => {
-                            const bounds = p.getBounds();
-                            return bounds.contains(x, y);
-                        });
-
-                        if (!hasCollision) {
-                            validY = y;
-                            break;
-                        }
-                    }
-
-                    if (validY !== null) {
-                        spawnPoints.push({ x, y: validY });
-                        break; // Only one spawn point per x coordinate
-                    }
-                }
-            }
-        }
-        
-        // Shuffle the spawn points
-        return Phaser.Utils.Array.Shuffle(spawnPoints);
     }
 
     lineIntersectsRect(x1, y1, x2, y2, rectX, rectY, rectWidth, rectHeight) {
