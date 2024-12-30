@@ -48,6 +48,10 @@ export class TheZucc extends Scene {
         }
         this.sound.play('thezucc', { loop: true });
 
+        // Set up camera
+        this.cameras.main.setBounds(0, 0, this.scale.width, this.scale.height);
+        this.cameras.main.setZoom(0.75);
+
         // Create the scene first before checking wallet
         await this.createScene();
         await this.initializeWallet();
