@@ -483,8 +483,11 @@ export class Matrix640x360 extends BaseScene{
             const x = this.LEVEL_WIDTH * (0.4 + (0.2 * i));
             const y = this.LEVEL_HEIGHT * 0.3;
             const drone = new Drone(this, x, y);
-            this.drones.add(drone);
-            this.enemies.add(drone);
+            if (drone.sprite) {
+                this.drones.add(drone.sprite);
+                this.enemies.add(drone.sprite);
+                drone.sprite.setData('enemy', drone);
+            }
         }
 
         // Start the game
@@ -515,7 +518,9 @@ export class Matrix640x360 extends BaseScene{
             this.slimes.add(slime.sprite);
             this.enemies.add(slime.sprite);
             this.enemyManager.addEnemy(slime, slime.sprite, slime.health);
-            slime.initializeMovement(); // Initialize movement
+            slime.sprite.setData('type', 'slime');
+            slime.sprite.setData('enemy', slime);
+            slime.initializeMovement();
         }
         return slime;
     }
@@ -525,6 +530,8 @@ export class Matrix640x360 extends BaseScene{
         if (drone.sprite) {
             this.drones.add(drone.sprite);
             this.enemies.add(drone.sprite);
+            this.enemyManager.addEnemy(drone, drone.sprite, drone.health);
+            drone.sprite.setData('type', 'drone');
             drone.sprite.setData('enemy', drone);
         }
         return drone;
@@ -534,19 +541,9 @@ export class Matrix640x360 extends BaseScene{
         const warrior = new MeleeWarrior(this, x, y);
         if (warrior.sprite) {
             this.enemies.add(warrior.sprite);
+            this.enemyManager.addEnemy(warrior, warrior.sprite, warrior.health);
             warrior.sprite.setData('type', 'warrior');
             warrior.sprite.setData('enemy', warrior);
-            
-            // Add warrior-specific debug data
-            warrior.sprite.setData('health', warrior.maxHealth);
-            warrior.sprite.setData('maxHealth', warrior.maxHealth);
-            warrior.sprite.setData('isAttacking', false);
-            warrior.sprite.setData('direction', warrior.direction);
-            warrior.sprite.setData('detectionRange', warrior.detectionRange);
-            warrior.sprite.setData('attackRange', warrior.attackRange);
-            
-            // Register warrior with EnemyManager
-            this.enemyManager.addEnemy(warrior, warrior.sprite, warrior.maxHealth);
         }
         return warrior;
     }
