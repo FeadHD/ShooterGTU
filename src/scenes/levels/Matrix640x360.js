@@ -57,6 +57,42 @@ export class Matrix640x360 extends BaseScene{
         this.load.audio('thezucc', '/assets/sounds/thezucc.wav');
         this.load.audio('alarm', '/assets/sounds/alarm.wav');  // Add alarm sound
 
+        // Load character spritesheets
+        this.load.spritesheet('character_idle', 'assets/sprites/character/idle.png', {
+            frameWidth: 24,
+            frameHeight: 24
+        });
+        this.load.spritesheet('character_walking', 'assets/sprites/character/walking.png', {
+            frameWidth: 24,
+            frameHeight: 24
+        });
+        this.load.spritesheet('character_run', 'assets/sprites/character/run.png', {
+            frameWidth: 24,
+            frameHeight: 24
+        });
+        this.load.spritesheet('character_jump', 'assets/sprites/character/jump.png', {
+            frameWidth: 24,
+            frameHeight: 24
+        });
+        this.load.spritesheet('character_fall', 'assets/sprites/character/fall.png', {
+            frameWidth: 24,
+            frameHeight: 24
+        });
+        this.load.spritesheet('character_shoot', 'assets/sprites/character/shoot.png', {
+            frameWidth: 24,
+            frameHeight: 24
+        });
+
+        // Load other necessary assets
+        this.load.spritesheet('bullet', 'assets/sprites/bullet.png', {
+            frameWidth: 16,
+            frameHeight: 16
+        });
+        this.load.spritesheet('hit-effect', 'assets/sprites/hit-effect.png', {
+            frameWidth: 32,
+            frameHeight: 32
+        });
+
         // Load tileset with error handling
         this.load.on('loaderror', (file) => {
             console.error('Error loading file:', file.src);
@@ -87,6 +123,9 @@ export class Matrix640x360 extends BaseScene{
                 this.boundaryManager = new SceneBoundaryManager(this);
                 this.animationManager = new AnimationManager(this);
                 this.gameUI = new GameUI(this);
+                
+                // Create animations
+                this.animationManager.createAllAnimations();
                 
                 // Initialize raycaster
                 this.raycaster = {
