@@ -6,6 +6,7 @@ import Drone from '../../prefabs/Drone';
 import CameraManager from '../../modules/managers/CameraManager';
 import { CollisionManager } from '../../modules/managers/CollisionManager';
 import MeleeWarrior from '../../prefabs/MeleeWarrior';
+import Alarm from '../../prefabs/Alarm';
 
 export class GameScene1 extends BaseScene {
     constructor() {
@@ -43,6 +44,7 @@ export class GameScene1 extends BaseScene {
 
         // Set initial game state
         this.gameStarted = false;  // Add flag to track if game has started
+        this.virusAlarmShown = false;
         
         // Initialize debug system if not already initialized
         if (!this.debugSystem) {
@@ -53,6 +55,9 @@ export class GameScene1 extends BaseScene {
                 }
             };
         }
+
+        // Initialize alarm system
+        this.alarm = new Alarm(this);
 
         // Create raycaster for laser collision detection
         this.raycaster = {
@@ -587,6 +592,12 @@ export class GameScene1 extends BaseScene {
 
         super.update(time, delta);
         if (this.isGamePaused) return;
+
+        // Show virus alarm when player reaches certain point
+        if (!this.virusAlarmShown && this.player && this.player.x > this.scale.width * 0.4) {
+            this.virusAlarmShown = true;
+            this.alarm.showVirusAlarm();
+        }
 
         // Update all enemies
         if (this.enemies) {
