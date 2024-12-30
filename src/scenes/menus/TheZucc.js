@@ -8,6 +8,9 @@ export class TheZucc extends Scene {
             'Drone': 0,
             'MeleeWarrior': 0
         };
+        this.trapConfig = {
+            'AlarmTrigger': 0
+        };
         // Add procedural configuration
         this.proceduralConfig = {
             gridWidth: 20,
@@ -51,67 +54,120 @@ export class TheZucc extends Scene {
     }
 
     createEnemyConfigSection(yOffset) {
-        const sectionX = 50;
+        const leftColumnX = 50;
+        const rightColumnX = this.cameras.main.width / 2 + 50;
         const labelStyle = {
-            fontSize: '18px',
+            fontSize: '32px',
             fill: '#fff',
-            fontFamily: 'Arial'
+            fontFamily: 'Press Start 2P'
         };
-        const inputStyle = {
-            fontSize: '16px',
-            fill: '#000',
-            backgroundColor: '#fff',
-            padding: { x: 5, y: 5 },
-            fixedWidth: 40
+        const valueStyle = {
+            fontSize: '48px',
+            fill: '#00ff00',
+            fontFamily: 'Press Start 2P'
+        };
+        const buttonStyle = {
+            fontSize: '48px',
+            fill: '#fff',
+            fontFamily: 'Press Start 2P',
+            backgroundColor: '#444444'
         };
 
-        // Add section title
-        this.add.text(sectionX, yOffset, 'Enemy Configuration:', labelStyle);
-        yOffset += 30;
+        // Add section titles
+        this.add.text(leftColumnX, yOffset, 'Enemy Configuration:', {
+            ...labelStyle,
+            fontSize: '48px'
+        });
+        this.add.text(rightColumnX, yOffset, 'Trap Configuration:', {
+            ...labelStyle,
+            fontSize: '48px',
+            fill: '#ff0000'
+        });
+        yOffset += 60;
 
-        // Create input fields for each enemy type
+        // Create enemy counters (left column)
         Object.keys(this.enemyConfig).forEach((enemyType, index) => {
-            // Enemy label
-            this.add.text(sectionX, yOffset + (index * 35), `${enemyType}:`, labelStyle);
+            const y = yOffset + (index * 60);
             
-            // Create input field
-            const input = this.add.text(sectionX + 150, yOffset + (index * 35), '0', inputStyle)
-                .setInteractive()
-                .setPadding(5)
-                .setBackgroundColor('#ffffff');
-
+            // Enemy label
+            this.add.text(leftColumnX, y, `${enemyType}:`, labelStyle);
+            
+            // Create counter display with background
+            const counterBg = this.add.rectangle(leftColumnX + 350, y + 20, 80, 50, 0x333333);
+            const counter = this.add.text(leftColumnX + 320, y, this.enemyConfig[enemyType].toString(), valueStyle);
+            
             // Add + button
-            const plusBtn = this.add.text(sectionX + 200, yOffset + (index * 35), '+', labelStyle)
+            const plusBtn = this.add.text(leftColumnX + 420, y, '+', buttonStyle)
                 .setInteractive()
-                .setPadding(5)
+                .setPadding(10)
                 .on('pointerdown', () => {
-                    const currentValue = parseInt(input.text);
-                    if (currentValue < 10) {
-                        input.setText((currentValue + 1).toString());
-                        this.enemyConfig[enemyType] = currentValue + 1;
-                    }
+                    this.enemyConfig[enemyType]++;
+                    counter.setText(this.enemyConfig[enemyType].toString());
                 });
 
             // Add - button
-            const minusBtn = this.add.text(sectionX + 230, yOffset + (index * 35), '-', labelStyle)
+            const minusBtn = this.add.text(leftColumnX + 500, y, '-', buttonStyle)
                 .setInteractive()
-                .setPadding(5)
+                .setPadding(10)
                 .on('pointerdown', () => {
-                    const currentValue = parseInt(input.text);
-                    if (currentValue > 0) {
-                        input.setText((currentValue - 1).toString());
-                        this.enemyConfig[enemyType] = currentValue - 1;
+                    if (this.enemyConfig[enemyType] > 0) {
+                        this.enemyConfig[enemyType]--;
+                        counter.setText(this.enemyConfig[enemyType].toString());
                     }
                 });
 
             // Add hover effects
             [plusBtn, minusBtn].forEach(btn => {
-                btn.on('pointerover', () => btn.setBackgroundColor('#2980b9'))
-                   .on('pointerout', () => btn.setBackgroundColor(null));
+                btn.on('pointerover', () => btn.setBackgroundColor('#666666'))
+                   .on('pointerout', () => btn.setBackgroundColor('#444444'));
             });
         });
 
-        return yOffset + (Object.keys(this.enemyConfig).length * 35) + 20;
+        // Create trap counters (right column)
+        Object.keys(this.trapConfig).forEach((trapType, index) => {
+            const y = yOffset + (index * 60);
+            
+            // Trap label
+            this.add.text(rightColumnX, y, `${trapType}:`, labelStyle);
+            
+            // Create counter display with background
+            const counterBg = this.add.rectangle(rightColumnX + 350, y + 20, 80, 50, 0x333333);
+            const counter = this.add.text(rightColumnX + 320, y, this.trapConfig[trapType].toString(), {
+                ...valueStyle,
+                fill: '#ff0000'
+            });
+            
+            // Add + button
+            const plusBtn = this.add.text(rightColumnX + 420, y, '+', buttonStyle)
+                .setInteractive()
+                .setPadding(10)
+                .on('pointerdown', () => {
+                    this.trapConfig[trapType]++;
+                    counter.setText(this.trapConfig[trapType].toString());
+                });
+
+            // Add - button
+            const minusBtn = this.add.text(rightColumnX + 500, y, '-', buttonStyle)
+                .setInteractive()
+                .setPadding(10)
+                .on('pointerdown', () => {
+                    if (this.trapConfig[trapType] > 0) {
+                        this.trapConfig[trapType]--;
+                        counter.setText(this.trapConfig[trapType].toString());
+                    }
+                });
+
+            // Add hover effects
+            [plusBtn, minusBtn].forEach(btn => {
+                btn.on('pointerover', () => btn.setBackgroundColor('#666666'))
+                   .on('pointerout', () => btn.setBackgroundColor('#444444'));
+            });
+        });
+
+        // Calculate max height between columns
+        const enemyHeight = Object.keys(this.enemyConfig).length * 60;
+        const trapHeight = Object.keys(this.trapConfig).length * 60;
+        return yOffset + Math.max(enemyHeight, trapHeight) + 40;
     }
 
     async createScene() {
@@ -123,7 +179,7 @@ export class TheZucc extends Scene {
 
         // Add title
         const titleStyle = {
-            fontSize: '32px',
+            fontSize: '48px',  
             fill: '#fff',
             fontFamily: 'Arial',
             align: 'center'
@@ -162,17 +218,17 @@ export class TheZucc extends Scene {
 
         // Style for category headers
         const categoryStyle = {
-            fontSize: '24px',
+            fontSize: '36px',  
             fill: '#fff',
             fontFamily: 'Arial'
         };
 
         // Style for scene buttons
         const buttonStyle = {
-            fontSize: '18px',
+            fontSize: '24px',  
             fill: '#fff',
             backgroundColor: '#34495e',
-            padding: { x: 10, y: 5 }
+            padding: { x: 15, y: 10 }
         };
 
         let yOffset = 120;
@@ -181,7 +237,7 @@ export class TheZucc extends Scene {
         for (const [category, config] of Object.entries(sceneCategories)) {
             // Add category header
             this.add.text(50, yOffset, category, categoryStyle);
-            yOffset += 40;
+            yOffset += 60;  
 
             // Add scene buttons
             let xOffset = 50;
@@ -190,7 +246,7 @@ export class TheZucc extends Scene {
             config.scenes.forEach(sceneName => {
                 const button = this.add.text(xOffset, yOffset, sceneName, buttonStyle)
                     .setInteractive()
-                    .setPadding(10)
+                    .setPadding(15)
                     .setBackgroundColor('#34495e')
                     .on('pointerover', () => button.setBackgroundColor('#2980b9'))
                     .on('pointerout', () => button.setBackgroundColor('#34495e'))
@@ -202,46 +258,46 @@ export class TheZucc extends Scene {
                         }
                         
                         if (config.showConfig) {
-                            this.scene.start(sceneName, { enemyConfig: this.enemyConfig });
+                            this.scene.start(sceneName, { enemyConfig: this.enemyConfig, trapConfig: this.trapConfig });
                         } else {
                             this.scene.start(sceneName);
                         }
                     });
 
-                xOffset += button.width + 20;
+                xOffset += button.width + 30;  
 
                 // Move to next row if we exceed max width
                 if (xOffset > maxWidth) {
                     xOffset = 50;
-                    yOffset += 40;
+                    yOffset += 60;  
                 }
             });
             
             // Add enemy configuration section if this category needs it
             if (config.showConfig) {
-                yOffset += 40;  // Add some space before the config section
+                yOffset += 60;  
                 yOffset = this.createEnemyConfigSection(yOffset);
             }
 
             // Add procedural configuration section if this category needs it
             if (config.showProcedural) {
-                yOffset += 40;  // Add some space before the config section
+                yOffset += 60;  
                 yOffset = this.addProceduralControls(yOffset);
             }
             
-            yOffset += 60;  // Space between categories
+            yOffset += 80;  
         }
 
         // Add back button at the bottom
         const backButton = this.add.text(width / 2, height - 50, 'BACK TO MAIN MENU', {
-            fontSize: '24px',
+            fontSize: '36px',  
             fill: '#fff',
             backgroundColor: '#c0392b',
-            padding: { x: 15, y: 10 }
+            padding: { x: 20, y: 15 }
         })
         .setOrigin(0.5)
         .setInteractive()
-        .setPadding(10)
+        .setPadding(15)
         .setBackgroundColor('#c0392b')
         .on('pointerover', () => backButton.setBackgroundColor('#e74c3c'))
         .on('pointerout', () => backButton.setBackgroundColor('#c0392b'))
@@ -258,30 +314,30 @@ export class TheZucc extends Scene {
 
     addProceduralControls(yOffset) {
         const labelStyle = {
-            fontSize: '20px',
+            fontSize: '32px',  
             fill: '#fff',
             fontFamily: 'Arial'
         };
 
         const buttonStyle = {
-            fontSize: '16px',
+            fontSize: '24px',  
             fill: '#fff',
             backgroundColor: '#34495e',
-            padding: { x: 10, y: 5 }
+            padding: { x: 15, y: 10 }
         };
 
         this.add.text(50, yOffset, 'Procedural Level Settings:', labelStyle);
-        yOffset += 40;
+        yOffset += 60;  
 
         // Platform Width Controls
         this.add.text(50, yOffset, 'Min Platform Width:', labelStyle);
         const minPlatformText = this.add.text(250, yOffset, this.proceduralConfig.minPlatformWidth.toString(), buttonStyle)
             .setInteractive()
-            .setPadding(10);
+            .setPadding(15);
 
         this.add.text(350, yOffset, '+', buttonStyle)
             .setInteractive()
-            .setPadding(10)
+            .setPadding(15)
             .on('pointerdown', () => {
                 if (this.proceduralConfig.minPlatformWidth < this.proceduralConfig.maxPlatformWidth - 1) {
                     this.proceduralConfig.minPlatformWidth++;
@@ -291,24 +347,24 @@ export class TheZucc extends Scene {
 
         this.add.text(400, yOffset, '-', buttonStyle)
             .setInteractive()
-            .setPadding(10)
+            .setPadding(15)
             .on('pointerdown', () => {
                 if (this.proceduralConfig.minPlatformWidth > 2) {
                     this.proceduralConfig.minPlatformWidth--;
                     minPlatformText.setText(this.proceduralConfig.minPlatformWidth.toString());
                 }
             });
-        yOffset += 40;
+        yOffset += 60;  
 
         // Max Platform Width Controls
         this.add.text(50, yOffset, 'Max Platform Width:', labelStyle);
         const maxPlatformText = this.add.text(250, yOffset, this.proceduralConfig.maxPlatformWidth.toString(), buttonStyle)
             .setInteractive()
-            .setPadding(10);
+            .setPadding(15);
 
         this.add.text(350, yOffset, '+', buttonStyle)
             .setInteractive()
-            .setPadding(10)
+            .setPadding(15)
             .on('pointerdown', () => {
                 if (this.proceduralConfig.maxPlatformWidth < 12) {
                     this.proceduralConfig.maxPlatformWidth++;
@@ -318,24 +374,24 @@ export class TheZucc extends Scene {
 
         this.add.text(400, yOffset, '-', buttonStyle)
             .setInteractive()
-            .setPadding(10)
+            .setPadding(15)
             .on('pointerdown', () => {
                 if (this.proceduralConfig.maxPlatformWidth > this.proceduralConfig.minPlatformWidth + 1) {
                     this.proceduralConfig.maxPlatformWidth--;
                     maxPlatformText.setText(this.proceduralConfig.maxPlatformWidth.toString());
                 }
             });
-        yOffset += 40;
+        yOffset += 60;  
 
         // Platform Density Controls
         this.add.text(50, yOffset, 'Platform Density:', labelStyle);
         const densityText = this.add.text(250, yOffset, this.proceduralConfig.platformDensity.toFixed(1), buttonStyle)
             .setInteractive()
-            .setPadding(10);
+            .setPadding(15);
 
         this.add.text(350, yOffset, '+', buttonStyle)
             .setInteractive()
-            .setPadding(10)
+            .setPadding(15)
             .on('pointerdown', () => {
                 if (this.proceduralConfig.platformDensity < 0.9) {
                     this.proceduralConfig.platformDensity += 0.1;
@@ -345,24 +401,24 @@ export class TheZucc extends Scene {
 
         this.add.text(400, yOffset, '-', buttonStyle)
             .setInteractive()
-            .setPadding(10)
+            .setPadding(15)
             .on('pointerdown', () => {
                 if (this.proceduralConfig.platformDensity > 0.2) {
                     this.proceduralConfig.platformDensity -= 0.1;
                     densityText.setText(this.proceduralConfig.platformDensity.toFixed(1));
                 }
             });
-        yOffset += 40;
+        yOffset += 60;  
 
         // Gap Width Controls
         this.add.text(50, yOffset, 'Min Gap Width:', labelStyle);
         const minGapText = this.add.text(250, yOffset, this.proceduralConfig.minGapWidth.toString(), buttonStyle)
             .setInteractive()
-            .setPadding(10);
+            .setPadding(15);
 
         this.add.text(350, yOffset, '+', buttonStyle)
             .setInteractive()
-            .setPadding(10)
+            .setPadding(15)
             .on('pointerdown', () => {
                 if (this.proceduralConfig.minGapWidth < this.proceduralConfig.maxGapWidth - 1) {
                     this.proceduralConfig.minGapWidth++;
@@ -372,24 +428,24 @@ export class TheZucc extends Scene {
 
         this.add.text(400, yOffset, '-', buttonStyle)
             .setInteractive()
-            .setPadding(10)
+            .setPadding(15)
             .on('pointerdown', () => {
                 if (this.proceduralConfig.minGapWidth > 2) {
                     this.proceduralConfig.minGapWidth--;
                     minGapText.setText(this.proceduralConfig.minGapWidth.toString());
                 }
             });
-        yOffset += 40;
+        yOffset += 60;  
 
         // Test Button
         const testButton = this.add.text(50, yOffset, 'Test Procedural Level', {
-            fontSize: '24px',
+            fontSize: '36px',  
             fill: '#fff',
             backgroundColor: '#2ecc71',
-            padding: { x: 15, y: 10 }
+            padding: { x: 20, y: 15 }
         })
         .setInteractive()
-        .setPadding(10)
+        .setPadding(15)
         .on('pointerdown', () => {
             // Stop the music before starting the procedural level
             const music = this.sound.get('thezucc');
@@ -400,11 +456,12 @@ export class TheZucc extends Scene {
             this.scene.start('Matrix640x360', { 
                 procedural: true,
                 proceduralConfig: this.proceduralConfig,
-                enemyConfig: this.enemyConfig 
+                enemyConfig: this.enemyConfig,
+                trapConfig: this.trapConfig
             });
         });
 
-        return yOffset + 60;
+        return yOffset + 80;  
     }
 
     shutdown() {
@@ -422,11 +479,11 @@ export class TheZucc extends Scene {
             // Add MetaMask connect button with retro style
             connectButton = this.add.text(this.cameras.main.width - 30, 30, 'Connect Wallet', {
                 fontFamily: 'Retronoid, Arial',
-                fontSize: '32px',
+                fontSize: '48px',  
                 color: '#00ffff',
                 stroke: '#ffffff',
                 strokeThickness: 2,
-                padding: { x: 15, y: 10 },
+                padding: { x: 20, y: 15 },
                 shadow: {
                     offsetX: 2,
                     offsetY: 2,

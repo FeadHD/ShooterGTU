@@ -14,6 +14,7 @@ import { Bullet } from '../../prefabs/Bullet';
 import { Player } from '../../prefabs/Player'; // Changed to named import
 import { ProceduralGenerator } from '../../scripts/ProceduralGenerator';
 import { GameUI } from '../elements/GameUI';
+import { AlarmTrigger } from '../../prefabs/AlarmTrigger';
 
 export class Matrix640x360 extends BaseScene{
     constructor() {
@@ -55,7 +56,8 @@ export class Matrix640x360 extends BaseScene{
         this.load.audio('laser', '/assets/sounds/laser.wav');
         this.load.audio('hit', '/assets/sounds/hit.wav');
         this.load.audio('victoryMusic', '/assets/sounds/congratulations');
-        this.load.audio('thezucc', '/assets/sounds/thezucc.wav'); // Load thezucc audio
+        this.load.audio('thezucc', '/assets/sounds/thezucc.wav');
+        this.load.audio('alarm', '/assets/sounds/alarm.wav');  // Add alarm sound
 
         // Load tileset with error handling
         this.load.on('loaderror', (file) => {
@@ -120,6 +122,38 @@ export class Matrix640x360 extends BaseScene{
                     maxSize: 10,
                     runChildUpdate: true
                 });
+                this.traps = this.physics.add.group();
+                
+                // Create the player
+                this.playerSpawnPoint = {
+                    x: this.scale.width * 0.1, // 10% from left edge
+                    y: 100 // Higher up to avoid tiles
+                };
+
+                // Create the player
+                this.player = new Player(this, this.playerSpawnPoint.x, this.playerSpawnPoint.y);
+                this.player.setPosition(this.playerSpawnPoint.x, this.playerSpawnPoint.y);
+                this.player.setVelocity(0, 0);  // Ensure player starts stationary
+
+                // Create alarm triggers after player
+                this.alarmTriggers = this.physics.add.staticGroup({
+                    classType: AlarmTrigger,
+                    runChildUpdate: true
+                });
+                
+                // Create an alarm trigger
+                const alarm1 = this.alarmTriggers.create(320, 180, null, false);
+                alarm1.setSize(100, 100);
+                alarm1.setAlpha(0.3);
+                
+                // Set up alarm trigger collision after both player and triggers exist
+                this.physics.add.overlap(
+                    this.player,
+                    this.alarmTriggers,
+                    (player, trap) => {
+                        trap.trigger();
+                    }
+                );
 
                 // Initialize managers
                 this.collisionManager = new CollisionManager(this);
@@ -142,21 +176,6 @@ export class Matrix640x360 extends BaseScene{
                         // this.gameUI = new GameUI(this);
                     }
                 });
-
-                // Define spawn position constants
-                const SPAWN_X_PERCENTAGE = 0.1;  // 10% from left edge
-                const SPAWN_Y = 100;             // Higher up to avoid tiles
-                
-                // Set spawn point for this level
-                this.playerSpawnPoint = {
-                    x: this.scale.width * SPAWN_X_PERCENTAGE,
-                    y: SPAWN_Y
-                };
-
-                // Create the player
-                this.player = new Player(this, this.playerSpawnPoint.x, this.playerSpawnPoint.y);
-                this.player.setPosition(this.playerSpawnPoint.x, this.playerSpawnPoint.y);
-                this.player.setVelocity(0, 0);  // Ensure player starts stationary
 
                 // Check if we should generate a procedural level
                 if (this.scene.settings.data && this.scene.settings.data.procedural) {
@@ -822,6 +841,33 @@ export class Matrix640x360 extends BaseScene{
         const ub = (((x2 - x1) * (y1 - y3)) - ((y2 - y1) * (x1 - x3))) / denominator;
 
         return (ua >= 0 && ua <= 1) && (ub >= 0 && ub <= 1);
+    }
+
+    spawnTraps() {
+        if (!this.trapConfig) return;
+        
+        // Get available platform positions
+        const platformPositions = [];
+        this.platformGroup.getChildren().forEach(platform => {
+            platformPositions.push({
+                x: platform.x + platform.width/2,
+                y: platform.y - 32 // Position above platform
+            });
+        });
+        
+        // Shuffle positions
+        for (let i = platformPositions.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [platformPositions[i], platformPositions[j]] = [platformPositions[j], platformPositions[i]];
+        }
+        
+        // Spawn alarm triggers
+        const alarmCount = this.trapConfig.AlarmTrigger || 0;
+        for (let i = 0; i < alarmCount && i < platformPositions.length; i++) {
+            const pos = platformPositions[i];
+            const trap = new AlarmTrigger(this, pos.x, pos.y);
+            this.traps.add(trap);
+        }
     }
 
     shutdown() {
