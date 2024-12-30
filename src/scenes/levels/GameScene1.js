@@ -6,6 +6,7 @@ import Drone from '../../prefabs/Drone';
 import CameraManager from '../../modules/managers/CameraManager';
 import { CollisionManager } from '../../modules/managers/CollisionManager';
 import MeleeWarrior from '../../prefabs/MeleeWarrior';
+import { AlarmTrigger } from '../../prefabs/AlarmTrigger';
 
 export class GameScene1 extends BaseScene {
     constructor() {
@@ -22,6 +23,8 @@ export class GameScene1 extends BaseScene {
         this.load.audio('laser', 'assets/sounds/laser.wav');
         this.load.audio('hit', 'assets/sounds/hit.wav');
         this.load.audio('victoryMusic', 'assets/sounds/congratulations');
+        this.load.audio('bgMusic', 'assets/audio/bgMusic.wav');
+        this.load.audio('alarm', '/assets/sounds/alarm.wav');  // Add alarm sound with correct path
 
         // Load tileset with error handling
         this.load.on('loaderror', (file) => {
@@ -174,6 +177,26 @@ export class GameScene1 extends BaseScene {
             this.player.controller.enabled = false;
         }
 
+        // Initialize alarm triggers group
+        this.alarmTriggers = this.physics.add.staticGroup({
+            classType: AlarmTrigger,
+            runChildUpdate: true
+        });
+        
+        // Create an alarm trigger 4 tiles to the right of player spawn and 2 tiles down
+        const alarm = this.alarmTriggers.create(this.playerSpawnPoint.x + 128, this.playerSpawnPoint.y + 32);
+        alarm.setSize(32, 32);
+        alarm.setDepth(5); // Same depth as enemies to be visible in front of tiles
+
+        // Set up alarm trigger collision
+        this.physics.add.overlap(
+            this.player,
+            this.alarmTriggers,
+            (player, trap) => {
+                trap.triggerAlarm();
+            }
+        );
+
         // Debug level data loading
         const levelData = this.cache.json.get('level1');
         
@@ -322,6 +345,10 @@ export class GameScene1 extends BaseScene {
 
         // Create debug graphics
         this.debugGraphics = this.add.graphics();
+
+        // Store background music reference
+        this.bgMusic = this.sound.add('bgMusic', { loop: true });
+        this.bgMusic.play();
     }
 
     setupRestOfScene() {
