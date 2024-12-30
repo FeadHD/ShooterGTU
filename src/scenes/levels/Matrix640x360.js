@@ -100,6 +100,29 @@ export class Matrix640x360 extends BaseScene{
     }
 
     create() {
+        // Get trap config from scene data or TheZucc scene
+        const sceneData = this.scene.settings.data;
+        const zuccScene = this.scene.get('TheZucc');
+        
+        // Try to get alarm count from multiple sources
+        const alarmCount = (
+            // First try scene data (passed when starting scene)
+            sceneData?.trapConfig?.AlarmTrigger !== undefined ? sceneData.trapConfig.AlarmTrigger :
+            // Then try getting it from TheZucc scene
+            zuccScene?.trapConfig?.AlarmTrigger !== undefined ? zuccScene.trapConfig.AlarmTrigger :
+            // Default to 1 if neither exists
+            1
+        );
+        
+        this.trapConfig = {
+            AlarmTrigger: alarmCount
+        };
+        
+        console.log('Matrix: Got alarm count:', this.trapConfig.AlarmTrigger, 
+                    'from:', sceneData?.trapConfig ? 'scene data' : 
+                            zuccScene?.trapConfig ? 'TheZucc scene' : 
+                            'default');
+
         // Stop any existing background music and play thezucc
         if (this.sound.get('bgMusic')) {
             this.sound.get('bgMusic').stop();
@@ -207,7 +230,8 @@ export class Matrix640x360 extends BaseScene{
                 // Create alarm triggers at random valid positions
                 if (alarmSpawnPoints.length > 0) {
                     // Get number of alarms to create from trapConfig
-                    const numAlarms = this.trapConfig?.AlarmTrigger || 1;
+                    const numAlarms = this.trapConfig.AlarmTrigger;
+                    console.log('Matrix: Creating', numAlarms, 'alarms');
                     
                     // Shuffle spawn points
                     Phaser.Utils.Array.Shuffle(alarmSpawnPoints);
@@ -217,6 +241,7 @@ export class Matrix640x360 extends BaseScene{
                         const spawnPoint = alarmSpawnPoints[i];
                         const alarm = this.alarmTriggers.create(spawnPoint.x, spawnPoint.y, null, false);
                         alarm.setSize(32, 32);
+                        console.log('Matrix: Created alarm at', spawnPoint.x, spawnPoint.y);
                     }
                 }
 
@@ -894,13 +919,7 @@ export class Matrix640x360 extends BaseScene{
             [platformPositions[i], platformPositions[j]] = [platformPositions[j], platformPositions[i]];
         }
         
-        // Spawn alarm triggers
-        const alarmCount = this.trapConfig.AlarmTrigger || 0;
-        for (let i = 0; i < alarmCount && i < platformPositions.length; i++) {
-            const pos = platformPositions[i];
-            const trap = new AlarmTrigger(this, pos.x, pos.y);
-            this.traps.add(trap);
-        }
+        // NOTE: Alarm triggers are now handled in active() method
     }
 
     shutdown() {
