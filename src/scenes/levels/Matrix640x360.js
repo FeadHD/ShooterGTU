@@ -109,7 +109,6 @@ export class Matrix640x360 extends BaseScene{
                 
                 // Add semi-transparent white background
                 const bg = this.add.rectangle(320, 180, 640, 360, 0xFFFFFF);
-                bg.setAlpha(0.5);  // 50% transparency
                 bg.setDepth(-1);   // Keep it at the back
 
                 // Initialize groups
@@ -144,7 +143,6 @@ export class Matrix640x360 extends BaseScene{
                 // Create an alarm trigger
                 const alarm1 = this.alarmTriggers.create(320, 180, null, false);
                 alarm1.setSize(32, 32);
-                alarm1.setAlpha(0.3);
                 
                 // Set up alarm trigger collision after both player and triggers exist
                 this.physics.add.overlap(

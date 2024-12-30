@@ -1,29 +1,29 @@
 import Phaser from 'phaser';
 
-class AlarmTrigger extends Phaser.GameObjects.Rectangle {
+class AlarmTrigger extends Phaser.GameObjects.Container {
     constructor(scene, x, y) {
         super(scene, x, y);
         
         // Add to scene
         scene.add.existing(this);
         
-        // Set up graphics
+        // Set up physics body size
         this.setSize(32, 32);
         
-        // Only show if added through Zucc menu
-        const fromZucc = scene.trapConfig && scene.trapConfig.AlarmTrigger > 0;
-        if (fromZucc) {
-            // Create a red rectangle for visibility
-            const graphics = scene.add.graphics();
-            graphics.lineStyle(2, 0xff0000);
-            graphics.strokeRect(-16, -16, 32, 32);  // Center the graphics
-            graphics.fillStyle(0xff0000, 0.3);
-            graphics.fillRect(-16, -16, 32, 32);    // Center the graphics
-            this.add(graphics);
-        } else {
-            // Make invisible if not from Zucc menu
-            this.setAlpha(0);
-        }
+        // Create visible graphics
+        const graphics = scene.add.graphics();
+        graphics.lineStyle(2, 0xff0000);
+        graphics.strokeRect(-16, -16, 32, 32);  // Center the graphics
+        graphics.fillStyle(0xff0000, 0.3);
+        graphics.fillRect(-16, -16, 32, 32);    // Center the graphics
+        this.add(graphics);
+
+        // Add an icon or symbol to make it more visible
+        const icon = scene.add.text(-8, -12, '⚠️', { 
+            fontSize: '24px',
+            color: '#ffffff'
+        });
+        this.add(icon);
 
         // Initialize sound
         this.alarmSound = scene.sound.add('alarm', { loop: false });
@@ -50,6 +50,9 @@ class AlarmTrigger extends Phaser.GameObjects.Rectangle {
 
     deactivate() {
         this.triggered = false;
+        if (this.alarmSound.isPlaying) {
+            this.alarmSound.stop();
+        }
     }
 }
 
