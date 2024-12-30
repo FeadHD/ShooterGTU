@@ -9,7 +9,8 @@ export class TheZucc extends Scene {
             'MeleeWarrior': 0
         };
         this.trapConfig = {
-            'AlarmTrigger': 0
+            'AlarmTrigger': 0,
+            'TrapPrefab': 0
         };
         // Add procedural configuration
         this.proceduralConfig = {

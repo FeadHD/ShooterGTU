@@ -15,6 +15,7 @@ import { Player } from '../../prefabs/Player'; // Changed to named import
 import { ProceduralGenerator } from '../../scripts/ProceduralGenerator';
 import { GameUI } from '../elements/GameUI';
 import { AlarmTrigger } from '../../prefabs/AlarmTrigger';
+import { Trap } from '../../prefabs/Trap';
 
 export class Matrix640x360 extends BaseScene{
     constructor() {
@@ -242,6 +243,21 @@ export class Matrix640x360 extends BaseScene{
                         const alarm = this.alarmTriggers.create(spawnPoint.x, spawnPoint.y, null, false);
                         alarm.setSize(32, 32);
                         console.log('Matrix: Created alarm at', spawnPoint.x, spawnPoint.y);
+                    }
+
+                    // Create traps at remaining spawn points
+                    const numTraps = this.trapConfig.TrapPrefab;
+                    console.log('Matrix: Creating', numTraps, 'traps');
+                    
+                    // Use remaining spawn points after alarms
+                    const remainingSpawnPoints = alarmSpawnPoints.slice(Math.min(numAlarms, alarmSpawnPoints.length));
+                    
+                    // Create trap prefabs up to the configured amount or available spawn points
+                    for (let i = 0; i < Math.min(numTraps, remainingSpawnPoints.length); i++) {
+                        const spawnPoint = remainingSpawnPoints[i];
+                        const trap = new Trap(this, spawnPoint.x, spawnPoint.y);
+                        this.traps.add(trap);
+                        console.log('Matrix: Created trap at', spawnPoint.x, spawnPoint.y);
                     }
                 }
 
