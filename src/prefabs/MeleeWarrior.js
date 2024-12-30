@@ -420,11 +420,13 @@ class MeleeWarrior extends Enemy {
 
     // Helper method to find platform above the warrior
     findPlatformAbove() {
-        const platforms = this.scene.platforms.getChildren();
+        const obstacles = this.scene.platforms ? 
+            this.scene.platforms.getChildren() : 
+            (this.scene.mapLayer ? [this.scene.mapLayer] : []);
         let nearestPlatform = null;
         let nearestDistance = Infinity;
 
-        platforms.forEach(platform => {
+        obstacles.forEach(platform => {
             // Only consider platforms that are above and within reasonable horizontal distance
             if (platform.y < this.sprite.y && 
                 Math.abs(platform.x - this.sprite.x) < 100) {
@@ -476,7 +478,10 @@ class MeleeWarrior extends Enemy {
             const rayEndX = rayStartX;
             const rayEndY = rayStartY - (i * 32); // Check each block level
             
-            const obstacles = this.scene.platforms.getChildren();
+            const obstacles = this.scene.platforms ? 
+                this.scene.platforms.getChildren() : 
+                (this.scene.mapLayer ? [this.scene.mapLayer] : []);
+
             for (const obstacle of obstacles) {
                 if (this.lineIntersectsRect(
                     rayStartX, rayEndY,
