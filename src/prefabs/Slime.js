@@ -451,37 +451,24 @@ export class Slime extends Enemy {
         // Calculate direction to player
         const direction = player.x < this.sprite.x ? -1 : 1;
         
-        // Check if there's a wall in the direction we want to jump
-        const tileX = Math.floor((this.sprite.x + direction * 16) / 32);
-        const tileY = Math.floor(this.sprite.y / 32);
-        const tile = this.scene.mapLayer.getTileAt(tileX, tileY);
-        
-        if (!tile || !tile.collides) {
-            this.sprite.setVelocityX(direction * this.horizontalJumpForce);
-            this.sprite.flipX = direction < 0;
-        }
+        // Apply horizontal force (no tile check needed for Matrix scene)
+        this.sprite.setVelocityX(direction * this.horizontalJumpForce);
+        this.sprite.flipX = direction < 0;
     }
 
     jump() {
         if (!this.sprite || !this.sprite.body || !this.sprite.body.onFloor()) return;
 
+        this.lastJumpTime = this.scene.time.now;
+        
         // Play jump animation
         this.playAnimation('jump');
 
         // Apply vertical jump force
         this.sprite.body.setVelocityY(this.jumpForce);
 
-        // Apply horizontal force in random direction
-        const direction = Math.random() < 0.5 ? -1 : 1;
-        
-        // Check if there's a wall in the direction we want to jump
-        const tileX = Math.floor((this.sprite.x + direction * 16) / 32);
-        const tileY = Math.floor(this.sprite.y / 32);
-        const tile = this.scene.mapLayer.getTileAt(tileX, tileY);
-        
-        if (!tile || !tile.collides) {
-            this.sprite.setVelocityX(direction * this.horizontalJumpForce);
-            this.sprite.flipX = direction < 0;
-        }
+        // Apply horizontal force in current direction
+        this.sprite.setVelocityX(this.direction * this.horizontalJumpForce);
+        this.sprite.flipX = this.direction < 0;
     }
 }

@@ -602,11 +602,9 @@ export class Matrix640x360 extends BaseScene{
         // Update all enemies
         if (this.enemies) {
             this.enemies.getChildren().forEach(enemySprite => {
-                if (enemySprite.getData('type') === 'warrior') {
-                    const warrior = enemySprite.getData('enemy');
-                    if (warrior) {
-                        warrior.update(time, delta);
-                    }
+                const enemy = enemySprite.getData('enemy');
+                if (enemy) {
+                    enemy.update(time, delta);
                 }
             });
         }
