@@ -70,7 +70,10 @@ export class Matrix640x360 extends BaseScene{
         if (this.sound.get('bgMusic')) {
             this.sound.get('bgMusic').stop();
         }
-        this.sound.play('thezucc', { loop: true });
+        
+        // Store background music reference
+        this.bgMusic = this.sound.add('thezucc', { loop: true });
+        this.bgMusic.play();
 
         // Load fonts before initializing UI
         WebFont.load({

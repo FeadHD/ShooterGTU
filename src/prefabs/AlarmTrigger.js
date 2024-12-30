@@ -38,8 +38,15 @@ class AlarmTrigger extends Phaser.GameObjects.Container {
 
     triggerAlarm() {
         if (!this.triggered) {
-            this.alarmSound.play();
             this.triggered = true;
+            
+            // Stop background music
+            if (this.scene.bgMusic && this.scene.bgMusic.isPlaying) {
+                this.scene.bgMusic.stop();
+            }
+
+            // Play alarm sound
+            this.alarmSound.play();
             
             // Reset after sound duration
             this.scene.time.delayedCall(this.alarmSound.duration * 1000, () => {
