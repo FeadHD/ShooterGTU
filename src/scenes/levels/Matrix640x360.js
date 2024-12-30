@@ -20,7 +20,7 @@ export class Matrix640x360 extends BaseScene{
     constructor() {
         super({ 
             key: 'Matrix640x360',
-            backgroundColor: '#000000'
+            backgroundColor: 'cyan',
         });
         this.tileColliderAdded = false;
         this.messageShown = false;
