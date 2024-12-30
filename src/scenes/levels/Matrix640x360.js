@@ -93,9 +93,9 @@ export class Matrix640x360 extends BaseScene{
                 bg.setDepth(-1);   // Keep it at the back
 
                 // Initialize groups
-                this.enemies = this.add.group();
-                this.slimes = this.add.group();
-                this.drones = this.add.group();
+                this.enemies = this.physics.add.group();
+                this.slimes = this.physics.add.group();
+                this.drones = this.physics.add.group();
                 this.bitcoins = this.add.group();
                 this.bullets = this.physics.add.group({
                     classType: Bullet,
@@ -544,6 +544,9 @@ export class Matrix640x360 extends BaseScene{
             warrior.sprite.setData('direction', warrior.direction);
             warrior.sprite.setData('detectionRange', warrior.detectionRange);
             warrior.sprite.setData('attackRange', warrior.attackRange);
+            
+            // Register warrior with EnemyManager
+            this.enemyManager.addEnemy(warrior, warrior.sprite, warrior.maxHealth);
         }
         return warrior;
     }
