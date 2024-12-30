@@ -143,7 +143,7 @@ export class Matrix640x360 extends BaseScene{
                 
                 // Create an alarm trigger
                 const alarm1 = this.alarmTriggers.create(320, 180, null, false);
-                alarm1.setSize(100, 100);
+                alarm1.setSize(32, 32);
                 alarm1.setAlpha(0.3);
                 
                 // Set up alarm trigger collision after both player and triggers exist
@@ -708,11 +708,42 @@ export class Matrix640x360 extends BaseScene{
                 this.spawnText.destroy();
             }
             this.spawnText = spawnText;
+
+            // Draw alarm trigger debug boxes
+            if (this.alarmTriggers) {
+                this.alarmTriggers.getChildren().forEach(alarm => {
+                    this.debugGraphics.lineStyle(2, 0xff0000);
+                    const bounds = alarm.getBounds();
+                    this.debugGraphics.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height);
+                    
+                    // Add debug text above alarm
+                    if (!alarm.debugText) {
+                        alarm.debugText = this.add.text(bounds.x, bounds.y - 20, '', {
+                            fontSize: '16px',
+                            backgroundColor: '#000000',
+                            color: '#ff0000',
+                            padding: { x: 4, y: 2 }
+                        });
+                    }
+                    alarm.debugText.setText(`ALARM TRIGGER\nPos: ${Math.round(bounds.x)},${Math.round(bounds.y)}\nSize: ${bounds.width}x${bounds.height}`);
+                    alarm.debugText.setPosition(bounds.x, bounds.y - 60);
+                    alarm.debugText.setScrollFactor(1);
+                });
+            }
         } else {
             // Clean up text when debug is disabled
             if (this.spawnText) {
                 this.spawnText.destroy();
                 this.spawnText = null;
+            }
+            // Clean up alarm debug text
+            if (this.alarmTriggers) {
+                this.alarmTriggers.getChildren().forEach(alarm => {
+                    if (alarm.debugText) {
+                        alarm.debugText.destroy();
+                        alarm.debugText = null;
+                    }
+                });
             }
         }
     }

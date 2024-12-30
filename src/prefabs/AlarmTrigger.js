@@ -16,9 +16,9 @@ class AlarmTrigger extends Phaser.GameObjects.Rectangle {
             // Create a red rectangle for visibility
             const graphics = scene.add.graphics();
             graphics.lineStyle(2, 0xff0000);
-            graphics.strokeRect(-16, -16, 32, 32);
+            graphics.strokeRect(-16, -16, 32, 32);  // Center the graphics
             graphics.fillStyle(0xff0000, 0.3);
-            graphics.fillRect(-16, -16, 32, 32);
+            graphics.fillRect(-16, -16, 32, 32);    // Center the graphics
             this.add(graphics);
         } else {
             // Make invisible if not from Zucc menu
