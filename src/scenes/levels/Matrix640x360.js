@@ -151,7 +151,7 @@ export class Matrix640x360 extends BaseScene{
                     this.player,
                     this.alarmTriggers,
                     (player, trap) => {
-                        trap.trigger();
+                        trap.triggerAlarm();
                     }
                 );
 
