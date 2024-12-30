@@ -81,6 +81,20 @@ export class Matrix640x360 extends BaseScene{
                 this.effectsManager = new EffectsManager(this);
                 this.gameUI = new GameUI(this);
                 
+                // Initialize raycaster
+                this.raycaster = {
+                    createRay: (config) => {
+                        return {
+                            origin: config.origin,
+                            cast: (target) => {
+                                return {
+                                    hasHit: false // No walls in Matrix scene, so laser always hits
+                                };
+                            }
+                        };
+                    }
+                };
+                
                 // Set up world bounds and physics
                 this.physics.world.setBoundsCollision(true, true, true, true);
                 
