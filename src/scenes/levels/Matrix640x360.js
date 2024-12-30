@@ -97,6 +97,10 @@ export class Matrix640x360 extends BaseScene{
                 
                 // Set up world bounds and physics
                 this.physics.world.setBoundsCollision(true, true, true, true);
+                this.physics.world.setBounds(0, 0, 640, 360); // Match scene dimensions
+                
+                // Set scene boundaries
+                this.cameras.main.setBounds(0, 0, 640, 360);
                 
                 // Set scene background color
                 this.cameras.main.setBackgroundColor('#ffffff');
