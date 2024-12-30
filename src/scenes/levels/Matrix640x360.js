@@ -84,6 +84,10 @@ export class Matrix640x360 extends BaseScene{
                 // Initialize managers and UI first
                 this.stateManager = new StateManager(this);
                 this.effectsManager = new EffectsManager(this);
+                this.enemyManager = new EnemyManager(this);  // Add enemy manager initialization
+                this.collisionManager = new CollisionManager(this);
+                this.boundaryManager = new SceneBoundaryManager(this);
+                this.animationManager = new AnimationManager(this);
                 this.gameUI = new GameUI(this);
                 
                 // Initialize raycaster
