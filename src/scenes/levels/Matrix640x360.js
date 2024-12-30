@@ -20,17 +20,21 @@ export class Matrix640x360 extends BaseScene{
     constructor() {
         super({ 
             key: 'Matrix640x360',
-            backgroundColor: '#ffffff'  // Set white background
+            backgroundColor: '#000000'
         });
         this.tileColliderAdded = false;
         this.messageShown = false;
-        this.totalEnemies = 7; // Increased to include drone and melee warriors
+        this.totalEnemies = 7;
         this.remainingEnemies = this.totalEnemies;
-        this.drone = null; // Add drone reference
+        this.drone = null;
+        
+        // Fixed dimensions for Matrix room
+        this.ROOM_WIDTH = 640;
+        this.ROOM_HEIGHT = 360;
     }
 
     preload() {
-        super.preload();
+        super.preload();  // This loads the character animations
 
         // Load fonts
         this.load.script('webfont', 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js');
@@ -45,12 +49,6 @@ export class Matrix640x360 extends BaseScene{
         
         // Load LDtk level data
         this.load.json('matrix', '/assets/levels/Json/Matrix_640w_360h.json');
-
-        // Load player sprites
-        this.load.spritesheet('character_Idle', '/assets/player/idle.png', { frameWidth: 32, frameHeight: 32 });
-        this.load.spritesheet('character_Walking', '/assets/player/run.png', { frameWidth: 32, frameHeight: 32 });
-        this.load.spritesheet('character_Jump', '/assets/player/jump.png', { frameWidth: 32, frameHeight: 32 });
-        this.load.spritesheet('character_Fall', '/assets/player/fall.png', { frameWidth: 32, frameHeight: 32 });
 
         // Load all audio files
         this.load.audio('laser', '/assets/sounds/laser.wav');
@@ -112,12 +110,12 @@ export class Matrix640x360 extends BaseScene{
                 this.cameras.main.setBounds(0, 0, 640, 360);
                 
                 // Set scene background color
-                this.cameras.main.setBackgroundColor('#ffffff');
+                this.cameras.main.setBackgroundColor('#000000');
                 
-                // Add semi-transparent white background
-                const bg = this.add.rectangle(320, 180, 640, 360, 0xFFFFFF);
-                bg.setDepth(-1);   // Keep it at the back
-
+                // Set up camera with 1:1 zoom to match exact 640x360 dimensions
+                this.cameras.main.setZoom(1);  // No zoom scaling
+                this.cameras.main.centerOn(320, 180);  // Center on middle of scene
+                
                 // Initialize groups
                 this.enemies = this.physics.add.group();
                 this.slimes = this.physics.add.group();
@@ -278,29 +276,20 @@ export class Matrix640x360 extends BaseScene{
                     });
                 }
 
-                // Set up game dimensions
-                this.LEVEL_WIDTH = 640;
-                this.LEVEL_HEIGHT = 360;
-
-                // Get the actual screen dimensions
-                const screenWidth = window.innerWidth;
-                const screenHeight = window.innerHeight;
-
-                // Calculate scale to fit screen while maintaining aspect ratio
-                const scaleX = screenWidth / this.LEVEL_WIDTH;
-                const scaleY = screenHeight / this.LEVEL_HEIGHT;
-                const scale = Math.min(scaleX, scaleY);
-
-                // Calculate centered position
-                const offsetX = (screenWidth - (this.LEVEL_WIDTH * scale)) / 2;
-                const offsetY = (screenHeight - (this.LEVEL_HEIGHT * scale)) / 2;
-
-                // Configure the main camera to show full screen
+                // Set up the Matrix room camera to stretch to HD
                 const mainCam = this.cameras.main;
-                mainCam.setViewport(offsetX, offsetY, this.LEVEL_WIDTH * scale, this.LEVEL_HEIGHT * scale);
-                mainCam.setBounds(0, 0, this.LEVEL_WIDTH, this.LEVEL_HEIGHT);
+                mainCam.setViewport(0, 0, 1920, 1080); // Full HD viewport
+                mainCam.setBounds(0, 0, this.ROOM_WIDTH, this.ROOM_HEIGHT);
                 mainCam.setBackgroundColor('#000000');
-                mainCam.setZoom(scale);
+                mainCam.setScroll(0, 0);  // Lock camera position
+                
+                // Calculate zoom to stretch to full screen
+                const zoomX = 1920 / this.ROOM_WIDTH;
+                const zoomY = 1080 / this.ROOM_HEIGHT;
+                mainCam.setZoom(Math.min(zoomX, zoomY));  // Stretch to fill screen
+                
+                // Initialize debug graphics
+                this.debugGraphics = this.add.graphics();
 
                 // Ensure player has proper physics and collision
                 this.player.setCollideWorldBounds(true);
@@ -310,10 +299,6 @@ export class Matrix640x360 extends BaseScene{
                 if (this.player.controller) {
                     this.player.controller.enabled = true;
                 }
-
-                // Reset and set up camera AFTER player creation
-                this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
-                this.cameras.main.setFollowOffset(0, 0);
 
                 // Initialize slimes group
                 this.slimes = this.physics.add.group({
@@ -380,9 +365,6 @@ export class Matrix640x360 extends BaseScene{
                     return;
                 }
 
-                // Create debug graphics
-                this.debugGraphics = this.add.graphics();
-                
                 // Initialize debug system
                 this.debugSystem = new DebugSystem(this);
                 
