@@ -23,8 +23,9 @@ class CameraManager {
 
     init(player) {
         this.player = player;
-        this.camera.startFollow(player);
+        this.camera.startFollow(player, true, 1, 1);  // Use 1, 1 for instant following, no lerp
         this.camera.setZoom(this.defaultZoom);
+        this.camera.setRoundPixels(true);  // Enable pixel-perfect rendering
 
         // Make sure UI camera ignores game objects
         if (this.scene.gameUI) {
@@ -43,7 +44,8 @@ class CameraManager {
 
         // Reset camera to follow player
         this.camera.setZoom(this.defaultZoom);
-        this.camera.startFollow(this.player, true, 0.1, 0.1);
+        this.camera.startFollow(this.player, true, 1, 1);  // Use 1, 1 for instant following
+        this.camera.setRoundPixels(true);  // Enable pixel-perfect rendering
         this.isIntroPlaying = false;
     }
 
@@ -92,7 +94,8 @@ class CameraManager {
                             duration: 1000,
                             ease: 'Power2',
                             onComplete: () => {
-                                this.camera.startFollow(this.player, true, 0.1, 0.1);
+                                this.camera.startFollow(this.player, true, 1, 1);  // Use 1, 1 for instant following
+                                this.camera.setRoundPixels(true);  // Enable pixel-perfect rendering
                                 this.isIntroPlaying = false;
                                 
                                 // Final UI camera update
@@ -112,7 +115,8 @@ class CameraManager {
 
     update() {
         if (!this.isIntroPlaying && this.player) {
-            this.camera.startFollow(this.player);
+            this.camera.startFollow(this.player, true, 1, 1);  // Use 1, 1 for instant following
+            this.camera.setRoundPixels(true);  // Enable pixel-perfect rendering
         }
     }
 }

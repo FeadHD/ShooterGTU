@@ -19,6 +19,7 @@ import { TheZucc } from '../scenes/menus/TheZucc/TheZucc';
 
 export const config = {
     type: Phaser.AUTO,
+    pixelArt: true,
     scale: {
         mode: Phaser.Scale.NONE,
         parent: 'game-container',
