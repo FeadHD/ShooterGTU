@@ -152,24 +152,39 @@ export class TheZucc extends Scene {
     }
 
     createConfigSection(yOffset) {
-        const configStyle = {
-            fontSize: '24px',
-            fill: '#fff',
-            fontFamily: 'Arial'
-        };
-
-        this.add.text(50, yOffset, 'Configuration Section', configStyle);
+        TextStyleManager.createText(
+            this,
+            50,
+            yOffset,
+            'Configuration Section',
+            'configUI',
+            0
+        );
         yOffset += 40;
 
         // Display enemy types
         const enemyTypes = Object.keys(DEFAULT_ENEMY_CONFIG);
         enemyTypes.forEach((enemyType, index) => {
-            this.add.text(50, yOffset + (index * 30), enemyType, { fontSize: '20px', fill: '#fff' });
+            TextStyleManager.createText(
+                this,
+                50,
+                yOffset + (index * 30),
+                enemyType,
+                'configUI',
+                0
+            );
         });
         yOffset += enemyTypes.length * 30;
 
         // Enemies Input
-        this.add.text(50, yOffset, 'Number of Enemies:', configStyle);
+        TextStyleManager.createText(
+            this,
+            50,
+            yOffset,
+            'Number of Enemies:',
+            'configUI',
+            0
+        );
         const enemiesInput = this.add.dom(200, yOffset).createElement('input');
         enemiesInput.node.setAttribute('type', 'number');
         enemiesInput.node.setAttribute('min', '1');
@@ -181,7 +196,14 @@ export class TheZucc extends Scene {
         yOffset += 40;
 
         // Traps Input
-        this.add.text(50, yOffset, 'Number of Traps:', configStyle);
+        TextStyleManager.createText(
+            this,
+            50,
+            yOffset,
+            'Number of Traps:',
+            'configUI',
+            0
+        );
         const trapsInput = this.add.dom(200, yOffset).createElement('input');
         trapsInput.node.setAttribute('type', 'number');
         trapsInput.node.setAttribute('min', '1');
@@ -193,7 +215,14 @@ export class TheZucc extends Scene {
         yOffset += 40;
 
         // Alarms Input
-        this.add.text(50, yOffset, 'Number of Alarms:', configStyle);
+        TextStyleManager.createText(
+            this,
+            50,
+            yOffset,
+            'Number of Alarms:',
+            'configUI',
+            0
+        );
         const alarmsInput = this.add.dom(200, yOffset).createElement('input');
         alarmsInput.node.setAttribute('type', 'number');
         alarmsInput.node.setAttribute('min', '1');
@@ -208,13 +237,14 @@ export class TheZucc extends Scene {
     }
 
     createProceduralSection(yOffset) {
-        const proceduralStyle = {
-            fontSize: '24px',
-            fill: '#fff',
-            fontFamily: 'Arial'
-        };
-
-        this.add.text(50, yOffset, 'Procedural Section', proceduralStyle);
+        TextStyleManager.createText(
+            this,
+            50,
+            yOffset,
+            'Procedural Section',
+            'proceduralUI',
+            0
+        );
         yOffset += 40;
 
         // Add more UI elements for procedural generation as needed

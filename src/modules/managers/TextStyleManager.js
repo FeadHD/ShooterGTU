@@ -50,7 +50,9 @@ export class TextStyleManager {
             bitcoin: '#ffd700',    // Gold
             timer: '#ff00ff',      // Magenta
             wallet: '#40e0d0',     // Turquoise
-            scene: '#9370db'       // Medium Purple
+            scene: '#9370db',      // Medium Purple
+            config: '#ffffff',     // White
+            pause: '#ffffff'       // White for pause menu
         };
     }
 
@@ -97,9 +99,15 @@ export class TextStyleManager {
                 shadow: this.shadowEffects.subtle
             },
             pauseButton: {
-                ...this.baseStyles.arcade,
+                ...this.baseStyles.retro,
                 fontSize: '24px',
-                color: this.colors.neutral
+                color: this.colors.pause,
+                align: 'center',
+                strokeThickness: 2,
+                shadow: {
+                    ...this.shadowEffects.neon,
+                    color: '#4a4a4a'  // Dark gray
+                }
             },
 
             // UI styles
@@ -205,6 +213,20 @@ export class TextStyleManager {
                 fontSize: '72px',
                 color: this.colors.warning,
                 shadow: this.shadowEffects.neon
+            },
+            configUI: {
+                ...this.baseStyles.retro,
+                fontSize: '24px',
+                color: this.colors.config,
+                fontFamily: 'Arial',
+                align: 'left'
+            },
+            proceduralUI: {
+                ...this.baseStyles.retro,
+                fontSize: '24px',
+                color: this.colors.config,
+                fontFamily: 'Arial',
+                align: 'left'
             },
 
             // Configuration styles
