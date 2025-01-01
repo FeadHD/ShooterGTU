@@ -13,7 +13,7 @@ import { TitleScene } from '../scenes/elements/TitleScene';
 import Settings from '../scenes/menus/Settings';
 import { ControlsSettingsScene } from '../scenes/menus/ControlsSettingsScene';
 import { PauseMenu } from '../scenes/elements/PauseMenu';
-import { TheZucc } from '../scenes/menus/TheZucc';
+import { TheZucc } from '../scenes/menus/TheZucc/TheZucc';
 
 export const config = {
     type: Phaser.AUTO,
