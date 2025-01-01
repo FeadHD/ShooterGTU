@@ -50,8 +50,7 @@ export class TextStyleManager {
             bitcoin: '#ffd700',    // Gold
             timer: '#ff00ff',      // Magenta
             wallet: '#40e0d0',     // Turquoise
-            scene: '#9370db',      // Medium Purple
-            instruction: '#ff8c00'  // Dark Orange
+            scene: '#9370db'       // Medium Purple
         };
     }
 
@@ -186,17 +185,6 @@ export class TextStyleManager {
                 shadow: {
                     ...this.shadowEffects.subtle,
                     color: '#483d8b'  // Dark Slate Blue
-                }
-            },
-            instructionUI: {
-                ...this.baseStyles.retro,
-                fontSize: '24px',
-                color: this.colors.instruction,
-                align: 'center',
-                strokeThickness: 1,
-                shadow: {
-                    ...this.shadowEffects.subtle,
-                    color: '#d2691e'  // Chocolate
                 }
             },
             gameUIHighlight: {

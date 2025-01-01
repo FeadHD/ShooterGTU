@@ -352,13 +352,9 @@ export class GameScene1 extends BaseScene {
     }
 
     setupRestOfScene() {
-        // Show start message in GameUI
-        this.gameUI.showStartMessage();
-
         // Add space key listener for starting the game
         const spaceKey = this.input.keyboard.addKey('SPACE');
         spaceKey.once('down', () => {
-            this.gameUI.hideStartMessage();
             this.startGame();
         });
 
@@ -578,6 +574,9 @@ export class GameScene1 extends BaseScene {
         
         // Use the EnemyManager to handle the bullet hit
         this.enemyManager.handleBulletHit(bullet, enemySprite);
+        
+        // Update remaining enemies count
+        this.remainingEnemies = Math.max(0, this.remainingEnemies - 1);
     }
 
     handleEnemyCollision(enemy1, enemy2) {

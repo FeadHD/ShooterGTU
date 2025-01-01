@@ -203,17 +203,6 @@ export class GameUI {
         );
         this.container.add(this.sceneText);
 
-        // Create instruction text
-        this.instructionText = TextStyleManager.createText(
-            this.scene,
-            width / 2,
-            height - 50,
-            'Press SPACE to shoot',
-            'instructionUI',
-            0.5
-        );
-        this.container.add(this.instructionText);
-
         // Setup music controls
         this.setupMusicControls();
 
@@ -510,6 +499,26 @@ export class GameUI {
             scoreText,
             instructionText
         };
+    }
+
+    updateInstruction(text) {
+        // Removed
+    }
+
+    showShootingInstruction() {
+        // Removed
+    }
+
+    showDefeatInstruction() {
+        // Removed
+    }
+
+    hideInstruction() {
+        // Removed
+    }
+
+    showInstruction() {
+        // Removed
     }
 
     destroy() {
