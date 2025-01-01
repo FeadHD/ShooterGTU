@@ -49,7 +49,7 @@ export class TheZucc extends Scene {
     createSceneCategories() {
         const sceneCategories = {
             'ZUCC TESTING': {
-                scenes: ['Matrix640x360'],
+                scenes: ['Matrix640x360', 'BlueTest'],
                 showConfig: true
             },
             'PROCEDURAL SCENE': {
