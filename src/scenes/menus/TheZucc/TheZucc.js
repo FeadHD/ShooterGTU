@@ -149,12 +149,23 @@ export class TheZucc extends Scene {
         this.add.text(50, yOffset, 'Configuration Section', configStyle);
         yOffset += 40;
 
+        // Display enemy types
+        const enemyTypes = Object.keys(DEFAULT_ENEMY_CONFIG);
+        enemyTypes.forEach((enemyType, index) => {
+            this.add.text(50, yOffset + (index * 30), enemyType, { fontSize: '20px', fill: '#fff' });
+        });
+        yOffset += enemyTypes.length * 30;
+
         // Enemies Input
         this.add.text(50, yOffset, 'Number of Enemies:', configStyle);
         const enemiesInput = this.add.dom(200, yOffset).createElement('input');
         enemiesInput.node.setAttribute('type', 'number');
         enemiesInput.node.setAttribute('min', '1');
-        enemiesInput.node.setAttribute('max', '5');
+        enemiesInput.node.setAttribute('max', '8');
+        enemiesInput.node.style.backgroundColor = 'white';
+        enemiesInput.node.style.color = 'black';
+        enemiesInput.node.style.border = '1px solid black';
+        enemiesInput.node.style.padding = '5px';
         yOffset += 40;
 
         // Traps Input
@@ -162,7 +173,11 @@ export class TheZucc extends Scene {
         const trapsInput = this.add.dom(200, yOffset).createElement('input');
         trapsInput.node.setAttribute('type', 'number');
         trapsInput.node.setAttribute('min', '1');
-        trapsInput.node.setAttribute('max', '5');
+        trapsInput.node.setAttribute('max', '8');
+        trapsInput.node.style.backgroundColor = 'white';
+        trapsInput.node.style.color = 'black';
+        trapsInput.node.style.border = '1px solid black';
+        trapsInput.node.style.padding = '5px';
         yOffset += 40;
 
         // Alarms Input
@@ -170,7 +185,11 @@ export class TheZucc extends Scene {
         const alarmsInput = this.add.dom(200, yOffset).createElement('input');
         alarmsInput.node.setAttribute('type', 'number');
         alarmsInput.node.setAttribute('min', '1');
-        alarmsInput.node.setAttribute('max', '5');
+        alarmsInput.node.setAttribute('max', '8');
+        alarmsInput.node.style.backgroundColor = 'white';
+        alarmsInput.node.style.color = 'black';
+        alarmsInput.node.style.border = '1px solid black';
+        alarmsInput.node.style.padding = '5px';
         yOffset += 40;
 
         return yOffset;
