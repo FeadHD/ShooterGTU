@@ -1,4 +1,5 @@
 import { Scene } from 'phaser';
+import { TextStyleManager } from '../../modules/managers/TextStyleManager';
 
 export class MainMenu extends Scene {
     constructor() {
@@ -139,63 +140,96 @@ export class MainMenu extends Scene {
         const numLayers = 5;
         
         for (let i = numLayers; i >= 0; i--) {
-            this.add.text(
-                canvasWidth/2 + (i * shadowOffset), 
-                canvasHeight * 0.15 + (i * shadowOffset), 
+            TextStyleManager.createText(
+                this,
+                canvasWidth/2 + (i * shadowOffset),
+                canvasHeight * 0.15 + (i * shadowOffset),
                 'GOOD TIME UNIVERSE',
-                this.styles.titleShadow(i === 0)
-            ).setOrigin(0.5);
+                'titleShadow',
+                0.5
+            );
         }
 
         // Add main title text with glow effect
-        this.add.text(
-            canvasWidth/2, 
-            canvasHeight * 0.15, 
+        TextStyleManager.createText(
+            this,
+            canvasWidth/2,
+            canvasHeight * 0.15,
             'GOOD TIME UNIVERSE',
-            this.styles.mainTitle
-        ).setOrigin(0.5);
+            'mainTitle'
+        );
 
         // Add mission title
-        this.add.text(
-            canvasWidth/2, 
-            canvasHeight * 0.25, 
+        TextStyleManager.createText(
+            this,
+            canvasWidth/2,
+            canvasHeight * 0.25,
             'MISSION ONE: LEDGER HEIST',
-            this.styles.missionTitle
-        ).setOrigin(0.5);
+            'missionTitle'
+        );
     }
 
     createGameButtons(canvasWidth, canvasHeight) {
-        // Helper function to create buttons
-        const createButton = (text, y) => {
-            const button = this.add.text(
-                canvasWidth / 2, 
-                y, 
-                text, 
-                this.styles.menuButton
-            )
-            .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true });
-
-            button.on('pointerover', () => {
-                button.setScale(1.2);
-                button.setColor('#ff00ff');
-            });
-
-            button.on('pointerout', () => {
-                button.setScale(1);
-                button.setColor('#00ffff');
-            });
-
-            return button;
-        };
-
         // Create menu buttons - moved up for better spacing
-        const startButton = createButton('START', canvasHeight * 0.45);
-        const controlsButton = createButton('CONTROLS', canvasHeight * 0.55);
-        const settingsButton = createButton('SETTINGS', canvasHeight * 0.65);
-        const leaderboardButton = createButton('LEADERBOARD', canvasHeight * 0.75);
-        const rulesButton = createButton('RULES', canvasHeight * 0.85);
-        const theZuccButton = createButton('THE ZUCC', canvasHeight * 0.95);
+        const startButton = TextStyleManager.createText(
+            this,
+            canvasWidth/2,
+            canvasHeight * 0.45,
+            'START',
+            'menuButton',
+            0.5,
+            true
+        );
+
+        const controlsButton = TextStyleManager.createText(
+            this,
+            canvasWidth/2,
+            canvasHeight * 0.55,
+            'CONTROLS',
+            'menuButton',
+            0.5,
+            true
+        );
+
+        const settingsButton = TextStyleManager.createText(
+            this,
+            canvasWidth/2,
+            canvasHeight * 0.65,
+            'SETTINGS',
+            'menuButton',
+            0.5,
+            true
+        );
+
+        const leaderboardButton = TextStyleManager.createText(
+            this,
+            canvasWidth/2,
+            canvasHeight * 0.75,
+            'LEADERBOARD',
+            'menuButton',
+            0.5,
+            true
+        );
+
+        const rulesButton = TextStyleManager.createText(
+            this,
+            canvasWidth/2,
+            canvasHeight * 0.85,
+            'RULES',
+            'menuButton',
+            0.5,
+            true
+        );
+
+        const theZuccButton = TextStyleManager.createText(
+            this,
+            canvasWidth/2,
+            canvasHeight * 0.95,
+            'THE ZUCC',
+            'menuButton',
+            0.5,
+            true
+        );
 
         // Add click handlers
         startButton.on('pointerdown', () => {
@@ -240,12 +274,13 @@ export class MainMenu extends Scene {
         let connectButton;
         try {
             // Add MetaMask connect button
-            connectButton = this.add.text(
+            connectButton = TextStyleManager.createText(
+                this,
                 this.canvasWidth - 30, 
                 30, 
                 'Connect Wallet', 
-                this.styles.walletButton
-            ).setOrigin(1, 0);
+                'walletButton'
+            );
 
             // Function to handle wallet connection
             const connectWallet = async () => {

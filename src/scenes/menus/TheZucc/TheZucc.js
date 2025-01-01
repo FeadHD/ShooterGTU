@@ -1,6 +1,7 @@
 import { Scene } from 'phaser';
 import { EnemyManager } from '../../../modules/managers/EnemyManager';
 import AudioManager from '../../../modules/managers/AudioManager';
+import { TextStyleManager } from '../../../modules/managers/TextStyleManager';
 import { DEFAULT_ENEMY_CONFIG, DEFAULT_TRAP_CONFIG, DEFAULT_PROCEDURAL_CONFIG } from '../../../constants/Constants';
 import { createRetroButton } from '../../../scenes/menus/ui-helpers';
 
@@ -36,13 +37,13 @@ export class TheZucc extends Scene {
     }
 
     createTitle() {
-        const titleStyle = {
-            fontSize: '48px',
-            fill: '#fff',
-            fontFamily: 'Arial',
-            align: 'center'
-        };
-        this.add.text(this.scale.width / 2, 50, 'THE ZUCC', titleStyle).setOrigin(0.5);
+        TextStyleManager.createText(
+            this,
+            this.scale.width / 2,
+            50,
+            'THE ZUCC',
+            'mainTitle'
+        );
     }
 
     createSceneCategories() {
@@ -73,13 +74,14 @@ export class TheZucc extends Scene {
     }
 
     createCategorySection(category, config, yOffset) {
-        const categoryStyle = {
-            fontSize: '36px',
-            fill: '#fff',
-            fontFamily: 'Arial'
-        };
-
-        this.add.text(50, yOffset, category, categoryStyle);
+        TextStyleManager.createText(
+            this,
+            50,
+            yOffset,
+            category,
+            'configText',
+            0
+        );
         yOffset += 60;
 
         yOffset = this.createSceneButtons(config.scenes, yOffset);
@@ -102,7 +104,17 @@ export class TheZucc extends Scene {
         let xOffset = 50;
 
         scenes.forEach(sceneName => {
-            const button = createRetroButton(this, xOffset, yOffset, sceneName, () => {
+            const button = TextStyleManager.createText(
+                this,
+                xOffset,
+                yOffset,
+                sceneName,
+                'menuButton',
+                0,
+                true
+            );
+
+            button.on('pointerdown', () => {
                 this.audioManager.stopMusic();
                 this.startScene(sceneName);
             });

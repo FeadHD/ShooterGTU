@@ -1,3 +1,5 @@
+import { TextStyleManager } from '../../modules/managers/TextStyleManager';
+
 export class PauseMenu extends Phaser.Scene {
     constructor() {
         super({ key: 'PauseMenu' });
@@ -13,31 +15,31 @@ export class PauseMenu extends Phaser.Scene {
         const bg = this.add.rectangle(0, 0, width, height, 0x000000, 0.7);
         bg.setOrigin(0);
 
-        // Create container for buttons
-        const container = this.add.container(width / 2, height / 2 - 100);
-
-        // Button style configuration
-        const buttonWidth = 200;
-        const buttonHeight = 50;
+        // Button configuration
         const buttonSpacing = 70;
-        const buttonStyle = {
-            fontSize: '24px',
-            fontFamily: 'ArcadeClassic',
-            fill: '#ffffff'
-        };
+        const buttons = [
+            { text: 'RESUME', yOffset: -buttonSpacing * 1.5, callback: () => this.resumeGame() },
+            { text: 'RESTART', yOffset: -buttonSpacing * 0.5, callback: () => this.restartGame() },
+            { text: 'MAIN MENU', yOffset: buttonSpacing * 0.5, callback: () => this.goToMainMenu() },
+            { text: 'QUIT GAME', yOffset: buttonSpacing * 1.5, callback: () => this.quitGame() }
+        ];
 
         // Create buttons
-        this.createMenuButton('RESUME', -buttonSpacing * 1.5, () => this.resumeGame(), buttonWidth, buttonHeight, buttonStyle);
-        this.createMenuButton('RESTART', -buttonSpacing * 0.5, () => this.restartGame(), buttonWidth, buttonHeight, buttonStyle);
-        this.createMenuButton('MAIN MENU', buttonSpacing * 0.5, () => this.goToMainMenu(), buttonWidth, buttonHeight, buttonStyle);
-        this.createMenuButton('QUIT GAME', buttonSpacing * 1.5, () => this.quitGame(), buttonWidth, buttonHeight, buttonStyle);
+        buttons.forEach(({ text, yOffset, callback }) => {
+            this.createMenuButton(text, yOffset, callback);
+        });
 
         // Add ESC key handler to resume game
         this.input.keyboard.on('keydown-ESC', () => this.resumeGame());
     }
 
-    createMenuButton(text, yOffset, callback, width, height, textStyle) {
-        const button = this.add.rectangle(this.scale.width / 2, this.scale.height / 2 + yOffset, width, height, 0x4a4a4a)
+    createMenuButton(text, yOffset, callback) {
+        const x = this.scale.width / 2;
+        const y = this.scale.height / 2 + yOffset;
+        const width = 200;
+        const height = 50;
+
+        const button = this.add.rectangle(x, y, width, height, 0x4a4a4a)
             .setInteractive()
             .on('pointerover', () => {
                 button.setFillStyle(0x666666);
@@ -49,9 +51,13 @@ export class PauseMenu extends Phaser.Scene {
             })
             .on('pointerdown', callback);
 
-        const buttonText = this.add.text(button.x, button.y, text, textStyle)
-            .setOrigin(0.5)
-            .setScale(1);
+        const buttonText = TextStyleManager.createText(
+            this,
+            x,
+            y,
+            text,
+            'pauseButton'
+        );
 
         return { button, text: buttonText };
     }

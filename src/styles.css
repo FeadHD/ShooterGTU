@@ -68,7 +68,7 @@ button:hover {
     text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.7);
 }
 
-/* Main Menu Styles */
+/* MainMenu styles */
 .main-title {
     font-family: 'Retronoid, Arial';
     font-size: 100px;
@@ -76,20 +76,21 @@ button:hover {
     text-align: center;
     stroke: #ffffff;
     stroke-width: 2;
+    text-shadow: 2px 2px 8px #ff00ff;
 }
 
-.main-title-shadow {
+.title-shadow {
     font-family: 'Retronoid, Arial';
     font-size: 100px;
-    color: #ff00ff;
     text-align: center;
 }
 
-.main-title-shadow-base {
-    font-family: 'Retronoid, Arial';
-    font-size: 100px;
+.title-shadow-base {
     color: #4400ff;
-    text-align: center;
+}
+
+.title-shadow-effect {
+    color: #ff00ff;
 }
 
 .mission-title {
@@ -99,6 +100,7 @@ button:hover {
     text-align: center;
     stroke: #ffffff;
     stroke-width: 1;
+    text-shadow: 1px 1px 4px #ff00ff;
 }
 
 .menu-button {
@@ -107,11 +109,14 @@ button:hover {
     color: #00ffff;
     stroke: #ffffff;
     stroke-width: 4;
+    text-shadow: 3px 3px 5px #ff00ff;
+    cursor: pointer;
+    transition: transform 0.2s, color 0.2s;
 }
 
 .menu-button:hover {
-    color: #ff00ff;
     transform: scale(1.2);
+    color: #ff00ff;
 }
 
 .wallet-button {
@@ -121,9 +126,44 @@ button:hover {
     stroke: #ffffff;
     stroke-width: 2;
     padding: 15px 10px;
+    text-shadow: 2px 2px 5px #ff00ff;
+    cursor: pointer;
+    transition: transform 0.2s, color 0.2s;
 }
 
 .wallet-button:hover {
-    color: #ff00ff;
     transform: scale(1.1);
+    color: #ff00ff;
+}
+
+/* TheZucc styles */
+.zucc-title {
+    font-size: 48px;
+    color: #ffffff;
+    font-family: Arial;
+    text-align: center;
+}
+
+.zucc-category {
+    font-size: 36px;
+    color: #ffffff;
+    font-family: Arial;
+}
+
+.zucc-config {
+    font-size: 24px;
+    color: #ffffff;
+    font-family: Arial;
+}
+
+.zucc-enemy-type {
+    font-size: 20px;
+    color: #ffffff;
+}
+
+.zucc-input {
+    background-color: white;
+    color: black;
+    border: 1px solid black;
+    padding: 5px;
 }
