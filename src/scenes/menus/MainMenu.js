@@ -3,6 +3,75 @@ import { Scene } from 'phaser';
 export class MainMenu extends Scene {
     constructor() {
         super('MainMenu');
+        
+        // Define styles for reuse
+        this.styles = {
+            mainTitle: {
+                fontFamily: 'Retronoid, Arial',
+                fontSize: '100px',
+                color: '#00ffff',
+                align: 'center',
+                stroke: '#ffffff',
+                strokeThickness: 2,
+                shadow: {
+                    offsetX: 2,
+                    offsetY: 2,
+                    color: '#ff00ff',
+                    blur: 8,
+                    fill: true
+                }
+            },
+            titleShadow: (isBase = false) => ({
+                fontFamily: 'Retronoid, Arial',
+                fontSize: '100px',
+                color: isBase ? '#4400ff' : '#ff00ff',
+                align: 'center'
+            }),
+            missionTitle: {
+                fontFamily: 'Retronoid, Arial',
+                fontSize: '48px',
+                color: '#00ffff',
+                align: 'center',
+                stroke: '#ffffff',
+                strokeThickness: 1,
+                shadow: {
+                    offsetX: 1,
+                    offsetY: 1,
+                    color: '#ff00ff',
+                    blur: 4,
+                    fill: true
+                }
+            },
+            menuButton: {
+                fontFamily: 'Retronoid, Arial',
+                fontSize: '72px',
+                color: '#00ffff',
+                stroke: '#ffffff',
+                strokeThickness: 4,
+                shadow: {
+                    offsetX: 3,
+                    offsetY: 3,
+                    color: '#ff00ff',
+                    blur: 5,
+                    fill: true
+                }
+            },
+            walletButton: {
+                fontFamily: 'Retronoid, Arial',
+                fontSize: '32px',
+                color: '#00ffff',
+                stroke: '#ffffff',
+                strokeThickness: 2,
+                padding: { x: 15, y: 10 },
+                shadow: {
+                    offsetX: 2,
+                    offsetY: 2,
+                    color: '#ff00ff',
+                    blur: 5,
+                    fill: true
+                }
+            }
+        };
     }
 
     async create() {
@@ -70,72 +139,42 @@ export class MainMenu extends Scene {
         const numLayers = 5;
         
         for (let i = numLayers; i >= 0; i--) {
-            const layerColor = i === 0 ? '#4400ff' : '#ff00ff';
-            this.add.text(canvasWidth/2 + (i * shadowOffset), canvasHeight * 0.15 + (i * shadowOffset), 'GOOD TIME UNIVERSE', {
-                fontFamily: 'Retronoid, Arial',
-                fontSize: '100px',
-                color: layerColor,
-                align: 'center',
-            }).setOrigin(0.5);
+            this.add.text(
+                canvasWidth/2 + (i * shadowOffset), 
+                canvasHeight * 0.15 + (i * shadowOffset), 
+                'GOOD TIME UNIVERSE',
+                this.styles.titleShadow(i === 0)
+            ).setOrigin(0.5);
         }
 
         // Add main title text with glow effect
-        this.add.text(canvasWidth/2, canvasHeight * 0.15, 'GOOD TIME UNIVERSE', {
-            fontFamily: 'Retronoid, Arial',
-            fontSize: '100px',
-            color: '#00ffff',
-            align: 'center',
-            stroke: '#ffffff',
-            strokeThickness: 2,
-            shadow: {
-                offsetX: 2,
-                offsetY: 2,
-                color: '#ff00ff',
-                blur: 8,
-                fill: true
-            }
-        }).setOrigin(0.5);
+        this.add.text(
+            canvasWidth/2, 
+            canvasHeight * 0.15, 
+            'GOOD TIME UNIVERSE',
+            this.styles.mainTitle
+        ).setOrigin(0.5);
 
-        // Add mission title with similar style but smaller
-        this.add.text(canvasWidth/2, canvasHeight * 0.25, 'MISSION ONE: LEDGER HEIST', {
-            fontFamily: 'Retronoid, Arial',
-            fontSize: '48px',
-            color: '#00ffff',
-            align: 'center',
-            stroke: '#ffffff',
-            strokeThickness: 1,
-            shadow: {
-                offsetX: 1,
-                offsetY: 1,
-                color: '#ff00ff',
-                blur: 4,
-                fill: true
-            }
-        }).setOrigin(0.5);
+        // Add mission title
+        this.add.text(
+            canvasWidth/2, 
+            canvasHeight * 0.25, 
+            'MISSION ONE: LEDGER HEIST',
+            this.styles.missionTitle
+        ).setOrigin(0.5);
     }
 
     createGameButtons(canvasWidth, canvasHeight) {
-        // Create retro-style buttons
-        const buttonStyle = {
-            fontFamily: 'Retronoid, Arial',
-            fontSize: '72px',
-            color: '#00ffff',
-            stroke: '#ffffff',
-            strokeThickness: 4,
-            shadow: {
-                offsetX: 3,
-                offsetY: 3,
-                color: '#ff00ff',
-                blur: 5,
-                fill: true
-            }
-        };
-
         // Helper function to create buttons
         const createButton = (text, y) => {
-            const button = this.add.text(canvasWidth / 2, y, text, buttonStyle)
-                .setOrigin(0.5)
-                .setInteractive({ useHandCursor: true });
+            const button = this.add.text(
+                canvasWidth / 2, 
+                y, 
+                text, 
+                this.styles.menuButton
+            )
+            .setOrigin(0.5)
+            .setInteractive({ useHandCursor: true });
 
             button.on('pointerover', () => {
                 button.setScale(1.2);
@@ -200,22 +239,13 @@ export class MainMenu extends Scene {
     async initializeWallet() {
         let connectButton;
         try {
-            // Add MetaMask connect button with retro style
-            connectButton = this.add.text(this.canvasWidth - 30, 30, 'Connect Wallet', {
-                fontFamily: 'Retronoid, Arial',
-                fontSize: '32px',
-                color: '#00ffff',
-                stroke: '#ffffff',
-                strokeThickness: 2,
-                padding: { x: 15, y: 10 },
-                shadow: {
-                    offsetX: 2,
-                    offsetY: 2,
-                    color: '#ff00ff',
-                    blur: 5,
-                    fill: true
-                }
-            }).setOrigin(1, 0);
+            // Add MetaMask connect button
+            connectButton = this.add.text(
+                this.canvasWidth - 30, 
+                30, 
+                'Connect Wallet', 
+                this.styles.walletButton
+            ).setOrigin(1, 0);
 
             // Function to handle wallet connection
             const connectWallet = async () => {
