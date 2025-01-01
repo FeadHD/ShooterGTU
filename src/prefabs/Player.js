@@ -28,7 +28,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
             .setAlpha(1) // Set opacity to 100%
             .setDepth(1000); // Set a high depth value to render in front of everything
             
-        this.body.setSize(32, 32);
+        this.body.setSize(20, 27);
         
         // Start idle animation if it exists
         if (scene.anims.exists('character_idle')) {
