@@ -6,8 +6,16 @@ export default class Settings extends Phaser.Scene {
         this.isMusicOn = true;
     }
 
+    preload() {
+        this.load.image('settingsBackground', 'assets/backgroundsimages/settings.png');
+    }
+
     create() {
         const { width: canvasWidth, height: canvasHeight } = this.cameras.main;
+
+        // Add background
+        const background = this.add.image(canvasWidth / 2, canvasHeight / 2, 'settingsBackground');
+        background.setDisplaySize(canvasWidth, canvasHeight);
 
         // Add title
         this.add.text(canvasWidth / 2, canvasHeight * 0.2, 'SETTINGS', {
