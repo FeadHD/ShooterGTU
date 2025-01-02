@@ -1,455 +1,123 @@
 import { BaseScene } from '../elements/BaseScene';
-import { Slime } from '../../prefabs/Slime';
-import { Bitcoin } from '../../prefabs/Bitcoin';
-import Drone from '../../prefabs/Drone';
-import { CollisionManager } from '../../modules/managers/CollisionManager';
-import MeleeWarrior from '../../prefabs/MeleeWarrior';
-import { AnimationManager } from '../../modules/managers/AnimationManager';
-import { StateManager } from '../../modules/managers/StateManager';
-import { DebugSystem } from '../../_Debug/DebugSystem';
-import { SceneBoundaryManager } from '../../modules/managers/BoundaryManager';
-import { EffectsManager } from '../../modules/managers/EffectsManager';
-import { EnemyManager } from '../../modules/managers/EnemyManager'; // Import EnemyManager
-import { Bullet } from '../../prefabs/Bullet';
-import { Player } from '../../prefabs/Player'; // Changed to named import
-import { ProceduralGenerator } from '../../scripts/ProceduralGenerator';
 import { GameUI } from '../elements/GameUI';
-import { AlarmTrigger } from '../../prefabs/AlarmTrigger';
-import { Trap } from '../../prefabs/Trap';
+import { LevelLoader } from '../../modules/managers/LevelLoader';
+import { TrapManager } from '../../modules/managers/TrapManager';
+import { SceneInitializer } from '../../modules/managers/SceneInitializer';
+import { StateManager } from '../../modules/managers/StateManager';
+import { EffectsManager } from '../../modules/managers/EffectsManager';
+import { EnemyManager } from '../../modules/managers/EnemyManager';
+import { CollisionManager } from '../../modules/managers/CollisionManager';
+import { SceneBoundaryManager } from '../../modules/managers/BoundaryManager';
+import { AnimationManager } from '../../modules/managers/AnimationManager';
+import { DebugSystem } from '../../_Debug/DebugSystem';
 
-export class Matrix640x360 extends BaseScene{
+export class Matrix640x360 extends BaseScene {
     constructor() {
         super({ 
             key: 'Matrix640x360',
             backgroundColor: 'cyan',
         });
-        this.tileColliderAdded = false;
-        this.messageShown = false;
-        this.totalEnemies = 7;
-        this.remainingEnemies = this.totalEnemies;
-        this.drone = null;
-        
-        // Fixed dimensions for Matrix room
         this.ROOM_WIDTH = 640;
         this.ROOM_HEIGHT = 360;
+        this.totalEnemies = 7;
+        this.remainingEnemies = this.totalEnemies;
+        this.isGamePaused = false;
     }
 
     preload() {
-        super.preload();  // This loads the character animations
-
-        // Load fonts
-        this.load.script('webfont', 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js');
+        // Load level data
+        this.load.json('matrix', '/assets/levels/Json/Matrix_640w_360h.json');
         
-        // Load tileset as spritesheet
+        // Load all audio files
+        this.load.audio('laser', '/assets/sounds/laser.wav');
+        this.load.audio('hit', '/assets/sounds/hit.wav');
+        this.load.audio('victoryMusic', '/assets/sounds/congratulations');
+        this.load.audio('thezucc', '/assets/sounds/thezucc.wav');
+        this.load.audio('alarm', '/assets/sounds/alarm.wav');
+
+        // Load tileset
         this.load.spritesheet('megapixel', '/assets/levels/image/WannabeeTileset.png', {
             frameWidth: 32,
             frameHeight: 32,
             spacing: 0,
             margin: 0
         });
-        
-        // Load LDtk level data
-        this.load.json('matrix', '/assets/levels/Json/Matrix_640w_360h.json');
 
-        // Load all audio files
-        this.load.audio('laser', '/assets/sounds/laser.wav');
-        this.load.audio('hit', '/assets/sounds/hit.wav');
-        this.load.audio('victoryMusic', '/assets/sounds/congratulations');
-        this.load.audio('thezucc', '/assets/sounds/thezucc.wav');
-        this.load.audio('alarm', '/assets/sounds/alarm.wav');  // Add alarm sound
-
-        // Load character spritesheets
-        this.load.spritesheet('character_idle', 'assets/sprites/character/idle.png', {
-            frameWidth: 24,
-            frameHeight: 24
-        });
-        this.load.spritesheet('character_walking', 'assets/sprites/character/walking.png', {
-            frameWidth: 24,
-            frameHeight: 24
-        });
-        this.load.spritesheet('character_run', 'assets/sprites/character/run.png', {
-            frameWidth: 24,
-            frameHeight: 24
-        });
-        this.load.spritesheet('character_jump', 'assets/sprites/character/jump.png', {
-            frameWidth: 24,
-            frameHeight: 24
-        });
-        this.load.spritesheet('character_fall', 'assets/sprites/character/fall.png', {
-            frameWidth: 24,
-            frameHeight: 24
-        });
-        this.load.spritesheet('character_shoot', 'assets/sprites/character/shoot.png', {
-            frameWidth: 24,
-            frameHeight: 24
-        });
-
-        // Load other necessary assets
-        this.load.spritesheet('bullet', 'assets/sprites/bullet.png', {
-            frameWidth: 16,
-            frameHeight: 16
-        });
-        this.load.spritesheet('hit-effect', 'assets/sprites/hit-effect.png', {
-            frameWidth: 32,
-            frameHeight: 32
-        });
-
-        // Load tileset with error handling
-        this.load.on('loaderror', (file) => {
-            console.error('Error loading file:', file.src);
-        });
+        // Load other assets from BaseScene
+        super.preload();
     }
 
     create() {
-        // Get trap config from scene data or TheZucc scene
+        // Get trap config
         const sceneData = this.scene.settings.data;
         const zuccScene = this.scene.get('TheZucc');
-        
-        // Try to get alarm count from multiple sources
-        const alarmCount = (
-            // First try scene data (passed when starting scene)
-            sceneData?.trapConfig?.AlarmTrigger !== undefined ? sceneData.trapConfig.AlarmTrigger :
-            // Then try getting it from TheZucc scene
-            zuccScene?.trapConfig?.AlarmTrigger !== undefined ? zuccScene.trapConfig.AlarmTrigger :
-            // Default to 1 if neither exists
-            1
-        );
-        
         this.trapConfig = {
-            AlarmTrigger: alarmCount
+            AlarmTrigger: sceneData?.trapConfig?.AlarmTrigger ?? 
+                         zuccScene?.trapConfig?.AlarmTrigger ?? 1
         };
-        
-        console.log('Matrix: Got alarm count:', this.trapConfig.AlarmTrigger, 
-                    'from:', sceneData?.trapConfig ? 'scene data' : 
-                            zuccScene?.trapConfig ? 'TheZucc scene' : 
-                            'default');
 
-        // Stop any existing background music and play thezucc
+        // Setup background music
         if (this.sound.get('bgMusic')) {
             this.sound.get('bgMusic').stop();
         }
-        
-        // Store background music reference
         this.bgMusic = this.sound.add('thezucc', { loop: true });
         this.bgMusic.play();
 
-        // Load fonts before initializing UI
+        // Initialize scene
         WebFont.load({
-            google: {
-                families: ['Press Start 2P']
-            },
+            google: { families: ['Press Start 2P'] },
             active: () => {
-                // Initialize managers and UI first
-                this.stateManager = new StateManager(this);
-                this.effectsManager = new EffectsManager(this);
-                this.enemyManager = new EnemyManager(this);  // Add enemy manager initialization
-                this.collisionManager = new CollisionManager(this);
-                this.boundaryManager = new SceneBoundaryManager(this);
-                this.animationManager = new AnimationManager(this);
-                this.gameUI = new GameUI(this);
-                
-                // Create animations
-                this.animationManager.createAllAnimations();
-                
-                // Initialize raycaster
-                this.raycaster = {
-                    createRay: (config) => {
-                        return {
-                            origin: config.origin,
-                            cast: (target) => {
-                                return {
-                                    hasHit: false // No walls in Matrix scene, so laser always hits
-                                };
-                            }
-                        };
-                    }
-                };
-                
-                // Set up world bounds and physics
-                this.physics.world.setBoundsCollision(true, true, true, true);
-                this.physics.world.setBounds(0, 0, 640, 360); // Match scene dimensions
-                
-                // Set scene boundaries
-                this.cameras.main.setBounds(0, 0, 640, 360);
-                
-                // Set scene background color
-                this.cameras.main.setBackgroundColor('#000000');
-                
-                // Set up camera with 1:1 zoom to match exact 640x360 dimensions
-                this.cameras.main.setZoom(1);  // No zoom scaling
-                this.cameras.main.centerOn(320, 180);  // Center on middle of scene
-                
-                // Initialize groups
-                this.enemies = this.physics.add.group();
-                this.slimes = this.physics.add.group();
-                this.drones = this.physics.add.group();
-                this.bitcoins = this.add.group();
-                this.bullets = this.physics.add.group({
-                    classType: Bullet,
-                    maxSize: 10,
-                    runChildUpdate: true
-                });
-                this.traps = this.physics.add.group();
-                
-                // Create the player
-                this.playerSpawnPoint = {
-                    x: this.scale.width * 0.1, // 10% from left edge
-                    y: 100 // Higher up to avoid tiles
-                };
-
-                // Create the player
-                this.player = new Player(this, this.playerSpawnPoint.x, this.playerSpawnPoint.y);
-                this.player.setPosition(this.playerSpawnPoint.x, this.playerSpawnPoint.y);
-                this.player.setVelocity(0, 0);  // Ensure player starts stationary
-
-                // Create platforms
-                this.platforms = this.physics.add.staticGroup();
-                
-                // Load level data
-                const levelData = this.cache.json.get('matrix');
-                
-                // Create platforms from level data
-                const platformLayer = levelData.layerInstances.find(layer => layer.__identifier === "WannabeeTileset");
-                if (platformLayer && platformLayer.gridTiles) {
-                    platformLayer.gridTiles.forEach(tile => {
-                        const x = tile.px[0] + 16; // Center of tile
-                        const y = tile.px[1] + 16;
-                        const platform = this.platforms.create(x, y, 'megapixel');
-                        platform.setImmovable(true);
-                    });
-                }
-
-                // Initialize alarm triggers group
-                this.alarmTriggers = this.physics.add.staticGroup({
-                    classType: AlarmTrigger,
-                    runChildUpdate: true
-                });
-                
-                // Find valid spawn points for alarms after platforms are created
-                const alarmSpawnPoints = this.findSpawnPointsForAlarms();
-                
-                // Create alarm triggers at random valid positions
-                if (alarmSpawnPoints.length > 0) {
-                    // Get number of alarms to create from trapConfig
-                    const numAlarms = this.trapConfig.AlarmTrigger;
-                    console.log('Matrix: Creating', numAlarms, 'alarms');
-                    
-                    // Shuffle spawn points
-                    Phaser.Utils.Array.Shuffle(alarmSpawnPoints);
-                    
-                    // Create alarm triggers up to the configured amount or available spawn points
-                    for (let i = 0; i < Math.min(numAlarms, alarmSpawnPoints.length); i++) {
-                        const spawnPoint = alarmSpawnPoints[i];
-                        const alarm = this.alarmTriggers.create(spawnPoint.x, spawnPoint.y, null, false);
-                        alarm.setSize(32, 32);
-                        console.log('Matrix: Created alarm at', spawnPoint.x, spawnPoint.y);
-                    }
-
-                    // Create traps at remaining spawn points
-                    const numTraps = this.trapConfig.TrapPrefab;
-                    console.log('Matrix: Creating', numTraps, 'traps');
-                    
-                    // Use remaining spawn points after alarms
-                    const remainingSpawnPoints = alarmSpawnPoints.slice(Math.min(numAlarms, alarmSpawnPoints.length));
-                    
-                    // Create trap prefabs up to the configured amount or available spawn points
-                    for (let i = 0; i < Math.min(numTraps, remainingSpawnPoints.length); i++) {
-                        const spawnPoint = remainingSpawnPoints[i];
-                        const trap = new Trap(this, spawnPoint.x, spawnPoint.y);
-                        this.traps.add(trap);
-                        console.log('Matrix: Created trap at', spawnPoint.x, spawnPoint.y);
-                    }
-                }
-
-                // Set up alarm trigger collision after both player and triggers exist
-                this.physics.add.overlap(
-                    this.player,
-                    this.alarmTriggers,
-                    (player, trap) => {
-                        trap.triggerAlarm();
-                    }
-                );
-
-                // Get the layer instance for WannabeeTileset layer
-                const tileLayer = levelData.layerInstances.find(layer => layer.__identifier === "WannabeeTileset");
-        
-                if (!tileLayer) {
-                    console.error('WannabeeTileset layer not found');
-                    return;
-                }
-
-                // Create a tilemap for collision handling
-                const map = this.make.tilemap({
-                    width: Math.ceil(levelData.pxWid / tileLayer.__gridSize),
-                    height: Math.ceil(levelData.pxHei / tileLayer.__gridSize),
-                    tileWidth: tileLayer.__gridSize,
-                    tileHeight: tileLayer.__gridSize
-                });
-
-                // Add the tileset image to the map
-                const tileset = map.addTilesetImage('megapixel');
-        
-                // Create a static layer for collisions
-                const layer = map.createBlankLayer('collision', tileset);
-                if (!layer) {
-                    console.error('Failed to create collision layer');
-                    return;
-                }
-
-                // Create a group for visual tiles
-                this.tileLayer = this.add.group();
-
-                // Helper function to convert source coordinates to frame index
-                const getFrameFromSrc = (src) => {
-                    const tilesPerRow = 25; // Number of tiles per row in the tileset
-                    const tileX = src[0] / tileLayer.__gridSize;
-                    const tileY = src[1] / tileLayer.__gridSize;
-                    return tileY * tilesPerRow + tileX;
-                };
-
-                // Place tiles according to the LDtk data
-                if (tileLayer.gridTiles) {
-                    const placeTilesPromise = Promise.all(tileLayer.gridTiles.map(tile => {
-                        const frameIndex = getFrameFromSrc(tile.src);
-        
-                        // Create visual sprite
-                        const tileSprite = this.add.sprite(
-                            tile.px[0],  // x position
-                            tile.px[1],  // y position
-                            'megapixel',
-                            frameIndex
-                        );
-                        tileSprite.setOrigin(0);
-                        this.tileLayer.add(tileSprite);
-
-                        // Add collision tile
-                        const tileX = Math.floor(tile.px[0] / tileLayer.__gridSize);
-                        const tileY = Math.floor(tile.px[1] / tileLayer.__gridSize);
-                        const collisionTile = layer.putTileAt(frameIndex, tileX, tileY);
-                        if (collisionTile) {
-                            collisionTile.setCollision(true);
-                        }
-                        return Promise.resolve();
-                    }));
-
-                    // Wait for all tiles to be placed before showing the scene
-                    placeTilesPromise.then(() => {
-                        // Set up all collisions using CollisionManager
-                        if (this.collisionManager) {
-                            this.collisionManager.setupCollisions();
-                            
-                            // Set up player-enemy collision
-                            this.physics.add.overlap(this.player, this.enemies, (player, enemy) => {
-                                if (enemy.getData('enemy') && !this.isDying) {
-                                    this.hitEnemy(player, enemy);
-                                }
-                            }, null, this);
-                        }
-
-                        // Initialize game elements
-                        this.initializeGameElements();
-        
-                        // Make sure camera follows the player from BaseScene
-                        this.cameras.main.startFollow(this.player);
-        
-                        console.log('Matrix640x360 scene setup complete');
-                    });
-                }
-
-                // Set up the Matrix room camera to stretch to HD
-                const mainCam = this.cameras.main;
-                mainCam.setViewport(0, 0, 1920, 1080); // Full HD viewport
-                mainCam.setBounds(0, 0, this.ROOM_WIDTH, this.ROOM_HEIGHT);
-                mainCam.setBackgroundColor('#000000');
-                mainCam.setScroll(0, 0);  // Lock camera position
-                
-                // Calculate zoom to stretch to full screen
-                const zoomX = 1920 / this.ROOM_WIDTH;
-                const zoomY = 1080 / this.ROOM_HEIGHT;
-                mainCam.setZoom(Math.min(zoomX, zoomY));  // Stretch to fill screen
-                
-                // Initialize debug graphics
-                this.debugGraphics = this.add.graphics();
-
-                // Ensure player has proper physics and collision
-                this.player.setCollideWorldBounds(true);
-                this.physics.add.collider(this.player, layer);
-
-                // Make sure player controller is enabled
-                if (this.player.controller) {
-                    this.player.controller.enabled = true;
-                }
-
-                // Initialize slimes group
-                this.slimes = this.physics.add.group({
-                    collideWorldBounds: true,
-                    bounceX: 0.5,
-                    bounceY: 0.2,
-                    dragX: 200
-                });
-
-                // Initialize drones group with consistent physics settings
-                this.drones = this.physics.add.group({
-                    runChildUpdate: true,
-                    collideWorldBounds: true,
-                    dragX: 200,
-                    bounceX: 0.2,
-                    bounceY: 0.2,
-                    gravityY: 0
-                });
-
-                // Create enemy group
-                this.enemies = this.physics.add.group({
-                    collideWorldBounds: true,
-                    bounceX: 0.5,
-                    bounceY: 0.2,
-                    dragX: 200
-                });
-
-                // Set up collisions between enemies and platforms
-                this.physics.add.collider(this.enemies, layer);
-        
-                // Set up collisions between enemies and each other
-                this.physics.add.collider(this.enemies, this.enemies, this.handleEnemyCollision, null, this);
-        
-                // Set up collisions between enemies and player
-                this.physics.add.overlap(this.enemies, this.player, (enemySprite, player) => {
-                    if (enemySprite.getData('enemy') && !this.isDying) {
-                        this.hitEnemy(player, enemySprite);
-                    }
-                }, null, this);
-
-                // Add ESC key for pause menu
-                this.pauseKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
-                this.pauseKey.on('down', () => {
+                this.initializeLevel();
+                // Add ESC key for pause menu after level initialization
+                this.input.keyboard.on('keydown-ESC', () => {
                     if (!this.isGamePaused) {
                         this.pauseGame();
                     }
                 });
-
-                // Ensure UI camera is properly set up
-                if (this.gameUI) {
-                    this.gameUI.updateCameraIgnoreList();
-                }
-
-                // Debug level data loading
-                if (!this.cache.json.get('matrix')) {
-                    console.error('Failed to load level data');
-                    return;
-                }
-
-                // Get the layer instance for Megapixel layer
-                const megapixelLayer = levelData.layerInstances[0];  // First layer is our Megapixel layer
-                if (!megapixelLayer) {
-                    console.error('Megapixel layer not found');
-                    return;
-                }
-
-                // Initialize debug system
-                this.debugSystem = new DebugSystem(this);
-                
             }
         });
+    }
+
+    initializeLevel() {
+        // Initialize scene components
+        const initializer = new SceneInitializer(this);
+        const managers = initializer.initializeScene();
+        Object.assign(this, managers);
+
+        // Load level
+        const levelLoader = new LevelLoader(this);
+        const { map, layer } = levelLoader.loadLevel('matrix');
+        
+        // Check if level loading failed
+        if (!map || !layer) {
+            console.error('Failed to load level. Returning to main menu...');
+            this.scene.start('MainMenu');
+            return;
+        }
+
+        // Set up collisions between player and tiles
+        this.physics.add.collider(this.player, this.tileLayer);
+        this.physics.add.collider(this.player, layer);
+        
+        // Set up collisions between enemies and tiles
+        this.physics.add.collider(this.enemies, this.tileLayer);
+        this.physics.add.collider(this.enemies, layer);
+        
+        // Set up collisions between bullets and tiles
+        this.physics.add.collider(this.bullets, this.tileLayer, (bullet) => bullet.destroy());
+        this.physics.add.collider(this.bullets, layer, (bullet) => bullet.destroy());
+
+        // Setup traps
+        const trapManager = new TrapManager(this);
+        trapManager.createTraps(this.trapConfig);
+        trapManager.setupCollisions(this.player);
+
+        // Initialize UI and collisions
+        this.gameUI = new GameUI(this);
+        this.collisionManager.setupCollisions();
+        
+        // Start game
+        this.startGame();
     }
 
     findSpawnPointsForAlarms() {
@@ -722,121 +390,26 @@ export class Matrix640x360 extends BaseScene{
 
     update(time, delta) {
         super.update(time, delta);
-
-        // Only update game elements if the game has started
-        if (!this.gameStarted) return;
-
-        if (this.isGamePaused) return;
-
-        // Update all enemies
-        if (this.enemies) {
-            this.enemies.getChildren().forEach(enemySprite => {
-                const enemy = enemySprite.getData('enemy');
-                if (enemy) {
-                    enemy.update(time, delta);
-                }
-            });
-        }
-
+        
         // Update debug system
         if (this.debugSystem) {
-            this.debugSystem.update();
+            this.debugSystem.update(time);
         }
 
         // Check for active slimes based on their health
-        const activeSlimes = this.slimes.getChildren().filter(slime => 
-            slime.enemy && slime.enemy.health > 0
-        );
-        const activeSlimeCount = activeSlimes.length;
-
-        // Debug info
-        console.log({
-            playerX: this.player.x,
-            activeSlimeCount,
-            slimeDetails: activeSlimes.map(slime => ({
-                health: slime.enemy?.health,
-                active: slime.active,
-                visible: slime.visible
-            }))
-        });
-
-        // Update debug visuals
-        this.updateDebugVisuals();
+        if (this.slimes) {
+            this.slimes.children.iterate(slime => {
+                if (slime && slime.health <= 0) {
+                    slime.destroy();
+                }
+            });
+        }
     }
 
     updateDebugVisuals() {
-        // Clear previous debug graphics
-        this.debugGraphics.clear();
-
-        // Only show debug visuals if debug system is enabled
-        if (this.debugSystem?.enabled) {
-            // Draw spawn point indicator
-            this.debugGraphics.lineStyle(2, 0x00ff00);  // Green outline
-            this.debugGraphics.strokeCircle(this.playerSpawnPoint.x, this.playerSpawnPoint.y, 20);
-            
-            // Draw X in the center
-            this.debugGraphics.lineStyle(2, 0xff0000);  // Red X
-            const x = this.playerSpawnPoint.x;
-            const y = this.playerSpawnPoint.y;
-            this.debugGraphics.beginPath();
-            this.debugGraphics.moveTo(x - 10, y - 10);
-            this.debugGraphics.lineTo(x + 10, y + 10);
-            this.debugGraphics.moveTo(x + 10, y - 10);
-            this.debugGraphics.lineTo(x - 10, y + 10);
-            this.debugGraphics.strokePath();
-            
-            // Add "SPAWN" text
-            const spawnText = this.add.text(x, y - 30, 'SPAWN', {
-                fontSize: '16px',
-                fill: '#00ff00',
-                backgroundColor: '#000000',
-                padding: { x: 4, y: 2 }
-            });
-            spawnText.setOrigin(0.5);
-            spawnText.setScrollFactor(1);
-            
-            // Store the text to remove it later
-            if (this.spawnText) {
-                this.spawnText.destroy();
-            }
-            this.spawnText = spawnText;
-
-            // Draw alarm trigger debug boxes
-            if (this.alarmTriggers) {
-                this.alarmTriggers.getChildren().forEach(alarm => {
-                    this.debugGraphics.lineStyle(2, 0xff0000);
-                    const bounds = alarm.getBounds();
-                    this.debugGraphics.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height);
-                    
-                    // Add debug text above alarm
-                    if (!alarm.debugText) {
-                        alarm.debugText = this.add.text(bounds.x, bounds.y - 20, '', {
-                            fontSize: '16px',
-                            backgroundColor: '#000000',
-                            color: '#ff0000',
-                            padding: { x: 4, y: 2 }
-                        });
-                    }
-                    alarm.debugText.setText(`ALARM TRIGGER\nPos: ${Math.round(bounds.x)},${Math.round(bounds.y)}\nSize: ${bounds.width}x${bounds.height}`);
-                    alarm.debugText.setPosition(bounds.x, bounds.y - 60);
-                    alarm.debugText.setScrollFactor(1);
-                });
-            }
-        } else {
-            // Clean up text when debug is disabled
-            if (this.spawnText) {
-                this.spawnText.destroy();
-                this.spawnText = null;
-            }
-            // Clean up alarm debug text
-            if (this.alarmTriggers) {
-                this.alarmTriggers.getChildren().forEach(alarm => {
-                    if (alarm.debugText) {
-                        alarm.debugText.destroy();
-                        alarm.debugText = null;
-                    }
-                });
-            }
+        if (this.debugGraphics) {
+            this.debugGraphics.clear();
+            this.debugSystem.drawDebugInfo();
         }
     }
 
@@ -846,12 +419,12 @@ export class Matrix640x360 extends BaseScene{
         this.isGamePaused = true;
         this.physics.pause();
         
-        // Disable player controller
+        // Disable player input
         if (this.player && this.player.controller) {
             this.player.controller.enabled = false;
         }
-        
-        // Launch pause menu
+
+        // Launch the pause menu scene
         this.scene.launch('PauseMenu');
         this.scene.pause();
     }
@@ -862,11 +435,11 @@ export class Matrix640x360 extends BaseScene{
         this.isGamePaused = false;
         this.physics.resume();
         
-        // Re-enable player controller
+        // Re-enable player input
         if (this.player && this.player.controller) {
             this.player.controller.enabled = true;
         }
-        
+
         this.scene.resume();
     }
 

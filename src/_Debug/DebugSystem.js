@@ -424,6 +424,60 @@ export class DebugSystem {
         );
     }
 
+    drawDebugInfo() {
+        if (!this.enabled) return;
+
+        this.clear();
+
+        // Draw player debug info if player exists
+        if (this.scene.player) {
+            this.drawPlayerDebug(this.scene.player);
+        }
+
+        // Draw platform bounds
+        if (this.scene.platforms) {
+            this.scene.platforms.children.iterate(platform => {
+                if (platform) {
+                    this.drawPlatformBounds(platform);
+                }
+            });
+        }
+
+        // Draw enemy debug info
+        if (this.scene.enemies) {
+            this.scene.enemies.children.iterate(enemy => {
+                if (enemy) {
+                    if (enemy.getData('type') === 'drone') {
+                        this.drawDroneDebug(enemy);
+                    } else if (enemy.getData('type') === 'slime') {
+                        this.drawSlimeDebug(enemy);
+                    } else if (enemy.getData('type') === 'warrior') {
+                        this.drawWarriorDebug(enemy);
+                    }
+                }
+            });
+        }
+
+        // Draw spawn point if it exists
+        if (this.scene.playerSpawnPoint) {
+            const { x, y } = this.scene.playerSpawnPoint;
+            this.drawPoint(x, y, 0x00ff00);
+            this.drawText(x, y - 20, 'SPAWN');
+        }
+
+        // Draw alarm triggers if they exist
+        if (this.scene.alarmTriggers) {
+            this.scene.alarmTriggers.children.iterate(alarm => {
+                if (alarm) {
+                    const bounds = alarm.getBounds();
+                    this.graphics.lineStyle(2, 0xff0000);
+                    this.graphics.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height);
+                    this.drawText(bounds.x, bounds.y - 20, 'ALARM TRIGGER');
+                }
+            });
+        }
+    }
+
     update(time) {
         // Clear previous frame's debug graphics
         this.graphics.clear();
