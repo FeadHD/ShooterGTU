@@ -140,6 +140,11 @@ export class MainMenu extends Scene {
         this.canvasHeight = canvasHeight;
     }
 
+    preload() {
+        // Load background music
+        this.load.audio('bgMusic', 'assets/sounds/mainmenumusic.mp3');
+    }
+
     createTitle(canvasWidth, canvasHeight) {
         // Add shadow layers for 3D effect
         const shadowOffset = 4;
@@ -191,20 +196,10 @@ export class MainMenu extends Scene {
             true
         );
 
-        const controlsButton = TextStyleManager.createText(
-            this,
-            canvasWidth/2,
-            startY,
-            'CONTROLS',
-            'menuButton',
-            0.5,
-            true
-        );
-
         const settingsButton = TextStyleManager.createText(
             this,
             canvasWidth/2,
-            startY + buttonSpacing,
+            startY,
             'SETTINGS',
             'menuButton',
             0.5,
@@ -214,7 +209,7 @@ export class MainMenu extends Scene {
         const leaderboardButton = TextStyleManager.createText(
             this,
             canvasWidth/2,
-            startY + buttonSpacing * 2,
+            startY + buttonSpacing,
             'LEADERBOARD',
             'menuButton',
             0.5,
@@ -224,7 +219,7 @@ export class MainMenu extends Scene {
         const rulesButton = TextStyleManager.createText(
             this,
             canvasWidth/2,
-            startY + buttonSpacing * 3,
+            startY + buttonSpacing * 2,
             'RULES',
             'menuButton',
             0.5,
@@ -234,7 +229,7 @@ export class MainMenu extends Scene {
         const theZuccButton = TextStyleManager.createText(
             this,
             canvasWidth/2,
-            startY + buttonSpacing * 4,
+            startY + buttonSpacing * 3,
             'THE ZUCC',
             'menuButton',
             0.5,
@@ -267,9 +262,6 @@ export class MainMenu extends Scene {
 
             // Start first level
             this.scene.start('GameScene1');
-        });
-        controlsButton.on('pointerdown', () => {
-            this.scene.start('ControlsSettingsScene');
         });
         settingsButton.on('pointerdown', () => {
             this.scene.start('Settings');

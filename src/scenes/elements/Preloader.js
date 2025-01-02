@@ -233,7 +233,7 @@ export class Preloader extends Scene {
 
         // Load sound effects
         this.load.audio('laser', './assets/sounds/laser.wav');
-        this.load.audio('bgMusic', './assets/sounds/background_music.mp3');
+        this.load.audio('bgMusic', './assets/sounds/mainmenumusic.mp3');
         this.load.audio('hit', './assets/sounds/hit.wav');
         this.load.audio('bitcoin_collect', './assets/sounds/bitcoin_collect.mp3');
         this.load.audio('thezucc', './assets/sounds/thezucc.wav');
