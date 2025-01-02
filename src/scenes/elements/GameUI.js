@@ -287,27 +287,57 @@ export class GameUI {
     createStartMessage() {
         const { width, height } = this.scene.scale;
         
+        // Create black background
+        this.startMessageBg = this.scene.add.rectangle(
+            width - 120, // Position from right
+            height - 30, // Position from bottom
+            200, // Width
+            40,  // Height
+            0x000000, // Black color
+            0.7      // Semi-transparent
+        );
+        this.startMessageBg.setOrigin(0.5);
+        this.startMessageBg.setDepth(999);
+        this.startMessageBg.setScrollFactor(0);
+        this.startMessageBg.setVisible(false);
+        
+        // Create text
         this.startMessage = TextStyleManager.createText(
             this.scene,
-            width / 2,
-            height / 2,
-            'Press SPACE to start',
-            'startMessage'
+            width - 120, // Same x as background
+            height - 30, // Same y as background
+            'Skip Intro (Space)',
+            'walletUI'
         );
         
-        this.container.add(this.startMessage);
+        // Style the text
+        this.startMessage.setOrigin(0.5);
+        this.startMessage.setDepth(1000);
+        this.startMessage.setScrollFactor(0);
         this.startMessage.setVisible(false);
+        this.startMessage.setColor('#ffffff'); // White text
+        
+        // Add a slight pulsing effect to both
+        this.scene.tweens.add({
+            targets: [this.startMessage, this.startMessageBg],
+            alpha: 0.7,
+            duration: 800,
+            yoyo: true,
+            repeat: -1
+        });
     }
 
     showStartMessage() {
         if (this.startMessage) {
             this.startMessage.setVisible(true);
+            this.startMessageBg.setVisible(true);
         }
     }
 
     hideStartMessage() {
         if (this.startMessage) {
             this.startMessage.setVisible(false);
+            this.startMessageBg.setVisible(false);
         }
     }
 

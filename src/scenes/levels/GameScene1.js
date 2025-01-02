@@ -92,7 +92,16 @@ export class GameScene1 extends BaseScene {
         // Add ESC key for pause menu
         this.pauseKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
         this.pauseKey.on('down', () => {
-            this.pauseGame();
+            if (!this.gameStarted) {
+                // Skip intro if game hasn't started
+                if (this.cameraManager && this.cameraManager.isIntroPlaying) {
+                    this.cameraManager.stopIntroSequence();
+                }
+                this.startGame();
+            } else {
+                // Normal pause functionality if game is running
+                this.pauseGame();
+            }
         });
 
         // Game paused flag
@@ -358,10 +367,17 @@ export class GameScene1 extends BaseScene {
     }
 
     setupRestOfScene() {
+        // Show the start message
+        if (this.gameUI) {
+            this.gameUI.showStartMessage();
+        }
+
         // Add space key listener for starting the game
         const spaceKey = this.input.keyboard.addKey('SPACE');
         spaceKey.once('down', () => {
-            this.startGame();
+            if (!this.gameStarted) {
+                this.startGame();
+            }
         });
 
         // Calculate proper spawn height
