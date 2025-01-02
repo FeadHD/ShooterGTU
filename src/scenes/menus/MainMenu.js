@@ -143,6 +143,8 @@ export class MainMenu extends Scene {
     preload() {
         // Load background music
         this.load.audio('bgMusic', 'assets/sounds/mainmenumusic.mp3');
+        // Load confirmation sound
+        this.load.audio('confirmSound', 'assets/sounds/confirmation.mp3');
     }
 
     createTitle(canvasWidth, canvasHeight) {
@@ -184,6 +186,13 @@ export class MainMenu extends Scene {
         const buttonStyle = this.styles.menuButton;
         const buttonSpacing = 100;
         const startY = canvasHeight / 2;
+
+        // Helper function to play confirmation sound
+        const playConfirmSound = () => {
+            const sfxVolume = this.registry.get('sfxVolume') ?? 1;
+            const confirmSound = this.sound.add('confirmSound', { volume: sfxVolume });
+            confirmSound.play();
+        };
 
         // Create "START GAME" button
         const startButton = TextStyleManager.createText(
@@ -238,6 +247,7 @@ export class MainMenu extends Scene {
 
         // Add click handlers
         startButton.on('pointerdown', () => {
+            playConfirmSound();
             // Reset game state
             this.registry.set('score', 0);
             this.registry.set('lives', 3);
@@ -264,15 +274,19 @@ export class MainMenu extends Scene {
             this.scene.start('GameScene1');
         });
         settingsButton.on('pointerdown', () => {
+            playConfirmSound();
             this.scene.start('Settings');
         });
         leaderboardButton.on('pointerdown', () => {
+            playConfirmSound();
             this.scene.start('Leaderboard');
         });
         rulesButton.on('pointerdown', () => {
+            playConfirmSound();
             // Add rules functionality here
         });
         theZuccButton.on('pointerdown', () => {
+            playConfirmSound();
             // Stop menu music before starting TheZucc
             if (this.sound.get('bgMusic')) {
                 this.sound.get('bgMusic').stop();

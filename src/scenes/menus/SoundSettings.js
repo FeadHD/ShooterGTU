@@ -8,6 +8,7 @@ export default class SoundSettings extends Phaser.Scene {
     preload() {
         this.load.image('settingsBackground', 'assets/settings/settings.png');
         this.load.font('Gameplay', 'assets/fonts/retronoid/Gameplay.ttf');
+        this.load.audio('confirmSound', 'assets/sounds/confirmation.mp3');
     }
 
     create() {
@@ -63,28 +64,36 @@ export default class SoundSettings extends Phaser.Scene {
             fontWeight: 'bold'
         }).setOrigin(0, 0.5);
 
-        // Create sound effects volume controls
+        // Create SFX volume slider
         const sfxVolume = this.registry.get('sfxVolume') || 1;
         this.createVolumeSlider(canvasWidth * 0.6, canvasHeight * 0.55, sfxVolume, (value) => {
             this.registry.set('sfxVolume', value);
         });
 
+        // Helper function to play confirmation sound
+        const playConfirmSound = () => {
+            const sfxVolume = this.registry.get('sfxVolume') ?? 1;
+            const confirmSound = this.sound.add('confirmSound', { volume: sfxVolume });
+            confirmSound.play();
+        };
+
         // Add Back button
-        const backButton = this.add.text(canvasWidth / 2, canvasHeight * 0.8, 'Back', {
+        const backButton = this.add.text(canvasWidth / 2, canvasHeight * 0.8, 'BACK', {
             fontFamily: 'Gameplay',
-            fontSize: '48px',
+            fontSize: '36px',
             fill: '#ffffff',
             stroke: '#000000',
             strokeThickness: 6,
             fontWeight: 'bold'
-        }).setOrigin(0.5);
+        }).setOrigin(0.5)
+            .setInteractive({ useHandCursor: true });
 
-        backButton.setInteractive({ useHandCursor: true })
-            .on('pointerover', () => backButton.setStyle({ fill: '#00ff00' }))
-            .on('pointerout', () => backButton.setStyle({ fill: '#ffffff' }))
-            .on('pointerdown', () => {
-                this.scene.start('Settings');
-            });
+        backButton.on('pointerover', () => backButton.setStyle({ fill: '#00ff00' }));
+        backButton.on('pointerout', () => backButton.setStyle({ fill: '#ffffff' }));
+        backButton.on('pointerdown', () => {
+            playConfirmSound();
+            this.scene.start('Settings');
+        });
     }
 
     createVolumeSlider(x, y, initialValue, onChange) {

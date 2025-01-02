@@ -13,6 +13,7 @@ export default class ControlsSettings extends Scene {
     preload() {
         this.load.image('settingsBackground', 'assets/settings/settings.png');
         this.load.font('Gameplay', 'assets/fonts/retronoid/Gameplay.ttf');
+        this.load.audio('confirmSound', 'assets/sounds/confirmation.mp3');
     }
 
     create() {
@@ -57,18 +58,19 @@ export default class ControlsSettings extends Scene {
         const playerController = new PlayerController(this);
         const currentBindings = playerController.keyBindings;
 
-        // Create key binding buttons
-        const controls = [
-            { key: 'up', label: 'MOVE UP' },
-            { key: 'down', label: 'MOVE DOWN' },
-            { key: 'left', label: 'MOVE LEFT' },
-            { key: 'right', label: 'MOVE RIGHT' },
-            { key: 'jump', label: 'JUMP' },
-            { key: 'specialAttack', label: 'SPECIAL ATTACK' }
+        // Create controls buttons
+        const controlsConfig = [
+            { action: 'up', label: 'UP' },
+            { action: 'down', label: 'DOWN' },
+            { action: 'left', label: 'LEFT' },
+            { action: 'right', label: 'RIGHT' },
+            { action: 'jump', label: 'JUMP' },
+            { action: 'specialAttack', label: 'SPECIAL ATTACK' },
+            { action: 'shoot', label: 'SHOOT' }
         ];
 
         const spacing = canvasHeight * 0.09;
-        controls.forEach((control, index) => {
+        controlsConfig.forEach((control, index) => {
             const y = index * spacing;
             
             // Add label with outline for better visibility
@@ -82,7 +84,7 @@ export default class ControlsSettings extends Scene {
             }).setOrigin(1, 0.5);
 
             // Add key button
-            const keyName = this.getKeyName(currentBindings[control.key]);
+            const keyName = this.getKeyName(currentBindings[control.action]);
             const button = this.add.text(canvasWidth * 0.7, y, keyName, {
                 fontFamily: 'Gameplay',
                 fontSize: '36px',
@@ -106,7 +108,7 @@ export default class ControlsSettings extends Scene {
                 if (this.isWaitingForKey) return;
 
                 this.isWaitingForKey = true;
-                this.selectedButton = { button, control: control.key };
+                this.selectedButton = { button, control: control.action };
                 button.setText('PRESS ANY KEY');
                 button.setStyle({ fill: '#ffff00' });
 
@@ -118,7 +120,7 @@ export default class ControlsSettings extends Scene {
         });
 
         // Calculate max scroll based on content height
-        const contentHeight = controls.length * spacing;
+        const contentHeight = controlsConfig.length * spacing;
         const maxScroll = Math.max(0, contentHeight - scrollableArea.height);
         const startY = scrollableArea.y + 50; // Store initial Y position
 
@@ -134,6 +136,13 @@ export default class ControlsSettings extends Scene {
             }
         });
 
+        // Helper function to play confirmation sound
+        const playConfirmSound = () => {
+            const sfxVolume = this.registry.get('sfxVolume') ?? 1;
+            const confirmSound = this.sound.add('confirmSound', { volume: sfxVolume });
+            confirmSound.play();
+        };
+
         // Add reset button
         const resetButton = this.add.text(canvasWidth / 2, canvasHeight * 0.8, 'RESET TO DEFAULT', {
             fontFamily: 'Gameplay',
@@ -147,7 +156,10 @@ export default class ControlsSettings extends Scene {
 
         resetButton.on('pointerover', () => resetButton.setStyle({ fill: '#00ff00' }));
         resetButton.on('pointerout', () => resetButton.setStyle({ fill: '#ffffff' }));
-        resetButton.on('pointerdown', () => this.resetBindings());
+        resetButton.on('pointerdown', () => {
+            playConfirmSound();
+            this.resetBindings();
+        });
 
         // Add back button
         const backButton = this.add.text(canvasWidth / 2, canvasHeight * 0.9, 'BACK', {
@@ -162,7 +174,10 @@ export default class ControlsSettings extends Scene {
 
         backButton.on('pointerover', () => backButton.setStyle({ fill: '#00ff00' }));
         backButton.on('pointerout', () => backButton.setStyle({ fill: '#ffffff' }));
-        backButton.on('pointerdown', () => this.scene.start('Settings'));
+        backButton.on('pointerdown', () => {
+            playConfirmSound();
+            this.scene.start('Settings');
+        });
     }
 
     handleKeyPress(event) {

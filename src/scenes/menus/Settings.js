@@ -9,10 +9,18 @@ export default class Settings extends Phaser.Scene {
     preload() {
         this.load.image('settingsBackground', 'assets/settings/settings.png');
         this.load.font('Gameplay', 'assets/fonts/retronoid/Gameplay.ttf');
+        this.load.audio('confirmSound', 'assets/sounds/confirmation.mp3');
     }
 
     create() {
         const { width: canvasWidth, height: canvasHeight } = this.cameras.main;
+
+        // Helper function to play confirmation sound
+        const playConfirmSound = () => {
+            const sfxVolume = this.registry.get('sfxVolume') ?? 1;
+            const confirmSound = this.sound.add('confirmSound', { volume: sfxVolume });
+            confirmSound.play();
+        };
 
         // Add background
         const bg = this.add.image(canvasWidth / 2, canvasHeight / 2, 'settingsBackground');
@@ -42,6 +50,7 @@ export default class Settings extends Phaser.Scene {
             .on('pointerover', () => controlsButton.setStyle({ fill: '#00ff00' }))
             .on('pointerout', () => controlsButton.setStyle({ fill: '#ffffff' }))
             .on('pointerdown', () => {
+                playConfirmSound();
                 this.scene.start('ControlsSettings');
             });
 
@@ -59,6 +68,7 @@ export default class Settings extends Phaser.Scene {
             .on('pointerover', () => soundButton.setStyle({ fill: '#00ff00' }))
             .on('pointerout', () => soundButton.setStyle({ fill: '#ffffff' }))
             .on('pointerdown', () => {
+                playConfirmSound();
                 this.scene.start('SoundSettings');
             });
 
@@ -76,6 +86,7 @@ export default class Settings extends Phaser.Scene {
             .on('pointerover', () => backButton.setStyle({ fill: '#00ff00' }))
             .on('pointerout', () => backButton.setStyle({ fill: '#ffffff' }))
             .on('pointerdown', () => {
+                playConfirmSound();
                 this.scene.start('MainMenu');
             });
     }
