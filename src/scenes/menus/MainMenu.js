@@ -140,6 +140,13 @@ export class MainMenu extends Scene {
         this.canvasHeight = canvasHeight;
     }
 
+    preload() {
+        // Load background music
+        this.load.audio('bgMusic', 'assets/sounds/mainmenumusic.mp3');
+        // Load confirmation sound
+        this.load.audio('confirmSound', 'assets/sounds/confirmation.mp3');
+    }
+
     createTitle(canvasWidth, canvasHeight) {
         // Add shadow layers for 3D effect
         const shadowOffset = 4;
@@ -180,6 +187,13 @@ export class MainMenu extends Scene {
         const buttonSpacing = 100;
         const startY = canvasHeight / 2;
 
+        // Helper function to play confirmation sound
+        const playConfirmSound = () => {
+            const sfxVolume = this.registry.get('sfxVolume') ?? 1;
+            const confirmSound = this.sound.add('confirmSound', { volume: sfxVolume });
+            confirmSound.play();
+        };
+
         // Create "START GAME" button
         const startButton = TextStyleManager.createText(
             this,
@@ -191,20 +205,10 @@ export class MainMenu extends Scene {
             true
         );
 
-        const controlsButton = TextStyleManager.createText(
-            this,
-            canvasWidth/2,
-            startY,
-            'CONTROLS',
-            'menuButton',
-            0.5,
-            true
-        );
-
         const settingsButton = TextStyleManager.createText(
             this,
             canvasWidth/2,
-            startY + buttonSpacing,
+            startY,
             'SETTINGS',
             'menuButton',
             0.5,
@@ -214,7 +218,7 @@ export class MainMenu extends Scene {
         const leaderboardButton = TextStyleManager.createText(
             this,
             canvasWidth/2,
-            startY + buttonSpacing * 2,
+            startY + buttonSpacing,
             'LEADERBOARD',
             'menuButton',
             0.5,
@@ -224,7 +228,7 @@ export class MainMenu extends Scene {
         const rulesButton = TextStyleManager.createText(
             this,
             canvasWidth/2,
-            startY + buttonSpacing * 3,
+            startY + buttonSpacing * 2,
             'RULES',
             'menuButton',
             0.5,
@@ -234,7 +238,7 @@ export class MainMenu extends Scene {
         const theZuccButton = TextStyleManager.createText(
             this,
             canvasWidth/2,
-            startY + buttonSpacing * 4,
+            startY + buttonSpacing * 3,
             'THE ZUCC',
             'menuButton',
             0.5,
@@ -243,6 +247,7 @@ export class MainMenu extends Scene {
 
         // Add click handlers
         startButton.on('pointerdown', () => {
+            playConfirmSound();
             // Reset game state
             this.registry.set('score', 0);
             this.registry.set('lives', 3);
@@ -268,19 +273,20 @@ export class MainMenu extends Scene {
             // Start first level
             this.scene.start('GameScene1');
         });
-        controlsButton.on('pointerdown', () => {
-            this.scene.start('ControlsSettingsScene');
-        });
         settingsButton.on('pointerdown', () => {
+            playConfirmSound();
             this.scene.start('Settings');
         });
         leaderboardButton.on('pointerdown', () => {
+            playConfirmSound();
             this.scene.start('Leaderboard');
         });
         rulesButton.on('pointerdown', () => {
+            playConfirmSound();
             // Add rules functionality here
         });
         theZuccButton.on('pointerdown', () => {
+            playConfirmSound();
             // Stop menu music before starting TheZucc
             if (this.sound.get('bgMusic')) {
                 this.sound.get('bgMusic').stop();

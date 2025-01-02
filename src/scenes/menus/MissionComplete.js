@@ -11,7 +11,7 @@ export class MissionComplete extends Scene {
         // Load victory music
         this.load.audio('victoryMusic', 'assets/sounds/congratulations.mp3');
         // Load background music for restart
-        this.load.audio('bgMusic', 'assets/sounds/background_music.mp3');
+        this.load.audio('bgMusic', 'assets/sounds/mainmenumusic.mp3');
     }
 
     createFirework(x, y) {

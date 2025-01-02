@@ -8,10 +8,19 @@ export default class Settings extends Phaser.Scene {
 
     preload() {
         this.load.image('settingsBackground', 'assets/settings/settings.png');
+        this.load.font('Gameplay', 'assets/fonts/retronoid/Gameplay.ttf');
+        this.load.audio('confirmSound', 'assets/sounds/confirmation.mp3');
     }
 
     create() {
         const { width: canvasWidth, height: canvasHeight } = this.cameras.main;
+
+        // Helper function to play confirmation sound
+        const playConfirmSound = () => {
+            const sfxVolume = this.registry.get('sfxVolume') ?? 1;
+            const confirmSound = this.sound.add('confirmSound', { volume: sfxVolume });
+            confirmSound.play();
+        };
 
         // Add background
         const bg = this.add.image(canvasWidth / 2, canvasHeight / 2, 'settingsBackground');
@@ -19,48 +28,65 @@ export default class Settings extends Phaser.Scene {
 
         // Add title with a darker color to be visible on the background
         this.add.text(canvasWidth / 2, canvasHeight * 0.2, 'SETTINGS', {
-            fontSize: '32px',
-            fill: '#000',
+            fontFamily: 'Gameplay',
+            fontSize: '64px',
+            fill: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 8,
             fontWeight: 'bold'
         }).setOrigin(0.5);
 
-        // Create music toggle button with darker text
-        const bgMusic = this.sound.get('bgMusic');
-        const musicText = this.add.text(canvasWidth / 2, canvasHeight * 0.4, 
-            bgMusic && bgMusic.isPlaying ? 'Music: ON' : 'Music: OFF', {
-            fontSize: '24px',
-            fill: '#000',
+        // Add Controls button
+        const controlsButton = this.add.text(canvasWidth / 2, canvasHeight * 0.4, 'Controls', {
+            fontFamily: 'Gameplay',
+            fontSize: '48px',
+            fill: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 6,
             fontWeight: 'bold'
         }).setOrigin(0.5);
-        
-        musicText.setInteractive({ useHandCursor: true })
-            .on('pointerover', () => musicText.setStyle({ fill: '#444' }))
-            .on('pointerout', () => musicText.setStyle({ fill: '#000' }))
+
+        controlsButton.setInteractive({ useHandCursor: true })
+            .on('pointerover', () => controlsButton.setStyle({ fill: '#00ff00' }))
+            .on('pointerout', () => controlsButton.setStyle({ fill: '#ffffff' }))
             .on('pointerdown', () => {
-                if (bgMusic) {
-                    if (bgMusic.isPlaying) {
-                        bgMusic.pause();
-                        this.registry.set('musicEnabled', false);
-                        musicText.setText('Music: OFF');
-                    } else {
-                        bgMusic.resume();
-                        this.registry.set('musicEnabled', true);
-                        musicText.setText('Music: ON');
-                    }
-                }
+                playConfirmSound();
+                this.scene.start('ControlsSettings');
             });
 
-        // Create back button with darker text
-        const backButton = this.add.text(canvasWidth / 2, canvasHeight * 0.8, 'BACK', {
-            fontSize: '24px',
-            fill: '#000',
+        // Add Sound Settings button
+        const soundButton = this.add.text(canvasWidth / 2, canvasHeight * 0.5, 'Sound Settings', {
+            fontFamily: 'Gameplay',
+            fontSize: '48px',
+            fill: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 6,
+            fontWeight: 'bold'
+        }).setOrigin(0.5);
+
+        soundButton.setInteractive({ useHandCursor: true })
+            .on('pointerover', () => soundButton.setStyle({ fill: '#00ff00' }))
+            .on('pointerout', () => soundButton.setStyle({ fill: '#ffffff' }))
+            .on('pointerdown', () => {
+                playConfirmSound();
+                this.scene.start('SoundSettings');
+            });
+
+        // Add Back button
+        const backButton = this.add.text(canvasWidth / 2, canvasHeight * 0.8, 'Back', {
+            fontFamily: 'Gameplay',
+            fontSize: '48px',
+            fill: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 6,
             fontWeight: 'bold'
         }).setOrigin(0.5);
 
         backButton.setInteractive({ useHandCursor: true })
-            .on('pointerover', () => backButton.setStyle({ fill: '#444' }))
-            .on('pointerout', () => backButton.setStyle({ fill: '#000' }))
+            .on('pointerover', () => backButton.setStyle({ fill: '#00ff00' }))
+            .on('pointerout', () => backButton.setStyle({ fill: '#ffffff' }))
             .on('pointerdown', () => {
+                playConfirmSound();
                 this.scene.start('MainMenu');
             });
     }

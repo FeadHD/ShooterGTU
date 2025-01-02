@@ -8,7 +8,10 @@ export class PlayerController {
             up: Phaser.Input.Keyboard.KeyCodes.W,
             down: Phaser.Input.Keyboard.KeyCodes.S,
             left: Phaser.Input.Keyboard.KeyCodes.A,
-            right: Phaser.Input.Keyboard.KeyCodes.D
+            right: Phaser.Input.Keyboard.KeyCodes.D,
+            jump: Phaser.Input.Keyboard.KeyCodes.SPACE,
+            specialAttack: Phaser.Input.Keyboard.KeyCodes.Q,
+            shoot: Phaser.Input.Keyboard.KeyCodes.E
         };
         
         // Load saved bindings from localStorage or use defaults
@@ -143,6 +146,14 @@ export class PlayerController {
 
     isJumping() {
         return this.enabled && Phaser.Input.Keyboard.JustDown(this.controls.up);
+    }
+
+    isSpecialAttacking() {
+        return this.enabled && Phaser.Input.Keyboard.JustDown(this.controls.specialAttack);
+    }
+
+    isShooting() {
+        return this.enabled && Phaser.Input.Keyboard.JustDown(this.controls.shoot);
     }
 
     destroy() {

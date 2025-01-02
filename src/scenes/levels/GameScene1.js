@@ -59,7 +59,11 @@ export class GameScene1 extends BaseScene {
 
         // Initialize background music if not already playing
         if (!this.bgMusic || !this.bgMusic.isPlaying) {
-            this.bgMusic = this.sound.add('bgMusic', { loop: true });
+            const musicVolume = this.registry.get('musicVolume') || 1;
+            this.bgMusic = this.sound.add('bgMusic', { 
+                loop: true,
+                volume: musicVolume
+            });
             this.bgMusic.play();
         }
 
