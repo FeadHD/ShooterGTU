@@ -1,3 +1,5 @@
+// @ai-do-not-touch
+
 import { Scene } from 'phaser';
 import { GameUI } from './GameUI';
 import { Bullet } from '../../prefabs/Bullet';
@@ -9,7 +11,6 @@ import { DebugSystem } from '../../_Debug/DebugSystem';
 import { SceneBoundaryManager } from '../../modules/managers/BoundaryManager';
 import { EffectsManager } from '../../modules/managers/EffectsManager';
 import { EnemyManager } from '../../modules/managers/EnemyManager';
-
 export class BaseScene extends Scene {
     preload() {
         // Load character spritesheet if not already loaded
@@ -328,3 +329,4 @@ export class BaseScene extends Scene {
         return this.groundTop - 16;
     }
 }
+
