@@ -183,7 +183,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
             }
 
             // Handle jumping
-            if (this.controller.isJumping()) {
+            if (this.controller.controls.jump.isDown && !this.controller.controls.jump.wasJustPressed) {
                 if (this.body.onFloor() && this.jumpsAvailable === this.maxJumps) {
                     // First jump
                     this.setVelocityY(this.jumpSpeed);
@@ -195,6 +195,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
                     this.jumpsAvailable--;
                     this.play('character_Jump', true);
                 }
+                // Set wasJustPressed to prevent multiple jumps from a single press
+                this.controller.controls.jump.wasJustPressed = true;
+            }
+            
+            // Reset wasJustPressed when the key is released
+            if (!this.controller.controls.jump.isDown) {
+                this.controller.controls.jump.wasJustPressed = false;
             }
 
             // Update bullet group
