@@ -26,6 +26,20 @@ export class Game extends Scene {
         // Background
         this.add.image(512, 384, 'background');
 
+        // Get stored music volume
+        const musicVolume = this.registry.get('musicVolume') || 1;
+
+        // Apply volume to any existing game music
+        this.sound.getAll().forEach(sound => {
+            if (sound.key && (
+                sound.key.toLowerCase().includes('music') || 
+                sound.key.toLowerCase().includes('bgm') ||
+                sound.key.toLowerCase().includes('theme')
+            )) {
+                sound.setVolume(musicVolume);
+            }
+        });
+
         // Score Text with arcade style
         this.scoreText = this.add.text(16, 16, 'SCORE: 0', {
             fontFamily: 'ArcadeClassic',

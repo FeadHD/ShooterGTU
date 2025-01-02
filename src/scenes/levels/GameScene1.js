@@ -7,6 +7,7 @@ import CameraManager from '../../modules/managers/CameraManager';
 import { CollisionManager } from '../../modules/managers/CollisionManager';
 import MeleeWarrior from '../../prefabs/MeleeWarrior';
 import { AlarmTrigger } from '../../prefabs/AlarmTrigger';
+import { MusicManager } from '../../modules/managers/MusicManager';
 
 export class GameScene1 extends BaseScene {
     constructor() {
@@ -58,14 +59,47 @@ export class GameScene1 extends BaseScene {
         }
 
         // Initialize background music if not already playing
+        const musicVolume = this.registry.get('musicVolume') ?? 1; // Use nullish coalescing to allow 0
         if (!this.bgMusic || !this.bgMusic.isPlaying) {
-            const musicVolume = this.registry.get('musicVolume') || 1;
-            this.bgMusic = this.sound.add('bgMusic', { 
+            // If there's an existing stopped music instance, destroy it
+            if (this.bgMusic) {
+                this.bgMusic.destroy();
+            }
+            
+            // Create new music instance with current volume
+            this.bgMusic = this.sound.add('bgMusic', {
                 loop: true,
                 volume: musicVolume
             });
-            this.bgMusic.play();
+
+            // Only play if volume is not 0
+            if (musicVolume > 0) {
+                this.bgMusic.play();
+            }
+        } else {
+            // Update volume of existing music
+            this.bgMusic.setVolume(musicVolume);
+            
+            // Pause/resume based on volume
+            if (musicVolume === 0 && this.bgMusic.isPlaying) {
+                this.bgMusic.pause();
+            } else if (musicVolume > 0 && !this.bgMusic.isPlaying) {
+                this.bgMusic.resume();
+            }
         }
+
+        // Add registry listener for volume changes
+        this.registry.events.on('changedata-musicVolume', (parent, value) => {
+            if (this.bgMusic) {
+                this.bgMusic.setVolume(value);
+                // Pause/resume based on volume
+                if (value === 0 && this.bgMusic.isPlaying) {
+                    this.bgMusic.pause();
+                } else if (value > 0 && !this.bgMusic.isPlaying) {
+                    this.bgMusic.resume();
+                }
+            }
+        });
 
         // Create raycaster for laser collision detection
         this.raycaster = {
@@ -738,19 +772,226 @@ export class GameScene1 extends BaseScene {
         }
     }
 
+    resumeGame() {
+        if (!this.isGamePaused) return;
+        
+        this.isGamePaused = false;
+        
+        // Restore game state
+        if (this.pausedState) {
+            // Restore player state
+            if (this.player && this.pausedState.playerState) {
+                this.player.x = this.pausedState.playerState.x;
+                this.player.y = this.pausedState.playerState.y;
+                if (this.player.body && this.pausedState.playerState.velocity) {
+                    this.player.body.velocity.x = this.pausedState.playerState.velocity.x;
+                    this.player.body.velocity.y = this.pausedState.playerState.velocity.y;
+                }
+            }
+
+            // Restore enemy states
+            if (this.enemies && this.pausedState.enemyStates) {
+                this.pausedState.enemyStates.forEach(enemyState => {
+                    const enemy = this.enemies.getChildren().find(e => e.id === enemyState.id);
+                    if (enemy) {
+                        enemy.x = enemyState.x;
+                        enemy.y = enemyState.y;
+                        if (enemy.body && enemyState.velocity) {
+                            enemy.body.velocity.x = enemyState.velocity.x;
+                            enemy.body.velocity.y = enemyState.velocity.y;
+                        }
+                        // Re-enable enemy AI if it exists
+                        if (enemy.startFollowing && typeof enemy.startFollowing === 'function') {
+                            enemy.startFollowing();
+                        }
+                    }
+                });
+            }
+
+            // Restore bullet states
+            if (this.bullets && this.pausedState.bulletStates) {
+                const bullets = this.bullets.getChildren();
+                this.pausedState.bulletStates.forEach((bulletState, index) => {
+                    if (bullets[index]) {
+                        bullets[index].x = bulletState.x;
+                        bullets[index].y = bulletState.y;
+                        if (bullets[index].body && bulletState.velocity) {
+                            bullets[index].body.velocity.x = bulletState.velocity.x;
+                            bullets[index].body.velocity.y = bulletState.velocity.y;
+                        }
+                    }
+                });
+            }
+
+            // Restore game time and score
+            this.gameTime = this.pausedState.gameTime;
+            this.score = this.pausedState.score;
+
+            // Clear the stored state
+            this.pausedState = null;
+        }
+        
+        // Resume physics world
+        if (this.physics && this.physics.world) {
+            try {
+                // Resume physics world
+                this.physics.world.resume();
+                
+                // Make sure physics debug is in the right state
+                if (this.physics.world.debugGraphic) {
+                    this.physics.world.debugGraphic.clear();
+                }
+                
+                // Resume all physics bodies and reset their states
+                this.physics.world.bodies.entries.forEach(body => {
+                    if (body && !body.destroyed) {
+                        body.enable = true;
+                        body.moves = true;
+                        if (body.velocity) {
+                            body.velocity.x = body.velocity.x || 0;
+                            body.velocity.y = body.velocity.y || 0;
+                        }
+                    }
+                });
+
+                // Reset physics world step
+                this.physics.world.step(0);
+            } catch (error) {
+                console.warn('Could not resume physics:', error);
+            }
+        }
+        
+        // Re-enable player controller and input
+        if (this.player) {
+            if (this.player.controller) {
+                this.player.controller.enabled = true;
+            }
+            if (this.player.body && !this.player.body.destroyed) {
+                this.player.body.enable = true;
+                this.player.body.moves = true;
+            }
+        }
+        
+        // Re-enable input system
+        if (this.input && this.input.keyboard) {
+            this.input.keyboard.enabled = true;
+        }
+        
+        // Resume any animations
+        this.anims.resumeAll();
+        
+        // Force a physics world update
+        if (this.physics && this.physics.world) {
+            this.physics.world.step(this.game.loop.delta);
+        }
+        
+        // Resume all tweens
+        if (this.tweens) {
+            this.tweens.resumeAll();
+        }
+        
+        // Resume the scene (do this last to ensure everything is ready)
+        this.scene.resume();
+    }
+
     pauseGame() {
         if (this.isGamePaused) return;
         
+        // Store game state before pausing
+        this.pausedState = {
+            playerState: {
+                x: this.player?.x,
+                y: this.player?.y,
+                velocity: {
+                    x: this.player?.body?.velocity?.x,
+                    y: this.player?.body?.velocity?.y
+                }
+            },
+            enemyStates: this.enemies?.getChildren().map(enemy => ({
+                id: enemy.id,
+                x: enemy.x,
+                y: enemy.y,
+                velocity: {
+                    x: enemy.body?.velocity?.x,
+                    y: enemy.body?.velocity?.y
+                }
+            })),
+            bulletStates: this.bullets?.getChildren().map(bullet => ({
+                x: bullet.x,
+                y: bullet.y,
+                velocity: {
+                    x: bullet.body?.velocity?.x,
+                    y: bullet.body?.velocity?.y
+                }
+            })),
+            gameTime: this.gameTime,
+            score: this.score
+        };
+        
         this.isGamePaused = true;
-        this.physics.pause();
+        
+        // Launch pause menu before pausing the scene
         this.scene.launch('PauseMenu');
+        
+        // Pause physics world
+        if (this.physics && this.physics.world) {
+            try {
+                // Pause physics world
+                this.physics.world.pause();
+                
+                // Disable all physics bodies
+                this.physics.world.bodies.entries.forEach(body => {
+                    if (body && !body.destroyed) {
+                        body.enable = false;
+                    }
+                });
+            } catch (error) {
+                console.warn('Could not pause physics:', error);
+            }
+        }
+        
+        // Disable player controller and input
+        if (this.player) {
+            if (this.player.controller) {
+                this.player.controller.enabled = false;
+            }
+            if (this.player.body && !this.player.body.destroyed) {
+                this.player.body.enable = false;
+            }
+            
+            // Stop any ongoing player animations
+            if (this.player.anims) {
+                this.player.anims.pause();
+            }
+        }
+        
+        // Disable input system
+        if (this.input && this.input.keyboard) {
+            this.input.keyboard.enabled = false;
+        }
+        
+        // Pause enemy AI
+        if (this.enemies) {
+            this.enemies.getChildren().forEach(enemy => {
+                if (enemy.stopFollowing && typeof enemy.stopFollowing === 'function') {
+                    enemy.stopFollowing();
+                }
+                if (enemy.body && !enemy.body.destroyed) {
+                    enemy.body.enable = false;
+                }
+            });
+        }
+        
+        // Pause any animations
+        this.anims.pauseAll();
+        
+        // Pause all tweens
+        if (this.tweens) {
+            this.tweens.pauseAll();
+        }
+        
+        // Pause the scene (do this last to ensure everything is properly stored)
         this.scene.pause();
-    }
-
-    resumeGame() {
-        this.isGamePaused = false;
-        this.physics.resume();
-        this.scene.resume();
     }
 
     gameOver() {

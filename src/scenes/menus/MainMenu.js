@@ -111,6 +111,7 @@ export class MainMenu extends Scene {
         // Handle music
         let bgMusic = this.sound.get('bgMusic');
         const musicEnabled = this.registry.get('musicEnabled');
+        const musicVolume = this.registry.get('musicVolume') ?? 1; // Use nullish coalescing to allow 0
 
         // Check if we need to create or restart the music
         if (!bgMusic || !bgMusic.isPlaying) {
@@ -119,17 +120,41 @@ export class MainMenu extends Scene {
                 bgMusic.destroy();
             }
             
-            // Create new music instance
+            // Create new music instance with current volume
             bgMusic = this.sound.add('bgMusic', {
-                volume: 0.15,
+                volume: musicVolume,
                 loop: true
             });
             
-            // Only play if music was enabled
-            if (musicEnabled !== false) {
+            // Only play if music is enabled and volume is not 0
+            if (musicEnabled !== false && musicVolume > 0) {
                 bgMusic.play();
             }
+        } else {
+            // Update volume of existing music
+            bgMusic.setVolume(musicVolume);
+            
+            // Pause/resume based on volume
+            if (musicVolume === 0 && bgMusic.isPlaying) {
+                bgMusic.pause();
+            } else if (musicVolume > 0 && !bgMusic.isPlaying && musicEnabled !== false) {
+                bgMusic.resume();
+            }
         }
+
+        // Add registry listener for volume changes
+        this.registry.events.on('changedata-musicVolume', (parent, value) => {
+            const currentMusic = this.sound.get('bgMusic');
+            if (currentMusic) {
+                currentMusic.setVolume(value);
+                // Pause/resume based on volume
+                if (value === 0 && currentMusic.isPlaying) {
+                    currentMusic.pause();
+                } else if (value > 0 && !currentMusic.isPlaying && musicEnabled !== false) {
+                    currentMusic.resume();
+                }
+            }
+        });
 
         // Create title and buttons first
         this.createTitle(canvasWidth, canvasHeight);
@@ -398,9 +423,9 @@ export class MainMenu extends Scene {
                             try {
                                 await window.ethereum.request({
                                     method: "wallet_revokePermissions",
-                                    params: [{
+                                    params: [/*{
                                         eth_accounts: {}
-                                    }]
+                                    }*/]
                                 });
                                 
                                 this.registry.set('walletAddress', null);

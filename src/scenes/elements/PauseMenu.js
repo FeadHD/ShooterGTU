@@ -5,6 +5,12 @@ export class PauseMenu extends Phaser.Scene {
         super({ key: 'PauseMenu' });
     }
 
+    preload() {
+        this.load.image('pauseBackground', 'assets/settings/settings.png');
+        this.load.font('Gameplay', 'assets/fonts/retronoid/Gameplay.ttf');
+        this.load.audio('confirmSound', 'assets/sounds/confirmation.mp3');
+    }
+
     create() {
         // Get all active scenes and find the game scene that launched the pause menu
         const activeScenes = this.scene.manager.getScenes(true);
@@ -19,13 +25,24 @@ export class PauseMenu extends Phaser.Scene {
         const bg = this.add.rectangle(0, 0, width, height, 0x000000, 0.7);
         bg.setOrigin(0);
 
+        // Add PAUSE title
+        this.add.text(width / 2, height * 0.2, 'PAUSE', {
+            fontFamily: 'Gameplay',
+            fontSize: '64px',
+            fill: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 8,
+            fontWeight: 'bold'
+        }).setOrigin(0.5);
+
         // Button configuration
         const buttonSpacing = 70;
         const buttons = [
-            { text: 'RESUME', yOffset: -buttonSpacing * 1.5, callback: () => this.resumeGame() },
-            { text: 'RESTART', yOffset: -buttonSpacing * 0.5, callback: () => this.restartGame() },
-            { text: 'MAIN MENU', yOffset: buttonSpacing * 0.5, callback: () => this.goToMainMenu() },
-            { text: 'QUIT GAME', yOffset: buttonSpacing * 1.5, callback: () => this.quitGame() }
+            { text: 'RESUME', yOffset: -buttonSpacing * 2, callback: () => this.resumeGame() },
+            { text: 'SETTINGS', yOffset: -buttonSpacing, callback: () => this.openSettings() },
+            { text: 'RESTART', yOffset: 0, callback: () => this.restartGame() },
+            { text: 'MAIN MENU', yOffset: buttonSpacing, callback: () => this.goToMainMenu() },
+            { text: 'QUIT GAME', yOffset: buttonSpacing * 2, callback: () => this.quitGame() }
         ];
 
         // Create buttons
@@ -35,35 +52,63 @@ export class PauseMenu extends Phaser.Scene {
 
         // Add ESC key handler to resume game
         this.input.keyboard.on('keydown-ESC', () => this.resumeGame());
+
+        // Make sure the game scene is paused
+        const gameScene = this.scene.get(this.parentSceneKey);
+        if (gameScene) {
+            gameScene.scene.pause();
+            if (gameScene.physics?.world) {
+                try {
+                    gameScene.physics.world.pause();
+                } catch (error) {
+                    console.warn('Could not pause physics:', error);
+                }
+            }
+        }
     }
 
     createMenuButton(text, yOffset, callback) {
-        const x = this.scale.width / 2;
-        const y = this.scale.height / 2 + yOffset;
-        const width = 200;
-        const height = 50;
+        const { width, height } = this.scale;
+        const buttonWidth = 300;
+        const buttonHeight = 60;
 
-        const button = this.add.rectangle(x, y, width, height, 0x4a4a4a)
-            .setInteractive()
+        const button = this.add.rectangle(
+            width / 2,
+            height / 2 + yOffset,
+            buttonWidth,
+            buttonHeight,
+            0x2a2a2a
+        );
+
+        button.setInteractive({ useHandCursor: true })
             .on('pointerover', () => {
-                button.setFillStyle(0x666666);
+                button.setFillStyle(0x3a3a3a);
                 buttonText.setScale(1.1);
             })
             .on('pointerout', () => {
-                button.setFillStyle(0x4a4a4a);
+                button.setFillStyle(0x2a2a2a);
                 buttonText.setScale(1);
             })
-            .on('pointerdown', callback);
+            .on('pointerdown', () => {
+                const sfxVolume = this.registry.get('sfxVolume') || 1;
+                const confirmSound = this.sound.add('confirmSound');
+                confirmSound.setVolume(sfxVolume);
+                confirmSound.play();
+                confirmSound.once('complete', () => {
+                    confirmSound.destroy();
+                });
+                callback();
+            });
 
         const buttonText = TextStyleManager.createText(
             this,
-            x,
-            y,
+            width / 2,
+            height / 2 + yOffset,
             text,
             'pauseButton'
         );
 
-        return { button, text: buttonText };
+        return { button, buttonText };
     }
 
     resumeGame() {
@@ -73,13 +118,14 @@ export class PauseMenu extends Phaser.Scene {
             if (typeof gameScene.resumeGame === 'function') {
                 gameScene.resumeGame();
             } else {
-                // Fallback resume behavior
+                // Resume the scene manually
                 gameScene.scene.resume();
-                if (gameScene.physics) {
-                    gameScene.physics.resume();
-                }
-                if (gameScene.player?.controller) {
-                    gameScene.player.controller.enabled = true;
+                if (gameScene.physics?.world) {
+                    try {
+                        gameScene.physics.world.resume();
+                    } catch (error) {
+                        console.warn('Could not resume physics:', error);
+                    }
                 }
             }
         }
@@ -126,6 +172,27 @@ export class PauseMenu extends Phaser.Scene {
 
         // Start MainMenu scene
         this.scene.start('MainMenu');
+    }
+
+    openSettings() {
+        // Launch settings scene but keep game paused
+        const gameScene = this.scene.get(this.parentSceneKey);
+        if (gameScene) {
+            // Keep game scene paused
+            gameScene.scene.pause();
+            if (gameScene.physics?.world) {
+                try {
+                    gameScene.physics.world.pause();
+                } catch (error) {
+                    console.warn('Could not pause physics:', error);
+                }
+            }
+        }
+        
+        // Stop this scene and start settings
+        this.scene.sleep();
+        this.scene.launch('Settings', { fromPause: true, parentScene: this.parentSceneKey });
+        this.scene.moveAbove('Settings', 'PauseMenu');
     }
 
     quitGame() {

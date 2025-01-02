@@ -1,8 +1,29 @@
 import 'phaser';
+import { MusicManager } from '../../modules/managers/MusicManager';
 
 export default class SoundSettings extends Phaser.Scene {
     constructor() {
         super('SoundSettings');
+    }
+
+    init(data) {
+        this.fromPause = data?.fromPause || false;
+        this.parentScene = data?.parentScene;
+        
+        // If we're coming from pause menu, make sure parent scene stays paused
+        if (this.fromPause && this.parentScene) {
+            const gameScene = this.scene.get(this.parentScene);
+            if (gameScene) {
+                gameScene.scene.pause();
+                if (gameScene.physics?.world) {
+                    try {
+                        gameScene.physics.world.pause();
+                    } catch (error) {
+                        console.warn('Could not pause physics:', error);
+                    }
+                }
+            }
+        }
     }
 
     preload() {
@@ -13,6 +34,10 @@ export default class SoundSettings extends Phaser.Scene {
 
     create() {
         const { width: canvasWidth, height: canvasHeight } = this.cameras.main;
+
+        // Store the fromPause and parentScene values passed from Settings
+        this.fromPause = this.scene.settings.data?.fromPause;
+        this.parentScene = this.scene.settings.data?.parentScene;
 
         // Add background
         const bg = this.add.image(canvasWidth / 2, canvasHeight / 2, 'settingsBackground');
@@ -39,17 +64,29 @@ export default class SoundSettings extends Phaser.Scene {
         }).setOrigin(0, 0.5);
 
         // Create music volume controls
-        const bgMusic = this.sound.get('bgMusic');
-        const musicVolume = bgMusic ? bgMusic.volume : (this.registry.get('musicVolume') || 1);
+        const musicVolume = this.registry.get('musicVolume') || 1;
         this.createVolumeSlider(canvasWidth * 0.6, canvasHeight * 0.4, musicVolume, (value) => {
-            // Store the volume in the registry for persistence across scenes
+            // Store the volume in the registry
             this.registry.set('musicVolume', value);
             
-            // Update volume for all active sounds
-            this.sound.getAllPlaying().forEach(sound => {
-                // Only adjust music tracks, not sound effects
-                if (sound.key.toLowerCase().includes('music')) {
+            // Update all music tracks in the game
+            const allSounds = this.sound.getAll();
+            allSounds.forEach(sound => {
+                if (sound.key && (
+                    sound.key.toLowerCase().includes('music') || 
+                    sound.key.toLowerCase().includes('bgm') ||
+                    sound.key.toLowerCase() === 'bgmusic'
+                )) {
                     sound.setVolume(value);
+                }
+            });
+
+            // Also update any music in other active scenes
+            const gameScenes = ['GameScene1', 'GameScene2', 'GameScene3', 'GameScene4', 'GameScene5'];
+            gameScenes.forEach(sceneName => {
+                const scene = this.scene.get(sceneName);
+                if (scene && scene.bgMusic) {
+                    scene.bgMusic.setVolume(value);
                 }
             });
         });
@@ -72,28 +109,51 @@ export default class SoundSettings extends Phaser.Scene {
 
         // Helper function to play confirmation sound
         const playConfirmSound = () => {
-            const sfxVolume = this.registry.get('sfxVolume') ?? 1;
-            const confirmSound = this.sound.add('confirmSound', { volume: sfxVolume });
+            const sfxVolume = this.registry.get('sfxVolume') || 1;
+            const confirmSound = this.sound.add('confirmSound');
+            confirmSound.setVolume(sfxVolume);
             confirmSound.play();
+            confirmSound.once('complete', () => {
+                confirmSound.destroy();
+            });
         };
 
         // Add Back button
-        const backButton = this.add.text(canvasWidth / 2, canvasHeight * 0.8, 'BACK', {
+        const backButton = this.add.text(canvasWidth / 2, canvasHeight * 0.8, 'Back', {
             fontFamily: 'Gameplay',
-            fontSize: '36px',
+            fontSize: '48px',
             fill: '#ffffff',
             stroke: '#000000',
             strokeThickness: 6,
             fontWeight: 'bold'
-        }).setOrigin(0.5)
-            .setInteractive({ useHandCursor: true });
+        }).setOrigin(0.5);
 
-        backButton.on('pointerover', () => backButton.setStyle({ fill: '#00ff00' }));
-        backButton.on('pointerout', () => backButton.setStyle({ fill: '#ffffff' }));
-        backButton.on('pointerdown', () => {
-            playConfirmSound();
-            this.scene.start('Settings');
-        });
+        backButton.setInteractive({ useHandCursor: true })
+            .on('pointerover', () => backButton.setStyle({ fill: '#00ff00' }))
+            .on('pointerout', () => backButton.setStyle({ fill: '#ffffff' }))
+            .on('pointerdown', () => {
+                playConfirmSound();
+                // Return to Settings scene with the same pause state
+                if (this.fromPause && this.parentScene) {
+                    const gameScene = this.scene.get(this.parentScene);
+                    if (gameScene) {
+                        gameScene.scene.pause();
+                        if (gameScene.physics?.world) {
+                            try {
+                                gameScene.physics.world.pause();
+                            } catch (error) {
+                                console.warn('Could not pause physics:', error);
+                            }
+                        }
+                    }
+                }
+                // Start the settings scene with the same data
+                this.scene.start('Settings', { 
+                    fromPause: this.fromPause, 
+                    parentScene: this.parentScene 
+                });
+                this.scene.stop();
+            });
     }
 
     createVolumeSlider(x, y, initialValue, onChange) {
@@ -155,8 +215,15 @@ export default class SoundSettings extends Phaser.Scene {
             handle.x = x + (width * value);
             percentText.setText(Math.round(value * 100));
             
-            // Call callback
+            // Call callback with exact value (can be 0)
             onChange(value);
+
+            // Update handle color based on value
+            if (value === 0) {
+                handle.setFillStyle(0xff0000); // Red when muted
+            } else {
+                handle.setFillStyle(0xffffff); // White when not muted
+            }
         };
     }
 }
