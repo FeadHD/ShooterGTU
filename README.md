@@ -87,3 +87,5 @@ The development server runs on `http://localhost:8080` by default. The game supp
 Built with:
 - [Phaser 3.87.0](https://github.com/phaserjs/phaser)
 - [Webpack 5.91.0](https://github.com/webpack/webpack)
+
+Good luck and have fun!
