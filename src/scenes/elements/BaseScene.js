@@ -267,17 +267,22 @@ export class BaseScene extends Scene {
     }
 
     cleanup() {
-        // Clean up game over elements if they exist
-        if (this.gameOverElements) {
-            if (this.gameOverElements.overlay) this.gameOverElements.overlay.destroy();
-            if (this.gameOverElements.gameOverContainer) this.gameOverElements.gameOverContainer.destroy();
-            this.gameOverElements = null;
+        // Clean up game objects
+        if (this.player) {
+            this.player.destroy();
+            this.player = null;
         }
 
-        // Clean up UI
         if (this.gameUI) {
             this.gameUI.destroy();
             this.gameUI = null;
+        }
+
+        // Stop and remove background music if it exists
+        if (this.bgMusic) {
+            this.bgMusic.stop();
+            this.bgMusic.destroy();
+            this.bgMusic = null;
         }
 
         // Clean up managers

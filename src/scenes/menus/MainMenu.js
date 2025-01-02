@@ -112,8 +112,14 @@ export class MainMenu extends Scene {
         let bgMusic = this.sound.get('bgMusic');
         const musicEnabled = this.registry.get('musicEnabled');
 
-        // Only create new music if it doesn't exist
-        if (!bgMusic) {
+        // Check if we need to create or restart the music
+        if (!bgMusic || !bgMusic.isPlaying) {
+            // If there's an existing stopped music instance, destroy it
+            if (bgMusic) {
+                bgMusic.destroy();
+            }
+            
+            // Create new music instance
             bgMusic = this.sound.add('bgMusic', {
                 volume: 0.15,
                 loop: true
@@ -170,11 +176,15 @@ export class MainMenu extends Scene {
     }
 
     createGameButtons(canvasWidth, canvasHeight) {
-        // Create menu buttons - moved up for better spacing
+        const buttonStyle = this.styles.menuButton;
+        const buttonSpacing = 100;
+        const startY = canvasHeight / 2;
+
+        // Create "START GAME" button
         const startButton = TextStyleManager.createText(
             this,
-            canvasWidth/2,
-            canvasHeight * 0.45,
+            canvasWidth / 2,
+            startY - buttonSpacing,
             'START',
             'menuButton',
             0.5,
@@ -184,7 +194,7 @@ export class MainMenu extends Scene {
         const controlsButton = TextStyleManager.createText(
             this,
             canvasWidth/2,
-            canvasHeight * 0.55,
+            startY,
             'CONTROLS',
             'menuButton',
             0.5,
@@ -194,7 +204,7 @@ export class MainMenu extends Scene {
         const settingsButton = TextStyleManager.createText(
             this,
             canvasWidth/2,
-            canvasHeight * 0.65,
+            startY + buttonSpacing,
             'SETTINGS',
             'menuButton',
             0.5,
@@ -204,7 +214,7 @@ export class MainMenu extends Scene {
         const leaderboardButton = TextStyleManager.createText(
             this,
             canvasWidth/2,
-            canvasHeight * 0.75,
+            startY + buttonSpacing * 2,
             'LEADERBOARD',
             'menuButton',
             0.5,
@@ -214,7 +224,7 @@ export class MainMenu extends Scene {
         const rulesButton = TextStyleManager.createText(
             this,
             canvasWidth/2,
-            canvasHeight * 0.85,
+            startY + buttonSpacing * 3,
             'RULES',
             'menuButton',
             0.5,
@@ -224,7 +234,7 @@ export class MainMenu extends Scene {
         const theZuccButton = TextStyleManager.createText(
             this,
             canvasWidth/2,
-            canvasHeight * 0.95,
+            startY + buttonSpacing * 4,
             'THE ZUCC',
             'menuButton',
             0.5,
@@ -250,6 +260,11 @@ export class MainMenu extends Scene {
             this.scene.stop('GameScene4');
             this.scene.stop('GameScene5');
 
+            // Stop menu music before starting game
+            if (this.sound.get('bgMusic')) {
+                this.sound.get('bgMusic').stop();
+            }
+
             // Start first level
             this.scene.start('GameScene1');
         });
@@ -266,6 +281,10 @@ export class MainMenu extends Scene {
             // Add rules functionality here
         });
         theZuccButton.on('pointerdown', () => {
+            // Stop menu music before starting TheZucc
+            if (this.sound.get('bgMusic')) {
+                this.sound.get('bgMusic').stop();
+            }
             this.scene.start('TheZucc');
         });
     }
@@ -392,5 +411,15 @@ export class MainMenu extends Scene {
         } catch (error) {
             console.error('Error initializing wallet:', error);
         }
+    }
+
+    shutdown() {
+        // Stop and cleanup menu music when leaving the scene
+        const bgMusic = this.sound.get('bgMusic');
+        if (bgMusic) {
+            bgMusic.stop();
+            bgMusic.destroy();
+        }
+        super.shutdown();
     }
 }

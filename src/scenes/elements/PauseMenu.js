@@ -116,6 +116,11 @@ export class PauseMenu extends Phaser.Scene {
             if (scene.gameUI) {
                 scene.gameUI.stopTimer();
             }
+            // Clean up any background music
+            if (scene.bgMusic) {
+                scene.bgMusic.stop();
+                scene.bgMusic.destroy();
+            }
             this.scene.stop(scene.scene.key);
         });
 

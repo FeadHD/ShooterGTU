@@ -57,6 +57,12 @@ export class GameScene1 extends BaseScene {
             };
         }
 
+        // Initialize background music if not already playing
+        if (!this.bgMusic || !this.bgMusic.isPlaying) {
+            this.bgMusic = this.sound.add('bgMusic', { loop: true });
+            this.bgMusic.play();
+        }
+
         // Create raycaster for laser collision detection
         this.raycaster = {
             createRay: (config) => {
@@ -347,8 +353,8 @@ export class GameScene1 extends BaseScene {
         this.debugGraphics = this.add.graphics();
 
         // Store background music reference
-        this.bgMusic = this.sound.add('bgMusic', { loop: true });
-        this.bgMusic.play();
+        // Removed this.bgMusic = this.sound.add('bgMusic', { loop: true });
+        // Removed this.bgMusic.play();
     }
 
     setupRestOfScene() {
