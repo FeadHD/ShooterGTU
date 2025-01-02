@@ -59,16 +59,16 @@ export class MainMenu extends Scene {
             },
             walletButton: {
                 fontFamily: 'Retronoid, Arial',
-                fontSize: '32px',
+                fontSize: '24px',
                 color: '#00ffff',
                 stroke: '#ffffff',
-                strokeThickness: 2,
-                padding: { x: 15, y: 10 },
+                strokeThickness: 1,
+                padding: { x: 10, y: 5 },
                 shadow: {
-                    offsetX: 2,
-                    offsetY: 2,
+                    offsetX: 1,
+                    offsetY: 1,
                     color: '#ff00ff',
-                    blur: 5,
+                    blur: 3,
                     fill: true
                 }
             }
@@ -292,13 +292,14 @@ export class MainMenu extends Scene {
     async initializeWallet() {
         let connectButton;
         try {
-            // Add MetaMask connect button
+            // Add MetaMask connect button with adjusted position
             connectButton = TextStyleManager.createText(
                 this,
-                this.canvasWidth - 30, 
-                30, 
+                this.cameras.main.width - 100, 
+                40, 
                 'Connect Wallet', 
-                'walletButton'
+                'walletButton',
+                1
             );
 
             // Function to handle wallet connection
