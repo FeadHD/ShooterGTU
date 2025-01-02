@@ -184,11 +184,11 @@ export class GameUI {
         // Create FPS counter
         this.fpsText = TextStyleManager.createText(
             this.scene,
-            width - 20,
             20,
+            height - 30,
             'FPS: 60',
             'gameUI',
-            1
+            0
         );
         this.container.add(this.fpsText);
 
@@ -241,28 +241,30 @@ export class GameUI {
             this.scene,
             0,
             0,
-            'MUSIC:',
+            'MUSIC :',
             'walletUI',
             0
         );
         
         this.musicOnText = TextStyleManager.createText(
             this.scene,
-            70,
+            80,
             0,
-            'ON',
+            ' ON',
             'walletUI',
             0
         );
+        this.musicOnText.setTint(0x00ff00); // Green tint for ON
         
         this.musicOffText = TextStyleManager.createText(
             this.scene,
-            70,
+            80,
             0,
-            'OFF',
+            ' OFF',
             'walletUI',
             0
         );
+        this.musicOffText.setTint(0xff0000); // Red tint for OFF
         
         // Set initial state
         this.musicOnText.setVisible(this.scene.sound.mute ? false : true);
