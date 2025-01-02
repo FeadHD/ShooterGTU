@@ -12,32 +12,32 @@ const OUTPUT_DIR = path.join(__dirname, '..', 'analysis');
 const ANALYSIS_TASKS = [
     {
         name: 'Scene Hierarchy',
-        command: `powershell -Command "Get-ChildItem -Path '${SRC_DIR}' -Recurse -Filter *.js | Select-String -Pattern 'extends.*Scene' -List | ForEach-Object { $_.Path }"`,
+        command: `find '${SRC_DIR}' -type f -name "*.js" -exec grep -l "extends.*Scene" {} \\;`,
         outputFile: 'scene_hierarchy.txt'
     },
     {
         name: 'Manager Classes',
-        command: `powershell -Command "Get-ChildItem -Path '${SRC_DIR}/modules/managers' -Filter *.js | Select-String -Pattern 'class.*{' -List | ForEach-Object { $_.Path }"`,
+        command: `find '${SRC_DIR}/modules/managers' -type f -name "*.js" -exec grep -l "class.*{" {} \\;`,
         outputFile: 'manager_classes.txt'
     },
     {
         name: 'Event Handlers',
-        command: `powershell -Command "Get-ChildItem -Path '${SRC_DIR}' -Recurse -Filter *.js | Select-String -Pattern 'on\\(.*\\)' -List | ForEach-Object { $_.Path }"`,
+        command: `find '${SRC_DIR}' -type f -name "*.js" -exec grep -l "on(" {} \\;`,
         outputFile: 'event_handlers.txt'
     },
     {
         name: 'Update Methods',
-        command: `powershell -Command "Get-ChildItem -Path '${SRC_DIR}' -Recurse -Filter *.js | Select-String -Pattern 'update.*\\(' -List | ForEach-Object { $_.Path }"`,
+        command: `find '${SRC_DIR}' -type f -name "*.js" -exec grep -l "update.*(" {} \\;`,
         outputFile: 'update_methods.txt'
     },
     {
         name: 'Collision Handlers',
-        command: `powershell -Command "Get-ChildItem -Path '${SRC_DIR}' -Recurse -Filter *.js | Select-String -Pattern 'collide.*\\(|overlap.*\\(|addCollider.*\\(' -List | ForEach-Object { $_.Path }"`,
+        command: `find '${SRC_DIR}' -type f -name "*.js" -exec grep -l "collide.*\\|overlap.*\\|addCollider.*(" {} \\;`,
         outputFile: 'collision_handlers.txt'
     },
     {
         name: 'Constructor Patterns',
-        command: `powershell -Command "Get-ChildItem -Path '${SRC_DIR}' -Recurse -Filter *.js | Select-String -Pattern 'constructor.*\\(' -List | ForEach-Object { $_.Path }"`,
+        command: `find '${SRC_DIR}' -type f -name "*.js" -exec grep -l "constructor.*(" {} \\;`,
         outputFile: 'constructors.txt'
     }
 ];
@@ -80,7 +80,7 @@ async function runAnalysis(task) {
                               task.name === 'Collision Handlers' ? 'collide.*\\(|overlap.*\\(|addCollider.*\\(' :
                               task.name === 'Constructor Patterns' ? 'constructor.*\\(' :
                               'class.*{';
-                const { stdout: fileMatches } = await execPromise(`powershell -Command "Select-String -Path '${file}' -Pattern '${pattern}' | ForEach-Object { $_.LineNumber.ToString() + ': ' + $_.Line.Trim() }"`);
+                const { stdout: fileMatches } = await execPromise(`grep -n "${pattern}" '${file}'`);
                 if (fileMatches) {
                     details += `\n=== ${file} ===\n${fileMatches}\n`;
                 }

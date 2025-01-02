@@ -89,3 +89,22 @@ Built with:
 - [Webpack 5.91.0](https://github.com/webpack/webpack)
 
 Good luck and have fun!
+
+Command to analyse code for linux:
+```bash
+# Make the script executable (only needed once)
+chmod +x scripts/analyze_linux.sh
+
+# Run the analysis
+./scripts/analyze_linux.sh
+```
+
+The analysis will generate reports in the `analysis` directory:
+- `summary.md`: Complete overview of the codebase analysis
+- Individual analysis files for specific aspects:
+  - `scene_hierarchy.txt`: All scene classes
+  - `manager_classes.txt`: All manager classes
+  - `event_handlers.txt`: Event handler methods
+  - `update_methods.txt`: Update method implementations
+  - `collision_handlers.txt`: Collision-related code
+  - `constructor_patterns.txt`: Constructor implementations
