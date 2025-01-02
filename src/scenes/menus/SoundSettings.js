@@ -64,31 +64,44 @@ export default class SoundSettings extends Phaser.Scene {
         }).setOrigin(0, 0.5);
 
         // Create music volume controls
-        const musicVolume = this.registry.get('musicVolume') || 1;
+        const musicVolume = this.registry.get('musicVolume') ?? 1;
         this.createVolumeSlider(canvasWidth * 0.6, canvasHeight * 0.4, musicVolume, (value) => {
-            // Store the volume in the registry
-            this.registry.set('musicVolume', value);
-            
-            // Update all music tracks in the game
-            const allSounds = this.sound.getAll();
-            allSounds.forEach(sound => {
-                if (sound.key && (
-                    sound.key.toLowerCase().includes('music') || 
-                    sound.key.toLowerCase().includes('bgm') ||
-                    sound.key.toLowerCase() === 'bgmusic'
-                )) {
-                    sound.setVolume(value);
-                }
-            });
+            // Ensure value is finite and handle 0 properly
+            value = Math.abs(value) < 0.01 ? 0 : value;
+            if (Number.isFinite(value)) {
+                this.registry.set('musicVolume', value);
+                
+                // Update all music tracks in the game
+                const allSounds = this.sound.getAll();
+                allSounds.forEach(sound => {
+                    if (sound.key && (
+                        sound.key.toLowerCase().includes('music') || 
+                        sound.key.toLowerCase().includes('bgm') ||
+                        sound.key.toLowerCase() === 'bgmusic'
+                    )) {
+                        if (value === 0) {
+                            sound.setMute(true);
+                        } else {
+                            sound.setMute(false);
+                            sound.setVolume(value);
+                        }
+                    }
+                });
 
-            // Also update any music in other active scenes
-            const gameScenes = ['GameScene1', 'GameScene2', 'GameScene3', 'GameScene4', 'GameScene5'];
-            gameScenes.forEach(sceneName => {
-                const scene = this.scene.get(sceneName);
-                if (scene && scene.bgMusic) {
-                    scene.bgMusic.setVolume(value);
-                }
-            });
+                // Also update any music in other active scenes
+                const gameScenes = ['GameScene1', 'GameScene2', 'GameScene3', 'GameScene4', 'GameScene5'];
+                gameScenes.forEach(sceneName => {
+                    const scene = this.scene.get(sceneName);
+                    if (scene && scene.bgMusic) {
+                        if (value === 0) {
+                            scene.bgMusic.setMute(true);
+                        } else {
+                            scene.bgMusic.setMute(false);
+                            scene.bgMusic.setVolume(value);
+                        }
+                    }
+                });
+            }
         });
 
         // Sound Effects Section
@@ -102,20 +115,27 @@ export default class SoundSettings extends Phaser.Scene {
         }).setOrigin(0, 0.5);
 
         // Create SFX volume slider
-        const sfxVolume = this.registry.get('sfxVolume') || 1;
+        const sfxVolume = this.registry.get('sfxVolume') ?? 1;
         this.createVolumeSlider(canvasWidth * 0.6, canvasHeight * 0.55, sfxVolume, (value) => {
-            this.registry.set('sfxVolume', value);
+            // Ensure 0 is exactly 0 and value is finite
+            value = Math.abs(value) < 0.01 ? 0 : value;
+            if (Number.isFinite(value)) {
+                this.registry.set('sfxVolume', value);
+            }
         });
 
         // Helper function to play confirmation sound
         const playConfirmSound = () => {
-            const sfxVolume = this.registry.get('sfxVolume') || 1;
-            const confirmSound = this.sound.add('confirmSound');
-            confirmSound.setVolume(sfxVolume);
-            confirmSound.play();
-            confirmSound.once('complete', () => {
-                confirmSound.destroy();
-            });
+            const sfxVolume = this.registry.get('sfxVolume') ?? 1;  // Use nullish coalescing
+            // Do not create or play any sound if volume is 0
+            if (sfxVolume !== 0 && Number.isFinite(sfxVolume)) {
+                const confirmSound = this.sound.add('confirmSound');
+                confirmSound.setVolume(sfxVolume);
+                confirmSound.play();
+                confirmSound.once('complete', () => {
+                    confirmSound.destroy();
+                });
+            }
         };
 
         // Add Back button

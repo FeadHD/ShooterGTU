@@ -57,13 +57,16 @@ export default class Settings extends Phaser.Scene {
 
         // Helper function to play confirmation sound
         const playConfirmSound = () => {
-            const sfxVolume = this.registry.get('sfxVolume') || 1;
-            const confirmSound = this.sound.add('confirmSound');
-            confirmSound.setVolume(sfxVolume);
-            confirmSound.play();
-            confirmSound.once('complete', () => {
-                confirmSound.destroy();
-            });
+            const sfxVolume = this.registry.get('sfxVolume') ?? 1;  // Use nullish coalescing
+            // Do not create or play any sound if volume is 0
+            if (sfxVolume !== 0 && Number.isFinite(sfxVolume)) {
+                const confirmSound = this.sound.add('confirmSound');
+                confirmSound.setVolume(sfxVolume);
+                confirmSound.play();
+                confirmSound.once('complete', () => {
+                    confirmSound.destroy();
+                });
+            }
         };
 
         // Add Controls button
