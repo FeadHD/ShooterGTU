@@ -12,32 +12,32 @@ const OUTPUT_DIR = path.join(__dirname, '..', 'analysis');
 const ANALYSIS_TASKS = [
     {
         name: 'Scene Hierarchy',
-        command: `find ${SRC_DIR} -type f -name "*.js" -exec grep -l "extends.*Scene" {} \\;`,
+        command: `powershell -Command "Get-ChildItem -Path '${SRC_DIR}' -Recurse -Filter *.js | Select-String -Pattern 'extends.*Scene' -List | ForEach-Object { $_.Path }"`,
         outputFile: 'scene_hierarchy.txt'
     },
     {
         name: 'Manager Classes',
-        command: `find ${SRC_DIR}/modules/managers -type f -name "*.js" -exec grep -l "class.*{" {} \\;`,
+        command: `powershell -Command "Get-ChildItem -Path '${SRC_DIR}/modules/managers' -Filter *.js | Select-String -Pattern 'class.*{' -List | ForEach-Object { $_.Path }"`,
         outputFile: 'manager_classes.txt'
     },
     {
         name: 'Event Handlers',
-        command: `find ${SRC_DIR} -type f -name "*.js" -exec grep -l "on[(].*[)]" {} \\;`,
+        command: `powershell -Command "Get-ChildItem -Path '${SRC_DIR}' -Recurse -Filter *.js | Select-String -Pattern 'on\\(.*\\)' -List | ForEach-Object { $_.Path }"`,
         outputFile: 'event_handlers.txt'
     },
     {
         name: 'Update Methods',
-        command: `find ${SRC_DIR} -type f -name "*.js" -exec grep -l "update.*[(]" {} \\;`,
+        command: `powershell -Command "Get-ChildItem -Path '${SRC_DIR}' -Recurse -Filter *.js | Select-String -Pattern 'update.*\\(' -List | ForEach-Object { $_.Path }"`,
         outputFile: 'update_methods.txt'
     },
     {
         name: 'Collision Handlers',
-        command: `find ${SRC_DIR} -type f -name "*.js" -exec grep -l "collide.*[(]\\|overlap.*[(]\\|addCollider.*[(]" {} \\;`,
+        command: `powershell -Command "Get-ChildItem -Path '${SRC_DIR}' -Recurse -Filter *.js | Select-String -Pattern 'collide.*\\(|overlap.*\\(|addCollider.*\\(' -List | ForEach-Object { $_.Path }"`,
         outputFile: 'collision_handlers.txt'
     },
     {
         name: 'Constructor Patterns',
-        command: `find ${SRC_DIR} -type f -name "*.js" -exec grep -l "constructor.*[(]" {} \\;`,
+        command: `powershell -Command "Get-ChildItem -Path '${SRC_DIR}' -Recurse -Filter *.js | Select-String -Pattern 'constructor.*\\(' -List | ForEach-Object { $_.Path }"`,
         outputFile: 'constructors.txt'
     }
 ];
@@ -74,12 +74,13 @@ async function runAnalysis(task) {
             let details = '';
             for (const file of lines) {
                 if (!file.trim()) continue;
-                const { stdout: fileMatches } = await execPromise(`grep -n "${task.name === 'Scene Hierarchy' ? 'extends.*Scene' : 
-                                                                          task.name === 'Event Handlers' ? 'on[(].*[)]' :
-                                                                          task.name === 'Update Methods' ? 'update.*[(]' :
-                                                                          task.name === 'Collision Handlers' ? 'collide.*[(]\\|overlap.*[(]\\|addCollider.*[(]' :
-                                                                          task.name === 'Constructor Patterns' ? 'constructor.*[(]' :
-                                                                          'class.*{'}" "${file}"`);
+                const pattern = task.name === 'Scene Hierarchy' ? 'extends.*Scene' :
+                              task.name === 'Event Handlers' ? 'on\\(.*\\)' :
+                              task.name === 'Update Methods' ? 'update.*\\(' :
+                              task.name === 'Collision Handlers' ? 'collide.*\\(|overlap.*\\(|addCollider.*\\(' :
+                              task.name === 'Constructor Patterns' ? 'constructor.*\\(' :
+                              'class.*{';
+                const { stdout: fileMatches } = await execPromise(`powershell -Command "Select-String -Path '${file}' -Pattern '${pattern}' | ForEach-Object { $_.LineNumber.ToString() + ': ' + $_.Line.Trim() }"`);
                 if (fileMatches) {
                     details += `\n=== ${file} ===\n${fileMatches}\n`;
                 }
