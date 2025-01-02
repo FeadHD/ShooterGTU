@@ -12,10 +12,10 @@ import { MissionComplete } from '../scenes/menus/MissionComplete';
 import { Preloader } from '../scenes/elements/Preloader';
 import { TitleScene } from '../scenes/elements/TitleScene';
 import Settings from '../scenes/menus/Settings';
-import { ControlsSettingsScene } from '../scenes/menus/ControlsSettingsScene';
+import ControlsSettings from '../scenes/menus/ControlsSettings';
+import SoundSettings from '../scenes/menus/SoundSettings';
 import { PauseMenu } from '../scenes/elements/PauseMenu';
 import { TheZucc } from '../scenes/menus/TheZucc/TheZucc';
-
 
 export const config = {
     type: Phaser.AUTO,
@@ -30,6 +30,9 @@ export const config = {
         autoCenter: Phaser.Scale.CENTER_BOTH,
         fullscreenTarget: 'game-container',
         expandParent: true
+    },
+    dom: {
+        createContainer: true
     },
     physics: {
         default: 'arcade',
@@ -55,12 +58,13 @@ export const config = {
         GameScene5,
         Matrix640x360,
         BlueTest,
+        GameOver,
         Settings,
+        ControlsSettings,
+        SoundSettings,
         Leaderboard,
         MissionComplete,
-        ControlsSettingsScene,
         PauseMenu,
-        GameOver,
         TheZucc
     ]
 };

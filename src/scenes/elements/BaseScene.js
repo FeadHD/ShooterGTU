@@ -37,6 +37,12 @@ export class BaseScene extends Scene {
         this.effectsManager = new EffectsManager(this);
         this.enemyManager = new EnemyManager(this);
 
+        // Initialize background music with volume from registry
+        if (this.sound.get('bgMusic')) {
+            const musicVolume = this.registry.get('musicVolume') || 1;
+            this.sound.get('bgMusic').setVolume(musicVolume);
+        }
+
         this.input.keyboard.enabled = true;  // Ensure keyboard is enabled on scene start
 
         // Set up world physics
