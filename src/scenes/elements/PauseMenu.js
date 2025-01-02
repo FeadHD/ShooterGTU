@@ -6,8 +6,12 @@ export class PauseMenu extends Phaser.Scene {
     }
 
     create() {
-        // Store the key of the scene that launched the pause menu
-        this.parentSceneKey = this.scene.get('Matrix640x360') ? 'Matrix640x360' : 'GameScene1';
+        // Get all active scenes and find the game scene that launched the pause menu
+        const activeScenes = this.scene.manager.getScenes(true);
+        this.parentSceneKey = activeScenes.find(scene => 
+            scene.scene.key !== 'PauseMenu' && 
+            scene.scene.isActive()
+        )?.scene.key || 'MainMenu';
         
         const { width, height } = this.scale;
 
@@ -65,25 +69,65 @@ export class PauseMenu extends Phaser.Scene {
     resumeGame() {
         const gameScene = this.scene.get(this.parentSceneKey);
         if (gameScene) {
-            gameScene.resumeGame();
+            // Check if the scene has a resumeGame method
+            if (typeof gameScene.resumeGame === 'function') {
+                gameScene.resumeGame();
+            } else {
+                // Fallback resume behavior
+                gameScene.scene.resume();
+                if (gameScene.physics) {
+                    gameScene.physics.resume();
+                }
+                if (gameScene.player?.controller) {
+                    gameScene.player.controller.enabled = true;
+                }
+            }
         }
         this.scene.stop();
     }
 
     restartGame() {
-        this.scene.stop();
-        this.scene.stop(this.parentSceneKey);
+        // Stop all scenes except MainMenu to prevent scene conflicts
+        const scenesToStop = this.scene.manager.getScenes(true)
+            .filter(scene => scene.scene.key !== 'MainMenu');
+        
+        scenesToStop.forEach(scene => {
+            this.scene.stop(scene.scene.key);
+        });
+
+        // Start the parent scene fresh
         this.scene.start(this.parentSceneKey);
     }
 
     goToMainMenu() {
-        this.scene.stop();
-        this.scene.stop(this.parentSceneKey);
+        const gameScene = this.scene.get(this.parentSceneKey);
+        
+        // First try to use the scene's own main menu transition if available
+        if (gameScene && typeof gameScene.returnToMainMenu === 'function') {
+            gameScene.returnToMainMenu();
+            this.scene.stop(); // Stop the pause menu
+            return;
+        }
+
+        // Fallback behavior if no specific transition exists
+        const scenesToStop = this.scene.manager.getScenes(true);
+        scenesToStop.forEach(scene => {
+            // Stop all game UI elements if they exist
+            if (scene.gameUI) {
+                scene.gameUI.stopTimer();
+            }
+            this.scene.stop(scene.scene.key);
+        });
+
+        // Start MainMenu scene
         this.scene.start('MainMenu');
     }
 
     quitGame() {
         // You might want to show a confirmation dialog here
-        window.close();
+        const confirmQuit = window.confirm('Are you sure you want to quit the game?');
+        if (confirmQuit) {
+            window.close();
+        }
     }
 }
