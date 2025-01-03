@@ -318,6 +318,12 @@ export default class ControlsSettings extends Scene {
                 if (action === 'shoot') {
                     gameScene.player.controller.setupShootingControls(gameScene.player);
                 }
+
+                // Update tutorial text if in tutorial
+                if (gameScene.tutorialManager) {
+                    gameScene.tutorialManager.updateTutorialSteps();
+                    gameScene.tutorialManager.showCurrentStep();
+                }
             }
         }
     }
@@ -338,6 +344,12 @@ export default class ControlsSettings extends Scene {
                 
                 // Re-setup shooting controls
                 gameScene.player.controller.setupShootingControls(gameScene.player);
+
+                // Update tutorial text if in tutorial
+                if (gameScene.tutorialManager) {
+                    gameScene.tutorialManager.updateTutorialSteps();
+                    gameScene.tutorialManager.showCurrentStep();
+                }
             }
         }
         

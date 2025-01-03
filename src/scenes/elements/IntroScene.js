@@ -46,14 +46,14 @@ export class IntroScene extends Scene {
             frameHeight: 32
         });
 
+        // Load the Gameplay font
+        this.load.font('Gameplay', 'assets/fonts/retronoid/Gameplay.ttf');
+
         // Load bullet sprite
         this.load.spritesheet('bullet_animation', 'assets/sprites/bullet.png', {
             frameWidth: 24,
             frameHeight: 24
         });
-
-        // Load font
-        this.load.font('Gameplay', 'assets/fonts/retronoid/Gameplay.ttf');
 
         this.load.on('complete', () => {
             console.log('IntroScene: All assets loaded');
@@ -206,11 +206,15 @@ export class IntroScene extends Scene {
             });
 
             // Start the tutorial
-            this.tutorialManager.start();
+            if (this.tutorialManager) {
+                this.tutorialManager.start();
+            }
 
             // Listen for player shooting
             this.input.on('pointerdown', () => {
-                this.tutorialManager.onPlayerShoot();
+                if (this.tutorialManager) {
+                    this.tutorialManager.onPlayerShoot();
+                }
             });
         }
 

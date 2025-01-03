@@ -23,25 +23,88 @@ export class TutorialManager {
             padding: { x: 10, y: 5 }
         };
 
-        // Define tutorial steps
+        // Define tutorial steps with dynamic key bindings
+        this.updateTutorialSteps();
+
+        // Initialize tracking variables
+        this.hasMovedLeft = false;
+        this.hasMovedRight = false;
+        this.hasJumped = false;
+        this.hasHovered = false;
+        this.hasShot = false;
+    }
+
+    getKeyName(keyCode) {
+        if (!keyCode) return 'UNKNOWN';
+        
+        // Handle mouse buttons
+        if (typeof keyCode === 'string' && keyCode.startsWith('MOUSE_')) {
+            switch (keyCode) {
+                case 'MOUSE_LEFT': return 'Left Click';
+                case 'MOUSE_RIGHT': return 'Right Click';
+                case 'MOUSE_MIDDLE': return 'Middle Click';
+                default: return keyCode.replace('MOUSE_', '');
+            }
+        }
+
+        // Handle keyboard keys
+        const keyNames = {
+            32: 'SPACE',
+            37: 'LEFT',
+            38: 'UP',
+            39: 'RIGHT',
+            40: 'DOWN',
+            // Letters
+            65: 'A', 66: 'B', 67: 'C', 68: 'D', 69: 'E',
+            70: 'F', 71: 'G', 72: 'H', 73: 'I', 74: 'J',
+            75: 'K', 76: 'L', 77: 'M', 78: 'N', 79: 'O',
+            80: 'P', 81: 'Q', 82: 'R', 83: 'S', 84: 'T',
+            85: 'U', 86: 'V', 87: 'W', 88: 'X', 89: 'Y',
+            90: 'Z'
+        };
+
+        // Convert numeric key code
+        if (typeof keyCode === 'number') {
+            return keyNames[keyCode] || String.fromCharCode(keyCode);
+        }
+
+        // Convert Phaser key code object
+        if (typeof keyCode === 'object' && keyCode.hasOwnProperty('value')) {
+            return keyNames[keyCode.value] || String.fromCharCode(keyCode.value);
+        }
+
+        return 'UNKNOWN';
+    }
+
+    updateTutorialSteps() {
+        if (!this.scene.player || !this.scene.player.controller) {
+            return;
+        }
+
+        const bindings = this.scene.player.controller.keyBindings;
+        const leftKey = this.getKeyName(bindings.left);
+        const rightKey = this.getKeyName(bindings.right);
+        const jumpKey = this.getKeyName(bindings.jump);
+        const shootKey = this.getKeyName(bindings.shoot);
+
         this.tutorialSteps = [
             {
-                text: 'Use A and D to move left and right',
+                text: `Use ${leftKey} and ${rightKey} to move left and right`,
                 condition: () => this.hasPlayerMoved(),
                 position: { x: 0.5, y: 0.2 }
             },
             {
-                text: 'Press SPACE to jump',
+                text: `Press ${jumpKey} to jump`,
                 condition: () => this.hasPlayerJumped(),
                 position: { x: 0.5, y: 0.2 }
             },
             {
-                text: 'Press SPACE in mid-air\nfor double jump!',
-                condition: () => this.hasPlayerDoubleJumped(),
+                text: `Hold ${jumpKey} in mid-air\nto hover!`,
+                condition: () => this.hasPlayerHovered(),
                 position: { x: 0.5, y: 0.2 }
             },
             {
-                text: 'Click to shoot',
+                text: `${shootKey} to shoot`,
                 condition: () => this.hasPlayerShot(),
                 position: { x: 0.5, y: 0.2 }
             },
@@ -51,17 +114,12 @@ export class TutorialManager {
                 position: { x: 0.5, y: 0.2 }
             }
         ];
-
-        // Initialize tracking variables
-        this.hasMovedLeft = false;
-        this.hasMovedRight = false;
-        this.hasJumped = false;
-        this.hasDoubleJumped = false;
-        this.hasShot = false;
     }
 
     start() {
         if (!this.isActive) return;
+        // Update tutorial steps with current key bindings before showing
+        this.updateTutorialSteps();
         this.showCurrentStep();
     }
 
@@ -73,14 +131,17 @@ export class TutorialManager {
             if (this.scene.player.body.velocity.x < 0) this.hasMovedLeft = true;
             if (this.scene.player.body.velocity.x > 0) this.hasMovedRight = true;
             
-            // Track jumps
+            // Track jumps and hover
             if (this.scene.player.body.velocity.y < 0 && 
                 this.scene.player.controller.controls.jump.isDown) {
-                if (this.scene.player.jumpsAvailable === 1) {
+                if (!this.scene.player.body.touching.down) {
                     this.hasJumped = true;
-                } else if (this.scene.player.jumpsAvailable === 0) {
-                    this.hasDoubleJumped = true;
                 }
+            }
+
+            // Track hover
+            if (this.scene.player.isHovering) {
+                this.hasHovered = true;
             }
         }
 
@@ -157,8 +218,8 @@ export class TutorialManager {
         return this.hasJumped;
     }
 
-    hasPlayerDoubleJumped() {
-        return this.hasDoubleJumped;
+    hasPlayerHovered() {
+        return this.hasHovered;
     }
 
     hasPlayerShot() {
