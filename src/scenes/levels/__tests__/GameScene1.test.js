@@ -9,6 +9,7 @@ jest.mock('phaser', () => {
         GameObjects: {
             Sprite: jest.fn(),
             Image: jest.fn(),
+            Container: class {}
         },
         Input: {
             Keyboard: {
@@ -448,6 +449,16 @@ describe('GameScene1', () => {
                 tileHeight: 32,
                 layers: [],
             }),
+        };
+
+        // Mock gameUI
+        scene.gameUI = {
+            startTimer: jest.fn(),
+            animateUIElements: jest.fn(),
+            updateScore: jest.fn(),
+            updateLives: jest.fn(),
+            updateHealth: jest.fn(),
+            updateBitcoins: jest.fn()
         };
     });
 
