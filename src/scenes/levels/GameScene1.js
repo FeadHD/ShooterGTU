@@ -11,6 +11,7 @@ import { MusicManager } from '../../modules/managers/MusicManager';
 import { Bitcoin } from '../../prefabs/Bitcoin';
 import { Slime } from '../../prefabs/Slime';
 import Drone from '../../prefabs/Drone';
+import Trampoline from '../../prefabs/Trampoline';
 
 export class GameScene1 extends BaseScene {
     constructor() {
@@ -29,6 +30,9 @@ export class GameScene1 extends BaseScene {
         this.load.audio('victoryMusic', 'assets/sounds/congratulations');
         this.load.audio('bgMusic', 'assets/audio/bgMusic.wav');
         this.load.audio('alarm', '/assets/sounds/alarm.wav');  // Add alarm sound with correct path
+
+        // Load spark particle for trampoline
+        this.load.image('spark', 'assets/particles/spark.png');
 
         // Load tileset with error handling
         this.load.on('loaderror', (file) => {
@@ -638,6 +642,10 @@ export class GameScene1 extends BaseScene {
             // Set number of enemies
             this.remainingEnemies = 7;
         });
+        
+        // Add trampoline at x=735 on top of a solid tile
+        // Placing it higher up on the solid platform visible in the screenshot
+        this.trampoline = new Trampoline(this, 735, 448);
     }
 
     startGame() {
