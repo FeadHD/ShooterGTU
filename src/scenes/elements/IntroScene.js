@@ -3,7 +3,8 @@ import { LevelLoader } from '../../modules/managers/LevelLoader';
 import { Player } from '../../prefabs/Player';
 import { PlayerController } from '../../modules/controls/PlayerController';
 import { AnimationManager } from '../../modules/managers/AnimationManager';
-import { Bullet } from '../../prefabs/Bullet'; // Import Bullet class
+import { Bullet } from '../../prefabs/Bullet'; 
+import { TutorialManager } from '../../modules/managers/TutorialManager';
 
 export class IntroScene extends Scene {
     constructor() {
@@ -51,6 +52,9 @@ export class IntroScene extends Scene {
             frameHeight: 24
         });
 
+        // Load font
+        this.load.font('Gameplay', 'assets/fonts/retronoid/Gameplay.ttf');
+
         this.load.on('complete', () => {
             console.log('IntroScene: All assets loaded');
         });
@@ -66,19 +70,19 @@ export class IntroScene extends Scene {
         // Reset the camera
         const mainCamera = this.cameras.main;
         mainCamera.setViewport(0, 0, this.SCENE_WIDTH, this.SCENE_HEIGHT);
-        mainCamera.setBackgroundColor('#000000');
+        mainCamera.setBackgroundColor('#87CEEB'); // Light blue background
         mainCamera.setBounds(0, 0, this.SCENE_WIDTH, this.SCENE_HEIGHT);
         mainCamera.setPosition(0, 0);
         mainCamera.setSize(this.SCENE_WIDTH, this.SCENE_HEIGHT);
         mainCamera.setZoom(1);
         
-        // Create a black background for the visible area
+        // Create a light blue background for the visible area
         const background = this.add.rectangle(
             this.SCENE_WIDTH / 2,
             this.SCENE_HEIGHT / 2,
             this.SCENE_WIDTH,
             this.SCENE_HEIGHT,
-            0x000000
+            0x87CEEB
         );
         background.setDepth(-1);
 
@@ -88,6 +92,9 @@ export class IntroScene extends Scene {
             maxSize: 10,
             runChildUpdate: true
         });
+
+        // Initialize tutorial manager
+        this.tutorialManager = new TutorialManager(this);
 
         // Set world bounds
         this.physics.world.setBounds(0, 0, this.SCENE_WIDTH + 30, this.SCENE_HEIGHT); // +30 to include transfer zone width
@@ -187,6 +194,14 @@ export class IntroScene extends Scene {
                 this.scale.setGameSize(1920, 1080);
                 this.scene.start('GameScene1');
             });
+
+            // Start the tutorial
+            this.tutorialManager.start();
+
+            // Listen for player shooting
+            this.input.on('pointerdown', () => {
+                this.tutorialManager.onPlayerShoot();
+            });
         }
 
         // Log the final scene setup
@@ -204,6 +219,11 @@ export class IntroScene extends Scene {
                 // Reset player position to start
                 this.player.setPosition(100, this.SCENE_HEIGHT - 100);
             }
+        }
+
+        // Update tutorial
+        if (this.tutorialManager) {
+            this.tutorialManager.update();
         }
     }
 }
