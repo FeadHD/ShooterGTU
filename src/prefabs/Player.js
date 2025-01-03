@@ -103,10 +103,54 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         // Disable controls
         this.controller.enabled = false;
         
-        // Reset after a short delay
-        this.scene.time.delayedCall(500, () => {
-            this.respawn();
-        });
+        // Update lives in registry and UI only if we're in a game scene
+        if (this.scene.gameUI) {
+            const currentLives = this.scene.registry.get('lives');
+            if (currentLives > 0) {
+                this.scene.registry.set('lives', currentLives - 1);
+                this.scene.gameUI.updateLives(currentLives - 1);
+            }
+        }
+        
+        // Play death animation
+        if (this.scene.anims.exists('character_Death')) {
+            this.play('character_Death', true);
+            this.once('animationcomplete', () => {
+                this.setAlpha(0); // Hide player after death animation
+                // Reset after animation completes
+                this.scene.time.delayedCall(500, () => {
+                    this.respawn();
+                });
+            });
+        } else {
+            // If no death animation, just wait and respawn
+            this.setAlpha(0);
+            this.scene.time.delayedCall(500, () => {
+                this.respawn();
+            });
+        }
+    }
+
+    fallDeath() {
+        if (this.isDying) return;
+
+        this.isDying = true;
+        this.setVelocity(0, 0);
+        this.body.moves = false;
+        this.controller.enabled = false;
+
+        // Update lives in registry and UI only if we're in a game scene
+        if (this.scene.gameUI) {
+            const currentLives = this.scene.registry.get('lives');
+            if (currentLives > 0) {
+                this.scene.registry.set('lives', currentLives - 1);
+                this.scene.gameUI.updateLives(currentLives - 1);
+            }
+        }
+
+        // Immediately respawn without animation
+        this.setAlpha(0);
+        this.respawn();
     }
 
     respawn() {
@@ -116,13 +160,31 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.setAlpha(1);
         this.controller.enabled = true;  // Re-enable controls
         
-        // Reset position to start
-        this.setPosition(100, this.scene.SCENE_HEIGHT - 100);
+        // Reset HP
+        this.playerHP = 100;
+        this.scene.registry.set('playerHP', this.playerHP);
+        
+        // Make player temporarily invulnerable
+        this.makeInvulnerable();
+        
+        // Reset position to spawn point if it exists, otherwise use default
+        if (this.scene.playerSpawnPoint) {
+            this.setPosition(this.scene.playerSpawnPoint.x, this.scene.playerSpawnPoint.y);
+        } else {
+            this.setPosition(100, this.scene.scale.height - 100);
+        }
+        
         this.setVelocity(0, 0);
     }
 
     update() {
         if (this.body && !this.isDying) {  
+            // Check if player has fallen off the map
+            if (this.y > this.scene.scale.height + 100) {
+                this.fallDeath();
+                return;
+            }
+
             // Reset jumps when landing
             if (this.body.onFloor()) {
                 this.jumpsAvailable = this.maxJumps;

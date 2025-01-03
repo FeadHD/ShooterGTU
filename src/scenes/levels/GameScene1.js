@@ -1046,7 +1046,7 @@ export class GameScene1 extends BaseScene {
     }
 
     handlePlayerDeath() {
-        const lives = this.stateManager.get('lives');
+        const lives = this.registry.get('lives');
         if (lives <= 0) {
             // Game Over - stop timer and transition
             this.gameUI.stopTimer();
