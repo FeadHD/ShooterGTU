@@ -1,3 +1,5 @@
+// @ai-do-not-touch
+
 import { GameOver } from '../events/GameOver';
 import { GameScene1 } from '../scenes/levels/GameScene1';
 import { GameScene2 } from '../scenes/levels/GameScene2';
