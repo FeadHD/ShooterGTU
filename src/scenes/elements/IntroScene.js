@@ -92,7 +92,7 @@ export class IntroScene extends Scene {
         // Set world bounds
         this.physics.world.setBounds(0, 0, this.SCENE_WIDTH + 30, this.SCENE_HEIGHT); // +30 to include transfer zone width
         
-        // Create invisible walls at the boundaries (except right side)
+        // Create invisible walls at the boundaries (except right side and bottom)
         this.worldBounds = this.physics.add.staticGroup();
         
         // Left wall
@@ -104,14 +104,7 @@ export class IntroScene extends Scene {
         
         // Top wall
         this.worldBounds.add(
-            this.add.rectangle(this.SCENE_WIDTH/2 + 15, 0, this.SCENE_WIDTH + 30, 4) // Extended to cover transfer zone
-                .setOrigin(0.5)
-                .setFillStyle(0xff0000) // Red color
-        );
-        
-        // Bottom wall
-        this.worldBounds.add(
-            this.add.rectangle(this.SCENE_WIDTH/2 + 15, this.SCENE_HEIGHT, this.SCENE_WIDTH + 30, 4) // Extended to cover transfer zone
+            this.add.rectangle(this.SCENE_WIDTH/2 + 15, 0, this.SCENE_WIDTH + 30, 4)
                 .setOrigin(0.5)
                 .setFillStyle(0xff0000) // Red color
         );
@@ -162,14 +155,6 @@ export class IntroScene extends Scene {
                     tile.properties = { ...tile.properties, collides: true };
                 }
             });
-
-            // Enable collision debugging if needed (comment out in production)
-            this.physics.world.createDebugGraphic();
-            layer.renderDebug(this.add.graphics(), {
-                tileColor: null,
-                collidingTileColor: new Phaser.Display.Color(243, 134, 48, 128),
-                faceColor: new Phaser.Display.Color(40, 39, 37, 255)
-            });
             
             console.log('Level dimensions:', {
                 width: levelWidth,
@@ -212,6 +197,13 @@ export class IntroScene extends Scene {
         // Update the player if it exists
         if (this.player) {
             this.player.update();
+            
+            // Check if player has fallen below the scene
+            if (this.player.y > this.SCENE_HEIGHT + 100) {
+                this.player.die();
+                // Reset player position to start
+                this.player.setPosition(100, this.SCENE_HEIGHT - 100);
+            }
         }
     }
 }

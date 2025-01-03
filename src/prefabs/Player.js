@@ -22,7 +22,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         
         // Set up physics properties
         this.setScale(2)
-            .setCollideWorldBounds(true)
             .setBounce(0.1)
             .setGravityY(400)  // Match world gravity
             .setAlpha(1) // Set opacity to 100%
@@ -104,57 +103,22 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         // Disable controls
         this.controller.enabled = false;
         
-        // Decrease lives
-        const lives = this.scene.stateManager.decrement('lives');
-        this.scene.gameUI.updateLives(lives);
-    
-        console.log('Playing death animation');  // Debug log
-        // Play death animation
-        this.play('character_Death', true);  // Force start the animation
-        this.once('animationcomplete', () => {
-            console.log('Death animation complete');  // Debug log
-            if (lives <= 0) {
-                this.handleGameOver();
-            } else {
-                this.handleRespawn();
-            }
+        // Reset after a short delay
+        this.scene.time.delayedCall(500, () => {
+            this.respawn();
         });
     }
 
-    handleGameOver() {
-        // Stop the timer
-        this.scene.gameUI.stopTimer();
-        
-        const gameOverElements = this.scene.gameUI.showGameOver();
-        this.scene.gameOverElements = gameOverElements;
-        this.scene.gameOver = true;
-        this.scene.input.mouse.enabled = false;
-        
-        // Add space key for restart
-        this.scene.spaceKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-    }
-
-    handleRespawn() {
-        // Use scene's spawn point if available, otherwise use default position
-        const spawnPoint = this.scene.playerSpawnPoint || {
-            x: this.scene.cameras.main.width * 0.1,
-            y: this.scene.groundTop - 16
-        };
-        
-        this.setPosition(spawnPoint.x, spawnPoint.y);
-        this.setVelocity(0, 0);
-        
+    respawn() {
         // Reset player state
         this.isDying = false;
         this.body.moves = true;
         this.setAlpha(1);
         this.controller.enabled = true;  // Re-enable controls
         
-        // Reset player HP
-        this.playerHP = 100;  // Update the player's own HP property
-        this.lastDamageTaken = 0;  // Reset last damage taken
-        this.scene.stateManager.set('playerHP', this.playerHP);
-        this.scene.gameUI.updateHP(this.playerHP);
+        // Reset position to start
+        this.setPosition(100, this.scene.SCENE_HEIGHT - 100);
+        this.setVelocity(0, 0);
     }
 
     update() {
