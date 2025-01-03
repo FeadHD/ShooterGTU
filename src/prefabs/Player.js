@@ -21,6 +21,15 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.lastOnGroundTime = 0; // Track when player was last on ground
         this.lastJumpPressedTime = 0; // Track when jump was last pressed
         this.hasBufferedJump = false; // Track if we have a buffered jump
+
+        // Hover mechanics
+        this.isHovering = false;          // Current hover state
+        this.canStartHover = true;        // Whether we can start a new hover
+        this.hoverDuration = 750;         // How long player can hover (ms)
+        this.hoverCooldown = 1000;        // Time before can hover again (ms)
+        this.hoverForce = -200;           // Upward force during hover
+        this.hoverStartTime = 0;          // When current hover began
+        this.lastHoverEndTime = 0;        // When last hover ended
         
         // Add sprite to scene and enable physics
         scene.add.existing(this);
@@ -183,6 +192,34 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.setVelocity(0, 0);
     }
 
+    handleHover() {
+        const currentTime = this.scene.time.now;
+        const isHoverKeyDown = this.controller.controls.jump.isDown || this.controller.controls.up.isDown;
+        
+        // Check if we can start hovering
+        if (!this.isHovering && isHoverKeyDown && this.canStartHover && !this.body.onFloor()) {
+            // Check cooldown
+            if (currentTime - this.lastHoverEndTime >= this.hoverCooldown) {
+                this.isHovering = true;
+                this.hoverStartTime = currentTime;
+            }
+        }
+        
+        // Handle active hover
+        if (this.isHovering) {
+            const hoverTimeElapsed = currentTime - this.hoverStartTime;
+            
+            if (hoverTimeElapsed < this.hoverDuration && isHoverKeyDown) {
+                // Apply hover force
+                this.setVelocityY(this.hoverForce);
+            } else {
+                // End hover
+                this.isHovering = false;
+                this.lastHoverEndTime = currentTime;
+            }
+        }
+    }
+
     update() {
         if (this.body && !this.isDying) {  
             // Check if player has fallen off the map
@@ -196,6 +233,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
                 this.lastOnGroundTime = this.scene.time.now;
                 this.jumpsAvailable = this.maxJumps;
             }
+
+            // Handle hover mechanics
+            this.handleHover();
 
             // Handle horizontal movement
             if (this.controller.isMovingLeft()) {
