@@ -9,76 +9,80 @@ export class LevelLoader {
             console.error(`Level data not found for key: ${levelKey}`);
             return { map: null, layer: null };
         }
+        
+        // Check if we need to get the first level's layer instances
+        if (levelData.levels && levelData.levels[0]) {
+            return this.createTileMap(levelData.levels[0]);
+        }
         return this.createTileMap(levelData);
     }
 
     createTileMap(levelData) {
-        const tileLayer = levelData.layerInstances.find(layer => layer.__identifier === "WannabeeTileset");
+        // Get the layer instances, handling both direct and nested structures
+        const layerInstances = levelData.layerInstances || [];
+        const tileLayer = layerInstances.find(layer => layer.__type === "Tiles");
         
         if (!tileLayer) {
-            console.error('WannabeeTileset layer not found');
+            console.error('Tiles layer not found');
             return { map: null, layer: null };
         }
 
+        // Create the tilemap with the exact dimensions from LDtk
         const map = this.scene.make.tilemap({
-            width: Math.ceil(levelData.pxWid / tileLayer.__gridSize),
-            height: Math.ceil(levelData.pxHei / tileLayer.__gridSize),
+            width: tileLayer.__cWid,
+            height: tileLayer.__cHei,
             tileWidth: tileLayer.__gridSize,
             tileHeight: tileLayer.__gridSize
         });
 
-        const tileset = map.addTilesetImage('megapixel');
+        // Add the tileset
+        const tileset = map.addTilesetImage('tileset');
         if (!tileset) {
             console.error('Failed to add tileset image');
             return { map: null, layer: null };
         }
 
-        const layer = map.createBlankLayer('collision', tileset);
+        // Create a new layer
+        const layer = map.createBlankLayer('level', tileset, 0, 0);
         if (!layer) {
-            console.error('Failed to create collision layer');
+            console.error('Failed to create level layer');
             return { map: null, layer: null };
         }
 
-        // Create a physics group for tiles
-        this.scene.tileLayer = this.scene.physics.add.staticGroup();
-        
+        // Place tiles according to the LDtk data
         if (tileLayer.gridTiles) {
             tileLayer.gridTiles.forEach(tile => {
-                const frameIndex = this.getFrameFromSrc(tile.src, tileLayer.__gridSize);
-                
-                // Create a physics-enabled sprite for each tile
-                const tileSprite = this.scene.physics.add.sprite(
-                    tile.px[0],
-                    tile.px[1],
-                    'megapixel',
-                    frameIndex
-                );
-                tileSprite.setOrigin(0);
-                tileSprite.setImmovable(true);
-                tileSprite.body.allowGravity = false;
-                this.scene.tileLayer.add(tileSprite);
-
-                // Add collision tile to the tilemap layer
                 const tileX = Math.floor(tile.px[0] / tileLayer.__gridSize);
                 const tileY = Math.floor(tile.px[1] / tileLayer.__gridSize);
-                const collisionTile = layer.putTileAt(frameIndex, tileX, tileY);
-                if (collisionTile) {
-                    collisionTile.setCollision(true);
+                const tileIndex = this.getFrameFromSrc(tile.src, tileLayer.__gridSize);
+                layer.putTileAt(tileIndex, tileX, tileY);
+            });
+
+            // Set collision for all non-empty tiles in the layer
+            layer.forEachTile(tile => {
+                if (tile && tile.index !== -1) {
+                    tile.setCollision(true, true, true, true);
+                    tile.properties = { ...tile.properties, collides: true };
                 }
             });
-        }
 
-        // Enable collision for the entire layer
-        layer.setCollisionByProperty({ collides: true });
-        layer.setCollision(0, true); // Enable collision for all tiles
+            // Enable collision for specific tile indexes (all tiles in your tileset)
+            const indexes = [];
+            for (let i = 0; i < this.getTotalTiles(tileset); i++) {
+                indexes.push(i);
+            }
+            layer.setCollision(indexes);
+        }
 
         return { map, layer };
     }
 
     getFrameFromSrc(src, gridSize) {
-        const tilesPerRow = 25;
-        const tileX = src[0] / gridSize;
-        const tileY = src[1] / gridSize;
-        return tileY * tilesPerRow + tileX;
+        const [x, y] = src;
+        return (y / gridSize) * (192/32) + (x / gridSize); // 192 is the tileset width
+    }
+
+    getTotalTiles(tileset) {
+        return (tileset.image.width / tileset.tileWidth) * (tileset.image.height / tileset.tileHeight);
     }
 }

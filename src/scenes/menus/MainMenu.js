@@ -289,14 +289,15 @@ export class MainMenu extends Scene {
             this.scene.stop('GameScene3');
             this.scene.stop('GameScene4');
             this.scene.stop('GameScene5');
+            this.scene.stop('IntroScene');
 
             // Stop menu music before starting game
             if (this.sound.get('bgMusic')) {
                 this.sound.get('bgMusic').stop();
             }
 
-            // Start first level
-            this.scene.start('GameScene1');
+            // Start intro scene
+            this.scene.start('IntroScene');
         });
         settingsButton.on('pointerdown', () => {
             playConfirmSound();
@@ -427,7 +428,7 @@ export class MainMenu extends Scene {
                                         eth_accounts: {}
                                     }*/]
                                 });
-                                
+                                 
                                 this.registry.set('walletAddress', null);
                                 requestAnimationFrame(() => {
                                     if (connectButton && !connectButton.destroyed) {

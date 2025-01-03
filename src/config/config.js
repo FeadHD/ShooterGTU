@@ -11,6 +11,7 @@ import { MainMenu } from '../scenes/menus/MainMenu';
 import { MissionComplete } from '../scenes/menus/MissionComplete';
 import { Preloader } from '../scenes/elements/Preloader';
 import { TitleScene } from '../scenes/elements/TitleScene';
+import { IntroScene } from '../scenes/elements/IntroScene';
 import Settings from '../scenes/menus/Settings';
 import ControlsSettings from '../scenes/menus/ControlsSettings';
 import SoundSettings from '../scenes/menus/SoundSettings';
@@ -51,6 +52,7 @@ export const config = {
         Preloader,
         TitleScene,
         MainMenu,
+        IntroScene,
         GameScene1,
         GameScene2,
         GameScene3,

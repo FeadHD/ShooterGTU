@@ -28,7 +28,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
             .setAlpha(1) // Set opacity to 100%
             .setDepth(1000); // Set a high depth value to render in front of everything
             
-        this.body.setSize(20, 27);
+        this.body.setSize(12, 27); // Set width to 12px, keep height at 27px
         
         // Start idle animation if it exists
         if (scene.anims.exists('character_idle')) {
@@ -47,7 +47,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         bullet.body.setAllowGravity(false);
         bullet.body.setImmovable(true);
         bullet.fire(this.x, this.y, direction);
-        this.scene.effectsManager.playSound('laser');
+        
+        // Only play sound if effectsManager exists
+        if (this.scene.effectsManager && this.scene.effectsManager.playSound) {
+            this.scene.effectsManager.playSound('laser');
+        }
     }
 
     takeDamage() {
@@ -84,7 +88,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
             }
         });
         
-        this.scene.effectsManager.playSound('hit');
+        // Only play sound if effectsManager exists
+        if (this.scene.effectsManager && this.scene.effectsManager.playSound) {
+            this.scene.effectsManager.playSound('hit');
+        }
     }
 
     die() {
