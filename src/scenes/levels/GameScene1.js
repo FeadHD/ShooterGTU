@@ -12,6 +12,8 @@ import { Bitcoin } from '../../prefabs/Bitcoin';
 import { Slime } from '../../prefabs/Slime';
 import Drone from '../../prefabs/Drone';
 import Trampoline from '../../prefabs/Trampoline';
+import { Trap } from '../../prefabs/Trap';
+import { TrapManager } from '../../modules/managers/TrapManager';
 
 export class GameScene1 extends BaseScene {
     constructor() {
@@ -50,10 +52,7 @@ export class GameScene1 extends BaseScene {
         // Initialize transition screen first
         this.transitionScreen = new TransitionScreen(this);
         
-        // Initialize GameUI (hidden initially)
-        this.gameUI = new GameUI(this);
-
-        // Start transition sequence
+        // Start with transition screen
         this.transitionScreen.start(() => {
             // After transition completes, continue with scene setup
             super.create();
@@ -445,6 +444,12 @@ export class GameScene1 extends BaseScene {
     }
 
     setupRestOfScene() {
+        // Initialize managers and UI
+        this.cameraManager = new CameraManager(this);
+        this.collisionManager = new CollisionManager(this);
+        this.gameUI = new GameUI(this);
+        this.trapManager = new TrapManager(this);
+
         // Show the start message
         if (this.gameUI) {
             this.gameUI.showStartMessage();
@@ -630,6 +635,28 @@ export class GameScene1 extends BaseScene {
             null,
             this
         );
+
+        // Create trap at specific location
+        if (this.platforms) {
+            // Create a new trap at the specified coordinates
+            const trap = new Trap(this, 835, 448);
+            this.trapManager.traps.add(trap);
+            
+            // Enable physics for the trap
+            this.physics.world.enable(trap);
+            trap.body.setCollideWorldBounds(true);
+            trap.body.setImmovable(true);
+            
+            // Add collision with map layer
+            this.physics.add.collider(trap, this.mapLayer);
+            
+            // Set up trap collisions with player
+            this.physics.add.overlap(
+                this.player,
+                this.trapManager.traps,
+                (player, trap) => trap.damagePlayer(player)
+            );
+        }
 
         // Set initial number of enemies
         this.remainingEnemies = 7;
@@ -923,11 +950,6 @@ export class GameScene1 extends BaseScene {
         
         // Resume any animations
         this.anims.resumeAll();
-        
-        // Force a physics world update
-        if (this.physics && this.physics.world) {
-            this.physics.world.step(this.game.loop.delta);
-        }
         
         // Resume all tweens
         if (this.tweens) {
