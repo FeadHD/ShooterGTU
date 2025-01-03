@@ -27,7 +27,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.canStartHover = true;        // Whether we can start a new hover
         this.hoverDuration = 750;         // How long player can hover (ms)
         this.hoverCooldown = 1000;        // Time before can hover again (ms)
-        this.hoverForce = -200;           // Upward force during hover
+        this.hoverForce = -100;           // Reduced from -200 to -100 for lower height
         this.hoverStartTime = 0;          // When current hover began
         this.lastHoverEndTime = 0;        // When last hover ended
         
@@ -194,10 +194,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     handleHover() {
         const currentTime = this.scene.time.now;
-        const isHoverKeyDown = this.controller.controls.jump.isDown || this.controller.controls.up.isDown;
+        const isHoverKeyHeld = this.controller.controls.jump.isDown && this.controller.controls.jump.getDuration() > 200;
         
         // Check if we can start hovering
-        if (!this.isHovering && isHoverKeyDown && this.canStartHover && !this.body.onFloor()) {
+        if (!this.isHovering && isHoverKeyHeld && this.canStartHover && !this.body.onFloor()) {
             // Check cooldown
             if (currentTime - this.lastHoverEndTime >= this.hoverCooldown) {
                 this.isHovering = true;
@@ -209,7 +209,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         if (this.isHovering) {
             const hoverTimeElapsed = currentTime - this.hoverStartTime;
             
-            if (hoverTimeElapsed < this.hoverDuration && isHoverKeyDown) {
+            if (hoverTimeElapsed < this.hoverDuration && isHoverKeyHeld) {
                 // Apply hover force
                 this.setVelocityY(this.hoverForce);
             } else {
@@ -234,7 +234,27 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
                 this.jumpsAvailable = this.maxJumps;
             }
 
-            // Handle hover mechanics
+            // Handle jump input buffering
+            if (this.controller.controls.jump.isDown && !this.controller.controls.jump.wasJustPressed) {
+                this.lastJumpPressedTime = this.scene.time.now;
+                this.controller.controls.jump.wasJustPressed = true;
+                
+                // Only jump if we're not already hovering
+                if (!this.isHovering) {
+                    const canCoyoteJump = this.scene.time.now - this.lastOnGroundTime < this.coyoteTime;
+                    const hasBufferedJump = this.scene.time.now - this.lastJumpPressedTime < this.jumpBufferTime;
+
+                    if ((canCoyoteJump || this.body.onFloor()) && hasBufferedJump) {
+                        // Perform the jump
+                        this.setVelocityY(this.jumpSpeed);
+                        this.play('character_Jump', true);
+                        // Reset jump buffer
+                        this.lastJumpPressedTime = 0;
+                    }
+                }
+            }
+
+            // Handle hover mechanics after jump
             this.handleHover();
 
             // Handle horizontal movement
@@ -262,24 +282,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
                 this.play('character_Jump', true);
             }
 
-            // Handle jump input buffering
-            if (this.controller.controls.jump.isDown && !this.controller.controls.jump.wasJustPressed) {
-                this.lastJumpPressedTime = this.scene.time.now;
-                this.controller.controls.jump.wasJustPressed = true;
-            }
-
-            // Check for jump conditions (including Coyote Time and Jump Buffer)
-            const canCoyoteJump = this.scene.time.now - this.lastOnGroundTime < this.coyoteTime;
-            const hasBufferedJump = this.scene.time.now - this.lastJumpPressedTime < this.jumpBufferTime;
-
-            if ((canCoyoteJump || this.body.onFloor()) && hasBufferedJump) {
-                // Perform the jump
-                this.setVelocityY(this.jumpSpeed);
-                this.play('character_Jump', true);
-                // Reset jump buffer
-                this.lastJumpPressedTime = 0;
-            }
-            
             // Reset wasJustPressed when the key is released
             if (!this.controller.controls.jump.isDown) {
                 this.controller.controls.jump.wasJustPressed = false;
