@@ -1,4 +1,5 @@
 import { TextStyleManager } from '../../modules/managers/TextStyleManager';
+import { GameUI } from './GameUI';
 
 export class TransitionScreen {
     constructor(scene) {
@@ -102,6 +103,11 @@ export class TransitionScreen {
         overlay.setOrigin(0);
         this.elements.push(overlay);
 
+        // Make sure GameUI exists
+        if (!this.scene.gameUI) {
+            this.scene.gameUI = new GameUI(this.scene);
+        }
+
         // Fade in black screen
         this.scene.tweens.add({
             targets: overlay,
@@ -112,76 +118,38 @@ export class TransitionScreen {
     }
 
     showElements(onComplete) {
-        const centerX = 1920 / 2;
-        const centerY = 1080 / 2;
-        const spacing = 50;
-        let delay = 0;
-        const delayIncrement = 800;
-        const finalPositions = {
-            score: { x: 20, y: 20 },       // Exact match from GameUI
-            lives: { x: 20, y: 50 },       // Exact match from GameUI
-            hp: { x: 20, y: 80 },          // Exact match from GameUI
-            bitcoin: { x: 20, y: 110 },     // Exact match from GameUI
-            timer: { x: 20, y: 144 }        // Exact match from GameUI
-        };
+        // Create black overlay at GameScene1 size
+        const overlay = this.elements[0]; // The black overlay
 
-        // Create each UI element centered, then move to final position
-        const createUIElement = (text, style, finalPos) => {
-            const element = this.scene.add.text(centerX, centerY, text, this.styles[style]);
-            element.setOrigin(0.5);
-            element.setAlpha(0);
-            element.setDepth(9001);
-            this.elements.push(element);
+        // Start the UI animation sequence
+        if (this.scene.gameUI) {
+            this.scene.gameUI.animateUIElements();
+        }
 
-            // First fade in at center
-            this.scene.tweens.add({
-                targets: element,
-                alpha: 1,
-                duration: 500,
-                delay: delay,
-                onComplete: () => {
-                    // Then move to final position
-                    this.scene.tweens.add({
-                        targets: element,
-                        x: finalPos.x,
-                        y: finalPos.y,
-                        duration: 1000,
-                        ease: 'Power2',
-                        onStart: () => {
-                            element.setOrigin(0, 0); // Change origin for corner positioning
-                        }
-                    });
-                }
-            });
-            delay += delayIncrement;
-        };
-
-        // Sequence of UI elements
-        const elements = [
-            { text: 'Score: 0', key: 'score', style: 'score' },
-            { text: 'Lives: 3', key: 'lives', style: 'lives' },
-            { text: 'HP: 100', key: 'hp', style: 'hp' },
-            { text: 'Bitcoins: 0', key: 'bitcoin', style: 'bitcoin' },
-            { text: 'Time: 0:00', key: 'timer', style: 'timer' }
-        ];
-
-        elements.forEach((element) => {
-            createUIElement(element.text, element.style, finalPositions[element.key]);
-
-            // Update text with actual values
-            const value = this.scene.registry.get(element.key);
-            if (element.key === 'timer') {
-                const minutes = Math.floor(value / 60);
-                const seconds = value % 60;
-                this.elements[this.elements.length - 1].setText(`Time: ${minutes}:${seconds.toString().padStart(2, '0')}`);
-            } else {
-                this.elements[this.elements.length - 1].setText(`${element.text.split(':')[0]}: ${value || 0}`);
+        // After animations complete, start scene transition
+        this.scene.time.delayedCall(4500, () => { // Wait for all UI animations
+            if (onComplete) {
+                onComplete();
+                
+                // After scene transition, fade out the black overlay
+                this.scene.time.delayedCall(100, () => {
+                    if (overlay) {
+                        this.scene.tweens.add({
+                            targets: overlay,
+                            alpha: 0,
+                            duration: 500,
+                            ease: 'Power2',
+                            onComplete: () => {
+                                overlay.destroy();
+                                // Make sure UI elements persist in GameScene1
+                                if (this.scene.gameUI) {
+                                    this.scene.gameUI.container.setDepth(100);
+                                }
+                            }
+                        });
+                    }
+                });
             }
-        });
-
-        // After all elements are in position, wait a bit then complete
-        this.scene.time.delayedCall(500 + delayIncrement * elements.length, () => {
-            if (onComplete) onComplete();
         });
     }
 

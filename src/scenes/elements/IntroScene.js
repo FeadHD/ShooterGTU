@@ -5,7 +5,6 @@ import { PlayerController } from '../../modules/controls/PlayerController';
 import { AnimationManager } from '../../modules/managers/AnimationManager';
 import { Bullet } from '../../prefabs/Bullet'; 
 import { TutorialManager } from '../../modules/managers/TutorialManager';
-import { TransitionScreen } from './TransitionScreen';
 
 export class IntroScene extends Scene {
     constructor() {
@@ -96,9 +95,6 @@ export class IntroScene extends Scene {
 
         // Initialize tutorial manager
         this.tutorialManager = new TutorialManager(this);
-
-        // Initialize transition screen
-        this.transitionScreen = new TransitionScreen(this);
 
         // Set world bounds
         this.physics.world.setBounds(0, 0, this.SCENE_WIDTH + 30, this.SCENE_HEIGHT); // +30 to include transfer zone width
@@ -198,17 +194,14 @@ export class IntroScene extends Scene {
                     this.transitioning = true;
                     
                     // Start transition sequence
-                    this.transitionScreen.start(() => {
-                        // After transition is complete
-                        this.registry.set('lives', 3);
-                        this.registry.set('playerHP', 100);
-                        this.registry.set('score', 0);
-                        this.registry.set('bitcoins', 0);
-                        this.registry.set('time', 0);
-                        
-                        this.scale.setGameSize(1920, 1080);
-                        this.scene.start('GameScene1');
-                    });
+                    this.registry.set('lives', 3);
+                    this.registry.set('playerHP', 100);
+                    this.registry.set('score', 0);
+                    this.registry.set('bitcoins', 0);
+                    this.registry.set('time', 0);
+                    
+                    this.scale.setGameSize(1920, 1080);
+                    this.scene.start('GameScene1');
                 }
             });
 

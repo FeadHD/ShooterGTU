@@ -1,13 +1,16 @@
 import { BaseScene } from '../elements/BaseScene';
-import { GameUI } from '../elements/GameUI';
-import { Slime } from '../../prefabs/Slime';
-import { Bitcoin } from '../../prefabs/Bitcoin';
-import Drone from '../../prefabs/Drone';
 import CameraManager from '../../modules/managers/CameraManager';
 import { CollisionManager } from '../../modules/managers/CollisionManager';
+import { TextStyleManager } from '../../modules/managers/TextStyleManager';
+import { GameUI } from '../elements/GameUI';
+import { TransitionScreen } from '../elements/TransitionScreen';
+import { Enemy } from '../../prefabs/Enemy';
 import MeleeWarrior from '../../prefabs/MeleeWarrior';
 import { AlarmTrigger } from '../../prefabs/AlarmTrigger';
 import { MusicManager } from '../../modules/managers/MusicManager';
+import { Bitcoin } from '../../prefabs/Bitcoin';
+import { Slime } from '../../prefabs/Slime';
+import Drone from '../../prefabs/Drone';
 
 export class GameScene1 extends BaseScene {
     constructor() {
@@ -40,368 +43,401 @@ export class GameScene1 extends BaseScene {
     }
 
     create() {
-        // Call parent create first to set up base systems
-        super.create();
+        // Initialize transition screen first
+        this.transitionScreen = new TransitionScreen(this);
         
-        const { width, height } = this.scale;
+        // Initialize GameUI (hidden initially)
+        this.gameUI = new GameUI(this);
 
-        // Set initial game state
-        this.gameStarted = false;  // Add flag to track if game has started
-        
-        // Initialize debug system if not already initialized
-        if (!this.debugSystem) {
-            this.debugSystem = {
-                enabled: false,
-                toggle: () => {
-                    this.debugSystem.enabled = !this.debugSystem.enabled;
-                }
-            };
-        }
-
-        // Initialize background music if not already playing
-        const musicVolume = this.registry.get('musicVolume') ?? 1; // Use nullish coalescing to allow 0
-        if (!this.bgMusic || !this.bgMusic.isPlaying) {
-            // If there's an existing stopped music instance, destroy it
-            if (this.bgMusic) {
-                this.bgMusic.destroy();
-            }
+        // Start transition sequence
+        this.transitionScreen.start(() => {
+            // After transition completes, continue with scene setup
+            super.create();
             
-            // Create new music instance with current volume
-            this.bgMusic = this.sound.add('bgMusic', {
-                loop: true,
-                volume: musicVolume
+            const { width, height } = this.scale;
+
+            // Set initial game state
+            this.gameStarted = false;
+            
+            // Set initial registry values
+            this.registry.set('score', 0);
+            this.registry.set('lives', 3);
+            this.registry.set('playerHP', 100);
+            this.registry.set('bitcoins', 0);
+            
+            // Start timer and show UI
+            this.gameUI.startTimer();
+            this.gameUI.animateUIElements();
+            
+            // Initialize update event for UI
+            this.events.on('update', () => {
+                // Update UI elements
+                const score = this.registry.get('score') || 0;
+                const lives = this.registry.get('lives') || 3;
+                const hp = this.registry.get('playerHP') || 100;
+                const bitcoins = this.registry.get('bitcoins') || 0;
+                
+                this.gameUI.updateScore(score);
+                this.gameUI.updateLives(lives);
+                this.gameUI.updateHP(hp);
+                this.gameUI.updateBitcoins(bitcoins);
             });
-
-            // Only play if volume is not 0
-            if (musicVolume > 0) {
-                this.bgMusic.play();
-            }
-        } else {
-            // Update volume of existing music
-            this.bgMusic.setVolume(musicVolume);
             
-            // Pause/resume based on volume
-            if (musicVolume === 0 && this.bgMusic.isPlaying) {
-                this.bgMusic.pause();
-            } else if (musicVolume > 0 && !this.bgMusic.isPlaying) {
-                this.bgMusic.resume();
-            }
-        }
-
-        // Add registry listener for volume changes
-        this.registry.events.on('changedata-musicVolume', (parent, value) => {
-            if (this.bgMusic) {
-                this.bgMusic.setVolume(value);
-                // Pause/resume based on volume
-                if (value === 0 && this.bgMusic.isPlaying) {
-                    this.bgMusic.pause();
-                } else if (value > 0 && !this.bgMusic.isPlaying) {
-                    this.bgMusic.resume();
-                }
-            }
-        });
-
-        // Create raycaster for laser collision detection
-        this.raycaster = {
-            createRay: (config) => {
-                return {
-                    cast: (target) => {
-                        const start = config.origin;
-                        const end = { x: target.x, y: target.y };
-                        const obstacles = target.obstacles;
-
-                        // Check if line intersects with any obstacle
-                        for (const obstacle of obstacles) {
-                            if (this.lineIntersectsRect(
-                                start.x, start.y,
-                                end.x, end.y,
-                                obstacle.x, obstacle.y,
-                                obstacle.width, obstacle.height
-                            )) {
-                                return { hasHit: true };
-                            }
-                        }
-                        return { hasHit: false };
+            // Initialize debug system if not already initialized
+            if (!this.debugSystem) {
+                this.debugSystem = {
+                    enabled: false,
+                    toggle: () => {
+                        this.debugSystem.enabled = !this.debugSystem.enabled;
                     }
                 };
             }
-        };
 
-        // Add ESC key for pause menu
-        this.pauseKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
-        this.pauseKey.on('down', () => {
-            if (!this.gameStarted) {
-                // Skip intro if game hasn't started
-                if (this.cameraManager && this.cameraManager.isIntroPlaying) {
-                    this.cameraManager.stopIntroSequence();
+            // Initialize background music if not already playing
+            const musicVolume = this.registry.get('musicVolume') ?? 1; // Use nullish coalescing to allow 0
+            if (!this.bgMusic || !this.bgMusic.isPlaying) {
+                // If there's an existing stopped music instance, destroy it
+                if (this.bgMusic) {
+                    this.bgMusic.destroy();
                 }
-                this.startGame();
-            } else {
-                // Normal pause functionality if game is running
-                this.pauseGame();
-            }
-        });
-
-        // Game paused flag
-        this.isGamePaused = false;
-
-        // Define initial spawn position (near the left side of the level)
-        const SPAWN_X_PERCENTAGE = 0.1;  // 10% from left edge
-        const SPAWN_Y = 500;             // Fixed height from top
-        
-        // Override base scene's spawn point for this level
-        this.playerSpawnPoint = {
-            x: width * SPAWN_X_PERCENTAGE,
-            y: SPAWN_Y
-        };
-        
-        // Set player position to spawn point
-        this.player.setPosition(this.playerSpawnPoint.x, this.playerSpawnPoint.y);
-        
-        // Set world bounds to match the level size
-        const levelWidth = 3840; // Adjust this to match your level width
-        const levelHeight = 1080; // Adjust this to match your level height
-        this.physics.world.setBounds(0, 0, levelWidth, levelHeight);
-        
-        // Set camera bounds to match world bounds
-        this.cameras.main.setBounds(0, 0, levelWidth, levelHeight);
-        
-        // Set next scene
-        this.nextSceneName = 'GameScene2';
-        
-        // Set up the main game camera
-        this.cameras.main.setZoom(1.5);
-        this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
-
-        // Initialize camera manager
-        this.cameraManager = new CameraManager(this);
-        this.cameraManager.init(this.player);
-        this.cameraManager.playIntroSequence(this.player);
-
-        // Initialize collision manager
-        this.collisionManager = new CollisionManager(this);
-
-        // Initialize slimes group
-        this.slimes = this.physics.add.group({
-            collideWorldBounds: true,
-            bounceX: 0.5,
-            bounceY: 0.2,
-            dragX: 200
-        });
-
-        // Initialize drones group with consistent physics settings
-        this.drones = this.physics.add.group({
-            runChildUpdate: true,
-            collideWorldBounds: true,
-            dragX: 200,
-            bounceX: 0.2,
-            bounceY: 0.2,
-            gravityY: 0
-        });
-
-        // Create enemy group
-        this.enemies = this.physics.add.group({
-            collideWorldBounds: true,
-            bounceX: 0.5,
-            bounceY: 0.2,
-            dragX: 200
-        });
-
-        // Set up collisions between enemies and platforms
-        this.physics.add.collider(this.enemies, this.platforms);
-        
-        // Set up collisions between enemies and each other
-        this.physics.add.collider(this.enemies, this.enemies, this.handleEnemyCollision, null, this);
-        
-        // Set up collisions between enemies and player
-        this.physics.add.overlap(this.enemies, this.player, (enemySprite, player) => {
-            if (enemySprite.enemy && !this.isDying) {
-                this.hitEnemy(player, enemySprite);
-            }
-        }, null, this);
-
-        // Create bitcoin group
-        this.bitcoins = this.add.group();
-
-        // Create player if it doesn't exist
-        if (!this.player) {
-            this.createPlayer(this.scale.width);
-            // Disable player controls initially
-            this.player.controller.enabled = false;
-        }
-
-        // Initialize alarm triggers group
-        this.alarmTriggers = this.physics.add.staticGroup({
-            classType: AlarmTrigger,
-            runChildUpdate: true
-        });
-        
-        // Create an alarm trigger 4 tiles to the right of player spawn and 2 tiles down
-        const alarm = this.alarmTriggers.create(this.playerSpawnPoint.x + 128, this.playerSpawnPoint.y + 32);
-        alarm.setSize(32, 32);
-        alarm.setDepth(5); // Same depth as enemies to be visible in front of tiles
-
-        // Set up alarm trigger collision
-        this.physics.add.overlap(
-            this.player,
-            this.alarmTriggers,
-            (player, trap) => {
-                trap.triggerAlarm();
-            }
-        );
-
-        // Debug level data loading
-        const levelData = this.cache.json.get('level1');
-        
-        if (!levelData) {
-            console.error('Failed to load level data');
-            return;
-        }
-
-        // Get the layer instance for Megapixel layer
-        const megapixelLayer = levelData.layerInstances[0];  // First layer is our Megapixel layer
-        if (!megapixelLayer) {
-            console.error('Megapixel layer not found');
-            return;
-        }
-
-        // Create tilemap from JSON using level dimensions
-        const map = this.make.tilemap({ 
-            width: Math.ceil(levelData.pxWid / megapixelLayer.__gridSize),
-            height: Math.ceil(levelData.pxHei / megapixelLayer.__gridSize),
-            tileWidth: megapixelLayer.__gridSize,
-            tileHeight: megapixelLayer.__gridSize
-        });
-        
-        // Add tileset to map
-        const tileset = map.addTilesetImage('megapixel', 'megapixel', 32, 32, 0, 0);
-        
-        if (!tileset) {
-            console.error('Failed to create tileset');
-            return;
-        }
-        
-        // Create layer from LDtk data
-        const layer = map.createBlankLayer('Megapixel', tileset, 0, 0);
-        
-        if (!layer) {
-            console.error('Failed to create layer');
-            return;
-        }
-
-        // Store layer and map references
-        this.mapLayer = layer;
-        this.map = map;
-
-        // Create a promise to track tile placement
-        const placeTilesPromise = new Promise((resolve) => {
-            if (megapixelLayer.gridTiles && megapixelLayer.gridTiles.length > 0) {
-                let tilesPlaced = 0;
-                const totalTiles = megapixelLayer.gridTiles.length;
-                const totalRows = Math.ceil(levelData.pxHei / megapixelLayer.__gridSize);
-
-                // Create a map to track platform tiles
-                const platformTiles = new Set();
-
-                // First pass: identify platform tiles
-                megapixelLayer.gridTiles.forEach((tile) => {
-                    const gridX = Math.floor(tile.px[0] / megapixelLayer.__gridSize);
-                    const gridY = Math.floor(tile.px[1] / megapixelLayer.__gridSize);
-                    if (gridY === 8 || tile.t === 370) { // Platform height or solid tile type
-                        platformTiles.add(`${gridX},${gridY}`);
-                    }
+                
+                // Create new music instance with current volume
+                this.bgMusic = this.sound.add('bgMusic', {
+                    loop: true,
+                    volume: musicVolume
                 });
 
-                // Second pass: place tiles and set up collisions
-                megapixelLayer.gridTiles.forEach((tile) => {
-                    const gridX = Math.floor(tile.px[0] / megapixelLayer.__gridSize);
-                    const gridY = Math.floor(tile.px[1] / megapixelLayer.__gridSize);
-                    
-                    try {
-                        // Place the tile at the grid coordinates
-                        const placedTile = layer.putTileAt(tile.t, gridX, gridY);
-                        
-                        // Check if this tile is in the bottom two rows
-                        if (gridY >= totalRows - 2) {
-                            // Add collision for bottom tiles
-                            placedTile.setCollision(true);
-                            
-                            // Create collision rectangle for this tile
-                            const tileRect = this.add.rectangle(
-                                gridX * megapixelLayer.__gridSize + megapixelLayer.__gridSize/2,
-                                gridY * megapixelLayer.__gridSize + megapixelLayer.__gridSize/2,
-                                megapixelLayer.__gridSize,
-                                megapixelLayer.__gridSize
-                            );
-                            tileRect.setVisible(false);  // Hide the rectangle by default
-                            this.physics.add.existing(tileRect, true);
-                            this.platforms.add(tileRect);
-                        }
-
-                        // Set collision for tiles with ID between 400 and 500
-                        if (tile.t >= 400 && tile.t <= 500) {
-                            placedTile.setCollision(true);
-                            
-                            // Create collision rectangle for solid tiles
-                            const solidRect = this.add.rectangle(
-                                gridX * megapixelLayer.__gridSize + megapixelLayer.__gridSize/2,
-                                gridY * megapixelLayer.__gridSize + megapixelLayer.__gridSize/2,
-                                megapixelLayer.__gridSize,
-                                megapixelLayer.__gridSize
-                            );
-                            solidRect.setVisible(false);  // Hide the rectangle by default
-                            this.physics.add.existing(solidRect, true);
-                            this.platforms.add(solidRect);
-                        }
-                        
-                        tilesPlaced++;
-                        
-                        if (tilesPlaced === totalTiles) {
-                            resolve();
-                        }
-                    } catch (error) {
-                        console.error('Error placing tile:', {
-                            gridX, gridY,
-                            px: tile.px,
-                            tileId: tile.t,
-                            error: error.message
-                        });
-                        tilesPlaced++;
-                        if (tilesPlaced === totalTiles) {
-                            resolve();
-                        }
-                    }
-                });
+                // Only play if volume is not 0
+                if (musicVolume > 0) {
+                    this.bgMusic.play();
+                }
             } else {
-                resolve();
+                // Update volume of existing music
+                this.bgMusic.setVolume(musicVolume);
+                
+                // Pause/resume based on volume
+                if (musicVolume === 0 && this.bgMusic.isPlaying) {
+                    this.bgMusic.pause();
+                } else if (musicVolume > 0 && !this.bgMusic.isPlaying) {
+                    this.bgMusic.resume();
+                }
             }
-        });
 
-        // Wait for all tiles to be placed before showing the scene
-        placeTilesPromise.then(() => {
-            // Set up all collisions using CollisionManager
-            this.collisionManager.setupCollisions();
-
-            console.log('All tiles placed, showing scene');
-            // Fade in the scene
-            this.tweens.add({
-                targets: this.cameras.main,
-                alpha: 1,
-                duration: 500,
-                ease: 'Linear',
-                onComplete: () => {
-                    // Continue with the rest of the scene setup
-                    this.setupRestOfScene();
+            // Add registry listener for volume changes
+            this.registry.events.on('changedata-musicVolume', (parent, value) => {
+                if (this.bgMusic) {
+                    this.bgMusic.setVolume(value);
+                    // Pause/resume based on volume
+                    if (value === 0 && this.bgMusic.isPlaying) {
+                        this.bgMusic.pause();
+                    } else if (value > 0 && !this.bgMusic.isPlaying) {
+                        this.bgMusic.resume();
+                    }
                 }
             });
+
+            // Create raycaster for laser collision detection
+            this.raycaster = {
+                createRay: (config) => {
+                    return {
+                        cast: (target) => {
+                            const start = config.origin;
+                            const end = { x: target.x, y: target.y };
+                            const obstacles = target.obstacles;
+
+                            // Check if line intersects with any obstacle
+                            for (const obstacle of obstacles) {
+                                if (this.lineIntersectsRect(
+                                    start.x, start.y,
+                                    end.x, end.y,
+                                    obstacle.x, obstacle.y,
+                                    obstacle.width, obstacle.height
+                                )) {
+                                    return { hasHit: true };
+                                }
+                            }
+                            return { hasHit: false };
+                        }
+                    };
+                }
+            };
+
+            // Add ESC key for pause menu
+            this.pauseKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
+            this.pauseKey.on('down', () => {
+                if (!this.gameStarted) {
+                    // Skip intro if game hasn't started
+                    if (this.cameraManager && this.cameraManager.isIntroPlaying) {
+                        this.cameraManager.stopIntroSequence();
+                    }
+                    this.startGame();
+                } else {
+                    // Normal pause functionality if game is running
+                    this.pauseGame();
+                }
+            });
+
+            // Game paused flag
+            this.isGamePaused = false;
+
+            // Define initial spawn position (near the left side of the level)
+            const SPAWN_X_PERCENTAGE = 0.1;  // 10% from left edge
+            const SPAWN_Y = 500;             // Fixed height from top
+            
+            // Override base scene's spawn point for this level
+            this.playerSpawnPoint = {
+                x: width * SPAWN_X_PERCENTAGE,
+                y: SPAWN_Y
+            };
+            
+            // Set player position to spawn point
+            this.player.setPosition(this.playerSpawnPoint.x, this.playerSpawnPoint.y);
+            
+            // Set world bounds to match the level size
+            const levelWidth = 3840; // Adjust this to match your level width
+            const levelHeight = 1080; // Adjust this to match your level height
+            this.physics.world.setBounds(0, 0, levelWidth, levelHeight);
+            
+            // Set camera bounds to match world bounds
+            this.cameras.main.setBounds(0, 0, levelWidth, levelHeight);
+            
+            // Set next scene
+            this.nextSceneName = 'GameScene2';
+            
+            // Set up the main game camera
+            this.cameras.main.setZoom(1.5);
+            this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
+
+            // Initialize camera manager
+            this.cameraManager = new CameraManager(this);
+            this.cameraManager.init(this.player);
+            this.cameraManager.playIntroSequence(this.player);
+
+            // Initialize collision manager
+            this.collisionManager = new CollisionManager(this);
+
+            // Initialize slimes group
+            this.slimes = this.physics.add.group({
+                collideWorldBounds: true,
+                bounceX: 0.5,
+                bounceY: 0.2,
+                dragX: 200
+            });
+
+            // Initialize drones group with consistent physics settings
+            this.drones = this.physics.add.group({
+                runChildUpdate: true,
+                collideWorldBounds: true,
+                dragX: 200,
+                bounceX: 0.2,
+                bounceY: 0.2,
+                gravityY: 0
+            });
+
+            // Create enemy group
+            this.enemies = this.physics.add.group({
+                collideWorldBounds: true,
+                bounceX: 0.5,
+                bounceY: 0.2,
+                dragX: 200
+            });
+
+            // Set up collisions between enemies and platforms
+            this.physics.add.collider(this.enemies, this.platforms);
+            
+            // Set up collisions between enemies and each other
+            this.physics.add.collider(this.enemies, this.enemies, this.handleEnemyCollision, null, this);
+            
+            // Set up collisions between enemies and player
+            this.physics.add.overlap(this.enemies, this.player, (enemySprite, player) => {
+                if (enemySprite.enemy && !this.isDying) {
+                    this.hitEnemy(player, enemySprite);
+                }
+            }, null, this);
+
+            // Create bitcoin group
+            this.bitcoins = this.add.group();
+
+            // Create player if it doesn't exist
+            if (!this.player) {
+                this.createPlayer(this.scale.width);
+                // Disable player controls initially
+                this.player.controller.enabled = false;
+            }
+
+            // Initialize alarm triggers group
+            this.alarmTriggers = this.physics.add.staticGroup({
+                classType: AlarmTrigger,
+                runChildUpdate: true
+            });
+            
+            // Create an alarm trigger 4 tiles to the right of player spawn and 2 tiles down
+            const alarm = this.alarmTriggers.create(this.playerSpawnPoint.x + 128, this.playerSpawnPoint.y + 32);
+            alarm.setSize(32, 32);
+            alarm.setDepth(5); // Same depth as enemies to be visible in front of tiles
+
+            // Set up alarm trigger collision
+            this.physics.add.overlap(
+                this.player,
+                this.alarmTriggers,
+                (player, trap) => {
+                    trap.triggerAlarm();
+                }
+            );
+
+            // Debug level data loading
+            const levelData = this.cache.json.get('level1');
+            
+            if (!levelData) {
+                console.error('Failed to load level data');
+                return;
+            }
+
+            // Get the layer instance for Megapixel layer
+            const megapixelLayer = levelData.layerInstances[0];  // First layer is our Megapixel layer
+            if (!megapixelLayer) {
+                console.error('Megapixel layer not found');
+                return;
+            }
+
+            // Create tilemap from JSON using level dimensions
+            const map = this.make.tilemap({ 
+                width: Math.ceil(levelData.pxWid / megapixelLayer.__gridSize),
+                height: Math.ceil(levelData.pxHei / megapixelLayer.__gridSize),
+                tileWidth: megapixelLayer.__gridSize,
+                tileHeight: megapixelLayer.__gridSize
+            });
+            
+            // Add tileset to map
+            const tileset = map.addTilesetImage('megapixel', 'megapixel', 32, 32, 0, 0);
+            
+            if (!tileset) {
+                console.error('Failed to create tileset');
+                return;
+            }
+            
+            // Create layer from LDtk data
+            const layer = map.createBlankLayer('Megapixel', tileset, 0, 0);
+            
+            if (!layer) {
+                console.error('Failed to create layer');
+                return;
+            }
+
+            // Store layer and map references
+            this.mapLayer = layer;
+            this.map = map;
+
+            // Create a promise to track tile placement
+            const placeTilesPromise = new Promise((resolve) => {
+                if (megapixelLayer.gridTiles && megapixelLayer.gridTiles.length > 0) {
+                    let tilesPlaced = 0;
+                    const totalTiles = megapixelLayer.gridTiles.length;
+                    const totalRows = Math.ceil(levelData.pxHei / megapixelLayer.__gridSize);
+
+                    // Create a map to track platform tiles
+                    const platformTiles = new Set();
+
+                    // First pass: identify platform tiles
+                    megapixelLayer.gridTiles.forEach((tile) => {
+                        const gridX = Math.floor(tile.px[0] / megapixelLayer.__gridSize);
+                        const gridY = Math.floor(tile.px[1] / megapixelLayer.__gridSize);
+                        if (gridY === 8 || tile.t === 370) { // Platform height or solid tile type
+                            platformTiles.add(`${gridX},${gridY}`);
+                        }
+                    });
+
+                    // Second pass: place tiles and set up collisions
+                    megapixelLayer.gridTiles.forEach((tile) => {
+                        const gridX = Math.floor(tile.px[0] / megapixelLayer.__gridSize);
+                        const gridY = Math.floor(tile.px[1] / megapixelLayer.__gridSize);
+                        
+                        try {
+                            // Place the tile at the grid coordinates
+                            const placedTile = layer.putTileAt(tile.t, gridX, gridY);
+                            
+                            // Check if this tile is in the bottom two rows
+                            if (gridY >= totalRows - 2) {
+                                // Add collision for bottom tiles
+                                placedTile.setCollision(true);
+                                
+                                // Create collision rectangle for this tile
+                                const tileRect = this.add.rectangle(
+                                    gridX * megapixelLayer.__gridSize + megapixelLayer.__gridSize/2,
+                                    gridY * megapixelLayer.__gridSize + megapixelLayer.__gridSize/2,
+                                    megapixelLayer.__gridSize,
+                                    megapixelLayer.__gridSize
+                                );
+                                tileRect.setVisible(false);  // Hide the rectangle by default
+                                this.physics.add.existing(tileRect, true);
+                                this.platforms.add(tileRect);
+                            }
+
+                            // Set collision for tiles with ID between 400 and 500
+                            if (tile.t >= 400 && tile.t <= 500) {
+                                placedTile.setCollision(true);
+                                
+                                // Create collision rectangle for solid tiles
+                                const solidRect = this.add.rectangle(
+                                    gridX * megapixelLayer.__gridSize + megapixelLayer.__gridSize/2,
+                                    gridY * megapixelLayer.__gridSize + megapixelLayer.__gridSize/2,
+                                    megapixelLayer.__gridSize,
+                                    megapixelLayer.__gridSize
+                                );
+                                solidRect.setVisible(false);  // Hide the rectangle by default
+                                this.physics.add.existing(solidRect, true);
+                                this.platforms.add(solidRect);
+                            }
+                            
+                            tilesPlaced++;
+                            
+                            if (tilesPlaced === totalTiles) {
+                                resolve();
+                            }
+                        } catch (error) {
+                            console.error('Error placing tile:', {
+                                gridX, gridY,
+                                px: tile.px,
+                                tileId: tile.t,
+                                error: error.message
+                            });
+                            tilesPlaced++;
+                            if (tilesPlaced === totalTiles) {
+                                resolve();
+                            }
+                        }
+                    });
+                } else {
+                    resolve();
+                }
+            });
+
+            // Wait for all tiles to be placed before showing the scene
+            placeTilesPromise.then(() => {
+                // Set up all collisions using CollisionManager
+                this.collisionManager.setupCollisions();
+
+                console.log('All tiles placed, showing scene');
+                // Fade in the scene
+                this.tweens.add({
+                    targets: this.cameras.main,
+                    alpha: 1,
+                    duration: 500,
+                    ease: 'Linear',
+                    onComplete: () => {
+                        // Continue with the rest of the scene setup
+                        this.setupRestOfScene();
+                    }
+                });
+            });
+
+            // Create debug graphics
+            this.debugGraphics = this.add.graphics();
+
+            // Store background music reference
+            // Removed this.bgMusic = this.sound.add('bgMusic', { loop: true });
+            // Removed this.bgMusic.play();
         });
-
-        // Create debug graphics
-        this.debugGraphics = this.add.graphics();
-
-        // Store background music reference
-        // Removed this.bgMusic = this.sound.add('bgMusic', { loop: true });
-        // Removed this.bgMusic.play();
     }
 
     setupRestOfScene() {

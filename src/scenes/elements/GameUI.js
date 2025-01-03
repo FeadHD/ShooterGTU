@@ -27,6 +27,9 @@ export class GameUI {
         // Initial camera setup
         this.updateCameraIgnoreList();
 
+        // Set up registry event listeners
+        this.setupRegistryListeners();
+        
         // Listen for scene events
         this.scene.events.on('create', this.updateCameraIgnoreList, this);
         this.scene.events.on('wake', this.updateCameraIgnoreList, this);
@@ -126,62 +129,80 @@ export class GameUI {
             this.uiCamera.setScroll(0, 0);
         }
 
-        // Create score text
+        const centerX = width / 2;
+        const centerY = height / 2;
+
+        // Create score text (hidden initially)
         this.scoreText = TextStyleManager.createText(
             this.scene,
-            20,
-            20,
+            centerX,
+            centerY,
             'SCORE: 0',
             'scoreUI',
             0
         );
+        this.scoreText.setAlpha(0);
+        this.scoreText.setOrigin(0.5);
+        this.scoreText.setVisible(false);
         this.container.add(this.scoreText);
 
-        // Create lives text
+        // Create lives text (hidden initially)
         this.livesText = TextStyleManager.createText(
             this.scene,
-            20,
-            50,
+            centerX,
+            centerY,
             'LIVES: 3',
             'livesUI',
             0
         );
+        this.livesText.setAlpha(0);
+        this.livesText.setOrigin(0.5);
+        this.livesText.setVisible(false);
         this.container.add(this.livesText);
 
-        // Create HP text
+        // Create HP text (hidden initially)
         this.hpText = TextStyleManager.createText(
             this.scene,
-            20,
-            80,
+            centerX,
+            centerY,
             'HP: 100',
             'hpUI',
             0
         );
+        this.hpText.setAlpha(0);
+        this.hpText.setOrigin(0.5);
+        this.hpText.setVisible(false);
         this.container.add(this.hpText);
 
-        // Create bitcoins text
+        // Create bitcoins text (hidden initially)
         this.bitcoinsText = TextStyleManager.createText(
             this.scene,
-            20,
-            110,
+            centerX,
+            centerY,
             'BITCOINS: 0',
             'bitcoinUI',
             0
         );
+        this.bitcoinsText.setAlpha(0);
+        this.bitcoinsText.setOrigin(0.5);
+        this.bitcoinsText.setVisible(false);
         this.container.add(this.bitcoinsText);
 
-        // Create timer text
+        // Create timer text (hidden initially)
         this.timerText = TextStyleManager.createText(
             this.scene,
-            20,
-            144,
+            centerX,
+            centerY,
             'TIME: 00:00',
             'timerUI',
             0
         );
+        this.timerText.setAlpha(0);
+        this.timerText.setOrigin(0.5);
+        this.timerText.setVisible(false);
         this.container.add(this.timerText);
 
-        // Create FPS counter
+        // Create FPS counter (hidden initially)
         this.fpsText = TextStyleManager.createText(
             this.scene,
             20,
@@ -190,6 +211,7 @@ export class GameUI {
             'gameUI',
             0
         );
+        this.fpsText.setVisible(false);
         this.container.add(this.fpsText);
 
         // Create scene text
@@ -230,6 +252,79 @@ export class GameUI {
 
         // Update camera ignore list
         this.updateCameraIgnoreList();
+    }
+
+    animateUIElements() {
+        const elements = [
+            { text: this.scoreText, finalPos: { x: 20, y: 20 } },
+            { text: this.livesText, finalPos: { x: 20, y: 50 } },
+            { text: this.hpText, finalPos: { x: 20, y: 80 } },
+            { text: this.bitcoinsText, finalPos: { x: 20, y: 110 } },
+            { text: this.timerText, finalPos: { x: 20, y: 144 } }
+        ];
+
+        let delay = 0;
+        const delayIncrement = 800;
+
+        elements.forEach(({ text, finalPos }) => {
+            if (text) {
+                text.setVisible(true);
+                // Fade in at center
+                this.scene.tweens.add({
+                    targets: text,
+                    alpha: 1,
+                    duration: 500,
+                    delay: delay,
+                    onComplete: () => {
+                        // Move to final position
+                        this.scene.tweens.add({
+                            targets: text,
+                            x: finalPos.x,
+                            y: finalPos.y,
+                            duration: 1000,
+                            ease: 'Power2',
+                            onStart: () => {
+                                text.setOrigin(0, 0);
+                            }
+                        });
+                    }
+                });
+                delay += delayIncrement;
+            }
+        });
+
+        // Show FPS counter after transition
+        this.scene.time.delayedCall(delay + 1500, () => {
+            if (this.fpsText) {
+                this.fpsText.setVisible(true);
+            }
+        });
+    }
+
+    showUIElements() {
+        const elements = [
+            this.scoreText,
+            this.livesText,
+            this.hpText,
+            this.bitcoinsText,
+            this.timerText
+        ];
+
+        let delay = 0;
+        const delayIncrement = 800;
+
+        elements.forEach(element => {
+            if (element) {
+                this.scene.tweens.add({
+                    targets: element,
+                    alpha: 1,
+                    duration: 500,
+                    delay: delay,
+                    ease: 'Power2'
+                });
+                delay += delayIncrement;
+            }
+        });
     }
 
     setupMusicControls() {
@@ -353,12 +448,18 @@ export class GameUI {
                     if (this.isTimerRunning) {
                         this.elapsedSeconds++;
                         this.updateTimer();
+                        
+                        // Update registry with current time
+                        this.scene.registry.set('time', this.elapsedSeconds);
                     }
                 },
                 callbackScope: this,
                 loop: true
             });
         }
+        
+        // Force initial update
+        this.updateTimer();
     }
 
     updateTimer() {
@@ -396,6 +497,32 @@ export class GameUI {
         });
         
         this.updateTimer();
+    }
+
+    setupRegistryListeners() {
+        // Listen for registry changes
+        this.scene.registry.events.on('changedata', (parent, key, value) => {
+            switch(key) {
+                case 'score':
+                    this.updateScore(value);
+                    break;
+                case 'lives':
+                    this.updateLives(value);
+                    break;
+                case 'playerHP':
+                    this.updateHP(value);
+                    break;
+                case 'bitcoins':
+                    this.updateBitcoins(value);
+                    break;
+            }
+        });
+        
+        // Initial update from registry
+        this.updateScore(this.scene.registry.get('score') || 0);
+        this.updateLives(this.scene.registry.get('lives') || 3);
+        this.updateHP(this.scene.registry.get('playerHP') || 100);
+        this.updateBitcoins(this.scene.registry.get('bitcoins') || 0);
     }
 
     update(time) {
