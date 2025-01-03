@@ -6,15 +6,21 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         super(scene, x, y, 'character_idle');
         
         this.scene = scene;
-        this.maxJumps = 2;        // Maximum number of jumps allowed
-        this.jumpsAvailable = this.maxJumps;  // Start with max jumps
+        this.maxJumps = 1;        // Single jump
+        this.jumpsAvailable = this.maxJumps;
         this.isDying = false;
         this.invulnerableUntil = 0;
         this.movementSpeed = 300;
-        this.jumpSpeed = -350;    // Reduced jump speed for lower gravity
-        this.doubleJumpSpeed = -300;  // Second jump slightly weaker
+        this.jumpSpeed = -350;    // Single jump speed
         this.playerHP = scene.registry.get('playerHP') || 100;
         this.lastDamageTaken = 0; // Track last damage taken
+        
+        // Coyote Time and Jump Buffer variables
+        this.coyoteTime = 80;     // Standard coyote time for precise platforming
+        this.jumpBufferTime = 80; // Reduced from 150ms to 80ms to match coyote time
+        this.lastOnGroundTime = 0; // Track when player was last on ground
+        this.lastJumpPressedTime = 0; // Track when jump was last pressed
+        this.hasBufferedJump = false; // Track if we have a buffered jump
         
         // Add sprite to scene and enable physics
         scene.add.existing(this);
@@ -185,8 +191,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
                 return;
             }
 
-            // Reset jumps when landing
+            // Update ground time for Coyote Time
             if (this.body.onFloor()) {
+                this.lastOnGroundTime = this.scene.time.now;
                 this.jumpsAvailable = this.maxJumps;
             }
 
@@ -215,21 +222,22 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
                 this.play('character_Jump', true);
             }
 
-            // Handle jumping
+            // Handle jump input buffering
             if (this.controller.controls.jump.isDown && !this.controller.controls.jump.wasJustPressed) {
-                if (this.body.onFloor() && this.jumpsAvailable === this.maxJumps) {
-                    // First jump
-                    this.setVelocityY(this.jumpSpeed);
-                    this.jumpsAvailable--;
-                    this.play('character_Jump', true);
-                } else if (this.jumpsAvailable > 0) {
-                    // Double jump
-                    this.setVelocityY(this.doubleJumpSpeed);
-                    this.jumpsAvailable--;
-                    this.play('character_Jump', true);
-                }
-                // Set wasJustPressed to prevent multiple jumps from a single press
+                this.lastJumpPressedTime = this.scene.time.now;
                 this.controller.controls.jump.wasJustPressed = true;
+            }
+
+            // Check for jump conditions (including Coyote Time and Jump Buffer)
+            const canCoyoteJump = this.scene.time.now - this.lastOnGroundTime < this.coyoteTime;
+            const hasBufferedJump = this.scene.time.now - this.lastJumpPressedTime < this.jumpBufferTime;
+
+            if ((canCoyoteJump || this.body.onFloor()) && hasBufferedJump) {
+                // Perform the jump
+                this.setVelocityY(this.jumpSpeed);
+                this.play('character_Jump', true);
+                // Reset jump buffer
+                this.lastJumpPressedTime = 0;
             }
             
             // Reset wasJustPressed when the key is released
