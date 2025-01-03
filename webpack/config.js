@@ -1,3 +1,5 @@
+
+
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const path = require("path");
@@ -9,7 +11,13 @@ module.exports = {
     entry: "./src/main.js",
     output: {
         path: path.resolve(process.cwd(), 'dist'),
-        filename: "bundle.min.js"
+        filename: "[name].[contenthash].js"
+    },
+    devServer: {
+        hot: true,
+        headers: {
+            'Cache-Control': 'no-store',
+        }
     },
     module: {
         rules: [
@@ -47,6 +55,7 @@ module.exports = {
         new HtmlWebpackPlugin({
             template: "./index.html",
             inject: 'body'
-        })
+        }),
+        new webpack.HotModuleReplacementPlugin()
     ]
 };
