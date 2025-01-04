@@ -18,6 +18,11 @@ export class GameUI {
         // Make UI elements fixed on screen
         this.container.setScrollFactor(0);
 
+        // Stamina bar properties
+        this.staminaBarWidth = 200;
+        this.staminaBarHeight = 10;
+        this.staminaBarPadding = 20;
+        
         // Set up UI elements
         this.setupUI();
 
@@ -38,12 +43,8 @@ export class GameUI {
         // Listen for new objects
         this.scene.events.on('addedtoscene', this.handleNewObject, this);
         
-        // Debug log
-        console.log('GameUI initialized:', {
-            container: this.container ? 'created' : 'null',
-            uiCamera: this.uiCamera ? 'created' : 'null',
-            scene: this.scene.scene.key
-        });
+        // Debug flag
+        this.debugMode = true;
     }
 
     handleNewObject = (gameObject) => {
@@ -117,21 +118,9 @@ export class GameUI {
         const VERTICAL_SPACING = 30;
         const TEXT_WIDTH = 150;
 
-        // Create container if it doesn't exist
-        if (!this.container) {
-            this.container = this.scene.add.container(0, 0);
-            this.container.setDepth(100);
-        }
-
         // Clear existing UI elements
         if (this.container.list.length > 0) {
             this.container.removeAll(true);
-        }
-
-        // Create UI camera if it doesn't exist
-        if (!this.uiCamera) {
-            this.uiCamera = this.scene.cameras.add(0, 0, width, height);
-            this.uiCamera.setScroll(0, 0);
         }
 
         // Create score text
@@ -184,6 +173,43 @@ export class GameUI {
         );
         this.container.add(this.bitcoinsText);
 
+        // Get initial stamina value
+        const currentStamina = this.scene.registry.get('stamina') || 100;
+        const staminaRatio = Math.max(0, Math.min(1, currentStamina / 100));
+        
+        // Create stamina bar background (centered, full width)
+        this.staminaBarBackground = this.scene.add.rectangle(
+            width / 2,
+            height - this.staminaBarPadding,
+            this.staminaBarWidth,
+            this.staminaBarHeight,
+            0x000000
+        );
+        this.staminaBarBackground.setAlpha(0.9);
+        this.container.add(this.staminaBarBackground);
+
+        // Create stamina bar fill (anchored left, partial width based on current stamina)
+        const barStartX = width / 2 - this.staminaBarWidth / 2;
+        this.staminaBarFill = this.scene.add.rectangle(
+            barStartX,
+            height - this.staminaBarPadding,
+            this.staminaBarWidth * staminaRatio,
+            this.staminaBarHeight,
+            0xFF00FF  // Bright magenta
+        );
+        this.staminaBarFill.setOrigin(0, 0.5);
+        this.container.add(this.staminaBarFill);
+        
+        if (this.debugMode) {
+            console.log('Initial stamina setup:', {
+                currentStamina,
+                staminaRatio,
+                barWidth: this.staminaBarWidth * staminaRatio,
+                barStartX,
+                screenWidth: width
+            });
+        }
+
         // Create FPS counter (hidden initially)
         this.fpsText = TextStyleManager.createText(
             this.scene,
@@ -196,29 +222,71 @@ export class GameUI {
         this.container.add(this.fpsText);
 
         // Set initial alpha to 0 for fade-in effect
-        [this.scoreText, this.livesText, this.hpText, this.timerText, this.bitcoinsText].forEach(element => {
+        [this.scoreText, this.livesText, this.hpText, this.timerText, this.bitcoinsText, 
+         this.staminaBarBackground, this.staminaBarFill].forEach(element => {
             if (element) element.setAlpha(0);
         });
     }
 
     update(time, delta) {
-        // Update FPS counter
-        if (time > this.lastFpsUpdate + 100) {
+        if (!this.scene || !this.scene.registry) return;
+
+        // Update FPS counter every 100ms
+        if (time - this.lastFpsUpdate > 100) {
             this.fpsText.setText('FPS: ' + (1000 / delta).toFixed(1));
             this.lastFpsUpdate = time;
         }
+
+        // Update stamina bar
+        const currentStamina = this.scene.registry.get('stamina');
+        if (currentStamina !== undefined && this.staminaBarFill) {
+            const maxStamina = 100;
+            const staminaRatio = Math.max(0, Math.min(1, currentStamina / maxStamina));
+            
+            // Update width smoothly
+            const targetWidth = this.staminaBarWidth * staminaRatio;
+            const currentWidth = this.staminaBarFill.width;
+            const lerpFactor = 0.2; // Adjust for smoother or snappier transitions
+            
+            this.staminaBarFill.width = currentWidth + (targetWidth - currentWidth) * lerpFactor;
+            
+            // Update position (ensure it stays anchored to the left)
+            this.staminaBarFill.x = this.scene.scale.width / 2 - this.staminaBarWidth / 2;
+            
+            // Change color based on stamina level
+            if (staminaRatio <= 0.3) {
+                this.staminaBarFill.setFillStyle(0xFF0000); // Red when low
+            } else if (staminaRatio <= 0.6) {
+                this.staminaBarFill.setFillStyle(0xFFFF00); // Yellow when medium
+            } else {
+                this.staminaBarFill.setFillStyle(0xFF00FF); // Magenta when high
+            }
+            
+            if (this.debugMode) {
+                console.log('Stamina Update:', {
+                    currentStamina,
+                    staminaRatio,
+                    targetWidth,
+                    currentWidth: this.staminaBarFill.width,
+                    barX: this.staminaBarFill.x,
+                    screenWidth: this.scene.scale.width
+                });
+            }
+        }
     }
 
-    fadeIn() {
-        if (!this.container) return;
+    fadeInUI() {
+        const duration = 500;
+        const ease = 'Power1';
         
-        this.container.list.forEach(element => {
-            if (element && element.alpha !== undefined) {
+        [this.scoreText, this.livesText, this.hpText, this.timerText, this.bitcoinsText,
+         this.staminaBarBackground, this.staminaBarFill].forEach(element => {
+            if (element) {
                 this.scene.tweens.add({
                     targets: element,
                     alpha: 1,
-                    duration: 500,
-                    ease: 'Power2'
+                    duration: duration,
+                    ease: ease
                 });
             }
         });
@@ -336,28 +404,50 @@ export class GameUI {
 
     setupRegistryListeners() {
         // Listen for registry changes
-        this.scene.registry.events.on('changedata', (parent, key, value) => {
-            switch(key) {
-                case 'score':
-                    this.updateScore(value);
-                    break;
-                case 'lives':
-                    this.updateLives(value);
-                    break;
-                case 'playerHP':
-                    this.updateHP(value);
-                    break;
-                case 'bitcoins':
-                    this.updateBitcoins(value);
-                    break;
-            }
-        });
+        this.scene.registry.events.on('changedata', this.handleRegistryChange, this);
         
         // Initial update from registry
         this.updateScore(this.scene.registry.get('score') || 0);
         this.updateLives(this.scene.registry.get('lives') || 3);
         this.updateHP(this.scene.registry.get('playerHP') || 100);
         this.updateBitcoins(this.scene.registry.get('bitcoins') || 0);
+    }
+
+    handleRegistryChange = (parent, key, value) => {
+        if (this.debugMode) {
+            console.log('Registry changed:', { key, value });
+        }
+
+        // Handle stamina changes
+        if (key === 'stamina' && this.staminaBarFill) {
+            const maxStamina = 100;
+            const staminaRatio = Math.max(0, Math.min(1, value / maxStamina));
+            
+            // Update width smoothly
+            const targetWidth = this.staminaBarWidth * staminaRatio;
+            const currentWidth = this.staminaBarFill.width;
+            const lerpFactor = 0.2;
+            
+            this.staminaBarFill.width = currentWidth + (targetWidth - currentWidth) * lerpFactor;
+            
+            // Change color based on stamina level
+            if (staminaRatio <= 0.3) {
+                this.staminaBarFill.setFillStyle(0xFF0000); // Red when low
+            } else if (staminaRatio <= 0.6) {
+                this.staminaBarFill.setFillStyle(0xFFFF00); // Yellow when medium
+            } else {
+                this.staminaBarFill.setFillStyle(0xFF00FF); // Magenta when high
+            }
+
+            if (this.debugMode) {
+                console.log('Stamina bar updated:', {
+                    value,
+                    staminaRatio,
+                    targetWidth,
+                    currentWidth: this.staminaBarFill.width
+                });
+            }
+        }
     }
 
     animateUIElements() {
@@ -398,6 +488,16 @@ export class GameUI {
                 delay += delayIncrement;
             }
         });
+
+        // Fade in stamina bar
+        if (this.staminaBarBackground && this.staminaBarFill) {
+            this.scene.tweens.add({
+                targets: [this.staminaBarBackground, this.staminaBarFill],
+                alpha: 0.8,
+                duration: 500,
+                ease: 'Power2'
+            });
+        }
 
         // Show FPS counter after transition
         this.scene.time.delayedCall(delay + 1500, () => {

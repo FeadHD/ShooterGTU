@@ -20,7 +20,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         
         // Stamina mechanics
         this.maxStamina = 100;
-        this.currentStamina = this.maxStamina;
+        this.currentStamina = scene.registry.get('stamina') || this.maxStamina;
+        scene.registry.set('stamina', this.currentStamina); // Initialize registry
         this.staminaRegenRate = 12;           // base regen per second
         this.groundRegenBonus = 8;            // additional regen when on ground
         this.staminaRegenDelay = 500;         // 0.5s delay before regen starts

@@ -26,6 +26,9 @@ export class StateManager {
         if (!this.registry.has('gameStarted')) {
             this.registry.set('gameStarted', false);
         }
+        if (!this.registry.has('stamina')) {
+            this.registry.set('stamina', 100);
+        }
     }
 
     get(key) {
@@ -58,7 +61,8 @@ export class StateManager {
             playerHP: 100,
             bitcoins: 0,
             musicEnabled: true,
-            gameStarted: false
+            gameStarted: false,
+            stamina: 100
         };
         
         if (key) {
@@ -80,7 +84,7 @@ export class StateManager {
 
     saveToLocalStorage() {
         const gameState = {};
-        ['score', 'lives', 'playerHP', 'bitcoins', 'musicEnabled', 'gameStarted'].forEach(key => {
+        ['score', 'lives', 'playerHP', 'bitcoins', 'musicEnabled', 'gameStarted', 'stamina'].forEach(key => {
             gameState[key] = this.get(key);
         });
         localStorage.setItem('gameState', JSON.stringify(gameState));

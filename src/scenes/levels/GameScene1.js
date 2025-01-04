@@ -75,6 +75,7 @@ export class GameScene1 extends BaseScene {
             this.registry.set('score', 0);
             this.registry.set('lives', 3);
             this.registry.set('playerHP', 100);
+            this.registry.set('stamina', 100); // Reset stamina to full
             this.registry.set('bitcoins', 0);
             
             // Start timer and show UI
@@ -901,7 +902,7 @@ export class GameScene1 extends BaseScene {
 
         // Update game UI
         if (this.gameUI) {
-            this.gameUI.update(time);
+            this.gameUI.update(time, delta);
         }
 
         // Update debug visuals if enabled
