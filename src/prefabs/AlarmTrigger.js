@@ -7,9 +7,6 @@ class AlarmTrigger extends Phaser.GameObjects.Container {
         // Add to scene
         scene.add.existing(this);
         
-        // Set up physics body size
-        this.setSize(32, 32);
-        
         // Create visible graphics
         const graphics = scene.add.graphics();
         graphics.lineStyle(2, 0xff0000);
@@ -28,6 +25,7 @@ class AlarmTrigger extends Phaser.GameObjects.Container {
         // Initialize sound
         this.alarmSound = scene.sound.add('alarm', { loop: false });
         this.triggered = false;
+        this.alarmDuration = 10000; // 10 seconds alarm duration
     }
 
     update() {
@@ -39,6 +37,7 @@ class AlarmTrigger extends Phaser.GameObjects.Container {
     triggerAlarm() {
         if (!this.triggered) {
             this.triggered = true;
+            this.triggerTime = this.scene.time.now;
             
             // Stop background music
             if (this.scene.bgMusic && this.scene.bgMusic.isPlaying) {
@@ -48,17 +47,33 @@ class AlarmTrigger extends Phaser.GameObjects.Container {
             // Play alarm sound
             this.alarmSound.play();
             
-            // Reset after sound duration
-            this.scene.time.delayedCall(this.alarmSound.duration * 1000, () => {
-                this.triggered = false;
+            // Emit alarm triggered event
+            this.scene.events.emit('alarmTriggered');
+            
+            // Flash the alarm trigger
+            this.scene.tweens.add({
+                targets: this,
+                alpha: 0.2,
+                duration: 200,
+                yoyo: true,
+                repeat: -1
             });
         }
     }
 
     deactivate() {
-        this.triggered = false;
-        if (this.alarmSound.isPlaying) {
-            this.alarmSound.stop();
+        if (this.triggered) {
+            this.triggered = false;
+            if (this.alarmSound.isPlaying) {
+                this.alarmSound.stop();
+            }
+            
+            // Emit alarm reset event
+            this.scene.events.emit('alarmReset');
+            
+            // Stop flashing
+            this.scene.tweens.killTweensOf(this);
+            this.setAlpha(1);
         }
     }
 }

@@ -76,6 +76,11 @@ export class Turret extends Phaser.GameObjects.Sprite {
         this.numLasers = 3; // Number of lasers per shot
         this.laserSpeed = 150; // Slower velocity
         
+        // Alarm state
+        this.isActive = false;
+        this.activationDelay = 500; // Time before turret starts shooting after alarm
+        this.activationTime = 0;
+        
         // Position based on rotation
         switch(rotation) {
             case 'floor':
@@ -101,6 +106,30 @@ export class Turret extends Phaser.GameObjects.Sprite {
             this.setFlipX(true);
             this.gun.setFlipX(true);
         }
+
+        // Listen for alarm event
+        scene.events.on('alarmTriggered', this.onAlarmTriggered, this);
+        scene.events.on('alarmReset', this.onAlarmReset, this);
+    }
+
+    onAlarmTriggered() {
+        this.isActive = true;
+        this.activationTime = this.scene.time.now + this.activationDelay;
+        
+        // Flash red when activated
+        this.scene.tweens.add({
+            targets: [this, this.gun],
+            tint: 0xff0000,
+            duration: 200,
+            yoyo: true,
+            repeat: 2
+        });
+    }
+
+    onAlarmReset() {
+        this.isActive = false;
+        this.setTint(0xffffff);
+        this.gun.setTint(0x333333);
     }
 
     preUpdate(time, delta) {
@@ -109,6 +138,9 @@ export class Turret extends Phaser.GameObjects.Sprite {
         // Update gun position
         this.gun.x = this.x;
         this.gun.y = this.y;
+        
+        // Only process if alarm is triggered and activation delay has passed
+        if (!this.isActive || time < this.activationTime) return;
         
         // Get player reference and check if active
         const player = this.scene.player;
@@ -176,6 +208,10 @@ export class Turret extends Phaser.GameObjects.Sprite {
     }
 
     destroy() {
+        // Clean up event listeners
+        this.scene.events.off('alarmTriggered', this.onAlarmTriggered, this);
+        this.scene.events.off('alarmReset', this.onAlarmReset, this);
+        
         this.gun.destroy();
         super.destroy();
     }

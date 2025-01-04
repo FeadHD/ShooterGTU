@@ -283,10 +283,6 @@ export class GameScene1 extends BaseScene {
                 runChildUpdate: true
             });
             
-            // Create an alarm trigger 4 tiles to the right of player spawn and 2 tiles down
-            const alarm = this.alarmTriggers.create(this.playerSpawnPoint.x + 128, this.playerSpawnPoint.y + 32);
-            alarm.setSize(32, 32);
-            alarm.setDepth(5); // Same depth as enemies to be visible in front of tiles
 
             // Set up alarm trigger collision
             this.physics.add.overlap(
@@ -747,7 +743,6 @@ export class GameScene1 extends BaseScene {
         // Add turrets
         const turretPositions = [
             { x: 308, y: 384, direction: 'right', rotation: 'ceiling' },  // Ceiling mounted
-            { x: 2800, y: 350, direction: 'left', rotation: 'ceiling' },   // Ceiling mounted
         ];
 
         // Create turrets group if it doesn't exist
@@ -765,6 +760,19 @@ export class GameScene1 extends BaseScene {
         this.physics.add.overlap(this.player, this.turrets.getChildren().map(t => t.lasers), (player, laser) => {
             laser.destroy();
             player.takeDamage(2);
+        });
+
+        // Create and set up alarm trigger
+        if (!this.alarmTriggers) {
+            this.alarmTriggers = this.physics.add.staticGroup();
+        }
+        
+        const alarmTrigger = new AlarmTrigger(this, 308, 528); // Place it below the turret
+        this.alarmTriggers.add(alarmTrigger);
+        
+        // Set up collision between player and alarm trigger
+        this.physics.add.overlap(this.player, this.alarmTriggers, (player, trigger) => {
+            trigger.triggerAlarm();
         });
 
         // Create trap at specific location
