@@ -124,148 +124,82 @@ export class GameUI {
 
         // Create UI camera if it doesn't exist
         if (!this.uiCamera) {
-            const { width, height } = this.scene.scale;
             this.uiCamera = this.scene.cameras.add(0, 0, width, height);
             this.uiCamera.setScroll(0, 0);
         }
 
-        const centerX = width / 2;
-        const centerY = height / 2;
-
-        // Create score text (hidden initially)
+        // Create score text
         this.scoreText = TextStyleManager.createText(
             this.scene,
-            centerX,
-            centerY,
+            20,
+            20,
             'SCORE: 0',
-            'scoreUI',
-            0
+            'scoreUI'
         );
-        this.scoreText.setAlpha(0);
-        this.scoreText.setOrigin(0.5);
-        this.scoreText.setVisible(false);
         this.container.add(this.scoreText);
 
-        // Create lives text (hidden initially)
+        // Create lives text
         this.livesText = TextStyleManager.createText(
             this.scene,
-            centerX,
-            centerY,
+            20,
+            50,
             'LIVES: 3',
-            'livesUI',
-            0
+            'livesUI'
         );
-        this.livesText.setAlpha(0);
-        this.livesText.setOrigin(0.5);
-        this.livesText.setVisible(false);
         this.container.add(this.livesText);
 
-        // Create HP text (hidden initially)
+        // Create HP text
         this.hpText = TextStyleManager.createText(
             this.scene,
-            centerX,
-            centerY,
+            20,
+            80,
             'HP: 100',
-            'hpUI',
-            0
+            'hpUI'
         );
-        this.hpText.setAlpha(0);
-        this.hpText.setOrigin(0.5);
-        this.hpText.setVisible(false);
         this.container.add(this.hpText);
 
-        // Create bitcoins text (hidden initially)
-        this.bitcoinsText = TextStyleManager.createText(
-            this.scene,
-            centerX,
-            centerY,
-            'BITCOINS: 0',
-            'bitcoinUI',
-            0
-        );
-        this.bitcoinsText.setAlpha(0);
-        this.bitcoinsText.setOrigin(0.5);
-        this.bitcoinsText.setVisible(false);
-        this.container.add(this.bitcoinsText);
-
-        // Create stamina bar (hidden initially)
-        this.staminaText = TextStyleManager.createText(
-            this.scene,
-            centerX,
-            centerY,
-            'STAMINA: 100',
-            'staminaUI',
-            0
-        );
-        this.staminaText.setAlpha(0);
-        this.staminaText.setOrigin(0.5);
-        this.staminaText.setVisible(false);
-        this.container.add(this.staminaText);
-
-        // Create timer text (hidden initially)
+        // Create timer text
         this.timerText = TextStyleManager.createText(
             this.scene,
-            centerX,
-            centerY,
-            'TIME: 00:00',
-            'timerUI',
-            0
+            20,
+            110,
+            'TIME: 0',
+            'timerUI'
         );
-        this.timerText.setAlpha(0);
-        this.timerText.setOrigin(0.5);
-        this.timerText.setVisible(false);
         this.container.add(this.timerText);
 
-        // Create FPS counter (hidden initially)
-        this.fpsText = TextStyleManager.createText(
+        // Create stamina bar elements at position below timer
+        // Background
+        this.staminaBarBg = this.scene.add.rectangle(20, 140, 150, 15, 0x000000, 0.7);
+        this.staminaBarBg.setOrigin(0, 0.5);
+        this.container.add(this.staminaBarBg);
+
+        // Border
+        this.staminaBarBorder = this.scene.add.rectangle(20, 140, 150, 15, 0x000000);
+        this.staminaBarBorder.setStrokeStyle(2, 0xFFD700);
+        this.staminaBarBorder.setOrigin(0, 0.5);
+        this.container.add(this.staminaBarBorder);
+
+        // Fill
+        this.staminaBarFill = this.scene.add.rectangle(22, 140, 146, 11, 0xFFD700);
+        this.staminaBarFill.setOrigin(0, 0.5);
+        this.container.add(this.staminaBarFill);
+
+        // Create bitcoins text
+        this.bitcoinsText = TextStyleManager.createText(
             this.scene,
             20,
-            height - 30,
-            'FPS: 60',
-            'gameUI',
-            0
+            170,
+            'BITCOINS: 0',
+            'bitcoinUI'
         );
-        this.fpsText.setVisible(false);
-        this.container.add(this.fpsText);
+        this.container.add(this.bitcoinsText);
 
-        // Create scene text
-        this.sceneText = TextStyleManager.createText(
-            this.scene,
-            width / 2,
-            20,
-            'SCENE 1',
-            'sceneUI',
-            0.5
-        );
-        this.container.add(this.sceneText);
-
-        // Setup music controls
-        this.setupMusicControls();
-
-        // Create wallet display
-        const walletAddress = this.scene.registry.get('walletAddress');
-        const displayAddress = walletAddress ? 
-            walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4) : 
-            'Not Connected';
-        this.walletText = TextStyleManager.createText(
-            this.scene,
-            width - 500,
-            16,
-            `Wallet: ${displayAddress}`,
-            'walletUI',
-            0
-        );
-        this.walletText.setInteractive({ useHandCursor: true });
-        this.walletText.on('pointerdown', (pointer, localX, localY, event) => {
-            event.stopPropagation();
-            if (!this.walletText.text.includes('0x')) {
-                this.scene.events.emit('connectWallet');
-            }
+        // Set initial alpha to 0 for fade-in effect
+        [this.scoreText, this.livesText, this.hpText, this.timerText, this.bitcoinsText,
+         this.staminaBarBg, this.staminaBarBorder, this.staminaBarFill].forEach(element => {
+            if (element) element.setAlpha(0);
         });
-        this.container.add(this.walletText);
-
-        // Update camera ignore list
-        this.updateCameraIgnoreList();
     }
 
     animateUIElements() {
@@ -273,9 +207,8 @@ export class GameUI {
             { text: this.scoreText, finalPos: { x: 20, y: 20 } },
             { text: this.livesText, finalPos: { x: 20, y: 50 } },
             { text: this.hpText, finalPos: { x: 20, y: 80 } },
-            { text: this.bitcoinsText, finalPos: { x: 20, y: 110 } },
-            { text: this.staminaText, finalPos: { x: 20, y: 140 } },
-            { text: this.timerText, finalPos: { x: 20, y: 170 } }
+            { text: this.bitcoinsText, finalPos: { x: 20, y: 170 } },
+            { text: this.timerText, finalPos: { x: 20, y: 110 } }
         ];
 
         let delay = 0;
@@ -314,6 +247,15 @@ export class GameUI {
                 this.fpsText.setVisible(true);
             }
         });
+
+        // Show stamina bar after transition
+        this.scene.time.delayedCall(delay + 1500, () => {
+            if (this.staminaBarBg && this.staminaBarBorder && this.staminaBarFill) {
+                this.staminaBarBg.setAlpha(1);
+                this.staminaBarBorder.setAlpha(1);
+                this.staminaBarFill.setAlpha(1);
+            }
+        });
     }
 
     showUIElements() {
@@ -322,23 +264,20 @@ export class GameUI {
             this.livesText,
             this.hpText,
             this.bitcoinsText,
-            this.staminaText,
-            this.timerText
+            this.staminaBarBg,
+            this.staminaBarBorder,
+            this.staminaBarFill
         ];
 
-        let delay = 0;
-        const delayIncrement = 800;
-
-        elements.forEach(element => {
+        elements.forEach((element, index) => {
             if (element) {
                 this.scene.tweens.add({
                     targets: element,
                     alpha: 1,
                     duration: 500,
-                    delay: delay,
-                    ease: 'Power2'
+                    ease: 'Power2',
+                    delay: index * 100
                 });
-                delay += delayIncrement;
             }
         });
     }
@@ -581,8 +520,23 @@ export class GameUI {
     }
 
     updateStamina(stamina) {
-        if (!this.staminaText) return;
-        this.staminaText.setText(`STAMINA: ${Math.floor(stamina)}`);
+        if (!this.staminaBarFill || !this.staminaBarBg || !this.staminaBarBorder) return;
+        
+        // Calculate fill width based on stamina percentage
+        const maxWidth = 146; // Maximum width of the fill bar
+        const fillWidth = Math.max(0, Math.min(maxWidth, (stamina / 100) * maxWidth));
+        
+        // Update the fill bar width
+        this.staminaBarFill.width = fillWidth;
+        
+        // Add color transitions based on stamina level
+        if (stamina <= 25) {
+            this.staminaBarFill.setFillStyle(0xFF4500); // Orange-red when low
+        } else if (stamina <= 50) {
+            this.staminaBarFill.setFillStyle(0xFFA500); // Orange when medium
+        } else {
+            this.staminaBarFill.setFillStyle(0xFFD700); // Gold when high
+        }
     }
 
     updateBitcoins(bitcoins) {
