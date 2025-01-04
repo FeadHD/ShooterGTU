@@ -188,6 +188,20 @@ export class GameUI {
         this.bitcoinsText.setVisible(false);
         this.container.add(this.bitcoinsText);
 
+        // Create stamina bar (hidden initially)
+        this.staminaText = TextStyleManager.createText(
+            this.scene,
+            centerX,
+            centerY,
+            'STAMINA: 100',
+            'staminaUI',
+            0
+        );
+        this.staminaText.setAlpha(0);
+        this.staminaText.setOrigin(0.5);
+        this.staminaText.setVisible(false);
+        this.container.add(this.staminaText);
+
         // Create timer text (hidden initially)
         this.timerText = TextStyleManager.createText(
             this.scene,
@@ -260,7 +274,8 @@ export class GameUI {
             { text: this.livesText, finalPos: { x: 20, y: 50 } },
             { text: this.hpText, finalPos: { x: 20, y: 80 } },
             { text: this.bitcoinsText, finalPos: { x: 20, y: 110 } },
-            { text: this.timerText, finalPos: { x: 20, y: 144 } }
+            { text: this.staminaText, finalPos: { x: 20, y: 140 } },
+            { text: this.timerText, finalPos: { x: 20, y: 170 } }
         ];
 
         let delay = 0;
@@ -307,6 +322,7 @@ export class GameUI {
             this.livesText,
             this.hpText,
             this.bitcoinsText,
+            this.staminaText,
             this.timerText
         ];
 
@@ -512,6 +528,9 @@ export class GameUI {
                 case 'playerHP':
                     this.updateHP(value);
                     break;
+                case 'stamina':
+                    this.updateStamina(value);
+                    break;
                 case 'bitcoins':
                     this.updateBitcoins(value);
                     break;
@@ -522,6 +541,7 @@ export class GameUI {
         this.updateScore(this.scene.registry.get('score') || 0);
         this.updateLives(this.scene.registry.get('lives') || 3);
         this.updateHP(this.scene.registry.get('playerHP') || 100);
+        this.updateStamina(this.scene.registry.get('stamina') || 100);
         this.updateBitcoins(this.scene.registry.get('bitcoins') || 0);
     }
 
@@ -556,9 +576,13 @@ export class GameUI {
     }
 
     updateHP(hp) {
-        if (this.hpText) {
-            this.hpText.setText(`HP: ${hp}`);
-        }
+        if (!this.hpText) return;
+        this.hpText.setText(`HP: ${hp}`);
+    }
+
+    updateStamina(stamina) {
+        if (!this.staminaText) return;
+        this.staminaText.setText(`STAMINA: ${Math.floor(stamina)}`);
     }
 
     updateBitcoins(bitcoins) {

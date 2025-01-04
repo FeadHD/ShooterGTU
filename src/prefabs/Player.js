@@ -18,6 +18,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.playerHP = scene.registry.get('playerHP') || 100;
         this.lastDamageTaken = 0;
         
+        // Stamina mechanics
+        this.maxStamina = 100;
+        this.currentStamina = this.maxStamina;
+        this.staminaRegenRate = 15;  // per second
+        this.rollStaminaCost = 25;
+        this.hoverStaminaCost = 20;  // per second
+        
         // Rollover mechanics
         this.isRolling = false;           // Current rolling state
         this.rollSpeed = 450;             // Speed during roll
@@ -209,6 +216,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
             return;
         }
 
+        // Check stamina cost
+        if (this.currentStamina < this.rollStaminaCost) {
+            console.log('Not enough stamina to roll');
+            return;
+        }
+
+        // Consume stamina
+        this.currentStamina -= this.rollStaminaCost;
+        this.scene.registry.set('stamina', this.currentStamina);
+
         this.isRolling = true;
         this.canRoll = false;
         const direction = this.controller.isMovingLeft() ? -1 : 1;
@@ -250,10 +267,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
             this.canStartHover = true;
         }
         
-        // Check if we can start hovering (must be in air, key held for 100ms, and not jumping)
+        // Check if we can start hovering
         if (!this.isHovering && !this.isJumping && isHoverKeyHeld && this.canStartHover && !this.body.onFloor() && hoverHoldTime > 100) {
-            // Only check cooldown
-            if (currentTime - this.lastHoverEndTime >= this.hoverCooldown) {
+            // Check stamina and cooldown
+            if (currentTime - this.lastHoverEndTime >= this.hoverCooldown && this.currentStamina > 0) {
                 this.isHovering = true;
                 this.hoverStartTime = currentTime;
                 // Give a small upward boost when starting hover
@@ -267,28 +284,43 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         if (this.isHovering) {
             const hoverTimeElapsed = currentTime - this.hoverStartTime;
             
-            if (hoverTimeElapsed < this.hoverDuration && isHoverKeyHeld) {
-                // Apply hover force
-                this.setVelocityY(this.hoverForce);
-                
-                // Basic horizontal control during hover
-                if (this.controller.isMovingLeft()) {
-                    const hoverSpeed = this.movementSpeed * 0.8;
-                    this.setVelocityX(-hoverSpeed);
-                    this.setFlipX(true);
-                } else if (this.controller.isMovingRight()) {
-                    const hoverSpeed = this.movementSpeed * 0.8;
-                    this.setVelocityX(hoverSpeed);
-                    this.setFlipX(false);
+            // Calculate stamina cost for this frame
+            const staminaCostThisFrame = this.hoverStaminaCost * (this.scene.game.loop.delta / 1000); // Convert to per-frame cost
+
+            if (hoverTimeElapsed < this.hoverDuration && isHoverKeyHeld && this.currentStamina > 0) {
+                // Consume stamina
+                this.currentStamina = Math.max(0, this.currentStamina - staminaCostThisFrame);
+                this.scene.registry.set('stamina', this.currentStamina);
+
+                // Only hover if we have stamina
+                if (this.currentStamina > 0) {
+                    // Apply hover force
+                    this.setVelocityY(this.hoverForce);
+                    
+                    // Basic horizontal control during hover
+                    if (this.controller.isMovingLeft()) {
+                        const hoverSpeed = this.movementSpeed * 0.8;
+                        this.setVelocityX(-hoverSpeed);
+                        this.setFlipX(true);
+                    } else if (this.controller.isMovingRight()) {
+                        const hoverSpeed = this.movementSpeed * 0.8;
+                        this.setVelocityX(hoverSpeed);
+                        this.setFlipX(false);
+                    } else {
+                        // Gradual horizontal slowdown
+                        this.setVelocityX(this.body.velocity.x * 0.95);
+                    }
                 } else {
-                    // Gradual horizontal slowdown
-                    this.setVelocityX(this.body.velocity.x * 0.95);
+                    // End hover if out of stamina
+                    this.isHovering = false;
+                    this.lastHoverEndTime = currentTime;
+                    this.canStartHover = false;
                 }
             } else {
                 // End hover
                 this.isHovering = false;
                 this.lastHoverEndTime = currentTime;
-                this.canStartHover = false; // Need to release jump again
+                this.canStartHover = false;
             }
         }
     }
@@ -327,6 +359,15 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     update() {
         if (this.body && !this.isDying) {  
+            // Regenerate stamina when not hovering
+            if (!this.isHovering) {
+                this.currentStamina = Math.min(
+                    this.maxStamina,
+                    this.currentStamina + (this.staminaRegenRate * (this.scene.game.loop.delta / 1000))
+                );
+                this.scene.registry.set('stamina', this.currentStamina);
+            }
+
             // Check if player has fallen off the map
             if (this.y > this.scene.scale.height + 100) {
                 this.fallDeath();
