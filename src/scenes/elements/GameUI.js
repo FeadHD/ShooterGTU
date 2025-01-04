@@ -111,6 +111,12 @@ export class GameUI {
         const { width, height } = this.scene.scale;
         console.log('Setting up UI...');
 
+        // Constants for UI positioning
+        const LEFT_MARGIN = 25;
+        const TOP_MARGIN = 20;
+        const VERTICAL_SPACING = 30;
+        const TEXT_WIDTH = 150;
+
         // Create container if it doesn't exist
         if (!this.container) {
             this.container = this.scene.add.container(0, 0);
@@ -131,8 +137,8 @@ export class GameUI {
         // Create score text
         this.scoreText = TextStyleManager.createText(
             this.scene,
-            20,
-            20,
+            LEFT_MARGIN,
+            TOP_MARGIN,
             'SCORE: 0',
             'scoreUI'
         );
@@ -141,8 +147,8 @@ export class GameUI {
         // Create lives text
         this.livesText = TextStyleManager.createText(
             this.scene,
-            20,
-            50,
+            LEFT_MARGIN,
+            TOP_MARGIN + VERTICAL_SPACING,
             'LIVES: 3',
             'livesUI'
         );
@@ -151,8 +157,8 @@ export class GameUI {
         // Create HP text
         this.hpText = TextStyleManager.createText(
             this.scene,
-            20,
-            80,
+            LEFT_MARGIN,
+            TOP_MARGIN + VERTICAL_SPACING * 2,
             'HP: 100',
             'hpUI'
         );
@@ -161,177 +167,114 @@ export class GameUI {
         // Create timer text
         this.timerText = TextStyleManager.createText(
             this.scene,
-            20,
-            110,
-            'TIME: 0',
+            LEFT_MARGIN,
+            TOP_MARGIN + VERTICAL_SPACING * 3,
+            'TIME: 00:00',
             'timerUI'
         );
         this.container.add(this.timerText);
 
-        // Create stamina bar elements at position below timer
-        // Background
-        this.staminaBarBg = this.scene.add.rectangle(20, 140, 150, 15, 0x000000, 0.7);
-        this.staminaBarBg.setOrigin(0, 0.5);
-        this.container.add(this.staminaBarBg);
-
-        // Border
-        this.staminaBarBorder = this.scene.add.rectangle(20, 140, 150, 15, 0x000000);
-        this.staminaBarBorder.setStrokeStyle(2, 0xFFD700);
-        this.staminaBarBorder.setOrigin(0, 0.5);
-        this.container.add(this.staminaBarBorder);
-
-        // Fill
-        this.staminaBarFill = this.scene.add.rectangle(22, 140, 146, 11, 0xFFD700);
-        this.staminaBarFill.setOrigin(0, 0.5);
-        this.container.add(this.staminaBarFill);
-
         // Create bitcoins text
         this.bitcoinsText = TextStyleManager.createText(
             this.scene,
-            20,
-            170,
+            LEFT_MARGIN,
+            TOP_MARGIN + VERTICAL_SPACING * 4,
             'BITCOINS: 0',
             'bitcoinUI'
         );
         this.container.add(this.bitcoinsText);
 
+        // Create FPS counter (hidden initially)
+        this.fpsText = TextStyleManager.createText(
+            this.scene,
+            LEFT_MARGIN,
+            height - 30,
+            'FPS: 60',
+            'gameUI'
+        );
+        this.fpsText.setVisible(false);
+        this.container.add(this.fpsText);
+
         // Set initial alpha to 0 for fade-in effect
-        [this.scoreText, this.livesText, this.hpText, this.timerText, this.bitcoinsText,
-         this.staminaBarBg, this.staminaBarBorder, this.staminaBarFill].forEach(element => {
+        [this.scoreText, this.livesText, this.hpText, this.timerText, this.bitcoinsText].forEach(element => {
             if (element) element.setAlpha(0);
         });
     }
 
-    animateUIElements() {
-        const elements = [
-            { text: this.scoreText, finalPos: { x: 20, y: 20 } },
-            { text: this.livesText, finalPos: { x: 20, y: 50 } },
-            { text: this.hpText, finalPos: { x: 20, y: 80 } },
-            { text: this.bitcoinsText, finalPos: { x: 20, y: 170 } },
-            { text: this.timerText, finalPos: { x: 20, y: 110 } }
-        ];
-
-        let delay = 0;
-        const delayIncrement = 800;
-
-        elements.forEach(({ text, finalPos }) => {
-            if (text) {
-                text.setVisible(true);
-                // Fade in at center
-                this.scene.tweens.add({
-                    targets: text,
-                    alpha: 1,
-                    duration: 500,
-                    delay: delay,
-                    onComplete: () => {
-                        // Move to final position
-                        this.scene.tweens.add({
-                            targets: text,
-                            x: finalPos.x,
-                            y: finalPos.y,
-                            duration: 1000,
-                            ease: 'Power2',
-                            onStart: () => {
-                                text.setOrigin(0, 0);
-                            }
-                        });
-                    }
-                });
-                delay += delayIncrement;
-            }
-        });
-
-        // Show FPS counter after transition
-        this.scene.time.delayedCall(delay + 1500, () => {
-            if (this.fpsText) {
-                this.fpsText.setVisible(true);
-            }
-        });
-
-        // Show stamina bar after transition
-        this.scene.time.delayedCall(delay + 1500, () => {
-            if (this.staminaBarBg && this.staminaBarBorder && this.staminaBarFill) {
-                this.staminaBarBg.setAlpha(1);
-                this.staminaBarBorder.setAlpha(1);
-                this.staminaBarFill.setAlpha(1);
-            }
-        });
+    update(time, delta) {
+        // Update FPS counter
+        if (time > this.lastFpsUpdate + 100) {
+            this.fpsText.setText('FPS: ' + (1000 / delta).toFixed(1));
+            this.lastFpsUpdate = time;
+        }
     }
 
-    showUIElements() {
-        const elements = [
-            this.scoreText,
-            this.livesText,
-            this.hpText,
-            this.bitcoinsText,
-            this.staminaBarBg,
-            this.staminaBarBorder,
-            this.staminaBarFill
-        ];
-
-        elements.forEach((element, index) => {
-            if (element) {
+    fadeIn() {
+        if (!this.container) return;
+        
+        this.container.list.forEach(element => {
+            if (element && element.alpha !== undefined) {
                 this.scene.tweens.add({
                     targets: element,
                     alpha: 1,
                     duration: 500,
-                    ease: 'Power2',
-                    delay: index * 100
+                    ease: 'Power2'
                 });
             }
         });
     }
 
-    setupMusicControls() {
-        const { width } = this.scene.scale;
+    fadeOut() {
+        if (!this.container) return;
         
-        // Create music button
-        this.musicContainer = this.scene.add.container(width - 150, 16);
-        const musicLabel = TextStyleManager.createText(
-            this.scene,
-            0,
-            0,
-            'MUSIC :',
-            'walletUI',
-            0
-        );
-        
-        this.musicOnText = TextStyleManager.createText(
-            this.scene,
-            80,
-            0,
-            ' ON',
-            'walletUI',
-            0
-        );
-        this.musicOnText.setTint(0x00ff00); // Green tint for ON
-        
-        this.musicOffText = TextStyleManager.createText(
-            this.scene,
-            80,
-            0,
-            ' OFF',
-            'walletUI',
-            0
-        );
-        this.musicOffText.setTint(0xff0000); // Red tint for OFF
-        
-        // Set initial state
-        this.musicOnText.setVisible(this.scene.sound.mute ? false : true);
-        this.musicOffText.setVisible(this.scene.sound.mute ? true : false);
-        
-        // Make texts interactive
-        [this.musicOnText, this.musicOffText].forEach(text => {
-            text.setInteractive({ useHandCursor: true })
-                .on('pointerdown', () => {
-                    this.scene.sound.mute = !this.scene.sound.mute;
-                    this.musicOnText.setVisible(!this.scene.sound.mute);
-                    this.musicOffText.setVisible(this.scene.sound.mute);
+        this.container.list.forEach(element => {
+            if (element && element.alpha !== undefined) {
+                this.scene.tweens.add({
+                    targets: element,
+                    alpha: 0,
+                    duration: 500,
+                    ease: 'Power2'
                 });
+            }
         });
+    }
+
+    updateScore(score) {
+        if (this.scoreText) {
+            this.scoreText.setText('SCORE: ' + score);
+        }
+    }
+
+    updateLives(lives) {
+        if (this.livesText) {
+            this.livesText.setText('LIVES: ' + lives);
+        }
+    }
+
+    updateHP(hp) {
+        if (this.hpText) {
+            this.hpText.setText(`HP: ${hp}`);
+        }
+    }
+
+    updateTimer() {
+        if (!this.isTimerRunning || !this.timerText) return;
         
-        this.musicContainer.add([musicLabel, this.musicOnText, this.musicOffText]);
-        this.container.add(this.musicContainer);
+        const minutes = Math.floor(this.elapsedSeconds / 60);
+        const seconds = this.elapsedSeconds % 60;
+        this.timerText.setText(`TIME: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+    }
+
+    updateBitcoins(bitcoins) {
+        if (this.bitcoinsText) {
+            this.bitcoinsText.setText('BITCOINS: ' + bitcoins);
+        }
+    }
+
+    toggleFPS() {
+        if (this.fpsText) {
+            this.fpsText.setVisible(!this.fpsText.visible);
+        }
     }
 
     createStartMessage() {
@@ -391,6 +334,79 @@ export class GameUI {
         }
     }
 
+    setupRegistryListeners() {
+        // Listen for registry changes
+        this.scene.registry.events.on('changedata', (parent, key, value) => {
+            switch(key) {
+                case 'score':
+                    this.updateScore(value);
+                    break;
+                case 'lives':
+                    this.updateLives(value);
+                    break;
+                case 'playerHP':
+                    this.updateHP(value);
+                    break;
+                case 'bitcoins':
+                    this.updateBitcoins(value);
+                    break;
+            }
+        });
+        
+        // Initial update from registry
+        this.updateScore(this.scene.registry.get('score') || 0);
+        this.updateLives(this.scene.registry.get('lives') || 3);
+        this.updateHP(this.scene.registry.get('playerHP') || 100);
+        this.updateBitcoins(this.scene.registry.get('bitcoins') || 0);
+    }
+
+    animateUIElements() {
+        const elements = [
+            { text: this.scoreText, finalPos: { x: 25, y: 20 } },
+            { text: this.livesText, finalPos: { x: 25, y: 50 } },
+            { text: this.hpText, finalPos: { x: 25, y: 80 } },
+            { text: this.timerText, finalPos: { x: 25, y: 110 } },
+            { text: this.bitcoinsText, finalPos: { x: 25, y: 140 } }
+        ];
+
+        let delay = 0;
+        const delayIncrement = 800;
+
+        elements.forEach(({ text, finalPos }) => {
+            if (text) {
+                text.setVisible(true);
+                // Fade in at center
+                this.scene.tweens.add({
+                    targets: text,
+                    alpha: 1,
+                    duration: 500,
+                    delay: delay,
+                    onComplete: () => {
+                        // Move to final position
+                        this.scene.tweens.add({
+                            targets: text,
+                            x: finalPos.x,
+                            y: finalPos.y,
+                            duration: 1000,
+                            ease: 'Power2',
+                            onStart: () => {
+                                text.setOrigin(0, 0);
+                            }
+                        });
+                    }
+                });
+                delay += delayIncrement;
+            }
+        });
+
+        // Show FPS counter after transition
+        this.scene.time.delayedCall(delay + 1500, () => {
+            if (this.fpsText) {
+                this.fpsText.setVisible(true);
+            }
+        });
+    }
+
     startTimer() {
         this.isTimerRunning = true;
         this.elapsedSeconds = 0;
@@ -415,14 +431,6 @@ export class GameUI {
         
         // Force initial update
         this.updateTimer();
-    }
-
-    updateTimer() {
-        if (!this.isTimerRunning || !this.timerText) return;
-        
-        const minutes = Math.floor(this.elapsedSeconds / 60);
-        const seconds = this.elapsedSeconds % 60;
-        this.timerText.setText(`TIME: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
     }
 
     stopTimer() {
@@ -454,217 +462,7 @@ export class GameUI {
         this.updateTimer();
     }
 
-    setupRegistryListeners() {
-        // Listen for registry changes
-        this.scene.registry.events.on('changedata', (parent, key, value) => {
-            switch(key) {
-                case 'score':
-                    this.updateScore(value);
-                    break;
-                case 'lives':
-                    this.updateLives(value);
-                    break;
-                case 'playerHP':
-                    this.updateHP(value);
-                    break;
-                case 'stamina':
-                    this.updateStamina(value);
-                    break;
-                case 'bitcoins':
-                    this.updateBitcoins(value);
-                    break;
-            }
-        });
-        
-        // Initial update from registry
-        this.updateScore(this.scene.registry.get('score') || 0);
-        this.updateLives(this.scene.registry.get('lives') || 3);
-        this.updateHP(this.scene.registry.get('playerHP') || 100);
-        this.updateStamina(this.scene.registry.get('stamina') || 100);
-        this.updateBitcoins(this.scene.registry.get('bitcoins') || 0);
-    }
-
-    update(time) {
-        // Update performance counters if debug is enabled
-        if (this.scene.debugSystem?.enabled) {
-            this.fpsText.setVisible(true);
-            if (time - this.lastFpsUpdate > 500) {
-                // Update FPS
-                const fps = Math.round(this.scene.game.loop.actualFps);
-                if (this.fpsText) {
-                    this.fpsText.setText(`FPS: ${fps}`);
-                }
-                
-                this.lastFpsUpdate = time;
-            }
-        } else {
-            this.fpsText.setVisible(false);
-        }
-    }
-
-    updateScore(points) {
-        if (this.scoreText) {
-            this.scoreText.setText(`SCORE: ${points}`);
-        }
-    }
-
-    updateLives(lives) {
-        if (this.livesText) {
-            this.livesText.setText(`LIVES: ${lives}`);
-        }
-    }
-
-    updateHP(hp) {
-        if (!this.hpText) return;
-        this.hpText.setText(`HP: ${hp}`);
-    }
-
-    updateStamina(stamina) {
-        if (!this.staminaBarFill || !this.staminaBarBg || !this.staminaBarBorder) return;
-        
-        // Calculate fill width based on stamina percentage
-        const maxWidth = 146; // Maximum width of the fill bar
-        const fillWidth = Math.max(0, Math.min(maxWidth, (stamina / 100) * maxWidth));
-        
-        // Update the fill bar width
-        this.staminaBarFill.width = fillWidth;
-        
-        // Add color transitions based on stamina level
-        if (stamina <= 25) {
-            this.staminaBarFill.setFillStyle(0xFF4500); // Orange-red when low
-        } else if (stamina <= 50) {
-            this.staminaBarFill.setFillStyle(0xFFA500); // Orange when medium
-        } else {
-            this.staminaBarFill.setFillStyle(0xFFD700); // Gold when high
-        }
-    }
-
-    updateBitcoins(bitcoins) {
-        if (this.bitcoinsText) {
-            this.bitcoinsText.setText(`BITCOINS: ${bitcoins}`);
-        }
-    }
-
-    showGameOver() {
-        // Get the camera's viewport dimensions
-        const camera = this.scene.cameras.main;
-        const width = camera.width;
-        const height = camera.height;
-
-        // Add dark overlay that follows the camera
-        const overlay = this.scene.add.rectangle(0, 0, width, height, 0x000000, 0.7)
-            .setOrigin(0, 0)
-            .setDepth(98)
-            .setScrollFactor(0);
-
-        // Create main container for all game over elements
-        const mainContainer = this.scene.add.container(width/2, height/2)
-            .setDepth(99)
-            .setScrollFactor(0);
-
-        // Create "GAME OVER" text with shadow layers
-        const gameOverContainer = this.scene.add.container(0, -100);
-        const shadowOffset = 4;
-        const numLayers = 3;
-        
-        for (let i = numLayers; i >= 0; i--) {
-            const layerColor = i === 0 ? '#ff0000' : '#ff00ff';
-            const gameOverText = TextStyleManager.createText(
-                this.scene,
-                i * shadowOffset,
-                i * shadowOffset,
-                'GAME OVER',
-                'gameOver',
-                0
-            ).setOrigin(0.5);
-            gameOverContainer.add(gameOverText);
-        }
-
-        // Add final score
-        const finalScore = this.scene.registry.get('score');
-        const scoreText = TextStyleManager.createText(
-            this.scene,
-            0,
-            0,
-            `FINAL SCORE: ${finalScore}`,
-            'gameOver',
-            0
-        ).setOrigin(0.5);
-
-        // Add instruction text
-        const instructionText = TextStyleManager.createText(
-            this.scene,
-            0,
-            100,
-            'PRESS SPACE TO CONTINUE',
-            'gameOver',
-            0
-        ).setOrigin(0.5);
-
-        // Add all elements to the main container
-        mainContainer.add([gameOverContainer, scoreText, instructionText]);
-
-        // Add blinking effect to instruction text
-        this.scene.tweens.add({
-            targets: instructionText,
-            alpha: 0,
-            duration: 500,
-            yoyo: true,
-            repeat: -1
-        });
-
-        // Add glitch effect to Game Over text
-        this.scene.time.addEvent({
-            delay: 2000,
-            callback: () => {
-                this.scene.tweens.add({
-                    targets: gameOverContainer,
-                    x: Phaser.Math.Between(-5, 5),
-                    y: -100 + Phaser.Math.Between(-5, 5),
-                    duration: 50,
-                    yoyo: true,
-                    repeat: 3
-                });
-            },
-            loop: true
-        });
-
-        // Return references to the created elements
-        return {
-            overlay,
-            gameOverContainer: mainContainer,
-            scoreText,
-            instructionText
-        };
-    }
-
-    updateInstruction(text) {
-        // Removed
-    }
-
-    showShootingInstruction() {
-        // Removed
-    }
-
-    showDefeatInstruction() {
-        // Removed
-    }
-
-    hideInstruction() {
-        // Removed
-    }
-
-    showInstruction() {
-        // Removed
-    }
-
     destroy() {
-        // Stop and clean up timer
-        if (this.timerEvent) {
-            this.timerEvent.destroy();
-            this.timerEvent = null;
-        }
-        
         // Clean up other resources
         if (this.container) {
             this.container.destroy();
