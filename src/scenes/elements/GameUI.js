@@ -278,12 +278,8 @@ export class GameUI {
             const healthPercentage = Math.max(0, Math.min(100, currentHealth));
             const healthRatio = healthPercentage / 100;
             
-            // Update width to exactly match health percentage
+            // Update width and position exactly like stamina bar
             this.healthBarFill.width = this.barWidth * healthRatio;
-            
-            // Update position to stay centered
-            this.healthBarFill.x = this.scene.scale.width / 2 - this.barWidth / 2;
-            this.healthBarBackground.x = this.scene.scale.width / 2;
             
             // Change color based on health percentage
             if (healthPercentage <= 25) {
