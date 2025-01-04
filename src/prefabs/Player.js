@@ -25,7 +25,20 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.groundRegenBonus = 8;            // additional regen when on ground
         this.staminaRegenDelay = 500;         // 0.5s delay before regen starts
         this.lastStaminaUseTime = 0;          // Track when stamina was last used
-        this.rollStaminaCost = 25;
+        
+        // Roll stamina costs - progressive drain rates
+        this.rollStaminaCosts = [
+            { time: 300, cost: 45 },          // 0-300ms: 45/s
+            { time: 600, cost: 60 },          // 300-600ms: 60/s
+            { time: 900, cost: 85 },          // 600-900ms: 85/s
+            { time: 1200, cost: 120 }         // 900-1200ms: 120/s
+        ];
+        
+        // Rollover mechanics
+        this.isRolling = false;           // Current rolling state
+        this.rollSpeed = 450;             // Speed during roll
+        this.rollStartTime = 0;           // When current roll began
+        this.rollDirection = 1;           // 1 for right, -1 for left
         
         // Hover stamina costs - progressive drain rates
         this.hoverStaminaCosts = [
@@ -35,20 +48,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
             { time: 2000, cost: 90 }          // 1500-2000ms: 90/s
         ];
         
-        // Rollover mechanics
-        this.isRolling = false;           // Current rolling state
-        this.rollSpeed = 450;             // Speed during roll
-        this.rollDuration = 600;          // How long the roll lasts (ms)
-        this.rollCooldown = 800;          // Time before can roll again (ms)
-        this.lastRollTime = 0;            // When the last roll ended
-        this.canRoll = true;              // Whether we can start a new roll
-
-        // Coyote Time and Jump Buffer variables
-        this.coyoteTime = 80;     // Standard coyote time for precise platforming
-        this.lastOnGroundTime = 0; // Track when player was last on ground
-        this.lastJumpPressedTime = 0; // Track when jump was last pressed
-        this.hasBufferedJump = false; // Track if we have a buffered jump
-
         // Hover mechanics
         this.isHovering = false;          // Current hover state
         this.canStartHover = true;        // Whether we can start a new hover
@@ -58,6 +57,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.hoverStartTime = 0;          // When current hover began
         this.lastHoverEndTime = 0;        // When last hover ended
         this.hoverWarningThreshold = 500; // Show warning when 500ms left
+
+        // Coyote Time and Jump Buffer variables
+        this.coyoteTime = 80;     // Standard coyote time for precise platforming
+        this.lastOnGroundTime = 0; // Track when player was last on ground
+        this.lastJumpPressedTime = 0; // Track when jump was last pressed
+        this.hasBufferedJump = false; // Track if we have a buffered jump
 
         // Add sprite to scene and enable physics
         scene.add.existing(this);
@@ -220,53 +225,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.setVelocity(0, 0);
     }
 
-    startRoll() {
-        const currentTime = this.scene.time.now;
-        if (!this.canRoll || this.isRolling || this.isHovering || currentTime - this.lastRollTime < this.rollCooldown) {
-            console.log('Cannot roll:', { canRoll: this.canRoll, isRolling: this.isRolling, isHovering: this.isHovering });
-            return;
+    getRollStaminaCost(elapsedTime) {
+        for (let i = 0; i < this.rollStaminaCosts.length; i++) {
+            if (elapsedTime <= this.rollStaminaCosts[i].time) {
+                return this.rollStaminaCosts[i].cost;
+            }
         }
-
-        // Check stamina cost
-        if (this.currentStamina < this.rollStaminaCost) {
-            console.log('Not enough stamina to roll');
-            return;
-        }
-
-        // Consume stamina and update last use time
-        this.currentStamina -= this.rollStaminaCost;
-        this.lastStaminaUseTime = currentTime;
-        this.scene.registry.set('stamina', this.currentStamina);
-
-        this.isRolling = true;
-        this.canRoll = false;
-        const direction = this.controller.isMovingLeft() ? -1 : 1;
-        
-        // Set rollover velocity
-        this.setVelocityX(direction * this.rollSpeed);
-        
-        try {
-            // Play rollover animation
-            console.log('Starting rollover animation');
-            const anim = this.play('character_Rollover');
-            console.log('Animation object:', anim);
-            
-            // Set up a timer to end the roll
-            this.scene.time.delayedCall(this.rollDuration, () => {
-                console.log('Roll finished');
-                this.isRolling = false;
-                this.lastRollTime = currentTime;
-                
-                // Set up cooldown timer
-                this.scene.time.delayedCall(this.rollCooldown, () => {
-                    this.canRoll = true;
-                });
-            });
-        } catch (error) {
-            console.error('Error playing rollover animation:', error);
-            this.isRolling = false;
-            this.canRoll = true;
-        }
+        return this.rollStaminaCosts[this.rollStaminaCosts.length - 1].cost;
     }
 
     getHoverStaminaCost(elapsedTime) {
@@ -276,6 +241,66 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
             }
         }
         return this.hoverStaminaCosts[this.hoverStaminaCosts.length - 1].cost;
+    }
+
+    handleRoll() {
+        const currentTime = this.scene.time.now;
+        const isRollKeyHeld = this.controller.controls.shift.isDown;
+        
+        // Check if we should stop rolling
+        if (this.isRolling) {
+            if (!isRollKeyHeld || this.currentStamina <= 0) {
+                this.isRolling = false;
+                this.lastStaminaUseTime = currentTime;
+                // Stop roll animation
+                this.play('character_Idle');
+                return;
+            }
+            
+            // Calculate roll duration and stamina cost
+            const rollTimeElapsed = currentTime - this.rollStartTime;
+            const currentDrainRate = this.getRollStaminaCost(rollTimeElapsed);
+            const staminaCostThisFrame = currentDrainRate * (this.scene.game.loop.delta / 1000);
+            
+            // Consume stamina
+            this.currentStamina = Math.max(0, this.currentStamina - staminaCostThisFrame);
+            this.lastStaminaUseTime = currentTime;
+            this.scene.registry.set('stamina', this.currentStamina);
+            
+            // Apply roll movement if we have stamina
+            if (this.currentStamina > 0) {
+                // Set velocity based on roll direction
+                this.setVelocityX(this.rollSpeed * this.rollDirection);
+            } else {
+                this.isRolling = false;
+                // Stop roll animation when out of stamina
+                this.play('character_Idle');
+            }
+        }
+        
+        // Check if we can start rolling
+        if (!this.isRolling && isRollKeyHeld && this.currentStamina > 0) {
+            // Determine roll direction based on player's facing direction or movement
+            if (this.controller.isMovingLeft()) {
+                this.rollDirection = -1;
+            } else if (this.controller.isMovingRight()) {
+                this.rollDirection = 1;
+            } else {
+                this.rollDirection = this.flipX ? -1 : 1;
+            }
+            
+            this.isRolling = true;
+            this.rollStartTime = currentTime;
+            this.lastStaminaUseTime = currentTime;
+            
+            // Start roll animation
+            try {
+                this.play('character_Rollover');
+            } catch (error) {
+                console.error('Error playing rollover animation:', error);
+                this.isRolling = false;
+            }
+        }
     }
 
     handleHover() {
@@ -346,33 +371,44 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     handleJump() {
         const currentTime = this.scene.time.now;
-        const jumpPressed = this.controller.controls.jump.isDown && !this.controller.controls.jump.wasJustPressed;
-
-        if (jumpPressed) {
+        
+        // Track jump button press timing
+        if (this.controller.controls.jump.isDown) {
             this.lastJumpPressedTime = currentTime;
-            this.controller.controls.jump.wasJustPressed = true;
         }
         
-        // Check for buffered jump when touching ground
-        const hasBufferedJump = currentTime - this.lastJumpPressedTime < this.jumpBufferTime;
-        const canJump = (this.body.onFloor() || currentTime - this.lastOnGroundTime < this.coyoteTime) && !this.isHovering;
+        // Check if we should jump (including during roll)
+        const canJump = (currentTime - this.lastOnGroundTime < this.coyoteTime) && 
+                       (currentTime - this.lastJumpPressedTime < this.jumpBufferTime) &&
+                       this.jumpsAvailable > 0 && !this.isJumping && !this.isHovering;
         
-        // Execute jump if we have a buffered jump and can jump
-        if (hasBufferedJump && canJump) {
+        if (canJump) {
             this.isJumping = true;
+            this.jumpsAvailable--;
             this.setVelocityY(this.jumpSpeed);
-            this.play('character_Jump', true);
-            this.lastJumpTime = currentTime;
-            // Reset jump buffer
-            this.lastJumpPressedTime = 0;
-            // Disable hover briefly to prevent interference
-            this.canStartHover = false;
+            
+            // Keep roll velocity if rolling
+            if (!this.isRolling) {
+                this.setVelocityX(0);
+            }
+            
+            // Play jump animation only if not rolling
+            if (!this.isRolling) {
+                this.play('character_Jump', true);
+            }
         }
         
-        // Reset jump pressed state when released
-        if (!this.controller.controls.jump.isDown) {
-            this.controller.controls.jump.wasJustPressed = false;
+        // Reset jump state when landing
+        if (this.body.onFloor()) {
             this.isJumping = false;
+            // Only reset animation if not rolling
+            if (!this.isRolling) {
+                if (this.body.velocity.x !== 0) {
+                    this.play('character_Walking', true);
+                } else {
+                    this.play('character_Idle', true);
+                }
+            }
         }
     }
 
@@ -410,14 +446,20 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
                 this.canStartHover = false; // Reset hover when touching ground
             }
 
-            // Check for rollover
-            if (this.controller.isRolling() && !this.isRolling) {
-                this.startRoll();
+            // Check for wall collision during roll
+            if (this.isRolling && (this.body.blocked.left || this.body.blocked.right)) {
+                this.isRolling = false;
+                this.lastStaminaUseTime = currentTime;
+                // Stop roll animation on wall collision
+                this.play('character_Idle');
             }
 
-            if (!this.isRolling) {
-                this.handleJump();
+            // Handle roll and jump
+            this.handleRoll();
+            this.handleJump();  // Allow jumping during roll
 
+            // Only handle normal movement if not rolling
+            if (!this.isRolling) {
                 // Handle normal movement
                 if (this.controller.isMovingLeft()) {
                     if (this.isHovering) {
