@@ -18,10 +18,11 @@ export class GameUI {
         // Make UI elements fixed on screen
         this.container.setScrollFactor(0);
 
-        // Stamina bar properties
-        this.staminaBarWidth = 200;
-        this.staminaBarHeight = 10;
-        this.staminaBarPadding = 20;
+        // Bar properties
+        this.barWidth = 200;
+        this.barHeight = 10;
+        this.barPadding = 5;  // Padding between bars
+        this.maxHealth = 100;  // Set max health to 100
         
         // Set up UI elements
         this.setupUI();
@@ -33,7 +34,7 @@ export class GameUI {
         this.updateCameraIgnoreList();
 
         // Set up registry event listeners
-        this.setupRegistryListeners();
+        this.scene.registry.events.on('changedata', this.handleRegistryChange, this);
         
         // Listen for scene events
         this.scene.events.on('create', this.updateCameraIgnoreList, this);
@@ -117,6 +118,7 @@ export class GameUI {
         const TOP_MARGIN = 20;
         const VERTICAL_SPACING = 30;
         const TEXT_WIDTH = 150;
+        const TOP_BAR_MARGIN = 10;  // Margin from top of screen
 
         // Clear existing UI elements
         if (this.container.list.length > 0) {
@@ -173,39 +175,64 @@ export class GameUI {
         );
         this.container.add(this.bitcoinsText);
 
-        // Get initial stamina value
+        // Get initial values
         const currentStamina = this.scene.registry.get('stamina') || 100;
+        const currentHealth = this.scene.registry.get('playerHP') || 100;
         const staminaRatio = Math.max(0, Math.min(1, currentStamina / 100));
+        const healthRatio = currentHealth / 100;  // Exact percentage for health
         
-        // Create stamina bar background (centered, full width)
+        // Create stamina bar background (centered at top)
         this.staminaBarBackground = this.scene.add.rectangle(
             width / 2,
-            height - this.staminaBarPadding,
-            this.staminaBarWidth,
-            this.staminaBarHeight,
+            TOP_BAR_MARGIN,
+            this.barWidth,
+            this.barHeight,
             0x000000
         );
         this.staminaBarBackground.setAlpha(0.9);
         this.container.add(this.staminaBarBackground);
 
-        // Create stamina bar fill (anchored left, partial width based on current stamina)
-        const barStartX = width / 2 - this.staminaBarWidth / 2;
+        // Create stamina bar fill
+        const staminaStartX = width / 2 - this.barWidth / 2;
         this.staminaBarFill = this.scene.add.rectangle(
-            barStartX,
-            height - this.staminaBarPadding,
-            this.staminaBarWidth * staminaRatio,
-            this.staminaBarHeight,
-            0xFF00FF  // Bright magenta
+            staminaStartX,
+            TOP_BAR_MARGIN,
+            this.barWidth * staminaRatio,
+            this.barHeight,
+            0xFF00FF  // Magenta for stamina
         );
         this.staminaBarFill.setOrigin(0, 0.5);
         this.container.add(this.staminaBarFill);
+
+        // Create health bar background
+        this.healthBarBackground = this.scene.add.rectangle(
+            width / 2,
+            TOP_BAR_MARGIN + this.barHeight + this.barPadding,
+            this.barWidth,
+            this.barHeight,
+            0x000000
+        );
+        this.healthBarBackground.setAlpha(0.9);
+        this.container.add(this.healthBarBackground);
+
+        // Create health bar fill
+        const healthStartX = width / 2 - this.barWidth / 2;
+        this.healthBarFill = this.scene.add.rectangle(
+            healthStartX,
+            TOP_BAR_MARGIN + this.barHeight + this.barPadding,
+            this.barWidth * healthRatio,
+            this.barHeight,
+            0xFF0000  // Red for health
+        );
+        this.healthBarFill.setOrigin(0, 0.5);
+        this.container.add(this.healthBarFill);
         
         if (this.debugMode) {
             console.log('Initial stamina setup:', {
                 currentStamina,
                 staminaRatio,
-                barWidth: this.staminaBarWidth * staminaRatio,
-                barStartX,
+                barWidth: this.barWidth * staminaRatio,
+                barStartX: staminaStartX,
                 screenWidth: width
             });
         }
@@ -222,8 +249,9 @@ export class GameUI {
         this.container.add(this.fpsText);
 
         // Set initial alpha to 0 for fade-in effect
-        [this.scoreText, this.livesText, this.hpText, this.timerText, this.bitcoinsText, 
-         this.staminaBarBackground, this.staminaBarFill].forEach(element => {
+        [this.scoreText, this.livesText, this.hpText, this.timerText, this.bitcoinsText,
+         this.staminaBarBackground, this.staminaBarFill,
+         this.healthBarBackground, this.healthBarFill].forEach(element => {
             if (element) element.setAlpha(0);
         });
     }
@@ -240,38 +268,63 @@ export class GameUI {
         // Update stamina bar
         const currentStamina = this.scene.registry.get('stamina');
         if (currentStamina !== undefined && this.staminaBarFill) {
-            const maxStamina = 100;
-            const staminaRatio = Math.max(0, Math.min(1, currentStamina / maxStamina));
+            this.updateStaminaBar(currentStamina);
+        }
+
+        // Update health bar
+        const currentHealth = this.scene.registry.get('playerHP');
+        if (currentHealth !== undefined && this.healthBarFill) {
+            // Calculate exact percentage of health remaining (1-100)
+            const healthPercentage = Math.max(0, Math.min(100, currentHealth));
+            const healthRatio = healthPercentage / 100;
             
-            // Update width smoothly
-            const targetWidth = this.staminaBarWidth * staminaRatio;
-            const currentWidth = this.staminaBarFill.width;
-            const lerpFactor = 0.2; // Adjust for smoother or snappier transitions
+            // Update width to exactly match health percentage
+            this.healthBarFill.width = this.barWidth * healthRatio;
             
-            this.staminaBarFill.width = currentWidth + (targetWidth - currentWidth) * lerpFactor;
+            // Update position to stay centered
+            this.healthBarFill.x = this.scene.scale.width / 2 - this.barWidth / 2;
+            this.healthBarBackground.x = this.scene.scale.width / 2;
             
-            // Update position (ensure it stays anchored to the left)
-            this.staminaBarFill.x = this.scene.scale.width / 2 - this.staminaBarWidth / 2;
-            
-            // Change color based on stamina level
-            if (staminaRatio <= 0.3) {
-                this.staminaBarFill.setFillStyle(0xFF0000); // Red when low
-            } else if (staminaRatio <= 0.6) {
-                this.staminaBarFill.setFillStyle(0xFFFF00); // Yellow when medium
+            // Change color based on health percentage
+            if (healthPercentage <= 25) {
+                this.healthBarFill.setFillStyle(0xFF0000); // Red when <= 25%
+            } else if (healthPercentage <= 50) {
+                this.healthBarFill.setFillStyle(0xFF8000); // Orange when <= 50%
             } else {
-                this.staminaBarFill.setFillStyle(0xFF00FF); // Magenta when high
+                this.healthBarFill.setFillStyle(0x00FF00); // Green when > 50%
             }
-            
-            if (this.debugMode) {
-                console.log('Stamina Update:', {
-                    currentStamina,
-                    staminaRatio,
-                    targetWidth,
-                    currentWidth: this.staminaBarFill.width,
-                    barX: this.staminaBarFill.x,
-                    screenWidth: this.scene.scale.width
-                });
+
+            // Update HP text to show exact number
+            if (this.hpText) {
+                this.hpText.setText(`HP: ${Math.floor(healthPercentage)}`);
             }
+        }
+    }
+
+    updateStaminaBar(currentStamina) {
+        if (!this.staminaBarFill) return;
+
+        const maxStamina = 100;
+        const staminaRatio = Math.max(0, Math.min(1, currentStamina / maxStamina));
+        
+        // Update width smoothly
+        const targetWidth = this.barWidth * staminaRatio;
+        const currentWidth = this.staminaBarFill.width;
+        const lerpFactor = 0.2;
+        
+        this.staminaBarFill.width = currentWidth + (targetWidth - currentWidth) * lerpFactor;
+        
+        // Update position
+        this.staminaBarFill.x = this.scene.scale.width / 2 - this.barWidth / 2;
+        this.staminaBarBackground.x = this.scene.scale.width / 2;
+        
+        // Change color based on stamina level
+        if (staminaRatio <= 0.3) {
+            this.staminaBarFill.setFillStyle(0xFF0000); // Red when low
+        } else if (staminaRatio <= 0.6) {
+            this.staminaBarFill.setFillStyle(0xFFFF00); // Yellow when medium
+        } else {
+            this.staminaBarFill.setFillStyle(0xFF00FF); // Magenta when high
         }
     }
 
@@ -280,7 +333,8 @@ export class GameUI {
         const ease = 'Power1';
         
         [this.scoreText, this.livesText, this.hpText, this.timerText, this.bitcoinsText,
-         this.staminaBarBackground, this.staminaBarFill].forEach(element => {
+         this.staminaBarBackground, this.staminaBarFill,
+         this.healthBarBackground, this.healthBarFill].forEach(element => {
             if (element) {
                 this.scene.tweens.add({
                     targets: element,
@@ -320,9 +374,7 @@ export class GameUI {
     }
 
     updateHP(hp) {
-        if (this.hpText) {
-            this.hpText.setText(`HP: ${hp}`);
-        }
+        this.updateHealthBar(hp);
     }
 
     updateTimer() {
@@ -413,40 +465,40 @@ export class GameUI {
         this.updateBitcoins(this.scene.registry.get('bitcoins') || 0);
     }
 
-    handleRegistryChange = (parent, key, value) => {
-        if (this.debugMode) {
-            console.log('Registry changed:', { key, value });
+    handleRegistryChange(parent, key, value) {
+        if (key === 'playerHP') {
+            this.updateHealthBar(value);
+        } else if (key === 'stamina') {
+            this.updateStaminaBar(value);
+        }
+    }
+
+    updateHealthBar(currentHealth) {
+        if (!this.healthBarFill) return;
+
+        // Calculate exact percentage of health remaining (1-100)
+        const healthPercentage = Math.max(0, Math.min(100, currentHealth));
+        const healthRatio = healthPercentage / 100;
+        
+        // Update width to exactly match health percentage
+        this.healthBarFill.width = this.barWidth * healthRatio;
+        
+        // Update position to stay centered
+        this.healthBarFill.x = this.scene.scale.width / 2 - this.barWidth / 2;
+        this.healthBarBackground.x = this.scene.scale.width / 2;
+        
+        // Change color based on health percentage
+        if (healthPercentage <= 25) {
+            this.healthBarFill.setFillStyle(0xFF0000); // Red when <= 25%
+        } else if (healthPercentage <= 50) {
+            this.healthBarFill.setFillStyle(0xFF8000); // Orange when <= 50%
+        } else {
+            this.healthBarFill.setFillStyle(0x00FF00); // Green when > 50%
         }
 
-        // Handle stamina changes
-        if (key === 'stamina' && this.staminaBarFill) {
-            const maxStamina = 100;
-            const staminaRatio = Math.max(0, Math.min(1, value / maxStamina));
-            
-            // Update width smoothly
-            const targetWidth = this.staminaBarWidth * staminaRatio;
-            const currentWidth = this.staminaBarFill.width;
-            const lerpFactor = 0.2;
-            
-            this.staminaBarFill.width = currentWidth + (targetWidth - currentWidth) * lerpFactor;
-            
-            // Change color based on stamina level
-            if (staminaRatio <= 0.3) {
-                this.staminaBarFill.setFillStyle(0xFF0000); // Red when low
-            } else if (staminaRatio <= 0.6) {
-                this.staminaBarFill.setFillStyle(0xFFFF00); // Yellow when medium
-            } else {
-                this.staminaBarFill.setFillStyle(0xFF00FF); // Magenta when high
-            }
-
-            if (this.debugMode) {
-                console.log('Stamina bar updated:', {
-                    value,
-                    staminaRatio,
-                    targetWidth,
-                    currentWidth: this.staminaBarFill.width
-                });
-            }
+        // Update HP text to show exact number
+        if (this.hpText) {
+            this.hpText.setText(`HP: ${Math.floor(healthPercentage)}`);
         }
     }
 
@@ -493,6 +545,16 @@ export class GameUI {
         if (this.staminaBarBackground && this.staminaBarFill) {
             this.scene.tweens.add({
                 targets: [this.staminaBarBackground, this.staminaBarFill],
+                alpha: 0.8,
+                duration: 500,
+                ease: 'Power2'
+            });
+        }
+
+        // Fade in health bar
+        if (this.healthBarBackground && this.healthBarFill) {
+            this.scene.tweens.add({
+                targets: [this.healthBarBackground, this.healthBarFill],
                 alpha: 0.8,
                 duration: 500,
                 ease: 'Power2'

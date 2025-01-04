@@ -108,10 +108,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         // Check invulnerability
         if (this.scene.time.now < this.invulnerableUntil) return;
 
-        this.lastDamageTaken = 25; // Store the damage amount
-        this.playerHP -= this.lastDamageTaken;
+        // Take exactly 25 damage
+        this.lastDamageTaken = 25;
+        this.playerHP = Math.max(0, this.playerHP - this.lastDamageTaken);
         this.scene.registry.set('playerHP', this.playerHP);
-        this.scene.gameUI.updateHP(this.playerHP);
 
         if (this.playerHP <= 0) {
             this.die();
@@ -209,7 +209,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.setAlpha(1);
         this.controller.enabled = true;  // Re-enable controls
         
-        // Reset HP
+        // Reset HP to exactly 100
         this.playerHP = 100;
         this.scene.registry.set('playerHP', this.playerHP);
         
