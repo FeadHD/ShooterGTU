@@ -15,6 +15,7 @@ import Trampoline from '../../prefabs/Trampoline';
 import { Trap } from '../../prefabs/Trap';
 import { TrapManager } from '../../modules/managers/TrapManager';
 import { DisappearingPlatform } from '../../prefabs/DisappearingPlatform';
+import { DestructibleBlock } from '../../prefabs/DestructibleBlock';
 
 export class GameScene1 extends BaseScene {
     constructor() {
@@ -636,6 +637,27 @@ export class GameScene1 extends BaseScene {
             null,
             this
         );
+
+        // Create destructible blocks
+        this.destructibleBlocks = this.add.group();
+        
+        // Add some example destructible blocks
+        const block1 = new DestructibleBlock(this, 2600, 466);
+        const block2 = new DestructibleBlock(this, 2600, 498);
+        const block3 = new DestructibleBlock(this, 2600, 528);
+        
+        this.destructibleBlocks.add(block1);
+        this.destructibleBlocks.add(block2);
+        this.destructibleBlocks.add(block3);
+
+        // Set up collision between bullets and destructible blocks
+        this.physics.add.collider(this.bullets, this.destructibleBlocks, (bullet, block) => {
+            bullet.destroy();
+            block.destroy();
+        });
+
+        // Set up collision between player and destructible blocks
+        this.physics.add.collider(this.player, this.destructibleBlocks);
 
         // Create disappearing platforms
         this.disappearingPlatforms = this.add.group();
