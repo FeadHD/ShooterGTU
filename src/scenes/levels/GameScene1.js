@@ -14,6 +14,8 @@ import Drone from '../../prefabs/Drone';
 import Trampoline from '../../prefabs/Trampoline';
 import { Trap } from '../../prefabs/Trap';
 import { TrapManager } from '../../modules/managers/TrapManager';
+import { DestructibleBlock } from '../../prefabs/DestructibleBlock';
+import { FallingDestructibleBlock } from '../../prefabs/FallingDestructibleBlock';
 import { DisappearingPlatform } from '../../prefabs/DisappearingPlatform';
 
 export class GameScene1 extends BaseScene {
@@ -636,6 +638,79 @@ export class GameScene1 extends BaseScene {
             null,
             this
         );
+
+        // Create destructible blocks
+        this.destructibleBlocks = this.add.group();
+        
+        // Add some example destructible blocks
+        const block1 = new DestructibleBlock(this, 2600, 466);
+        const block2 = new DestructibleBlock(this, 2600, 498);
+        const block3 = new DestructibleBlock(this, 2600, 528);
+        
+        this.destructibleBlocks.add(block1);
+        this.destructibleBlocks.add(block2);
+        this.destructibleBlocks.add(block3);
+
+        // Set up collision between bullets and destructible blocks
+        this.physics.add.collider(this.bullets, this.destructibleBlocks, (bullet, block) => {
+            bullet.destroy();
+            block.destroy();
+        });
+
+        // Set up collision between player and destructible blocks
+        this.physics.add.collider(this.player, this.destructibleBlocks);
+
+        // Create falling destructible blocks group
+        this.fallingBlocks = this.add.group();
+
+        // Add falling blocks in specific positions
+        const fallingBlockPositions = [
+            { x: 2368, y: 402 },
+            { x: 2368, y: 434 },
+            { x: 2368, y: 466 },
+            { x: 2368, y: 498 },
+            { x: 2368, y: 528 },
+            { x: 2400, y: 402 },
+            { x: 2400, y: 434 },
+            { x: 2400, y: 466 },
+            { x: 2400, y: 498 },
+            { x: 2400, y: 528 }
+        ];
+
+        // Create each falling block at its position
+        fallingBlockPositions.forEach(pos => {
+            const block = new FallingDestructibleBlock(this, pos.x, pos.y);
+            this.fallingBlocks.add(block);
+        });
+
+        // Set up collision between bullets and falling blocks
+        this.physics.add.collider(this.bullets, this.fallingBlocks, (bullet, block) => {
+            bullet.destroy();
+            block.destroy();
+        });
+
+        // Set up collision between player and falling blocks
+        this.physics.add.collider(this.player, this.fallingBlocks);
+        
+        // Set up collision between falling blocks and platforms
+        this.physics.add.collider(this.fallingBlocks, this.platforms);
+        
+        // Add collision between falling blocks themselves
+        this.physics.add.collider(this.fallingBlocks, this.fallingBlocks);
+
+        // Check distance to player every frame for falling blocks
+        this.time.addEvent({
+            delay: 100, // Check every 100ms
+            callback: () => {
+                this.fallingBlocks.getChildren().forEach(block => {
+                    const distance = Math.abs(this.player.x - block.x);
+                    if (distance < 200) {
+                        block.startFalling();
+                    }
+                });
+            },
+            loop: true
+        });
 
         // Create disappearing platforms
         this.disappearingPlatforms = this.add.group();
