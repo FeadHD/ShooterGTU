@@ -1,5 +1,5 @@
 export class DestructibleBlock extends Phaser.Physics.Arcade.Sprite {
-    constructor(scene, x, y) {
+    constructor(scene, x, y, isStatic = true) {
         // Create texture if it doesn't exist
         if (!scene.textures.exists('destructible_block')) {
             const graphics = scene.add.graphics();
@@ -17,7 +17,7 @@ export class DestructibleBlock extends Phaser.Physics.Arcade.Sprite {
         
         // Add to scene and enable physics
         scene.add.existing(this);
-        scene.physics.add.existing(this, true); // true makes it static
+        scene.physics.add.existing(this, isStatic); // Allow dynamic bodies when isStatic is false
         
         // Set the block's size
         this.setDisplaySize(32, 32);
