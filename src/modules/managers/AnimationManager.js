@@ -26,45 +26,82 @@ export class AnimationManager {
     }
 
     createCharacterAnimations() {
+        console.log('Creating character animations');
+        
         // Idle animation
-        this.scene.anims.create({
-            key: 'character_Idle',
-            frames: this.scene.anims.generateFrameNumbers('character_idle', { start: 0, end: 3 }),
-            frameRate: 8,
-            repeat: -1
-        });
+        if (!this.scene.anims.exists('character_Idle')) {
+            this.scene.anims.create({
+                key: 'character_Idle',
+                frames: this.scene.anims.generateFrameNumbers('character_idle', { start: 0, end: 3 }),
+                frameRate: 8,
+                repeat: -1
+            });
+        }
 
         // Walking animation
-        this.scene.anims.create({
-            key: 'character_Walking',
-            frames: this.scene.anims.generateFrameNumbers('character_walking', { start: 0, end: 5 }),
-            frameRate: 10,
-            repeat: -1
-        });
+        if (!this.scene.anims.exists('character_Walking')) {
+            this.scene.anims.create({
+                key: 'character_Walking',
+                frames: this.scene.anims.generateFrameNumbers('character_walking', { start: 0, end: 5 }),
+                frameRate: 10,
+                repeat: -1
+            });
+        }
 
         // Running animation
-        this.scene.anims.create({
-            key: 'character_Run',
-            frames: this.scene.anims.generateFrameNumbers('character_run', { start: 0, end: 5 }),
-            frameRate: 12,
-            repeat: -1
-        });
-
-        // Death animation
-        this.scene.anims.create({
-            key: 'character_Death',
-            frames: this.scene.anims.generateFrameNumbers('character_death', { start: 0, end: 8 }),
-            frameRate: 10,
-            repeat: 0
-        });
+        if (!this.scene.anims.exists('character_Run')) {
+            this.scene.anims.create({
+                key: 'character_Run',
+                frames: this.scene.anims.generateFrameNumbers('character_run', { start: 0, end: 5 }),
+                frameRate: 12,
+                repeat: -1
+            });
+        }
 
         // Jump animation
-        this.scene.anims.create({
-            key: 'character_Jump',
-            frames: this.scene.anims.generateFrameNumbers('character_jump', { start: 0, end: 1 }),
-            frameRate: 8,
-            repeat: 0
-        });
+        if (!this.scene.anims.exists('character_Jump')) {
+            this.scene.anims.create({
+                key: 'character_Jump',
+                frames: this.scene.anims.generateFrameNumbers('character_jump', { start: 0, end: 3 }),
+                frameRate: 8,
+                repeat: 0
+            });
+        }
+
+        // Death animation
+        if (!this.scene.anims.exists('character_Death')) {
+            this.scene.anims.create({
+                key: 'character_Death',
+                frames: this.scene.anims.generateFrameNumbers('character_death', { start: 0, end: 5 }),
+                frameRate: 8,
+                repeat: 0
+            });
+        }
+
+        // Rollover animation
+        if (!this.scene.anims.exists('character_Rollover')) {
+            console.log('Creating rollover animation');
+            try {
+                const rolloverConfig = {
+                    key: 'character_Rollover',
+                    frames: this.scene.anims.generateFrameNumbers('character_rollover', { 
+                        start: 0, 
+                        end: 7  // Adjust based on actual number of frames
+                    }),
+                    frameRate: 14,  // Slightly faster to complete in rollDuration
+                    repeat: 0,
+                    hideOnComplete: false
+                };
+                console.log('Rollover config:', rolloverConfig);
+                this.scene.anims.create(rolloverConfig);
+                console.log('Rollover animation created successfully');
+                
+                // Debug: list all animations
+                console.log('Available animations:', Object.keys(this.scene.anims.anims.entries));
+            } catch (error) {
+                console.error('Error creating rollover animation:', error);
+            }
+        }
     }
 
     createEnemyAnimations() {

@@ -6,7 +6,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         super(scene, x, y, 'character_idle');
         
         this.scene = scene;
-        this.maxJumps = 1;                // Maximum number of jumps (for double jump if we add it)
+        this.maxJumps = 1;                // Maximum number of jumps
         this.jumpsAvailable = 1;          // Current jumps available
         this.isJumping = false;           // Track if currently in jump
         this.jumpSpeed = -330;            // Jump velocity
@@ -16,8 +16,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.invulnerableUntil = 0;
         this.movementSpeed = 300;
         this.playerHP = scene.registry.get('playerHP') || 100;
-        this.lastDamageTaken = 0; // Track last damage taken
+        this.lastDamageTaken = 0;
         
+        // Rollover mechanics
+        this.isRolling = false;           // Current rolling state
+        this.rollSpeed = 450;             // Speed during roll
+        this.rollDuration = 600;          // How long the roll lasts (ms)
+        this.rollCooldown = 800;          // Time before can roll again (ms)
+        this.lastRollTime = 0;            // When the last roll ended
+        this.canRoll = true;              // Whether we can start a new roll
+
         // Coyote Time and Jump Buffer variables
         this.coyoteTime = 80;     // Standard coyote time for precise platforming
         this.lastOnGroundTime = 0; // Track when player was last on ground
@@ -44,7 +52,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
             .setAlpha(1) // Set opacity to 100%
             .setDepth(1000); // Set a high depth value to render in front of everything
             
-        this.body.setSize(12, 27); // Set width to 12pdddx, keep height at 27px
+        this.body.setSize(12, 27); // Set width to 12px, keep height at 27px
         
         // Start idle animation if it exists
         if (scene.anims.exists('character_idle')) {
@@ -194,6 +202,44 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.setVelocity(0, 0);
     }
 
+    startRoll() {
+        const currentTime = this.scene.time.now;
+        if (!this.canRoll || this.isRolling || this.isHovering || currentTime - this.lastRollTime < this.rollCooldown) {
+            console.log('Cannot roll:', { canRoll: this.canRoll, isRolling: this.isRolling, isHovering: this.isHovering });
+            return;
+        }
+
+        this.isRolling = true;
+        this.canRoll = false;
+        const direction = this.controller.isMovingLeft() ? -1 : 1;
+        
+        // Set rollover velocity
+        this.setVelocityX(direction * this.rollSpeed);
+        
+        try {
+            // Play rollover animation
+            console.log('Starting rollover animation');
+            const anim = this.play('character_Rollover');
+            console.log('Animation object:', anim);
+            
+            // Set up a timer to end the roll
+            this.scene.time.delayedCall(this.rollDuration, () => {
+                console.log('Roll finished');
+                this.isRolling = false;
+                this.lastRollTime = currentTime;
+                
+                // Set up cooldown timer
+                this.scene.time.delayedCall(this.rollCooldown, () => {
+                    this.canRoll = true;
+                });
+            });
+        } catch (error) {
+            console.error('Error playing rollover animation:', error);
+            this.isRolling = false;
+            this.canRoll = true;
+        }
+    }
+
     handleHover() {
         const currentTime = this.scene.time.now;
         const isHoverKeyHeld = this.controller.controls.jump.isDown;
@@ -294,46 +340,53 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
                 this.canStartHover = false; // Reset hover when touching ground
             }
 
-            this.handleJump();
-
-            // Handle movement
-            if (this.controller.isMovingLeft()) {
-                if (this.isHovering) {
-                    this.setVelocityX(-this.movementSpeed * 0.8);
-                } else {
-                    this.setVelocityX(-this.movementSpeed);
-                }
-                this.setFlipX(true);
-            } else if (this.controller.isMovingRight()) {
-                if (this.isHovering) {
-                    this.setVelocityX(this.movementSpeed * 0.8);
-                } else {
-                    this.setVelocityX(this.movementSpeed);
-                }
-                this.setFlipX(false);
-            } else {
-                // Gradual slowdown
-                if (this.isHovering) {
-                    this.setVelocityX(this.body.velocity.x * 0.95);
-                } else {
-                    this.setVelocityX(0);
-                }
+            // Check for rollover
+            if (this.controller.isRolling() && !this.isRolling) {
+                this.startRoll();
             }
 
-            // Only try to hover if we're in the air
-            if (!this.body.onFloor()) {
-                this.handleHover();
-            }
+            if (!this.isRolling) {
+                this.handleJump();
 
-            // Handle animations
-            if (this.body.onFloor()) {
-                if (this.body.velocity.x !== 0) {
-                    this.play('character_Walking', true);
+                // Handle normal movement
+                if (this.controller.isMovingLeft()) {
+                    if (this.isHovering) {
+                        this.setVelocityX(-this.movementSpeed * 0.8);
+                    } else {
+                        this.setVelocityX(-this.movementSpeed);
+                    }
+                    this.setFlipX(true);
+                } else if (this.controller.isMovingRight()) {
+                    if (this.isHovering) {
+                        this.setVelocityX(this.movementSpeed * 0.8);
+                    } else {
+                        this.setVelocityX(this.movementSpeed);
+                    }
+                    this.setFlipX(false);
                 } else {
-                    this.play('character_Idle', true);
+                    // Gradual slowdown
+                    if (this.isHovering) {
+                        this.setVelocityX(this.body.velocity.x * 0.95);
+                    } else {
+                        this.setVelocityX(0);
+                    }
                 }
-            } else {
-                this.play('character_Jump', true);
+
+                // Only try to hover if we're in the air
+                if (!this.body.onFloor()) {
+                    this.handleHover();
+                }
+
+                // Handle animations
+                if (this.body.onFloor()) {
+                    if (this.body.velocity.x !== 0) {
+                        this.play('character_Walking', true);
+                    } else {
+                        this.play('character_Idle', true);
+                    }
+                } else {
+                    this.play('character_Jump', true);
+                }
             }
 
             // Update bullet group

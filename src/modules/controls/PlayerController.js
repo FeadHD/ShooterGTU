@@ -11,7 +11,8 @@ export class PlayerController {
             right: Phaser.Input.Keyboard.KeyCodes.D,
             jump: Phaser.Input.Keyboard.KeyCodes.SPACE,
             specialAttack: Phaser.Input.Keyboard.KeyCodes.Q,
-            shoot: 'MOUSE_LEFT'
+            shoot: 'MOUSE_LEFT',
+            shift: Phaser.Input.Keyboard.KeyCodes.SHIFT
         };
         
         // Load saved bindings from localStorage or use defaults
@@ -168,7 +169,8 @@ export class PlayerController {
             right: Phaser.Input.Keyboard.KeyCodes.D,
             jump: Phaser.Input.Keyboard.KeyCodes.SPACE,
             specialAttack: Phaser.Input.Keyboard.KeyCodes.Q,
-            shoot: 'MOUSE_LEFT'
+            shoot: 'MOUSE_LEFT',
+            shift: Phaser.Input.Keyboard.KeyCodes.SHIFT
         };
         this.saveKeyBindings();
     }
@@ -204,6 +206,10 @@ export class PlayerController {
 
     isShooting() {
         return this.enabled && this.controls.shoot.isDown;
+    }
+
+    isRolling() {
+        return this.controls.shift.isDown && (this.isMovingLeft() || this.isMovingRight());
     }
 
     destroy() {

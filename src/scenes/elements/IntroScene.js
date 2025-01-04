@@ -20,18 +20,6 @@ export class IntroScene extends Scene {
         // Set the camera and game size for this scene
         this.scale.setGameSize(this.SCENE_WIDTH, this.SCENE_HEIGHT);
         this.scale.setZoom(1);
-        
-        // Create animations
-        const animationManager = new AnimationManager(this);
-        animationManager.createCharacterAnimations();
-
-        // Create bullet animation
-        this.anims.create({
-            key: 'bullet_anim',
-            frames: this.anims.generateFrameNumbers('bullet_animation', { start: 0, end: 3 }),
-            frameRate: 10,
-            repeat: -1
-        });
     }
 
     preload() {
@@ -48,6 +36,28 @@ export class IntroScene extends Scene {
 
         // Load the Gameplay font
         this.load.font('Gameplay', 'assets/fonts/retronoid/Gameplay.ttf');
+
+        // Load character spritesheets
+        this.load.spritesheet('character_idle', 'assets/character/character_Idle.png', {
+            frameWidth: 32,
+            frameHeight: 32
+        });
+
+        this.load.spritesheet('character_walking', 'assets/character/character_Walking.png', {
+            frameWidth: 32,
+            frameHeight: 32
+        });
+
+        this.load.spritesheet('character_run', 'assets/character/character_Run.png', {
+            frameWidth: 32,
+            frameHeight: 32
+        });
+
+        // Load rollover spritesheet
+        this.load.spritesheet('character_rollover', 'assets/character/character_Rollover.png', {
+            frameWidth: 32,
+            frameHeight: 48
+        });
 
         // Load bullet sprite
         this.load.spritesheet('bullet_animation', 'assets/sprites/bullet.png', {
@@ -66,6 +76,18 @@ export class IntroScene extends Scene {
 
     create() {
         console.log('IntroScene: create started');
+
+        // Create animations
+        const animationManager = new AnimationManager(this);
+        animationManager.createCharacterAnimations();
+
+        // Create bullet animation
+        this.anims.create({
+            key: 'bullet_anim',
+            frames: this.anims.generateFrameNumbers('bullet_animation', { start: 0, end: 3 }),
+            frameRate: 10,
+            repeat: -1
+        });
 
         // Reset the camera
         const mainCamera = this.cameras.main;
