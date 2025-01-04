@@ -14,6 +14,7 @@ import Drone from '../../prefabs/Drone';
 import Trampoline from '../../prefabs/Trampoline';
 import { Trap } from '../../prefabs/Trap';
 import { TrapManager } from '../../modules/managers/TrapManager';
+import { DisappearingPlatform } from '../../prefabs/DisappearingPlatform';
 
 export class GameScene1 extends BaseScene {
     constructor() {
@@ -635,6 +636,32 @@ export class GameScene1 extends BaseScene {
             null,
             this
         );
+
+        // Create disappearing platforms
+        this.disappearingPlatforms = this.add.group();
+        
+        // Add some example disappearing platforms
+        const platform1 = new DisappearingPlatform(this, 1410, 560);
+        const platform2 = new DisappearingPlatform(this, 1482, 560);
+        const platform3 = new DisappearingPlatform(this, 1554, 560);
+        const platform4 = new DisappearingPlatform(this, 500, 330);
+        const platform5 = new DisappearingPlatform(this, 572, 430);
+        const platform6 = new DisappearingPlatform(this, 644, 400);
+        
+        this.disappearingPlatforms.add(platform1);
+        this.disappearingPlatforms.add(platform2);
+        this.disappearingPlatforms.add(platform3);
+        this.disappearingPlatforms.add(platform4);
+        this.disappearingPlatforms.add(platform5);
+        this.disappearingPlatforms.add(platform6);
+
+        // Set up collision between player and disappearing platforms
+        this.physics.add.collider(this.player, this.disappearingPlatforms, (player, platform) => {
+            // Only trigger when player is standing on the platform
+            if (player.body.touching.down && platform.body.touching.up) {
+                platform.disappear();
+            }
+        });
 
         // Create trap at specific location
         if (this.platforms) {
