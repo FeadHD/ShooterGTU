@@ -17,6 +17,7 @@ import { TrapManager } from '../../modules/managers/TrapManager';
 import { DestructibleBlock } from '../../prefabs/DestructibleBlock';
 import { FallingDestructibleBlock } from '../../prefabs/FallingDestructibleBlock';
 import { DisappearingPlatform } from '../../prefabs/DisappearingPlatform';
+import { Turret } from '../../prefabs/Turret';
 
 export class GameScene1 extends BaseScene {
     constructor() {
@@ -29,6 +30,11 @@ export class GameScene1 extends BaseScene {
     }
 
     preload() {
+        super.preload();
+        
+        // Load turret laser sound
+        this.load.audio('turretLaser', 'assets/sounds/laser.wav');
+        
         // Load all audio files
         this.load.audio('laser', 'assets/sounds/laser.wav');
         this.load.audio('hit', 'assets/sounds/hit.wav');
@@ -277,10 +283,6 @@ export class GameScene1 extends BaseScene {
                 runChildUpdate: true
             });
             
-            // Create an alarm trigger 4 tiles to the right of player spawn and 2 tiles down
-            const alarm = this.alarmTriggers.create(this.playerSpawnPoint.x + 128, this.playerSpawnPoint.y + 32);
-            alarm.setSize(32, 32);
-            alarm.setDepth(5); // Same depth as enemies to be visible in front of tiles
 
             // Set up alarm trigger collision
             this.physics.add.overlap(
@@ -738,6 +740,41 @@ export class GameScene1 extends BaseScene {
             }
         });
 
+        // Add turrets
+        const turretPositions = [
+            { x: 308, y: 384, direction: 'right', rotation: 'ceiling' },  // Ceiling mounted
+        ];
+
+        // Create turrets group if it doesn't exist
+        if (!this.turrets) {
+            this.turrets = this.add.group();
+        }
+
+        // Place turrets
+        turretPositions.forEach(pos => {
+            const turret = new Turret(this, pos.x, pos.y, pos.direction, pos.rotation);
+            this.turrets.add(turret);
+        });
+
+        // Set up collision between player and turret lasers
+        this.physics.add.overlap(this.player, this.turrets.getChildren().map(t => t.lasers), (player, laser) => {
+            laser.destroy();
+            player.takeDamage(2);
+        });
+
+        // Create and set up alarm trigger
+        if (!this.alarmTriggers) {
+            this.alarmTriggers = this.physics.add.staticGroup();
+        }
+        
+        const alarmTrigger = new AlarmTrigger(this, 308, 528); // Place it below the turret
+        this.alarmTriggers.add(alarmTrigger);
+        
+        // Set up collision between player and alarm trigger
+        this.physics.add.overlap(this.player, this.alarmTriggers, (player, trigger) => {
+            trigger.triggerAlarm();
+        });
+
         // Create trap at specific location
         if (this.platforms) {
             // Create a new trap at the specified coordinates
@@ -846,6 +883,9 @@ export class GameScene1 extends BaseScene {
 
         super.update(time, delta);
         if (this.isGamePaused) return;
+
+        // Update all turrets
+        this.turrets.getChildren().forEach(turret => turret.update());
 
         // Update all enemies
         if (this.enemies) {
