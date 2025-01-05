@@ -19,6 +19,7 @@ import ControlsSettings from '../scenes/menus/ControlsSettings';
 import SoundSettings from '../scenes/menus/SoundSettings';
 import { PauseMenu } from '../scenes/elements/PauseMenu';
 import { TheZucc } from '../scenes/menus/TheZucc/TheZucc';
+import { LegacyGameScene1 } from '../scenes/levels/LegacyGameScene1';
 
 export const config = {
     type: Phaser.AUTO,
@@ -70,6 +71,7 @@ export const config = {
         Leaderboard,
         MissionComplete,
         PauseMenu,
-        TheZucc
+        TheZucc,
+        LegacyGameScene1
     ]
 };
