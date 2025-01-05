@@ -56,7 +56,9 @@ export class DestructibleBlock extends Phaser.Physics.Arcade.Sprite {
             this.scene.sound.play('block_break', { volume: 0.5 });
         }
         
-        // Add a small camera shake
-        this.scene.cameras.main.shake(100, 0.005);
+        // Add a small camera shake if camera exists
+        if (this.scene && this.scene.cameras && this.scene.cameras.main) {
+            this.scene.cameras.main.shake(100, 0.005);
+        }
     }
 }

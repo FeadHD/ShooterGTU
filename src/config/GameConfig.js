@@ -101,9 +101,9 @@ export const GameConfig = {
 
     // Antivirus wall configuration
     ANTIVIRUS_WALL: {
+        WIDTH: 32,
+        START_OFFSET: -64, // Start 2 tiles outside the map
         SPEED: 80,
-        START_X: -100,
-        WIDTH: 100,
         RESPAWN_DELAY: 5000, // milliseconds
         FLASH_DURATION: 500 // milliseconds for warning flash
     }
