@@ -21,6 +21,8 @@ import { Turret } from '../../prefabs/Turret';
 import { EnemyManager } from '../../modules/managers/EnemyManager';
 import { EffectsManager } from '../../modules/managers/EffectsManager';
 import { BulletPool } from '../../modules/managers/pools/BulletPool';
+import { AntivirusWall } from '../../prefabs/AntivirusWall';
+import GameConfig from '../../config/GameConfig';
 
 export class GameScene1 extends BaseScene {
     constructor() {
@@ -48,6 +50,9 @@ export class GameScene1 extends BaseScene {
         // Load spark particle for trampoline
         this.load.image('spark', 'assets/particles/spark.png');
 
+        // Load particle texture for lava wall
+        this.load.atlas('flares', 'assets/particles/flares.png', 'assets/particles/flares.json');
+
         // Load tileset with error handling
         this.load.on('loaderror', (file) => {
             console.error('Error loading file:', file.src);
@@ -64,7 +69,7 @@ export class GameScene1 extends BaseScene {
         // Initialize transition screen first
         this.transitionScreen = new TransitionScreen(this);
         
-        // Start with transition screen
+        // Start transition
         this.transitionScreen.start(() => {
             // After transition completes, continue with scene setup
             super.create();
@@ -449,6 +454,18 @@ export class GameScene1 extends BaseScene {
             // Store background music reference
             // Removed this.bgMusic = this.sound.add('bgMusic', { loop: true });
             // Removed this.bgMusic.play();
+
+            // Create antivirus wall (make sure it's created after physics world is set up)
+            this.antivirusWall = new AntivirusWall(this, 0); // Start at left edge
+            
+            // Set up collision between player and antivirus wall
+            this.physics.add.overlap(this.player, this.antivirusWall.wall, this.handleAntivirusCollision, null, this);
+
+            // Make sure wall is behind UI but in front of other elements
+            if (this.gameUI && this.gameUI.container) {
+                this.gameUI.container.setDepth(100);
+                this.antivirusWall.wall.setDepth(90);
+            }
         });
     }
 
@@ -843,6 +860,19 @@ export class GameScene1 extends BaseScene {
 
         // Set game as started
         this.gameStarted = true;
+        this.isGamePaused = false;
+        
+        // Delay antivirus wall start by 5 seconds
+        this.time.delayedCall(5000, () => {
+            if (this.antivirusWall && this.gameStarted && !this.isGamePaused) {
+                this.antivirusWall.start();
+                
+                // Add warning effect
+                this.cameras.main.flash(500, 0, 136, 255); // Flash blue
+                // You can add a warning sound here if you have one
+                // this.sound.play('warning');
+            }
+        });
     }
 
     hitEnemyWithBullet(bullet, enemySprite) {
@@ -896,6 +926,16 @@ export class GameScene1 extends BaseScene {
 
         super.update(time, delta);
         if (this.isGamePaused) return;
+
+        // Update antivirus wall
+        if (this.antivirusWall) {
+            this.antivirusWall.update(time, delta);
+            
+            // Check if player is too far behind the antivirus wall
+            if (this.player.x < this.antivirusWall.getX() - 20) {
+                this.handleAntivirusCollision();
+            }
+        }
 
         // Update bullet pool to check for out-of-bounds bullets
         this.bulletPool.update();
@@ -1234,11 +1274,78 @@ export class GameScene1 extends BaseScene {
     }
 
     handlePlayerDeath() {
+        if (this.isDying) return; // Prevent multiple death handlers
+        
+        this.isDying = true;
+        this.player.setVelocity(0, 0);
+        this.player.body.moves = false;
+        
+        // Stop and reset antivirus wall immediately
+        if (this.antivirusWall) {
+            this.antivirusWall.stop();
+            this.antivirusWall.reset(GameConfig.ANTIVIRUS_WALL.START_X);
+        }
+        
+        // Decrease lives using StateManager
         const lives = this.registry.get('lives');
         if (lives <= 0) {
             // Game Over - stop timer and transition
             this.gameUI.stopTimer();
             this.scene.start('GameOver');
+        } else {
+            // If no death animation, wait a moment then proceed
+            this.time.delayedCall(1000, () => {
+                this.handleRespawn();
+            });
+        }
+    }
+
+    handleRespawn() {
+        // Get spawn point from current scene if available
+        const currentScene = this.scene.get(this.scene.key);
+        const spawnPoint = currentScene.playerSpawnPoint || this.playerSpawnPoint;
+        
+        // Reset player position using spawn point
+        this.player.setPosition(spawnPoint.x, spawnPoint.y);
+        this.player.setVelocity(0, 0);
+        
+        // Reset player state
+        this.isDying = false;
+        this.player.body.moves = true;
+        this.player.setAlpha(1);
+        
+        // Reset player HP
+        this.registry.set('playerHP', 100);
+        this.gameUI.updateHP(100);
+        
+        // Start antivirus wall after delay
+        if (this.antivirusWall) {
+            this.time.delayedCall(GameConfig.ANTIVIRUS_WALL.RESPAWN_DELAY, () => {
+                if (this.gameStarted && !this.isGamePaused) {
+                    this.antivirusWall.start();
+                    this.cameras.main.flash(GameConfig.ANTIVIRUS_WALL.FLASH_DURATION, 0, 136, 255);
+                }
+            });
+        }
+        
+        // Add temporary invulnerability
+        this.invulnerableUntil = this.time.now + 2000; // 2 seconds of invulnerability
+        
+        // Flash effect to show invulnerability
+        this.tweens.add({
+            targets: this.player,
+            alpha: 0.5,
+            duration: 200,
+            yoyo: true,
+            repeat: 4,
+            onComplete: () => {
+                this.player.setAlpha(1);
+            }
+        });
+
+        // Reset player animations if needed
+        if (this.player.play) {
+            this.player.play('character_Idle');
         }
     }
 
@@ -1332,6 +1439,13 @@ export class GameScene1 extends BaseScene {
         const ub = (((x2 - x1) * (y1 - y3)) - ((y2 - y1) * (x1 - x3))) / denominator;
 
         return (ua >= 0 && ua <= 1) && (ub >= 0 && ub <= 1);
+    }
+
+    handleAntivirusCollision() {
+        // Instant death on antivirus collision
+        if (!this.player.isDying) {
+            this.player.die();
+        }
     }
 
     cleanup() {

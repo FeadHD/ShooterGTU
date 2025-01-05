@@ -97,6 +97,15 @@ export const GameConfig = {
             MIN_HEIGHT: 6,
             OFFSET_MULTIPLIER: 2
         }
+    },
+
+    // Antivirus wall configuration
+    ANTIVIRUS_WALL: {
+        SPEED: 80,
+        START_X: -100,
+        WIDTH: 100,
+        RESPAWN_DELAY: 5000, // milliseconds
+        FLASH_DURATION: 500 // milliseconds for warning flash
     }
 };
 
