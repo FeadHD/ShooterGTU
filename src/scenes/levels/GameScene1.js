@@ -18,6 +18,8 @@ import { DestructibleBlock } from '../../prefabs/DestructibleBlock';
 import { FallingDestructibleBlock } from '../../prefabs/FallingDestructibleBlock';
 import { DisappearingPlatform } from '../../prefabs/DisappearingPlatform';
 import { Turret } from '../../prefabs/Turret';
+import { EnemyManager } from '../../modules/managers/EnemyManager';
+import { EffectsManager } from '../../modules/managers/EffectsManager';
 
 export class GameScene1 extends BaseScene {
     constructor() {
@@ -455,6 +457,13 @@ export class GameScene1 extends BaseScene {
         this.collisionManager = new CollisionManager(this);
         this.gameUI = new GameUI(this);
         this.trapManager = new TrapManager(this);
+        this.enemyManager = new EnemyManager(this);
+        this.effectsManager = new EffectsManager(this);
+
+        // Create physics group for enemies if not exists
+        if (!this.enemies) {
+            this.enemies = this.physics.add.group();
+        }
 
         // Show the start message
         if (this.gameUI) {
@@ -478,6 +487,7 @@ export class GameScene1 extends BaseScene {
             if (spawnHeight !== null) {
                 const warrior = new MeleeWarrior(this, x, spawnHeight);
                 if (warrior && warrior.sprite) {
+                    // Add to physics group
                     this.enemies.add(warrior.sprite);
                     warrior.sprite.setData('type', 'warrior');
                     warrior.sprite.setData('enemy', warrior);

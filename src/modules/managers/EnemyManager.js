@@ -60,7 +60,7 @@ export class EnemyManager {
             
             // Award points
             const points = enemyData.instance.isBoss ? 50 : 10;
-            this.scene.stateManager.increment('score', points);
+            this.scene.gameState.increment('score', points);
             
             this.checkLevelComplete();
         }

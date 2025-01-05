@@ -1,7 +1,12 @@
-import { StateManager } from '../managers/StateManager';
+import { GameStateManager } from '../managers/state/GameStateManager';
+import { PersistenceManager } from '../managers/state/PersistenceManager';
+import { SoundManager } from '../managers/audio/SoundManager';
+import { MusicManager } from '../managers/audio/MusicManager';
+import { EntityManager } from '../managers/entities/EntityManager';
+import { EnemyManager } from '../managers/entities/EnemyManager';
+import { HazardManager } from '../managers/entities/HazardManager';
 import { AnimationManager } from '../managers/AnimationManager';
 import { EffectsManager } from '../managers/EffectsManager';
-import { EnemyManager } from '../managers/EnemyManager';
 import { SceneBoundaryManager } from '../managers/BoundaryManager';
 import { DebugSystem } from '../../_Debug/DebugSystem';
 import { container } from './ServiceContainer';
@@ -9,32 +14,54 @@ import { eventBus } from '../events/EventBus';
 
 export class ManagerFactory {
     static createManagers(scene) {
-        // Register scene and eventBus in the container
+        // Register core dependencies
         container.register('scene', scene);
         container.register('eventBus', eventBus);
         
-        // Create and register managers
-        const stateManager = new StateManager(scene);
-        const animationManager = new AnimationManager(scene);
-        const effectsManager = new EffectsManager(scene);
-        const enemyManager = new EnemyManager(scene);
-        const boundaryManager = new SceneBoundaryManager(scene);
-        const debugSystem = new DebugSystem(scene);
+        // Create and register state managers
+        const gameState = new GameStateManager(scene);
+        const persistence = new PersistenceManager(gameState);
         
-        container.register('stateManager', stateManager);
-        container.register('animationManager', animationManager);
-        container.register('effectsManager', effectsManager);
-        container.register('enemyManager', enemyManager);
-        container.register('boundaryManager', boundaryManager);
-        container.register('debugSystem', debugSystem);
+        // Create and register audio managers
+        const sound = new SoundManager(scene);
+        const music = new MusicManager(scene);
+        
+        // Create and register entity managers
+        const entityManager = new EntityManager(scene);
+        const enemies = new EnemyManager(scene);
+        const hazards = new HazardManager(scene);
+        
+        // Create and register other managers
+        const animations = new AnimationManager(scene);
+        const effects = new EffectsManager(scene);
+        const boundaries = new SceneBoundaryManager(scene);
+        const debug = new DebugSystem(scene);
+        
+        // Register all managers
+        container.register('gameState', gameState);
+        container.register('persistence', persistence);
+        container.register('sound', sound);
+        container.register('music', music);
+        container.register('entityManager', entityManager);
+        container.register('enemies', enemies);
+        container.register('hazards', hazards);
+        container.register('animations', animations);
+        container.register('effects', effects);
+        container.register('boundaries', boundaries);
+        container.register('debug', debug);
         
         return {
-            stateManager,
-            animationManager,
-            effectsManager,
-            enemyManager,
-            boundaryManager,
-            debugSystem
+            gameState,
+            persistence,
+            sound,
+            music,
+            entityManager,
+            enemies,
+            hazards,
+            animations,
+            effects,
+            boundaries,
+            debug
         };
     }
 }

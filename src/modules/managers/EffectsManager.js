@@ -51,7 +51,9 @@ export class EffectsManager {
                 scale: 0.1,
                 duration: 300,
                 ease: 'Power2',
-                onComplete: () => particle.destroy()
+                onComplete: () => {
+                    particle.destroy();
+                }
             });
         }
     }
@@ -63,9 +65,9 @@ export class EffectsManager {
         this.playSound('explosion');
     }
 
-    playSound(soundKey) {
-        if (this.sounds[soundKey]) {
-            this.sounds[soundKey].play();
+    playSound(key) {
+        if (this.sounds[key]) {
+            this.sounds[key].play();
         }
     }
 
@@ -83,9 +85,19 @@ export class EffectsManager {
     }
 
     cleanup() {
+        // Clean up sounds
+        Object.values(this.sounds).forEach(sound => {
+            if (sound) {
+                sound.stop();
+                sound.destroy();
+            }
+        });
+        this.sounds = {};
+
+        // Clean up particles
         if (this.hitParticles) {
             this.hitParticles.destroy();
+            this.hitParticles = null;
         }
-        Object.values(this.sounds).forEach(sound => sound.destroy());
     }
 }

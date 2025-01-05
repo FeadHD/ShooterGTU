@@ -1,10 +1,14 @@
 import { Scene } from 'phaser';
 import { TextStyleManager } from '../../modules/managers/TextStyleManager';
 import { eventBus } from '../../modules/events/EventBus';
+import { GameConfig } from '../../config/GameConfig';
 
 export class GameUI {
     constructor(scene) {
         this.scene = scene;
+        
+        // Initialize TextStyleManager
+        this.textStyleManager = new TextStyleManager(scene);
         
         // Create main UI container
         this.container = this.scene.add.container(0, 0);
@@ -23,7 +27,7 @@ export class GameUI {
         this.barWidth = 200;
         this.barHeight = 10;
         this.barPadding = 5;  // Padding between bars
-        this.maxHealth = 100;  // Set max health to 100
+        this.maxHealth = GameConfig.PLAYER.INITIAL_HP;  // Use config value
         
         // Set up UI elements
         this.setupUI();
@@ -132,54 +136,24 @@ export class GameUI {
         }
 
         // Create score text
-        this.scoreText = TextStyleManager.createText(
-            this.scene,
-            LEFT_MARGIN,
-            TOP_MARGIN,
-            'SCORE: 0',
-            'scoreUI'
-        );
+        this.scoreText = this.scene.add.text(LEFT_MARGIN, TOP_MARGIN, 'Score: ' + this.scene.registry.get('score'), this.textStyleManager.styles.score);
         this.container.add(this.scoreText);
 
         // Create lives text
-        this.livesText = TextStyleManager.createText(
-            this.scene,
-            LEFT_MARGIN,
-            TOP_MARGIN + VERTICAL_SPACING,
-            'LIVES: 3',
-            'livesUI'
-        );
+        this.livesText = this.scene.add.text(LEFT_MARGIN, TOP_MARGIN + VERTICAL_SPACING, 'Lives: ' + this.scene.registry.get('lives'), this.textStyleManager.styles.lives);
         this.container.add(this.livesText);
 
         // Create HP text
-        this.hpText = TextStyleManager.createText(
-            this.scene,
-            LEFT_MARGIN,
-            TOP_MARGIN + VERTICAL_SPACING * 2,
-            'HP: 100',
-            'hpUI'
-        );
+        this.hpText = this.scene.add.text(LEFT_MARGIN, TOP_MARGIN + VERTICAL_SPACING * 2, 'HP: ' + this.scene.registry.get('playerHP'), this.textStyleManager.styles.hp);
         this.container.add(this.hpText);
 
         // Create timer text
-        this.timerText = TextStyleManager.createText(
-            this.scene,
-            LEFT_MARGIN,
-            TOP_MARGIN + VERTICAL_SPACING * 3,
-            'TIME: 00:00',
-            'timerUI'
-        );
+        this.timerText = this.scene.add.text(LEFT_MARGIN, TOP_MARGIN + VERTICAL_SPACING * 3, 'Time: 00:00', this.textStyleManager.styles.timer);
         this.container.add(this.timerText);
 
         // Create bitcoins text
-        this.bitcoinsText = TextStyleManager.createText(
-            this.scene,
-            LEFT_MARGIN,
-            TOP_MARGIN + VERTICAL_SPACING * 4,
-            'BITCOINS: 0',
-            'bitcoinUI'
-        );
-        this.container.add(this.bitcoinsText);
+        this.bitcoinText = this.scene.add.text(LEFT_MARGIN, TOP_MARGIN + VERTICAL_SPACING * 4, 'Bitcoins: ' + this.scene.registry.get('bitcoins'), this.textStyleManager.styles.bitcoin);
+        this.container.add(this.bitcoinText);
 
         // Get initial values
         const currentStamina = this.scene.registry.get('stamina') || 100;
@@ -248,18 +222,12 @@ export class GameUI {
         }
 
         // Create FPS counter (hidden initially)
-        this.fpsText = TextStyleManager.createText(
-            this.scene,
-            LEFT_MARGIN,
-            height - 30,
-            'FPS: 60',
-            'gameUI'
-        );
+        this.fpsText = this.scene.add.text(LEFT_MARGIN, height - 30, 'FPS: 60', this.textStyleManager.styles.fps);
         this.fpsText.setVisible(false);
         this.container.add(this.fpsText);
 
         // Set initial alpha to 0 for fade-in effect
-        [this.scoreText, this.livesText, this.hpText, this.timerText, this.bitcoinsText,
+        [this.scoreText, this.livesText, this.hpText, this.timerText, this.bitcoinText,
          this.staminaBarBackground, this.staminaBarFill,
          this.healthBarBackground, this.healthBarFill].forEach(element => {
             if (element) element.setAlpha(0);
@@ -345,7 +313,7 @@ export class GameUI {
         const duration = 500;
         const ease = 'Power1';
         
-        [this.scoreText, this.livesText, this.hpText, this.timerText, this.bitcoinsText,
+        [this.scoreText, this.livesText, this.hpText, this.timerText, this.bitcoinText,
          this.staminaBarBackground, this.staminaBarFill,
          this.healthBarBackground, this.healthBarFill].forEach(element => {
             if (element) {
@@ -376,13 +344,13 @@ export class GameUI {
 
     updateScore(score) {
         if (this.scoreText) {
-            this.scoreText.setText('SCORE: ' + score);
+            this.scoreText.setText('Score: ' + score);
         }
     }
 
     updateLives(lives) {
         if (this.livesText) {
-            this.livesText.setText('LIVES: ' + lives);
+            this.livesText.setText('Lives: ' + lives);
         }
     }
 
@@ -395,12 +363,12 @@ export class GameUI {
         
         const minutes = Math.floor(this.elapsedSeconds / 60);
         const seconds = this.elapsedSeconds % 60;
-        this.timerText.setText(`TIME: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+        this.timerText.setText(`Time: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
     }
 
     updateBitcoins(bitcoins) {
-        if (this.bitcoinsText) {
-            this.bitcoinsText.setText('BITCOINS: ' + bitcoins);
+        if (this.bitcoinText) {
+            this.bitcoinText.setText('Bitcoins: ' + bitcoins);
         }
     }
 
@@ -428,12 +396,11 @@ export class GameUI {
         this.startMessageBg.setVisible(false);
         
         // Create text
-        this.startMessage = TextStyleManager.createText(
-            this.scene,
+        this.startMessage = this.scene.add.text(
             width - 120, // Same x as background
             height - 30, // Same y as background
             'Skip Intro (Space)',
-            'walletUI'
+            this.textStyleManager.styles.wallet
         );
         
         // Style the text
@@ -479,10 +446,22 @@ export class GameUI {
     }
 
     handleRegistryChange(parent, key, value) {
-        if (key === 'playerHP') {
-            this.updateHealthBar(value);
-        } else if (key === 'stamina') {
-            this.updateStaminaBar(value);
+        switch (key) {
+            case 'score':
+                this.scoreText.setText('Score: ' + value);
+                break;
+            case 'lives':
+                this.livesText.setText('Lives: ' + value);
+                break;
+            case 'playerHP':
+                this.updateHealthBar(value);
+                break;
+            case 'stamina':
+                this.updateStaminaBar(value);
+                break;
+            case 'bitcoins':
+                this.bitcoinText.setText('Bitcoins: ' + value);
+                break;
         }
     }
 
@@ -521,7 +500,7 @@ export class GameUI {
             { text: this.livesText, finalPos: { x: 25, y: 50 } },
             { text: this.hpText, finalPos: { x: 25, y: 80 } },
             { text: this.timerText, finalPos: { x: 25, y: 110 } },
-            { text: this.bitcoinsText, finalPos: { x: 25, y: 140 } }
+            { text: this.bitcoinText, finalPos: { x: 25, y: 140 } }
         ];
 
         let delay = 0;

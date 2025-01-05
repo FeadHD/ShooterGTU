@@ -33,18 +33,24 @@ export class BaseScene extends Scene {
         const managers = ManagerFactory.createManagers(this);
         
         // Assign managers to scene
-        this.stateManager = managers.stateManager;
-        this.animationManager = managers.animationManager;
-        this.effectsManager = managers.effectsManager;
-        this.enemyManager = managers.enemyManager;
-        this.boundaryManager = managers.boundaryManager;
-        this.debugSystem = managers.debugSystem;
+        this.gameState = managers.gameState;
+        this.persistence = managers.persistence;
+        this.soundManager = managers.sound;
+        this.musicManager = managers.music;
+        this.entityManager = managers.entityManager;
+        this.enemies = managers.enemies;
+        this.hazards = managers.hazards;
+        this.animations = managers.animations;
+        this.effects = managers.effects;
+        this.boundaries = managers.boundaries;
+        this.debug = managers.debug;
 
         // Initialize background music with volume from registry
-        if (this.sound.get('bgMusic')) {
-            const musicVolume = this.registry.get('musicVolume') || 1;
-            this.sound.get('bgMusic').setVolume(musicVolume);
-        }
+        const bgMusic = this.sound.add('bgMusic', { loop: true });
+        const musicVolume = this.registry.get('musicVolume') || 1;
+        bgMusic.setVolume(musicVolume);
+        this.musicManager.setCurrentMusic(bgMusic);
+        this.musicManager.play();
 
         this.input.keyboard.enabled = true;  // Ensure keyboard is enabled on scene start
 
@@ -67,8 +73,8 @@ export class BaseScene extends Scene {
         };
 
         // Initialize game state and animations
-        this.stateManager.initializeGameState();
-        this.animationManager.createAllAnimations();
+        this.gameState.initializeGameState();
+        this.animations.createAllAnimations();
 
         // Create bullet group with physics
         this.bullets = this.physics.add.group({
@@ -86,7 +92,7 @@ export class BaseScene extends Scene {
 
         // Create game elements
         this.createPlayer(width);
-        this.boundaryManager.createBoundaries(this.player);
+        this.boundaries.createBoundaries(this.player);
 
         // Create UI
         this.createUI();
@@ -98,7 +104,7 @@ export class BaseScene extends Scene {
         this.events.on('sleep', this.cleanup, this);
 
         // Initialize debug system
-        this.debugSystem.initialize();
+        this.debug.initialize();
     }
 
     createPlayer(width) {
@@ -125,12 +131,12 @@ export class BaseScene extends Scene {
     }
 
     hitEnemyWithBullet(bullet, enemySprite) {
-        this.enemyManager.handleBulletHit(bullet, enemySprite);
+        this.enemies.handleBulletHit(bullet, enemySprite);
     }
 
     hitEnemy(player, enemy) {
         // Don't process damage if player is already dying or dead
-        if (player.isDying || this.stateManager.get('playerHP') <= 0) {
+        if (player.isDying || this.gameState.get('playerHP') <= 0) {
             if (!this.isDying) {
                 this.handlePlayerDeath();
             }
@@ -138,21 +144,21 @@ export class BaseScene extends Scene {
         }
         
         // Get current HP before damage
-        const currentHP = this.stateManager.get('playerHP');
+        const currentHP = this.gameState.get('playerHP');
         
         // Get enemy damage amount
         const damage = enemy.enemy ? enemy.enemy.damageAmount : 25;
         
         // Calculate new HP but don't let it go below 0
         const newHP = Math.max(0, currentHP - damage);
-        this.stateManager.set('playerHP', newHP);
+        this.gameState.set('playerHP', newHP);
         this.gameUI.updateHP(newHP);
 
         // Set invulnerability period (2 seconds for all enemies)
         this.invulnerableUntil = this.time.now + 2000;
         
         // Visual feedback
-        this.effectsManager.createFlashEffect(player);
+        this.effects.createFlashEffect(player);
         
         // Check for player death
         if (newHP <= 0 && !this.isDying) {
@@ -168,7 +174,7 @@ export class BaseScene extends Scene {
         this.player.body.moves = false;
         
         // Decrease lives using StateManager
-        const lives = this.stateManager.decrement('lives');
+        const lives = this.gameState.decrement('lives');
         this.gameUI.updateLives(lives);
     
         // Play death animation if it exists
@@ -176,7 +182,7 @@ export class BaseScene extends Scene {
             this.player.play('character_Death');
             this.player.once('animationcomplete', () => {
                 if (lives <= 0) {
-                    this.stateManager.handleGameOver();
+                    this.gameState.handleGameOver();
                 } else {
                     this.handleRespawn();
                 }
@@ -185,7 +191,7 @@ export class BaseScene extends Scene {
             // If no death animation, wait a moment then proceed
             this.time.delayedCall(1000, () => {
                 if (lives <= 0) {
-                    this.stateManager.handleGameOver();
+                    this.gameState.handleGameOver();
                 } else {
                     this.handleRespawn();
                 }
@@ -208,7 +214,7 @@ export class BaseScene extends Scene {
         this.player.setAlpha(1);
         
         // Reset player HP
-        this.stateManager.set('playerHP', 100);
+        this.gameState.set('playerHP', 100);
         this.gameUI.updateHP(100);
         
         // Add temporary invulnerability
@@ -237,8 +243,8 @@ export class BaseScene extends Scene {
             this.player.update();
         }
 
-        if (this.debugSystem) {
-            this.debugSystem.update();
+        if (this.debug) {
+            this.debug.update();
         }
 
         // Check for space key press during game over
@@ -277,11 +283,17 @@ export class BaseScene extends Scene {
         }
 
         // Clean up managers
-        if (this.stateManager) this.stateManager = null;
-        if (this.animationManager) this.animationManager = null;
-        if (this.effectsManager) this.effectsManager = null;
-        if (this.enemyManager) this.enemyManager = null;
-        if (this.debugSystem) this.debugSystem = null;
+        if (this.gameState) this.gameState = null;
+        if (this.persistence) this.persistence = null;
+        if (this.soundManager) this.soundManager = null;
+        if (this.musicManager) this.musicManager = null;
+        if (this.entityManager) this.entityManager = null;
+        if (this.enemies) this.enemies = null;
+        if (this.hazards) this.hazards = null;
+        if (this.animations) this.animations = null;
+        if (this.effects) this.effects = null;
+        if (this.boundaries) this.boundaries = null;
+        if (this.debug) this.debug = null;
 
         // Clean up input
         if (this.input) {

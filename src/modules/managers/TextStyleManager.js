@@ -1,4 +1,21 @@
 export class TextStyleManager {
+    constructor(scene) {
+        this.scene = scene;
+        this.styles = this.initializeStyles();
+    }
+
+    initializeStyles() {
+        return {
+            score: { ...TextStyleManager.baseStyles.retro, fontSize: '24px', fill: TextStyleManager.colors.score },
+            lives: { ...TextStyleManager.baseStyles.retro, fontSize: '24px', fill: TextStyleManager.colors.lives },
+            hp: { ...TextStyleManager.baseStyles.retro, fontSize: '24px', fill: TextStyleManager.colors.hp },
+            timer: { ...TextStyleManager.baseStyles.retro, fontSize: '24px', fill: TextStyleManager.colors.timer },
+            bitcoin: { ...TextStyleManager.baseStyles.retro, fontSize: '24px', fill: TextStyleManager.colors.bitcoin },
+            fps: { ...TextStyleManager.baseStyles.retro, fontSize: '16px', fill: TextStyleManager.colors.neutral },
+            wallet: { ...TextStyleManager.baseStyles.retro, fontSize: '20px', fill: TextStyleManager.colors.bitcoin }
+        };
+    }
+
     // Base styles that other styles can extend
     static get baseStyles() {
         return {
