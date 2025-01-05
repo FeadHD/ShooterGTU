@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { PlayerController } from '../modules/controls/PlayerController';
+import { eventBus } from '../modules/events/EventBus';
 
 export class Player extends Phaser.Physics.Arcade.Sprite {
     constructor(scene, x, y) {
@@ -112,12 +113,18 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.lastDamageTaken = 25;
         this.playerHP = Math.max(0, this.playerHP - this.lastDamageTaken);
         this.scene.registry.set('playerHP', this.playerHP);
+        
+        // Emit HP change event
+        eventBus.emit('playerHPChanged', this.playerHP);
 
         if (this.playerHP <= 0) {
             this.die();
-        } else {
-            this.makeInvulnerable();
+            return;
         }
+
+        // Set invulnerability period
+        this.invulnerableUntil = this.scene.time.now + 2000;
+        this.makeInvulnerable();
     }
 
     makeInvulnerable() {
@@ -212,6 +219,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         // Reset HP to exactly 100
         this.playerHP = 100;
         this.scene.registry.set('playerHP', this.playerHP);
+        eventBus.emit('playerHPChanged', this.playerHP);
         
         // Make player temporarily invulnerable
         this.makeInvulnerable();

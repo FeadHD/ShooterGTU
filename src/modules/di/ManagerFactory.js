@@ -5,11 +5,13 @@ import { EnemyManager } from '../managers/EnemyManager';
 import { SceneBoundaryManager } from '../managers/BoundaryManager';
 import { DebugSystem } from '../../_Debug/DebugSystem';
 import { container } from './ServiceContainer';
+import { eventBus } from '../events/EventBus';
 
 export class ManagerFactory {
     static createManagers(scene) {
-        // Register scene in the container
+        // Register scene and eventBus in the container
         container.register('scene', scene);
+        container.register('eventBus', eventBus);
         
         // Create and register managers
         const stateManager = new StateManager(scene);

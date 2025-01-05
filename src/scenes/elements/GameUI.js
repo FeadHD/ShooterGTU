@@ -1,5 +1,6 @@
 import { Scene } from 'phaser';
 import { TextStyleManager } from '../../modules/managers/TextStyleManager';
+import { eventBus } from '../../modules/events/EventBus';
 
 export class GameUI {
     constructor(scene) {
@@ -43,6 +44,11 @@ export class GameUI {
         
         // Listen for new objects
         this.scene.events.on('addedtoscene', this.handleNewObject, this);
+        
+        // Listen for HP changes
+        eventBus.on('playerHPChanged', (hp) => {
+            this.updateHP(hp);
+        });
         
         // Debug flag
         this.debugMode = true;
