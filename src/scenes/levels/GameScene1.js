@@ -86,6 +86,20 @@ export class GameScene1 extends BaseScene {
             this.registry.set('stamina', 100); // Reset stamina to full
             this.registry.set('bitcoins', 0);
             
+            // Initialize camera manager
+            this.cameraManager = new CameraManager(this);
+            this.cameraManager.init(this.player);
+            this.cameraManager.playIntroSequence(this.player);
+
+            // Add space key binding to skip intro
+            this.skipKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+            this.skipKey.on('down', () => {
+                if (!this.gameStarted && this.cameraManager && this.cameraManager.isIntroPlaying) {
+                    this.cameraManager.stopIntroSequence();
+                    this.startGame();
+                }
+            });
+            
             // Start timer and show UI
             this.gameUI.startTimer();
             this.gameUI.animateUIElements();
@@ -228,11 +242,6 @@ export class GameScene1 extends BaseScene {
             // Set up the main game camera
             this.cameras.main.setZoom(1.5);
             this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
-
-            // Initialize camera manager
-            this.cameraManager = new CameraManager(this);
-            this.cameraManager.init(this.player);
-            this.cameraManager.playIntroSequence(this.player);
 
             // Initialize collision manager
             this.collisionManager = new CollisionManager(this);
@@ -471,7 +480,6 @@ export class GameScene1 extends BaseScene {
 
     setupRestOfScene() {
         // Initialize managers and UI
-        this.cameraManager = new CameraManager(this);
         this.collisionManager = new CollisionManager(this);
         this.gameUI = new GameUI(this);
         this.trapManager = new TrapManager(this);
