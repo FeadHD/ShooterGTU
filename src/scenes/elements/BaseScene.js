@@ -1,16 +1,14 @@
 // @ai-do-not-touch
 
 import { Scene } from 'phaser';
+import { container } from '../../modules/di/ServiceContainer';
+import { ManagerFactory } from '../../modules/di/ManagerFactory';
 import { GameUI } from './GameUI';
 import { Bullet } from '../../prefabs/Bullet';
 import { ParallaxBackground } from '../../prefabs/ParallaxBackground';
 import { Player } from '../../prefabs/Player';
-import { AnimationManager } from '../../modules/managers/AnimationManager';
-import { StateManager } from '../../modules/managers/StateManager';
 import { DebugSystem } from '../../_Debug/DebugSystem';
-import { SceneBoundaryManager } from '../../modules/managers/BoundaryManager';
-import { EffectsManager } from '../../modules/managers/EffectsManager';
-import { EnemyManager } from '../../modules/managers/EnemyManager';
+
 export class BaseScene extends Scene {
     preload() {
         // Load character spritesheet if not already loaded
@@ -30,13 +28,16 @@ export class BaseScene extends Scene {
         const width = this.cameras.main.width;
         const height = this.cameras.main.height;
 
-        // Initialize managers
-        this.stateManager = new StateManager(this);
-        this.animationManager = new AnimationManager(this);
-        this.debugSystem = new DebugSystem(this);
-        this.boundaryManager = new SceneBoundaryManager(this);
-        this.effectsManager = new EffectsManager(this);
-        this.enemyManager = new EnemyManager(this);
+        // Initialize managers using factory
+        const managers = ManagerFactory.createManagers(this);
+        
+        // Assign managers to scene
+        this.stateManager = managers.stateManager;
+        this.animationManager = managers.animationManager;
+        this.effectsManager = managers.effectsManager;
+        this.enemyManager = managers.enemyManager;
+        this.boundaryManager = managers.boundaryManager;
+        this.debugSystem = managers.debugSystem;
 
         // Initialize background music with volume from registry
         if (this.sound.get('bgMusic')) {
@@ -86,26 +87,8 @@ export class BaseScene extends Scene {
         this.createPlayer(width);
         this.boundaryManager.createBoundaries(this.player);
 
-        // Ensure font is loaded before creating UI
-        if (typeof WebFont !== 'undefined') {
-            WebFont.load({
-                custom: {
-                    families: ['Retronoid'],
-                    urls: ['assets/fonts/fonts.css']
-                },
-                active: () => {
-                    console.log('Font loaded in BaseScene, creating UI');
-                    this.createUI();
-                },
-                inactive: () => {
-                    console.warn('Font failed to load in BaseScene, using fallback');
-                    this.createUI();
-                }
-            });
-        } else {
-            console.warn('WebFont not available in BaseScene, creating UI anyway');
-            this.createUI();
-        }
+        // Create UI
+        this.createUI();
         
         // Listen for scene events
         this.events.on('wake', this.onSceneWake, this);
@@ -329,4 +312,3 @@ export class BaseScene extends Scene {
         return this.groundTop - 16;
     }
 }
-

@@ -1,0 +1,12 @@
+/home/kdsm/TKU/DECEMBER202024/ShooterGTU/scripts/../src/modules/managers/TrapManager.js
+/home/kdsm/TKU/DECEMBER202024/ShooterGTU/scripts/../src/modules/managers/StateManager.js
+/home/kdsm/TKU/DECEMBER202024/ShooterGTU/scripts/../src/modules/managers/TutorialManager.js
+/home/kdsm/TKU/DECEMBER202024/ShooterGTU/scripts/../src/modules/managers/AnimationManager.js
+/home/kdsm/TKU/DECEMBER202024/ShooterGTU/scripts/../src/modules/managers/CameraManager.js
+/home/kdsm/TKU/DECEMBER202024/ShooterGTU/scripts/../src/modules/managers/EffectsManager.js
+/home/kdsm/TKU/DECEMBER202024/ShooterGTU/scripts/../src/modules/managers/MusicManager.js
+/home/kdsm/TKU/DECEMBER202024/ShooterGTU/scripts/../src/modules/managers/CollisionManager.js
+/home/kdsm/TKU/DECEMBER202024/ShooterGTU/scripts/../src/modules/managers/TextStyleManager.js
+/home/kdsm/TKU/DECEMBER202024/ShooterGTU/scripts/../src/modules/managers/EnemyManager.js
+/home/kdsm/TKU/DECEMBER202024/ShooterGTU/scripts/../src/modules/managers/AudioManager.js
+/home/kdsm/TKU/DECEMBER202024/ShooterGTU/scripts/../src/modules/managers/BoundaryManager.js
