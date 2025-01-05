@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { PlayerController } from '../modules/controls/PlayerController';
 import { eventBus } from '../modules/events/EventBus';
+import { GameConfig } from '../config/GameConfig';
 
 export class Player extends Phaser.Physics.Arcade.Sprite {
     constructor(scene, x, y) {
@@ -16,7 +17,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.isDying = false;
         this.invulnerableUntil = 0;
         this.movementSpeed = 300;
-        this.playerHP = scene.registry.get('playerHP') || 100;
+        this.playerHP = scene.registry.get('playerHP') || GameConfig.PLAYER.INITIAL_HP;
         this.lastDamageTaken = 0;
         
         // Stamina mechanics
@@ -109,8 +110,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         // Check invulnerability
         if (this.scene.time.now < this.invulnerableUntil) return;
 
-        // Take exactly 25 damage
-        this.lastDamageTaken = 25;
+        // Take damage
+        this.lastDamageTaken = GameConfig.PLAYER.DAMAGE;
         this.playerHP = Math.max(0, this.playerHP - this.lastDamageTaken);
         this.scene.registry.set('playerHP', this.playerHP);
         
@@ -123,7 +124,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         }
 
         // Set invulnerability period
-        this.invulnerableUntil = this.scene.time.now + 2000;
+        this.invulnerableUntil = this.scene.time.now + GameConfig.PLAYER.INVULNERABLE_DURATION;
         this.makeInvulnerable();
     }
 
@@ -216,8 +217,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.setAlpha(1);
         this.controller.enabled = true;  // Re-enable controls
         
-        // Reset HP to exactly 100
-        this.playerHP = 100;
+        // Reset HP
+        this.playerHP = GameConfig.PLAYER.INITIAL_HP;
         this.scene.registry.set('playerHP', this.playerHP);
         eventBus.emit('playerHPChanged', this.playerHP);
         

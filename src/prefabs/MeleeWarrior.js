@@ -1,16 +1,17 @@
 import Enemy from './Enemy';
 import { PlatformPathFinder } from '../modules/pathfinding/PathFinder';
+import { GameConfig } from '../config/GameConfig';
 
 class MeleeWarrior extends Enemy {
     constructor(scene, x, y, config = {}) {
-        const maxHealth = config.maxHealth || 3;
+        const maxHealth = config.maxHealth || GameConfig.ENEMIES.MELEE_WARRIOR.HEALTH;
         super(scene, x, y, {
             ...config,
             spriteKey: 'enemymeleewarrior_IDLE',
             maxHealth: maxHealth,
             currentHealth: maxHealth,
             health: maxHealth,
-            damage: config.damage || 30,
+            damage: config.damage || GameConfig.ENEMIES.MELEE_WARRIOR.DAMAGE,
             type: 'ground'
         });
 
@@ -20,10 +21,10 @@ class MeleeWarrior extends Enemy {
         this.health = maxHealth;
 
         // Combat properties
-        this.damage = config.damage || 30;
+        this.damage = config.damage || GameConfig.ENEMIES.MELEE_WARRIOR.DAMAGE;
 
         // Movement properties
-        this.speed = config.speed || 150;
+        this.speed = config.speed || GameConfig.ENEMIES.MELEE_WARRIOR.SPEED;
         this.detectionRange = config.detectionRange || 300;
         this.attackRange = config.attackRange || 50;
         this.attackCooldown = config.attackCooldown || 1000;

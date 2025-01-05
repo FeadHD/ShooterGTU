@@ -8,14 +8,15 @@ import { Bullet } from '../../prefabs/Bullet';
 import { ParallaxBackground } from '../../prefabs/ParallaxBackground';
 import { Player } from '../../prefabs/Player';
 import { DebugSystem } from '../../_Debug/DebugSystem';
+import { GameConfig, getGroundTop, getSpawnHeight } from '../../config/GameConfig';
 
 export class BaseScene extends Scene {
     preload() {
         // Load character spritesheet if not already loaded
         if (!this.textures.exists('character')) {
             this.load.spritesheet('character', 'assets/character.png', {
-                frameWidth: 24,
-                frameHeight: 24
+                frameWidth: GameConfig.SPRITES.CHARACTER.WIDTH,
+                frameHeight: GameConfig.SPRITES.CHARACTER.HEIGHT
             });
         }
         
@@ -57,12 +58,12 @@ export class BaseScene extends Scene {
         this.platforms = this.physics.add.staticGroup();
         
         // Store reference for spawning entities
-        this.groundTop = height - 64;
+        this.groundTop = getGroundTop(height);
         
         // Default spawn point (can be overridden by child scenes)
         this.playerSpawnPoint = {
-            x: width * 0.1,
-            y: this.getSpawnHeight()  // Use the method
+            x: width * GameConfig.PLAYER.SPAWN_OFFSET_X,
+            y: getSpawnHeight(this.groundTop)
         };
 
         // Initialize game state and animations
@@ -102,7 +103,7 @@ export class BaseScene extends Scene {
 
     createPlayer(width) {
         // Create player using the Player prefab
-        this.player = new Player(this, width * 0.1, this.playerSpawnPoint.y);
+        this.player = new Player(this, width * GameConfig.PLAYER.SPAWN_OFFSET_X, this.playerSpawnPoint.y);
         
         // Add collision with platforms
         this.physics.add.collider(this.player, this.platforms);

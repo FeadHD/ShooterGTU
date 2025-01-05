@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
+import { GameConfig } from '../config/GameConfig';
 
 class Trap extends Phaser.GameObjects.Container {
-    constructor(scene, x, y) {
+    constructor(scene, x, y, config = {}) {
         super(scene, x, y);
         
         // Add to scene and enable physics
@@ -37,7 +38,10 @@ class Trap extends Phaser.GameObjects.Container {
             config: {
                 x: 0,
                 y: 0,
-                speed: { min: 20, max: 50 },
+                speed: { 
+                    min: GameConfig.TRAPS.PARTICLES.SPEED.MIN, 
+                    max: GameConfig.TRAPS.PARTICLES.SPEED.MAX 
+                },
                 angle: { min: 0, max: 360 },
                 scale: { start: 0.2, end: 0 },
                 blendMode: 'ADD',
@@ -55,7 +59,7 @@ class Trap extends Phaser.GameObjects.Container {
         // Initialize damage properties
         this.lastDamageTime = 0;
         this.damageInterval = 1000; // 1 second in milliseconds
-        this.damageAmount = 5;
+        this.damageAmount = config.damage || GameConfig.TRAPS.DAMAGE;
     }
 
     damagePlayer(player) {
