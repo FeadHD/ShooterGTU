@@ -168,12 +168,17 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
                 this.scene.gameUI.updateLives(currentLives - 1);
             }
         }
+
+        // Reset antivirus wall if it exists
+        if (this.scene.antivirusWall) {
+            this.scene.antivirusWall.reset();
+        }
         
         // Play death animation
         if (this.scene.anims.exists('character_Death')) {
             this.play('character_Death', true);
             this.once('animationcomplete', () => {
-                this.setAlpha(0); // Hide player after death animation
+                this.setAlpha(0);
                 // Reset after animation completes
                 this.scene.time.delayedCall(500, () => {
                     this.respawn();

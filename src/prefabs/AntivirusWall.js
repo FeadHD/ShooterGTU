@@ -32,8 +32,13 @@ export class AntivirusWall {
         this.wall.body.setImmovable(true);
         this.wall.body.allowGravity = false;
         
-        // Configure movement
-        this.speed = GameConfig.ANTIVIRUS_WALL.SPEED; // pixels per second
+        // Column movement configuration
+        this.columnWidth = GameConfig.ANTIVIRUS_WALL.WIDTH;
+        this.currentColumn = 0;
+        this.targetX = startX;
+        this.moveDelay = 2000; // Time between column moves in milliseconds
+        this.lastMoveTime = 0;
+        this.isMoving = false;
         this.active = false;
         
         // Create particle effects
@@ -87,11 +92,33 @@ export class AntivirusWall {
         }
     }
 
+    moveToNextColumn() {
+        if (this.isMoving) return;
+        
+        this.isMoving = true;
+        this.currentColumn++;
+        this.targetX = this.initialX + (this.currentColumn * this.columnWidth);
+
+        // Create a tween for smooth movement
+        this.scene.tweens.add({
+            targets: this.wall,
+            x: this.targetX,
+            duration: 500, // Duration of the movement animation
+            ease: 'Power2',
+            onComplete: () => {
+                this.isMoving = false;
+            }
+        });
+    }
+
     update(time, delta) {
         if (!this.active) return;
 
-        // Move wall to the right
-        this.wall.x += (this.speed * delta) / 1000;
+        // Check if it's time to move to the next column
+        if (!this.isMoving && time > this.lastMoveTime + this.moveDelay) {
+            this.moveToNextColumn();
+            this.lastMoveTime = time;
+        }
         
         // Update particle position
         if (this.particles) {
@@ -99,41 +126,34 @@ export class AntivirusWall {
         }
     }
 
-    setSpeed(speed) {
-        this.speed = speed;
-    }
-
     getX() {
         return this.wall.x;
     }
 
-    reset(x = this.initialX) {
-        // Reset position
-        this.wall.x = x;
-        
-        // Stop movement and effects
+    reset() {
         this.stop();
-        
-        // Reset visual effects
-        if (this.pulseEffect) {
-            this.pulseEffect.stop();
-            this.pulseEffect.remove();
-            this.pulseEffect = null;
-        }
-        this.wall.setAlpha(0.9);
-        
-        // Reset particles
-        if (this.particles) {
-            this.particles.stop();
-            this.particles.setPosition(x, this.wall.y);
-        }
-        
-        this.active = false;
+        this.isMoving = true;
+        this.scene.tweens.add({
+            targets: this.wall,
+            x: this.initialX,
+            duration: 1000,
+            ease: 'Power2',
+            onComplete: () => {
+                this.currentColumn = 0;
+                this.targetX = this.initialX;
+                this.lastMoveTime = 0;
+                this.isMoving = false;
+                this.start();
+            }
+        });
     }
 
     destroy() {
         if (this.particles) {
             this.particles.destroy();
+        }
+        if (this.pulseEffect) {
+            this.pulseEffect.stop();
         }
         this.wall.destroy();
     }
