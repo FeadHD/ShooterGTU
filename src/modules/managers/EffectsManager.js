@@ -1,26 +1,11 @@
+import { ParticlePool } from './pools/ParticlePool';
+
 export class EffectsManager {
     constructor(scene) {
         this.scene = scene;
         this.sounds = {};
-        this.initializeParticles();
+        this.particlePool = new ParticlePool(scene, 50);
         this.initializeSounds();
-    }
-
-    initializeParticles() {
-        if (this.scene.textures.exists('particle')) {
-            this.hitParticles = this.scene.add.particles({
-                key: 'particle',
-                config: {
-                    speed: { min: 100, max: 200 },
-                    scale: { start: 1, end: 0 },
-                    tint: 0xffff00,
-                    blendMode: 'ADD',
-                    lifespan: 300,
-                    quantity: 10,
-                    emitZone: { type: 'random', source: new Phaser.Geom.Circle(0, 0, 20) }
-                }
-            });
-        }
     }
 
     initializeSounds() {
@@ -38,30 +23,12 @@ export class EffectsManager {
     }
 
     createHitEffect(x, y, color = 0xffff00) {
-        for(let i = 0; i < 10; i++) {
-            const particle = this.scene.add.circle(x, y, 3, color);
-            const angle = Math.random() * Math.PI * 2;
-            const speed = 100 + Math.random() * 100;
-            
-            this.scene.tweens.add({
-                targets: particle,
-                x: particle.x + Math.cos(angle) * speed * 0.3,
-                y: particle.y + Math.sin(angle) * speed * 0.3,
-                alpha: 0,
-                scale: 0.1,
-                duration: 300,
-                ease: 'Power2',
-                onComplete: () => {
-                    particle.destroy();
-                }
-            });
-        }
+        this.particlePool.createEffect(x, y, color);
+        this.playSound('hit');
     }
 
-    createExplosionEffect(x, y, scale = 1) {
-        if (this.hitParticles) {
-            this.hitParticles.emitParticleAt(x, y, 20);
-        }
+    createExplosionEffect(x, y) {
+        this.particlePool.createEffect(x, y, 0xff0000, 20);
         this.playSound('explosion');
     }
 
@@ -95,9 +62,6 @@ export class EffectsManager {
         this.sounds = {};
 
         // Clean up particles
-        if (this.hitParticles) {
-            this.hitParticles.destroy();
-            this.hitParticles = null;
-        }
+        this.particlePool.destroy();
     }
 }

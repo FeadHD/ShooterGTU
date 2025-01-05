@@ -20,6 +20,7 @@ import { DisappearingPlatform } from '../../prefabs/DisappearingPlatform';
 import { Turret } from '../../prefabs/Turret';
 import { EnemyManager } from '../../modules/managers/EnemyManager';
 import { EffectsManager } from '../../modules/managers/EffectsManager';
+import { BulletPool } from '../../modules/managers/pools/BulletPool';
 
 export class GameScene1 extends BaseScene {
     constructor() {
@@ -459,6 +460,7 @@ export class GameScene1 extends BaseScene {
         this.trapManager = new TrapManager(this);
         this.enemyManager = new EnemyManager(this);
         this.effectsManager = new EffectsManager(this);
+        this.bulletPool = new BulletPool(this);
 
         // Create physics group for enemies if not exists
         if (!this.enemies) {
@@ -895,6 +897,9 @@ export class GameScene1 extends BaseScene {
         super.update(time, delta);
         if (this.isGamePaused) return;
 
+        // Update bullet pool to check for out-of-bounds bullets
+        this.bulletPool.update();
+
         // Update all turrets
         this.turrets.getChildren().forEach(turret => turret.update());
 
@@ -1327,5 +1332,14 @@ export class GameScene1 extends BaseScene {
         const ub = (((x2 - x1) * (y1 - y3)) - ((y2 - y1) * (x1 - x3))) / denominator;
 
         return (ua >= 0 && ua <= 1) && (ub >= 0 && ub <= 1);
+    }
+
+    cleanup() {
+        super.cleanup();
+        
+        // Clean up pools
+        if (this.bulletPool) {
+            this.bulletPool.destroy();
+        }
     }
 }
