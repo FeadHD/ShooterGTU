@@ -190,6 +190,7 @@ export class GameUI {
             0x000000
         );
         this.staminaBarBackground.setAlpha(0.9);
+        this.staminaBarBackground.setScrollFactor(0);
         this.container.add(this.staminaBarBackground);
 
         // Create stamina bar fill
@@ -202,6 +203,7 @@ export class GameUI {
             0xFF00FF  // Magenta for stamina
         );
         this.staminaBarFill.setOrigin(0, 0.5);
+        this.staminaBarFill.setScrollFactor(0);
         this.container.add(this.staminaBarFill);
 
         // Create health bar background
@@ -213,6 +215,7 @@ export class GameUI {
             0x000000
         );
         this.healthBarBackground.setAlpha(0.9);
+        this.healthBarBackground.setScrollFactor(0);
         this.container.add(this.healthBarBackground);
 
         // Create health bar fill
@@ -225,6 +228,7 @@ export class GameUI {
             0xFF0000  // Red for health
         );
         this.healthBarFill.setOrigin(0, 0.5);
+        this.healthBarFill.setScrollFactor(0);
         this.container.add(this.healthBarFill);
         
         if (this.debugMode) {
@@ -265,7 +269,7 @@ export class GameUI {
             this.lastFpsUpdate = time;
         }
 
-        // Update stamina bar
+        // Update stamina bar first
         const currentStamina = this.scene.registry.get('stamina');
         if (currentStamina !== undefined && this.staminaBarFill) {
             this.updateStaminaBar(currentStamina);
@@ -278,7 +282,7 @@ export class GameUI {
             const healthPercentage = Math.max(0, Math.min(100, currentHealth));
             const healthRatio = healthPercentage / 100;
             
-            // Update width and position exactly like stamina bar
+            // Update width only, position is handled by updateStaminaBar
             this.healthBarFill.width = this.barWidth * healthRatio;
             
             // Change color based on health percentage
@@ -311,7 +315,8 @@ export class GameUI {
         this.staminaBarFill.width = currentWidth + (targetWidth - currentWidth) * lerpFactor;
         
         // Update position
-        this.staminaBarFill.x = this.scene.scale.width / 2 - this.barWidth / 2;
+        const startX = this.scene.scale.width / 2 - this.barWidth / 2;
+        this.staminaBarFill.x = startX;
         this.staminaBarBackground.x = this.scene.scale.width / 2;
         
         // Change color based on stamina level
@@ -321,6 +326,12 @@ export class GameUI {
             this.staminaBarFill.setFillStyle(0xFFFF00); // Yellow when medium
         } else {
             this.staminaBarFill.setFillStyle(0xFF00FF); // Magenta when high
+        }
+
+        // Update health bar position to match stamina bar
+        if (this.healthBarFill && this.healthBarBackground) {
+            this.healthBarFill.x = startX;
+            this.healthBarBackground.x = this.scene.scale.width / 2;
         }
     }
 
