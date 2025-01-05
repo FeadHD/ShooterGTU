@@ -1,5 +1,4 @@
 import { BaseScene } from '../elements/BaseScene';
-import { GameConfig } from '../../config/GameConfig';
 import CameraManager from '../../modules/managers/CameraManager';
 import { CollisionManager } from '../../modules/managers/CollisionManager';
 import { TextStyleManager } from '../../modules/managers/TextStyleManager';
@@ -23,10 +22,11 @@ import { EnemyManager } from '../../modules/managers/EnemyManager';
 import { EffectsManager } from '../../modules/managers/EffectsManager';
 import { BulletPool } from '../../modules/managers/pools/BulletPool';
 import { AntivirusWall } from '../../prefabs/AntivirusWall';
+import GameConfig from '../../config/GameConfig';
 
-export class GameScene1 extends BaseScene {
+export class LegacyGameScene1 extends BaseScene {
     constructor() {
-        super({ key: 'GameScene1' });
+        super({ key: 'LegacyGameScene1' });
         this.tileColliderAdded = false;
         this.messageShown = false;
         this.totalEnemies = 7; // Increased to include drone and melee warriors
@@ -438,65 +438,23 @@ export class GameScene1 extends BaseScene {
                 }
             });
 
-            // Wait for tiles to be placed before setting up the antivirus wall
+            // Wait for all tiles to be placed before showing the scene
             placeTilesPromise.then(() => {
-                // Create antivirus wall after tiles are placed
-                this.antivirusWall = new AntivirusWall(
-                    this,
-                    GameConfig.ANTIVIRUS_WALL.START_OFFSET
-                );
-                
-                // Set up collision between antivirus wall and map layer
-                if (this.mapLayer && this.antivirusWall && this.antivirusWall.wall) {
-                    // Enable collision for all tiles in the layer
-                    this.mapLayer.setCollisionByProperty({ collides: true });
-                    
-                    // Create a custom collision handler for the antivirus wall and tiles
-                    this.physics.add.overlap(this.antivirusWall.wall, this.mapLayer, (wall, tile) => {
-                        if (this.antivirusWall.movingForward) {
-                            // Destroy tiles when moving forward
-                            if (tile && tile.index !== -1) {  // -1 is an empty tile
-                                // Store just the tile index and position
-                                const tileData = {
-                                    index: tile.index,
-                                    x: tile.x,
-                                    y: tile.y
-                                };
-                                this.antivirusWall.storeTileInfo(tile.x, tile.y, tileData);
-                                
-                                // Just make the tile invisible instead of removing it
-                                tile.setVisible(false);
-                                
-                                // Create destruction effect
-                                if (this.antivirusWall.createDestructionEffect) {
-                                    this.antivirusWall.createDestructionEffect(
-                                        tile.pixelX + tile.width / 2,
-                                        tile.pixelY + tile.height / 2
-                                    );
-                                }
-                            }
-                        } else {
-                            // Make tiles visible when moving backward
-                            if (tile) {
-                                tile.setVisible(true);
-                                
-                                // Create building effect
-                                if (this.antivirusWall.createDestructionEffect) {
-                                    this.antivirusWall.createDestructionEffect(
-                                        tile.pixelX + tile.width / 2,
-                                        tile.pixelY + tile.height / 2
-                                    );
-                                }
-                            }
-                        }
-                    });
+                // Set up all collisions using CollisionManager
+                this.collisionManager.setupCollisions();
 
-                    // Set up collision between player and antivirus wall
-                    this.physics.add.overlap(this.player, this.antivirusWall.wall, this.handleAntivirusCollision, null, this);
-                }
-                
-                // Continue with scene setup
-                this.setupRestOfScene();
+                console.log('All tiles placed, showing scene');
+                // Fade in the scene
+                this.tweens.add({
+                    targets: this.cameras.main,
+                    alpha: 1,
+                    duration: 500,
+                    ease: 'Linear',
+                    onComplete: () => {
+                        // Continue with the rest of the scene setup
+                        this.setupRestOfScene();
+                    }
+                });
             });
 
             // Create debug graphics
@@ -506,9 +464,17 @@ export class GameScene1 extends BaseScene {
             // Removed this.bgMusic = this.sound.add('bgMusic', { loop: true });
             // Removed this.bgMusic.play();
 
-            // Remove the duplicate antivirus wall creation and collision setup
-            // this.antivirusWall = new AntivirusWall(this, 0); // This line should be removed
-            // this.physics.add.overlap(this.player, this.antivirusWall.wall, this.handleAntivirusCollision, null, this); // This line should be removed
+            // Create antivirus wall (make sure it's created after physics world is set up)
+            this.antivirusWall = new AntivirusWall(this, 0); // Start at left edge
+            
+            // Set up collision between player and antivirus wall
+            this.physics.add.overlap(this.player, this.antivirusWall.wall, this.handleAntivirusCollision, null, this);
+
+            // Make sure wall is behind UI but in front of other elements
+            if (this.gameUI && this.gameUI.container) {
+                this.gameUI.container.setDepth(100);
+                this.antivirusWall.wall.setDepth(90);
+            }
         });
     }
 
@@ -1316,39 +1282,79 @@ export class GameScene1 extends BaseScene {
     }
 
     handlePlayerDeath() {
-        if (this.player.lives > 0) {
-            this.player.lives--;
-            this.gameUI.updateLives(this.player.lives);
-            this.player.setVisible(false);
-            this.player.setActive(false);
-            this.player.body.enable = false;
-            
-            // Reset antivirus wall first
-            if (this.antivirusWall) {
-                this.antivirusWall.reset();
-                // Listen for wall reset completion
-                this.events.once('wallResetComplete', () => {
-                    this.handleRespawn();
-                });
-            }
+        if (this.isDying) return; // Prevent multiple death handlers
+        
+        this.isDying = true;
+        this.player.setVelocity(0, 0);
+        this.player.body.moves = false;
+        
+        // Stop and reset antivirus wall immediately
+        if (this.antivirusWall) {
+            this.antivirusWall.stop();
+            this.antivirusWall.reset(GameConfig.ANTIVIRUS_WALL.START_X);
+        }
+        
+        // Decrease lives using StateManager
+        const lives = this.registry.get('lives');
+        if (lives <= 0) {
+            // Game Over - stop timer and transition
+            this.gameUI.stopTimer();
+            this.scene.start('GameOver');
         } else {
-            this.gameOver();
+            // If no death animation, wait a moment then proceed
+            this.time.delayedCall(1000, () => {
+                this.handleRespawn();
+            });
         }
     }
 
     handleRespawn() {
-        // Reset player position and state
-        this.player.setPosition(this.spawnPoint.x, this.spawnPoint.y);
-        this.player.setVisible(true);
-        this.player.setActive(true);
-        this.player.body.enable = true;
+        // Get spawn point from current scene if available
+        const currentScene = this.scene.get(this.scene.key);
+        const spawnPoint = currentScene.playerSpawnPoint || this.playerSpawnPoint;
+        
+        // Reset player position using spawn point
+        this.player.setPosition(spawnPoint.x, spawnPoint.y);
         this.player.setVelocity(0, 0);
-        this.player.alpha = 0.5;
-
-        // Make player invulnerable for a short time
-        this.time.delayedCall(2000, () => {
-            this.player.alpha = 1;
+        
+        // Reset player state
+        this.isDying = false;
+        this.player.body.moves = true;
+        this.player.setAlpha(1);
+        
+        // Reset player HP
+        this.registry.set('playerHP', 100);
+        this.gameUI.updateHP(100);
+        
+        // Start antivirus wall after delay
+        if (this.antivirusWall) {
+            this.time.delayedCall(GameConfig.ANTIVIRUS_WALL.RESPAWN_DELAY, () => {
+                if (this.gameStarted && !this.isGamePaused) {
+                    this.antivirusWall.start();
+                    this.cameras.main.flash(GameConfig.ANTIVIRUS_WALL.FLASH_DURATION, 0, 136, 255);
+                }
+            });
+        }
+        
+        // Add temporary invulnerability
+        this.invulnerableUntil = this.time.now + 2000; // 2 seconds of invulnerability
+        
+        // Flash effect to show invulnerability
+        this.tweens.add({
+            targets: this.player,
+            alpha: 0.5,
+            duration: 200,
+            yoyo: true,
+            repeat: 4,
+            onComplete: () => {
+                this.player.setAlpha(1);
+            }
         });
+
+        // Reset player animations if needed
+        if (this.player.play) {
+            this.player.play('character_Idle');
+        }
     }
 
     findSpawnPointsForSlimes() {

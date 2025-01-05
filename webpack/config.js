@@ -1,5 +1,3 @@
-
-
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const path = require("path");
@@ -11,12 +9,14 @@ module.exports = {
     entry: "./src/main.js",
     output: {
         path: path.resolve(process.cwd(), 'dist'),
-        filename: "[name].[contenthash].js"
+        filename: "[name].[fullhash].js"
     },
     devServer: {
         hot: true,
         headers: {
-            'Cache-Control': 'no-store',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
         }
     },
     module: {
@@ -54,7 +54,8 @@ module.exports = {
         }),
         new HtmlWebpackPlugin({
             template: "./index.html",
-            inject: 'body'
+            inject: 'body',
+            hash: true
         }),
         new webpack.HotModuleReplacementPlugin()
     ]
