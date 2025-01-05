@@ -47,7 +47,8 @@ export const config = {
     },
     input: {
         mouse: {
-            preventDefaultWheel: true
+            preventDefaultWheel: true,
+            preventDefaultContextMenu: true
         }
     },
     scene: [

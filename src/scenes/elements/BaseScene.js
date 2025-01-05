@@ -25,6 +25,12 @@ export class BaseScene extends Scene {
     }
 
     create() {
+        // Prevent right-click context menu
+        this.game.canvas.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            return false;
+        }, false);
+
         // Get the canvas dimensions
         const width = this.cameras.main.width;
         const height = this.cameras.main.height;
