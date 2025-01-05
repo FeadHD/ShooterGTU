@@ -1,0 +1,193 @@
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scripts/ProceduralGenerator.js ===
+6:    constructor(config = {}) {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/prefabs/Trampoline.js ===
+2:    constructor(scene, x, y) {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/prefabs/Enemy.js ===
+2:    constructor(scene, x, y, config = {}) {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/prefabs/ParallaxBackground.js ===
+2:    constructor(scene) {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/prefabs/Slime.js ===
+4:    constructor(scene, x, y) {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/prefabs/Bitcoin.js ===
+2:    constructor(scene, x, y) {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/prefabs/Drone.js ===
+4:    constructor(scene, x, y, config = {}) {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/prefabs/Trap.js ===
+4:    constructor(scene, x, y) {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/prefabs/Bullet.js ===
+2:    constructor(scene, x, y) {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/prefabs/AlarmTrigger.js ===
+4:    constructor(scene, x, y) {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/prefabs/MeleeWarrior.js ===
+5:    constructor(scene, x, y, config = {}) {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/prefabs/Player.js ===
+5:    constructor(scene, x, y) {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/prefabs/EnemyTypes.js ===
+3:    constructor(scene, x, y, sprite, health, tint = 0xff0000) {
+188:    constructor(scene, x, y) {
+196:    constructor(scene, x, y) {
+204:    constructor(scene, x, y) {
+212:    constructor(scene, x, y) {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/_Debug/DebugSystem.js ===
+2:    constructor(scene) {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/modules/controls/PlayerController.js ===
+4:    constructor(scene) {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/modules/managers/TrapManager.js ===
+5:    constructor(scene) {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/modules/managers/StateManager.js ===
+3:    constructor(scene) {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/modules/managers/AnimationManager.js ===
+2:    constructor(scene) {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/modules/managers/LevelLoader.js ===
+2:    constructor(scene) {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/modules/managers/CameraManager.js ===
+2:    constructor(scene) {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/modules/managers/EffectsManager.js ===
+2:    constructor(scene) {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/modules/managers/SceneInitializer.js ===
+12:    constructor(scene) {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/modules/managers/CollisionManager.js ===
+2:    constructor(scene) {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/modules/managers/EnemyManager.js ===
+2:    constructor(scene) {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/modules/managers/AudioManager.js ===
+2:    constructor() {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/modules/managers/BoundaryManager.js ===
+2:    constructor(scene) {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/modules/pathfinding/PathFinder.js ===
+2:    constructor(x, y, walkable = true) {
+18:    constructor(scene, gridSize = 32) {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/levels/GameScene1.js ===
+12:    constructor() {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/levels/Matrix640x360.js ===
+15:    constructor() {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/levels/BlueTest.js ===
+21:    constructor() {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/levels/GameScene3.js ===
+7:    constructor() {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/levels/GameScene4.js ===
+7:    constructor() {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/levels/GameScene5.js ===
+7:    constructor() {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/levels/GameScene2.js ===
+7:    constructor() {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/menus/ControlsSettingsScene.js ===
+5:    constructor() {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/menus/TheZucc/TheZucc.js ===
+9:    constructor() {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/menus/Settings.js ===
+4:    constructor() {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/menus/MissionComplete.js ===
+4:    constructor() {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/menus/MainMenu.js ===
+5:    constructor() {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/menus/Leaderboard.js ===
+4:    constructor() {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/elements/TitleScene.js ===
+4:    constructor() {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/elements/GameUI.js ===
+5:    constructor(scene) {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/elements/Boot.js ===
+4:    constructor() {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/elements/PauseMenu.js ===
+4:    constructor() {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/elements/Game.js ===
+5:    constructor() {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/elements/Preloader.js ===
+4:    constructor() {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/events/GameOver.js ===
+4:    constructor() {
+
