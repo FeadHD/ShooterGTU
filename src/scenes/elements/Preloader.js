@@ -87,6 +87,9 @@ export class Preloader extends Scene {
         // Load drone image
         this.load.image('Bot1v1', 'assets/enemys/drone/Bot1v1.png');
 
+        // Load GTU tileset
+        this.load.image('GtuTileset', 'assets/levels/image/GtuTileset.png');
+
         // Load character sprites with correct paths and frame sizes
         this.load.spritesheet('character_idle', './assets/character/character_Idle.png', {
             frameWidth: 48,

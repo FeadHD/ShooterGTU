@@ -244,6 +244,22 @@ export class BaseScene extends Scene {
         }
     }
 
+    setupTileCollisions(map, layer) {
+        // These are the tile IDs that should collide based on the JSON
+        const collidingTiles = [257, 260, 261, 641, 642, 643, 644, 645, 705, 706, 707];
+        
+        // Set collision for specific tile IDs
+        layer.setCollision(collidingTiles);
+        
+        // Add collision between player and layer
+        if (this.player) {
+            this.physics.add.collider(this.player, layer);
+        }
+        
+        // Set world bounds based on map size
+        this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
+    }
+
     update() {
         if (this.player) {
             this.player.update();

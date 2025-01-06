@@ -4,6 +4,7 @@ import AudioManager from '../../../modules/managers/AudioManager';
 import { TextStyleManager } from '../../../modules/managers/TextStyleManager';
 import { DEFAULT_ENEMY_CONFIG, DEFAULT_TRAP_CONFIG, DEFAULT_PROCEDURAL_CONFIG } from '../../../constants/Constants';
 import { createRetroButton } from '../../../scenes/menus/ui-helpers';
+import { GtuTestLevel0 } from '../../levels/GtuTestLevel0';
 
 export class TheZucc extends Scene {
     constructor() {
@@ -58,7 +59,7 @@ export class TheZucc extends Scene {
                 showProcedural: true
             },
             'Levels': {
-                scenes: ['LegacyGameScene1'],
+                scenes: ['LegacyGameScene1','GtuTestLevel0','GtuTestLevel1','GtuTestLevel2'],
                 showConfig: false
             },
             'Menus': {

@@ -20,6 +20,9 @@ import SoundSettings from '../scenes/menus/SoundSettings';
 import { PauseMenu } from '../scenes/elements/PauseMenu';
 import { TheZucc } from '../scenes/menus/TheZucc/TheZucc';
 import { LegacyGameScene1 } from '../scenes/levels/LegacyGameScene1';
+import { GtuTestLevel0 } from '../scenes/levels/GtuTestLevel0';
+import { GtuTestLevel1 } from '../scenes/levels/GtuTestLevel1';
+import { GtuTestLevel2 } from '../scenes/levels/GtuTestLevel2';
 
 export const config = {
     type: Phaser.AUTO,
@@ -72,6 +75,9 @@ export const config = {
         MissionComplete,
         PauseMenu,
         TheZucc,
-        LegacyGameScene1
+        LegacyGameScene1,
+        GtuTestLevel0,
+        GtuTestLevel1,
+        GtuTestLevel2
     ]
 };
