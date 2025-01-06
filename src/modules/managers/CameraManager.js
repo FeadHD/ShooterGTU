@@ -1,5 +1,5 @@
 class CameraManager {
-    constructor(scene) {
+    constructor(scene, levelWidth = 3840, levelHeight = 1080) {
         this.scene = scene;
         this.camera = scene.cameras.main;
         this.isIntroPlaying = false;
@@ -10,9 +10,9 @@ class CameraManager {
         this.gameWidth = width;
         this.gameHeight = height;
         
-        // Level dimensions (same as level 1)
-        this.levelWidth = 3840;  // 3840 pixels wide
-        this.levelHeight = 1080; // 1080 pixels high
+        // Level dimensions from parameters or default to level 1 size
+        this.levelWidth = levelWidth;
+        this.levelHeight = levelHeight;
 
         // Find UI camera if it exists
         this.uiCamera = scene.cameras.cameras.find(cam => cam !== this.camera);

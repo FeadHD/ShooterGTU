@@ -86,8 +86,17 @@ export class GtuTestLevel1 extends BaseScene {
             this.registry.set('stamina', 100); // Reset stamina to full
             this.registry.set('bitcoins', 0);
             
-            // Initialize camera manager
-            this.cameraManager = new CameraManager(this);
+            // Get level data and dimensions from JSON
+            const levelData = this.cache.json.get('level1');
+            if (!levelData) {
+                console.error('Failed to load level data');
+                return;
+            }
+            const levelWidth = levelData.pxWid;
+            const levelHeight = levelData.pxHei;
+            
+            // Initialize camera manager with level dimensions
+            this.cameraManager = new CameraManager(this, levelWidth, levelHeight);
             this.cameraManager.init(this.player);
             this.cameraManager.playIntroSequence(this.player);
 
@@ -217,20 +226,18 @@ export class GtuTestLevel1 extends BaseScene {
 
             // Define initial spawn position (near the left side of the level)
             const SPAWN_X_PERCENTAGE = 0.1;  // 10% from left edge
-            const SPAWN_Y = 500;             // Fixed height from top
+            const SPAWN_Y = 256;             // 8 tiles from top
             
             // Override base scene's spawn point for this level
             this.playerSpawnPoint = {
                 x: width * SPAWN_X_PERCENTAGE,
                 y: SPAWN_Y
             };
-            
-            // Set player position to spawn point
+
+            // Set player position
             this.player.setPosition(this.playerSpawnPoint.x, this.playerSpawnPoint.y);
             
             // Set world bounds to match the level size
-            const levelWidth = 3840; // Adjust this to match your level width
-            const levelHeight = 1080; // Adjust this to match your level height
             this.physics.world.setBounds(0, 0, levelWidth, levelHeight);
             
             // Set camera bounds to match world bounds
@@ -246,83 +253,35 @@ export class GtuTestLevel1 extends BaseScene {
             // Initialize collision manager
             this.collisionManager = new CollisionManager(this);
 
-            // Initialize slimes group
-            this.slimes = this.physics.add.group({
-                collideWorldBounds: true,
-                bounceX: 0.5,
-                bounceY: 0.2,
-                dragX: 200
-            });
+            // Create debug graphics
+            this.debugGraphics = this.add.graphics();
 
-            // Initialize drones group with consistent physics settings
-            this.drones = this.physics.add.group({
-                runChildUpdate: true,
-                collideWorldBounds: true,
-                dragX: 200,
-                bounceX: 0.2,
-                bounceY: 0.2,
-                gravityY: 0
-            });
+            // Store background music reference
+            // Removed this.bgMusic = this.sound.add('bgMusic', { loop: true });
+            // Removed this.bgMusic.play();
 
-            // Create enemy group
-            this.enemies = this.physics.add.group({
-                collideWorldBounds: true,
-                bounceX: 0.5,
-                bounceY: 0.2,
-                dragX: 200
-            });
-
-            // Set up collisions between enemies and platforms
-            this.physics.add.collider(this.enemies, this.platforms);
+            // Create antivirus wall (make sure it's created after physics world is set up)
+            this.antivirusWall = new AntivirusWall(this, 0); // Start at left edge
             
-            // Set up collisions between enemies and each other
-            this.physics.add.collider(this.enemies, this.enemies, this.handleEnemyCollision, null, this);
-            
-            // Set up collisions between enemies and player
-            this.physics.add.overlap(this.enemies, this.player, (enemySprite, player) => {
-                if (enemySprite.enemy && !this.isDying) {
-                    this.hitEnemy(player, enemySprite);
-                }
-            }, null, this);
+            // Set up collision between player and antivirus wall
+            this.physics.add.overlap(this.player, this.antivirusWall.wall, this.handleAntivirusCollision, null, this);
 
-            // Create bitcoin group
-            this.bitcoins = this.add.group();
-
-            // Create player if it doesn't exist
-            if (!this.player) {
-                this.createPlayer(this.scale.width);
-                // Disable player controls initially
-                this.player.controller.enabled = false;
+            // Make sure wall is behind UI but in front of other elements
+            if (this.gameUI && this.gameUI.container) {
+                this.gameUI.container.setDepth(100);
+                this.antivirusWall.wall.setDepth(90);
             }
 
-            // Initialize alarm triggers group
-            this.alarmTriggers = this.physics.add.staticGroup({
-                classType: AlarmTrigger,
-                runChildUpdate: true
-            });
-            
-
-            // Set up alarm trigger collision
-            this.physics.add.overlap(
-                this.player,
-                this.alarmTriggers,
-                (player, trap) => {
-                    trap.triggerAlarm();
-                }
-            );
-
             // Debug level data loading
-            const levelData = this.cache.json.get('level1');
-            
             if (!levelData) {
                 console.error('Failed to load level data');
                 return;
             }
 
-            // Get the layer instance for Megapixel layer
-            const megapixelLayer = levelData.layerInstances[0];  // First layer is our Megapixel layer
+            // Get the layer instance for Tiles layer
+            const megapixelLayer = levelData.layerInstances[1];  // Second layer is our Tiles layer
             if (!megapixelLayer) {
-                console.error('Megapixel layer not found');
+                console.error('Tiles layer not found');
                 return;
             }
 
@@ -343,7 +302,7 @@ export class GtuTestLevel1 extends BaseScene {
             }
             
             // Create layer from LDtk data
-            const layer = map.createBlankLayer('Megapixel', tileset, 0, 0);
+            const layer = map.createBlankLayer('Tiles', tileset, 0, 0);
             
             if (!layer) {
                 console.error('Failed to create layer');
@@ -360,18 +319,6 @@ export class GtuTestLevel1 extends BaseScene {
                     let tilesPlaced = 0;
                     const totalTiles = megapixelLayer.gridTiles.length;
                     const totalRows = Math.ceil(levelData.pxHei / megapixelLayer.__gridSize);
-
-                    // Create a map to track platform tiles
-                    const platformTiles = new Set();
-
-                    // First pass: identify platform tiles
-                    megapixelLayer.gridTiles.forEach((tile) => {
-                        const gridX = Math.floor(tile.px[0] / megapixelLayer.__gridSize);
-                        const gridY = Math.floor(tile.px[1] / megapixelLayer.__gridSize);
-                        if (gridY === 8 || tile.t === 370) { // Platform height or solid tile type
-                            platformTiles.add(`${gridX},${gridY}`);
-                        }
-                    });
 
                     // Second pass: place tiles and set up collisions
                     megapixelLayer.gridTiles.forEach((tile) => {
@@ -456,41 +403,13 @@ export class GtuTestLevel1 extends BaseScene {
                     }
                 });
             });
-
-            // Create debug graphics
-            this.debugGraphics = this.add.graphics();
-
-            // Store background music reference
-            // Removed this.bgMusic = this.sound.add('bgMusic', { loop: true });
-            // Removed this.bgMusic.play();
-
-            // Create antivirus wall (make sure it's created after physics world is set up)
-            this.antivirusWall = new AntivirusWall(this, 0); // Start at left edge
-            
-            // Set up collision between player and antivirus wall
-            this.physics.add.overlap(this.player, this.antivirusWall.wall, this.handleAntivirusCollision, null, this);
-
-            // Make sure wall is behind UI but in front of other elements
-            if (this.gameUI && this.gameUI.container) {
-                this.gameUI.container.setDepth(100);
-                this.antivirusWall.wall.setDepth(90);
-            }
         });
     }
 
     setupRestOfScene() {
-        // Initialize managers and UI
-        this.collisionManager = new CollisionManager(this);
-        this.gameUI = new GameUI(this);
-        this.trapManager = new TrapManager(this);
-        this.enemyManager = new EnemyManager(this);
+        // Initialize managers
         this.effectsManager = new EffectsManager(this);
         this.bulletPool = new BulletPool(this);
-
-        // Create physics group for enemies if not exists
-        if (!this.enemies) {
-            this.enemies = this.physics.add.group();
-        }
 
         // Show the start message
         if (this.gameUI) {
@@ -504,427 +423,13 @@ export class GtuTestLevel1 extends BaseScene {
                 this.startGame();
             }
         });
-
-        // Calculate proper spawn height
-        const spawnHeight = this.getSpawnHeight();
-
-        // Create and initialize warriors at proper height
-        const createAndInitWarrior = (x) => {
-            const spawnHeight = this.getSpawnHeight();
-            if (spawnHeight !== null) {
-                const warrior = new MeleeWarrior(this, x, spawnHeight);
-                if (warrior && warrior.sprite) {
-                    // Add to physics group
-                    this.enemies.add(warrior.sprite);
-                    warrior.sprite.setData('type', 'warrior');
-                    warrior.sprite.setData('enemy', warrior);
-                    
-                    // Add warrior-specific debug data
-                    warrior.sprite.setData('health', warrior.maxHealth);
-                    warrior.sprite.setData('maxHealth', warrior.maxHealth);
-                    warrior.sprite.setData('isAttacking', false);
-                    warrior.sprite.setData('direction', warrior.direction);
-                    warrior.sprite.setData('detectionRange', warrior.detectionRange);
-                    warrior.sprite.setData('attackRange', warrior.attackRange);
-                    
-                    // Add warrior to enemy manager
-                    this.enemyManager.addEnemy(warrior, warrior.sprite, warrior.maxHealth);
-                    
-                    return warrior;
-                }
-                return null;
-            }
-        };
-
-        // Spawn warriors at different x positions
-        const warrior1 = createAndInitWarrior(this.scale.width * 0.4);
-        const warrior2 = createAndInitWarrior(this.scale.width * 0.6);
-
-        // Create random position warriors
-        const numRandomWarriors = 1;
-        for (let i = 0; i < numRandomWarriors; i++) {
-            const spawnPointsForWarriors = this.findSpawnPointsForSlimes(); // Reuse slime spawn point logic
-            if (spawnPointsForWarriors.length > 0) {
-                const spawnIndex = Math.floor(Math.random() * spawnPointsForWarriors.length);
-                const spawnPoint = spawnPointsForWarriors[spawnIndex];
-                createAndInitWarrior(spawnPoint.x);
-                spawnPointsForWarriors.splice(spawnIndex, 1);
-            }
-        }
-
-        // Spawn bitcoins after map is loaded
-        const bitcoinSpawnPoints = this.findSpawnPointsForBitcoins();
-        const numBitcoins = Math.min(10, bitcoinSpawnPoints.length);
-
-        // Spawn bitcoins at valid positions
-        for (let i = 0; i < numBitcoins; i++) {
-            const spawnPoint = bitcoinSpawnPoints[i];
-            const bitcoin = new Bitcoin(this, spawnPoint.x, spawnPoint.y);
-            this.bitcoins.add(bitcoin);
-            this.physics.add.overlap(this.player, bitcoin, () => {
-                bitcoin.collect();
-            });
-        }
-
-        // Spawn drone at the top part of the scene
-        if (this.player) {
-            const enemyY = this.scale.height * 0.2; // Top 20% of the screen
-            const droneX = this.scale.width * 0.6; // Adjust horizontal position as needed
-
-            // Create drone at the spawn point
-            const drone = new Drone(this, droneX, enemyY, {
-                maxHealth: 75,
-                damage: 20,
-                speed: 100,
-                flyingHeight: enemyY,
-                horizontalMovementRange: 100
-            });
-
-            // Add drone sprite to the drones group
-            this.drones.add(drone.sprite);
-
-            // Add drone to enemy manager
-            this.enemyManager.addEnemy(drone, drone.sprite, drone.maxHealth);
-
-            // Set up patrol path
-            const patrolPoints = [
-                { x: droneX - 200, y: enemyY },  // Left point
-                { x: droneX + 200, y: enemyY }   // Right point
-            ];
-            drone.setPatrolPath(patrolPoints);
-
-            // Add to scene update
-            this.events.on('update', () => {
-                if (drone && drone.sprite && drone.sprite.active) {
-                    drone.update();
-                }
-            });
-
-            // Store drone reference
-            this.drone = drone;
-        } else {
-            console.warn('Cannot spawn drone: player not found');
-        }
-
-        // Create fixed position slimes
-        const enemyY = this.scale.height * 0.7;
-
-        const createAndInitSlime = (x, y) => {
-            const slime = new Slime(this, x, y);
-            if (slime && slime.sprite) {
-                // Add to physics group
-                this.slimes.add(slime.sprite);
-                
-                // Set up sprite
-                slime.sprite.setActive(true);
-                slime.sprite.setVisible(true);
-                
-                // Set up physics body
-                if (slime.sprite.body) {
-                    slime.sprite.body.reset(x, y);
-                    slime.sprite.body.enable = true;
-                    slime.sprite.body.moves = true;
-                }
-                
-                // Add to enemy manager
-                this.enemyManager.addEnemy(slime, slime.sprite, slime.maxHealth);
-                
-                // Create health bar
-                slime.createHealthBar();
-                
-                // Start movement
-                slime.initializeMovement();
-                
-                // Add update callback
-                this.events.on('update', () => {
-                    if (slime && slime.sprite && slime.sprite.active) {
-                        slime.update();
-                        slime.updateHealthBar();
-                    }
-                });
-                
-                return slime;
-            }
-            return null;
-        };
-
-        this.enemy1 = createAndInitSlime(this.scale.width * 0.3, enemyY);
-        this.enemy2 = createAndInitSlime(this.scale.width * 0.7, enemyY);
-
-        // Create random position slimes
-        const numRandomSlimes = 1; 
-        for (let i = 0; i < numRandomSlimes; i++) {
-            const spawnPointsForSlimes = this.findSpawnPointsForSlimes();
-            if (spawnPointsForSlimes.length > 0) {
-                const spawnIndex = Math.floor(Math.random() * spawnPointsForSlimes.length);
-                const spawnPoint = spawnPointsForSlimes[spawnIndex];
-                createAndInitSlime(spawnPoint.x, spawnPoint.y);
-                spawnPointsForSlimes.splice(spawnIndex, 1);
-            }
-        }
-
-        // Set up player-enemy collision for damage
-        this.physics.add.overlap(this.player, this.slimes, (player, enemySprite) => {
-            if (enemySprite.enemy && !this.isDying) {
-                this.hitEnemy(player, enemySprite);
-            }
-        }, null, this);
-
-        // Add collisions between enemies with increased bounce
-        this.physics.add.collider(
-            this.slimes,
-            this.slimes,
-            this.handleEnemyCollision,
-            null,
-            this
-        );
-
-        // Create destructible blocks
-        this.destructibleBlocks = this.add.group();
-        
-        // Add some example destructible blocks
-        const block1 = new DestructibleBlock(this, 2600, 466);
-        const block2 = new DestructibleBlock(this, 2600, 498);
-        const block3 = new DestructibleBlock(this, 2600, 528);
-        
-        this.destructibleBlocks.add(block1);
-        this.destructibleBlocks.add(block2);
-        this.destructibleBlocks.add(block3);
-
-        // Set up collision between bullets and destructible blocks
-        this.physics.add.collider(this.bullets, this.destructibleBlocks, (bullet, block) => {
-            bullet.destroy();
-            block.destroy();
-        });
-
-        // Set up collision between player and destructible blocks
-        this.physics.add.collider(this.player, this.destructibleBlocks);
-
-        // Create falling destructible blocks group
-        this.fallingBlocks = this.add.group();
-
-        // Add falling blocks in specific positions
-        const fallingBlockPositions = [
-            { x: 2368, y: 402 },
-            { x: 2368, y: 434 },
-            { x: 2368, y: 466 },
-            { x: 2368, y: 498 },
-            { x: 2368, y: 528 },
-            { x: 2400, y: 402 },
-            { x: 2400, y: 434 },
-            { x: 2400, y: 466 },
-            { x: 2400, y: 498 },
-            { x: 2400, y: 528 }
-        ];
-
-        // Create each falling block at its position
-        fallingBlockPositions.forEach(pos => {
-            const block = new FallingDestructibleBlock(this, pos.x, pos.y);
-            this.fallingBlocks.add(block);
-        });
-
-        // Set up collision between bullets and falling blocks
-        this.physics.add.collider(this.bullets, this.fallingBlocks, (bullet, block) => {
-            bullet.destroy();
-            block.destroy();
-        });
-
-        // Set up collision between player and falling blocks
-        this.physics.add.collider(this.player, this.fallingBlocks);
-        
-        // Set up collision between falling blocks and platforms
-        this.physics.add.collider(this.fallingBlocks, this.platforms);
-        
-        // Add collision between falling blocks themselves
-        this.physics.add.collider(this.fallingBlocks, this.fallingBlocks);
-
-        // Check distance to player every frame for falling blocks
-        this.time.addEvent({
-            delay: 100, // Check every 100ms
-            callback: () => {
-                this.fallingBlocks.getChildren().forEach(block => {
-                    const distance = Math.abs(this.player.x - block.x);
-                    if (distance < 200) {
-                        block.startFalling();
-                    }
-                });
-            },
-            loop: true
-        });
-
-        // Create disappearing platforms
-        this.disappearingPlatforms = this.add.group();
-        
-        // Add some example disappearing platforms
-        const platform1 = new DisappearingPlatform(this, 1410, 560);
-        const platform2 = new DisappearingPlatform(this, 1482, 560);
-        const platform3 = new DisappearingPlatform(this, 1554, 560);
-        const platform4 = new DisappearingPlatform(this, 500, 330);
-        const platform5 = new DisappearingPlatform(this, 572, 430);
-        const platform6 = new DisappearingPlatform(this, 644, 400);
-        
-        this.disappearingPlatforms.add(platform1);
-        this.disappearingPlatforms.add(platform2);
-        this.disappearingPlatforms.add(platform3);
-        this.disappearingPlatforms.add(platform4);
-        this.disappearingPlatforms.add(platform5);
-        this.disappearingPlatforms.add(platform6);
-
-        // Set up collision between player and disappearing platforms
-        this.physics.add.collider(this.player, this.disappearingPlatforms, (player, platform) => {
-            // Only trigger when player is standing on the platform
-            if (player.body.touching.down && platform.body.touching.up) {
-                platform.disappear();
-            }
-        });
-
-        // Add turrets
-        const turretPositions = [
-            { x: 308, y: 384, direction: 'right', rotation: 'ceiling' },  // Ceiling mounted
-        ];
-
-        // Create turrets group if it doesn't exist
-        if (!this.turrets) {
-            this.turrets = this.add.group();
-        }
-
-        // Place turrets
-        turretPositions.forEach(pos => {
-            const turret = new Turret(this, pos.x, pos.y, pos.direction, pos.rotation);
-            this.turrets.add(turret);
-        });
-
-        // Set up collision between player and turret lasers
-        this.physics.add.overlap(this.player, this.turrets.getChildren().map(t => t.lasers), (player, laser) => {
-            laser.destroy();
-            player.takeDamage(2);
-        });
-
-        // Create and set up alarm trigger
-        if (!this.alarmTriggers) {
-            this.alarmTriggers = this.physics.add.staticGroup();
-        }
-        
-        const alarmTrigger = new AlarmTrigger(this, 308, 528); // Place it below the turret
-        this.alarmTriggers.add(alarmTrigger);
-        
-        // Set up collision between player and alarm trigger
-        this.physics.add.overlap(this.player, this.alarmTriggers, (player, trigger) => {
-            trigger.triggerAlarm();
-        });
-
-        // Create trap at specific location
-        if (this.platforms) {
-            // Create a new trap at the specified coordinates
-            const trap = new Trap(this, 835, 448);
-            this.trapManager.traps.add(trap);
-            
-            // Enable physics for the trap
-            this.physics.world.enable(trap);
-            trap.body.setCollideWorldBounds(true);
-            trap.body.setImmovable(true);
-            
-            // Add collision with map layer
-            this.physics.add.collider(trap, this.mapLayer);
-            
-            // Set up trap collisions with player
-            this.physics.add.overlap(
-                this.player,
-                this.trapManager.traps,
-                (player, trap) => trap.damagePlayer(player)
-            );
-        }
-
-        // Set initial number of enemies
-        this.remainingEnemies = 7;
-
-        // Wait a short moment for platforms to be fully set up
-        this.time.delayedCall(100, () => {
-            // Calculate spawn height relative to ground
-            const enemyY = this.groundTop - 16;  // Same calculation as player spawn
-
-            // Set number of enemies
-            this.remainingEnemies = 7;
-        });
-        
-        // Add trampoline at x=735 on top of a solid tile
-        // Placing it higher up on the solid platform visible in the screenshot
-        this.trampoline = new Trampoline(this, 735, 448);
     }
 
     startGame() {
-        // Stop intro sequence if it's playing
-        if (this.cameraManager.isIntroPlaying) {
-            this.cameraManager.stopIntroSequence();
-        }
-
         // Enable player controls
         if (this.player) {
             this.player.controller.enabled = true;
-        }
-
-        // Start the timer
-        this.gameUI.startTimer();
-
-        // Set game as started
-        this.gameStarted = true;
-        this.isGamePaused = false;
-        
-        // Delay antivirus wall start by 5 seconds
-        this.time.delayedCall(5000, () => {
-            if (this.antivirusWall && this.gameStarted && !this.isGamePaused) {
-                this.antivirusWall.start();
-                
-                // Add warning effect
-                this.cameras.main.flash(500, 0, 136, 255); // Flash blue
-                // You can add a warning sound here if you have one
-                // this.sound.play('warning');
-            }
-        });
-    }
-
-    hitEnemyWithBullet(bullet, enemySprite) {
-        // Skip if enemy is already being destroyed
-        if (!enemySprite.active || !enemySprite.body || !enemySprite.body.enable) {
-            bullet.destroy();
-            return;
-        }
-        
-        // Destroy the bullet first
-        bullet.destroy();
-        
-        // Use the EnemyManager to handle the bullet hit
-        this.enemyManager.handleBulletHit(bullet, enemySprite);
-        
-        // Update remaining enemies count
-        this.remainingEnemies = Math.max(0, this.remainingEnemies - 1);
-    }
-
-    handleEnemyCollision(enemy1, enemy2) {
-        // If enemies are moving towards each other, reverse their directions
-        if ((enemy1.body.velocity.x > 0 && enemy2.body.velocity.x < 0) ||
-            (enemy1.body.velocity.x < 0 && enemy2.body.velocity.x > 0)) {
-            
-            if (enemy1.enemy) {
-                enemy1.enemy.reverseDirection();
-                // Add slight upward velocity for better separation
-                enemy1.setVelocityY(-150);
-            }
-            if (enemy2.enemy) {
-                enemy2.enemy.reverseDirection();
-                // Add slight upward velocity for better separation
-                enemy2.setVelocityY(-150);
-            }
-        }
-        
-        // Ensure enemies bounce off each other
-        const pushForce = 100;
-        if (enemy1.x < enemy2.x) {
-            enemy1.setVelocityX(-pushForce);
-            enemy2.setVelocityX(pushForce);
-        } else {
-            enemy1.setVelocityX(pushForce);
-            enemy2.setVelocityX(-pushForce);
+            this.gameStarted = true;
         }
     }
 
@@ -932,72 +437,32 @@ export class GtuTestLevel1 extends BaseScene {
         // Only update game elements if the game has started
         if (!this.gameStarted) return;
 
-        super.update(time, delta);
-        if (this.isGamePaused) return;
+        // Update player if it exists
+        if (this.player) {
+            this.player.update(time, delta);
+        }
 
-        // Update antivirus wall
+        // Update antivirus wall if it exists
         if (this.antivirusWall) {
             this.antivirusWall.update(time, delta);
-            
-            // Check if player is too far behind the antivirus wall
-            if (this.player.x < this.antivirusWall.getX() - 20) {
-                this.handleAntivirusCollision();
-            }
         }
 
         // Update bullet pool to check for out-of-bounds bullets
         this.bulletPool.update();
-
-        // Update all turrets
-        this.turrets.getChildren().forEach(turret => turret.update());
-
-        // Update all enemies
-        if (this.enemies) {
-            this.enemies.getChildren().forEach(enemySprite => {
-                if (enemySprite.getData('type') === 'warrior') {
-                    const warrior = enemySprite.getData('enemy');
-                    if (warrior) {
-                        warrior.update(time, delta);
-                    }
-                }
-            });
-        }
 
         // Update game UI
         if (this.gameUI) {
             this.gameUI.update(time, delta);
         }
 
-        // Update debug visuals if enabled
-        this.updateDebugVisuals();
+        // Update camera to follow player
+        if (this.player) {
+            this.cameras.main.startFollow(this.player);
+        }
 
         // Check for scene transition
         const reachedEnd = this.player.x > 3740;
-        
-        // Check for active slimes based on their health
-        const activeSlimes = this.slimes.getChildren().filter(slime => 
-            slime.enemy && slime.enemy.health > 0
-        );
-        const activeSlimeCount = activeSlimes.length;
-        const allSlimesDefeated = activeSlimeCount === 0;
-
-        // Debug info
-        console.log({
-            reachedEnd,
-            playerX: this.player.x,
-            endX: 3740,
-            mapWidth: 3840,
-            activeSlimeCount,
-            allSlimesDefeated,
-            slimeDetails: activeSlimes.map(slime => ({
-                health: slime.enemy?.health,
-                active: slime.active,
-                visible: slime.visible
-            }))
-        });
-
-        // Transition to next scene if player has reached the end and defeated all slimes
-        if (reachedEnd && allSlimesDefeated) {
+        if (reachedEnd) {
             this.scene.start('GameScene2');
         }
     }
@@ -1355,80 +820,6 @@ export class GtuTestLevel1 extends BaseScene {
         if (this.player.play) {
             this.player.play('character_Idle');
         }
-    }
-
-    findSpawnPointsForSlimes() {
-        const spawnPoints = [];
-        const mapWidth = this.mapLayer.width;
-        const mapHeight = this.mapLayer.height;
-
-        // Scan the map for solid tiles (type 370)
-        for (let x = 0; x < mapWidth; x++) {
-            for (let y = 0; y < mapHeight - 1; y++) {
-                const tile = this.mapLayer.getTileAt(x, y);
-                const tileAbove = this.mapLayer.getTileAt(x, y - 1);
-                
-                // Check if current tile is solid and tile above is empty
-                if ((tile && (tile.index === 370 || tile.collides)) && 
-                    (!tileAbove || (!tileAbove.collides && tileAbove.index !== 370))) {
-                    // Position slime exactly on top of the tile
-                    spawnPoints.push({ 
-                        x: x * 32 + 16, // Center of tile
-                        y: y * 32 - 8   // Just above the tile
-                    });
-                }
-            }
-        }
-        return spawnPoints;
-    }
-
-    findSpawnPointsForBitcoins() {
-        const spawnPoints = [];
-        const tileHeight = 32;
-        const levelWidth = this.scale.width;
-        const maxJumpHeight = 5 * tileHeight; // Maximum 5 tiles above platform
-        
-        // Sample points across the level width
-        for (let x = levelWidth * 0.1; x < levelWidth * 0.9; x += 100) {
-            // Find platforms at this x coordinate
-            const platformsAtX = this.platforms.getChildren().filter(platform => {
-                const bounds = platform.getBounds();
-                return x >= bounds.left && x <= bounds.right;
-            });
-
-            if (platformsAtX.length > 0) {
-                // Sort platforms by Y position (top to bottom)
-                platformsAtX.sort((a, b) => a.y - b.y);
-
-                // For each platform, try to place a bitcoin above it
-                for (const platform of platformsAtX) {
-                    const platformTop = platform.getBounds().top;
-                    let validY = null;
-
-                    // Try positions above the platform, within jump height
-                    for (let y = platformTop - tileHeight; y >= platformTop - maxJumpHeight; y -= tileHeight) {
-                        // Check if this position collides with any platform
-                        const hasCollision = this.platforms.getChildren().some(p => {
-                            const bounds = p.getBounds();
-                            return bounds.contains(x, y);
-                        });
-
-                        if (!hasCollision) {
-                            validY = y;
-                            break;
-                        }
-                    }
-
-                    if (validY !== null) {
-                        spawnPoints.push({ x, y: validY });
-                        break; // Only one spawn point per x coordinate
-                    }
-                }
-            }
-        }
-        
-        // Shuffle the spawn points
-        return Phaser.Utils.Array.Shuffle(spawnPoints);
     }
 
     lineIntersectsRect(x1, y1, x2, y2, rx, ry, rw, rh) {
