@@ -10,18 +10,21 @@ export class CombinedLevelCamera {
         this.gameWidth = width;
         this.gameHeight = height;
         
-        // Level dimensions from parameters or default to combined level size
+        // Level dimensions
         this.levelWidth = levelWidth;
         this.levelHeight = levelHeight;
-
-        // Tile-based scrolling properties (Super Mario Bros 3 style)
-        this.tileWidth = 256; // Width of one screen/tile
-        this.tileHeight = 240; // Height of one screen/tile
-        this.currentTileX = 0;
-        this.currentTileY = 0;
-        this.isTransitioning = false;
-        this.transitionDuration = 200; // Faster transitions for snappier feel
-        this.transitionThreshold = 32; // Distance from edge to trigger transition
+        
+        // Camera settings
+        this.followOffsetX = 0;
+        this.followOffsetY = 0;
+        this.followLerpX = 0.1;
+        this.followLerpY = 0.1;
+        
+        // Transition settings
+        this.transitionThreshold = 50; // pixels before triggering transition
+        this.lastUpdateTime = 0;
+        this.updateInterval = 100; // ms between bound checks
+        this.currentBounds = { x: 0, y: 0, width: width, height: height };
 
         // Find UI camera if it exists
         this.uiCamera = scene.cameras.cameras.find(cam => cam !== this.camera);
@@ -32,15 +35,16 @@ export class CombinedLevelCamera {
 
     init(player) {
         this.player = player;
-        this.camera.startFollow(player, true, 0.1, 0.1); // Smoother following
+        
+        // Set up camera to follow player
+        this.camera.startFollow(player, true, this.followLerpX, this.followLerpY);
+        this.camera.setFollowOffset(this.followOffsetX, this.followOffsetY);
         this.camera.setZoom(this.defaultZoom);
         this.camera.setRoundPixels(true);
         
-        // Set camera bounds to prevent showing outside of level
-        this.camera.setBounds(0, 0, this.levelWidth, this.levelHeight);
-        
-        // Immediately center on player
-        this.camera.centerOn(player.x, player.y);
+        // Set initial camera bounds
+        const levelWidth = this.scene.scale.width;
+        this.camera.setBounds(0, 0, levelWidth, this.scene.scale.height);
         
         console.log('Camera initialized with:', {
             bounds: this.camera.getBounds(),
@@ -131,29 +135,50 @@ export class CombinedLevelCamera {
     }
 
     update() {
-        if (!this.player || !this.camera) return;
+        if (!this.player || this.isIntroPlaying) return;
 
-        // Get the current screen section
-        const screenWidth = 256;
-        const currentSection = Math.floor(this.player.x / screenWidth);
+        const now = performance.now();
+        if (now - this.lastUpdateTime < this.updateInterval) return;
+        this.lastUpdateTime = now;
+
+        // Get current level
+        const currentLevel = this.scene.currentLevel || 0;
+        const levelWidth = this.scene.scale.width;
         
-        // Calculate target camera position
-        const targetX = currentSection * screenWidth;
+        // Calculate camera bounds for current level
+        const targetBounds = {
+            x: currentLevel * levelWidth,
+            y: 0,
+            width: levelWidth,
+            height: this.scene.scale.height
+        };
         
-        // If we're in a new section, start transition
-        if (targetX !== this.camera.scrollX) {
-            // Use lerp for smooth transition
-            const t = 0.1; // Adjust this value to control smoothness (0.1 = very smooth, 0.5 = faster)
-            this.camera.scrollX = Phaser.Math.Linear(this.camera.scrollX, targetX, t);
+        // Only update bounds if they've significantly changed
+        if (Math.abs(this.currentBounds.x - targetBounds.x) > this.transitionThreshold || 
+            Math.abs(this.currentBounds.width - targetBounds.width) > this.transitionThreshold) {
             
-            // Snap to target if we're very close to avoid floating point issues
-            if (Math.abs(this.camera.scrollX - targetX) < 0.1) {
-                this.camera.scrollX = targetX;
-            }
+            this.camera.setBounds(targetBounds.x, targetBounds.y, targetBounds.width, targetBounds.height);
+            this.currentBounds = { ...targetBounds };
+            console.log('Updated camera bounds:', targetBounds);
         }
 
-        // Keep vertical position centered on player
-        const centerY = this.player.y - this.camera.height * 0.5;
-        this.camera.scrollY = centerY;
+        // Get the current screen section
+        const screenWidth = this.gameWidth;
+        const playerOffset = this.player.x - (currentLevel * levelWidth);
+        const currentSection = Math.floor(playerOffset / screenWidth);
+        
+        // Calculate target camera position with level offset
+        const targetX = (currentLevel * levelWidth) + (currentSection * screenWidth);
+        
+        // If we're in a new section and not too close to the previous position
+        if (Math.abs(targetX - this.camera.scrollX) > this.transitionThreshold) {
+            // Use lerp for smooth transition
+            const t = 0.1; // Adjust this value to control smoothness
+            this.camera.scrollX = Phaser.Math.Linear(this.camera.scrollX, targetX, t);
+        }
+
+        // Smooth vertical following
+        const idealY = this.player.y - (this.camera.height * 0.5);
+        this.camera.scrollY = Phaser.Math.Linear(this.camera.scrollY, idealY, 0.1);
     }
 }

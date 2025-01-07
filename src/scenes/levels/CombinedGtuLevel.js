@@ -35,6 +35,8 @@ export class CombinedGtuLevel extends BaseScene {
         this.checkpoints = new Map(); // Store checkpoint positions
         this.levelIndicatorText = null;
         this.isTransitioning = false;
+        this.nextLevelBuffer = null; // Store next level's tiles
+        this.bufferDistance = 200; // Distance before level end to start buffering
     }
 
     preload() {
@@ -95,10 +97,8 @@ export class CombinedGtuLevel extends BaseScene {
     }
 
     create() {
-        super.create();
-        
         // Initialize managers
-        this.cameraManager = new CombinedLevelCamera(this, 3840, 3240); // Set level dimensions
+        this.cameraManager = new CombinedLevelCamera(this, 3840, 720); // Adjusted height for single level
         this.collisionManager = new CollisionManager(this);
         this.enemyManager = new EnemyManager(this);
         this.effectsManager = new EffectsManager(this);
@@ -107,44 +107,62 @@ export class CombinedGtuLevel extends BaseScene {
         this.platforms = this.physics.add.staticGroup();
         this.enemies = this.physics.add.group();
         
-        // Load the level from LDtk
-        const levelData = this.cache.json.get('combined-level');
-        if (!levelData || !levelData.levels || !levelData.levels[0]) {
-            console.error('Failed to load level data');
-            return;
-        }
-
-        const level = levelData.levels[0];
-        console.log('Level data:', {
-            width: level.pxWid,
-            height: level.pxHei,
-            gridSize: level.__gridSize
-        });
-
-        // Create a simple tilemap with the correct dimensions
-        const map = this.make.tilemap({
-            width: Math.ceil(level.pxWid / 32),
-            height: Math.ceil(level.pxHei / 32),
+        // Set up game dimensions
+        this.singleLevelWidth = this.scale.width;
+        this.totalLevels = 3;
+        
+        // Create the base tilemap with total width for all levels
+        this.map = this.make.tilemap({
+            width: Math.ceil((this.singleLevelWidth * this.totalLevels) / 32),
+            height: Math.ceil(720 / 32), // Single level height
             tileWidth: 32,
             tileHeight: 32
         });
 
         // Add the tileset
-        const tileset = map.addTilesetImage('GtuTileset');
-        if (!tileset) {
+        this.tileset = this.map.addTilesetImage('GtuTileset');
+        if (!this.tileset) {
             console.error('Failed to load tileset');
             return;
         }
 
-        // Create layers
-        const platformLayer = map.createBlankLayer('Platforms', tileset);
-        if (!platformLayer) {
+        // Create platform layer
+        this.platformLayer = this.map.createBlankLayer('Platforms', this.tileset);
+        if (!this.platformLayer) {
             console.error('Failed to create platform layer');
             return;
         }
 
+        // Reset current level to 0
+        this.currentLevel = 0;
+
+        // Load initial level
+        this.loadLevelData(0);
+        
+        // Initialize UI
+        this.setupUI();
+
+        // Set world bounds for physics
+        this.physics.world.setBounds(0, 0, this.singleLevelWidth * this.totalLevels, 720);
+    }
+
+    loadLevelData(levelIndex) {
+        const levelData = this.cache.json.get('combined-level');
+        if (!levelData || !levelData.levels || !levelData.levels[levelIndex]) {
+            console.error('Failed to load level data for level', levelIndex);
+            return;
+        }
+
+        const level = levelData.levels[levelIndex];
+        const xOffset = levelIndex * Math.floor(this.singleLevelWidth / 32); // Convert to tile coordinates
+
+        console.log(`Loading level ${levelIndex} data at offset ${xOffset * 32}px`);
+        console.log('Level data:', level);
+
         // Process each layer
         level.layerInstances.forEach(layerInstance => {
+            console.log('Processing layer:', layerInstance.__identifier);
+            
             if (layerInstance.__identifier === 'IntGrid') {
                 // Convert IntGrid to tiles
                 const width = layerInstance.__cWid;
@@ -156,8 +174,11 @@ export class CombinedGtuLevel extends BaseScene {
                         const idx = y * width + x;
                         const value = csv[idx];
                         
-                        if (value === 1) { // This is a platform tile
-                            const tile = platformLayer.putTileAt(257, x, y); // Use the correct tile index from your tileset
+                        if (value === 1) {
+                            // Place tile at the correct horizontal offset
+                            const worldX = x + xOffset;
+                            const worldY = y; // Keep Y coordinate as is
+                            const tile = this.platformLayer.putTileAt(257, worldX, worldY);
                             if (tile) {
                                 tile.setCollision(true);
                             }
@@ -165,19 +186,63 @@ export class CombinedGtuLevel extends BaseScene {
                     }
                 }
             } else if (layerInstance.__identifier === 'Entities') {
-                this.processEntities(layerInstance);
+                console.log('Found Entities layer:', layerInstance);
+                if (layerInstance.entityInstances && Array.isArray(layerInstance.entityInstances)) {
+                    // Create a new array to hold adjusted entities
+                    const adjustedEntities = [];
+
+                    // Process entities
+                    layerInstance.entityInstances.forEach(entity => {
+                        // Don't apply offset for PlayerStart in level 0
+                        const shouldOffset = !(levelIndex === 0 && entity.__identifier === 'PlayerStart');
+                        const adjustedX = shouldOffset ? entity.__worldX + (levelIndex * this.singleLevelWidth) : entity.__worldX;
+                        
+                        // Keep Y coordinate as is
+                        const adjustedEntity = {
+                            ...entity,
+                            __worldX: adjustedX,
+                            __worldY: entity.__worldY // Keep original Y position
+                        };
+
+                        console.log('Entity after processing:', {
+                            id: entity.__identifier,
+                            x: adjustedX,
+                            y: entity.__worldY,
+                            level: levelIndex,
+                            shouldOffset
+                        });
+
+                        adjustedEntities.push(adjustedEntity);
+                    });
+
+                    // Process all adjusted entities at once
+                    if (adjustedEntities.length > 0) {
+                        this.processEntities({ entityInstances: adjustedEntities });
+                    }
+                }
             }
         });
 
-        // Set world bounds
-        this.physics.world.setBounds(0, 0, level.pxWid, level.pxHei);
-        
-        // Initialize UI
-        this.setupUI();
-        
-        console.log('Level creation complete');
+        // Set camera bounds for the current level
+        if (this.cameraManager) {
+            const bounds = {
+                x: levelIndex * this.singleLevelWidth,
+                y: 0,
+                width: this.singleLevelWidth,
+                height: this.scale.height
+            };
+            this.cameraManager.camera.setBounds(bounds.x, bounds.y, bounds.width, bounds.height);
+        }
     }
-    
+
+    bufferNextLevel() {
+        const nextLevel = this.currentLevel + 1;
+        if (nextLevel > 2) return;
+
+        console.log(`Buffering level ${nextLevel}`);
+        this.loadLevelData(nextLevel);
+    }
+
     getLayerDepth(identifier) {
         const depths = {
             'Background': 0,
@@ -188,20 +253,33 @@ export class CombinedGtuLevel extends BaseScene {
     }
     
     processEntities(layer) {
-        if (!layer || !layer.entityInstances) {
+        if (!layer || !layer.entityInstances || !Array.isArray(layer.entityInstances)) {
             console.error('Invalid entity layer:', layer);
             return;
         }
 
         layer.entityInstances.forEach(entity => {
+            if (!entity || !entity.__identifier) {
+                console.error('Invalid entity:', entity);
+                return;
+            }
+
             const x = entity.__worldX;
             const y = entity.__worldY;
             
-            console.log('Processing entity:', entity.__identifier, 'at', x, y);
+            console.log('Processing entity:', {
+                type: entity.__identifier,
+                x: x,
+                y: y,
+                raw: entity
+            });
             
             switch (entity.__identifier) {
                 case 'PlayerStart':
-                    this.createPlayer(x, y);
+                    if (!this.player) {
+                        console.log('Creating player at:', x, y);
+                        this.createPlayer(x, y);
+                    }
                     break;
                 case 'Enemy':
                     const enemy = new Enemy(this, x, y);
@@ -246,8 +324,10 @@ export class CombinedGtuLevel extends BaseScene {
     }
 
     createPlayer(x, y) {
-        // Override BaseScene's createPlayer to use exact coordinates
-        if (this.preventAutoPlayerCreation) return; // Skip if called from BaseScene's create()
+        if (this.player) {
+            console.log('Player already exists, skipping creation');
+            return;
+        }
         
         console.log('Creating player at exact coordinates:', x, y);
         this.player = new Player(this, x, y);
@@ -259,34 +339,30 @@ export class CombinedGtuLevel extends BaseScene {
         this.player.setBounce(0);
         this.player.setGravityY(300);
         
-        // Add collision with platforms and any collision layers
-        this.physics.add.collider(this.player, this.platforms);
+        // Add collision with platforms
+        if (this.platforms) {
+            this.physics.add.collider(this.player, this.platforms);
+        }
         
         // Add collision with tilemap layers that have collision
-        const collidableLayers = this.children.list.filter(child => 
-            child.type === 'TilemapLayer' && child.collisionMap
-        );
-        
-        collidableLayers.forEach(layer => {
-            console.log('Adding collision between player and layer:', layer.name);
-            this.physics.add.collider(this.player, layer);
-        });
-        
-        // Add collision with enemies
-        this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
-        
-        // Store spawn point for respawning
-        this.playerSpawnPoint = { x, y };
-        
-        // Set up camera to follow player
-        if (this.cameraManager) {
-            this.cameraManager.init(this.player);
-        } else {
-            this.cameras.main.startFollow(this.player, true);
-            this.cameras.main.setDeadzone(100, 100);
+        if (this.platformLayer) {
+            this.physics.add.collider(this.player, this.platformLayer);
         }
 
-        return this.player;
+        // Initialize camera if we have a camera manager
+        if (this.cameraManager) {
+            this.cameraManager.init(this.player);
+        }
+
+        console.log('Player creation complete:', {
+            x: this.player.x,
+            y: this.player.y,
+            physics: this.player.body ? 'enabled' : 'disabled',
+            colliders: {
+                platforms: !!this.platforms,
+                layer: !!this.platformLayer
+            }
+        });
     }
 
     setupUI() {
@@ -301,7 +377,7 @@ export class CombinedGtuLevel extends BaseScene {
         this.registry.set('maxPlayerHP', INITIAL_HP);
 
         // Create level indicator text
-        this.levelIndicatorText = this.add.text(16, 16, 'Level 0', {
+        this.levelIndicatorText = this.add.text(16, 16, `Level ${this.currentLevel}`, {
             fontFamily: 'Arial',
             fontSize: '24px',
             color: '#ffffff',
@@ -329,23 +405,9 @@ export class CombinedGtuLevel extends BaseScene {
         // Add ESC key for pause menu
         this.pauseKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
         this.pauseKey.on('down', () => {
-            if (!this.gameStarted) {
-                // Skip intro if game hasn't started
-                if (this.cameraManager && this.cameraManager.isIntroPlaying) {
-                    this.cameraManager.stopIntroSequence();
-                }
-                this.startGame();
-            } else {
-                // Normal pause functionality if game is running
-                this.pauseGame();
-            }
+            if (!this.gameStarted) return;
+            this.togglePause();
         });
-
-        // Set up collisions after all game objects are created
-        if (!this.collisionManager) {
-            this.collisionManager = new CollisionManager(this);
-        }
-        this.collisionManager.setupCollisions();
     }
 
     startGame() {
@@ -600,73 +662,73 @@ export class CombinedGtuLevel extends BaseScene {
         
         if (this.player && this.cameraManager) {
             // Check if player has reached the end of current level section
-            const levelWidth = this.tileWidth * 64; // 64 tiles per level section
+            const levelWidth = this.scale.width;
             const nextLevelX = (this.currentLevel + 1) * levelWidth;
             
-            if (this.player.x >= nextLevelX - 100) { // Start transition 100px before end
+            // Start buffering next level's tiles when player is within buffer distance
+            if (this.player.x >= nextLevelX - this.bufferDistance && !this.nextLevelBuffer && !this.isTransitioning) {
+                this.bufferNextLevel();
+            }
+            
+            if (this.player.x >= nextLevelX - 100 && !this.isTransitioning) {
                 this.loadNextLevel();
             }
 
-            this.cameraManager.update();
+            // Update camera
+            if (this.cameraManager) {
+                this.cameraManager.update();
+            }
         }
     }
 
     loadNextLevel() {
-        if (this.isTransitioning) return;
-        this.isTransitioning = true;
-
         const nextLevel = this.currentLevel + 1;
-        if (nextLevel <= 2) { // We have 3 levels (0, 1, 2)
-            // Save current player state
-            const playerState = {
-                x: this.player.x,
-                y: this.player.y,
-                health: this.registry.get('playerHP')
-            };
+        if (nextLevel > 2) return; // Don't load if we're at the last level
 
-            // Update level indicator
-            if (this.levelIndicatorText) {
-                this.levelIndicatorText.setText(`Level ${nextLevel}`);
-            }
-
-            // Transition to next level
-            this.currentLevel = nextLevel;
-            
-            // Update camera bounds for new level
-            const levelWidth = this.tileWidth * 64;
-            const newBounds = {
-                x: this.currentLevel * levelWidth,
-                y: 0,
-                width: levelWidth,
-                height: this.levelHeight
-            };
-            
-            this.cameraManager.camera.setBounds(newBounds.x, newBounds.y, newBounds.width, newBounds.height);
-            
-            // Reset transition flag after a short delay
-            this.time.delayedCall(500, () => {
-                this.isTransitioning = false;
-            });
-
-            console.log(`Loaded level ${this.currentLevel}`);
-        }
-    }
-
-    onLevelChange() {
-        // Update level indicator if it exists
+        console.log(`Loading level ${nextLevel}`);
+        this.loadLevelData(nextLevel);
+        
+        // Update level indicator
         if (this.levelIndicatorText) {
-            this.levelIndicatorText.setText(`Level ${this.currentLevel}`);
+            this.levelIndicatorText.setText(`Level ${nextLevel}`);
+        }
+
+        // Transition to next level
+        this.currentLevel = nextLevel;
+        
+        // Calculate new bounds
+        const levelWidth = this.scale.width;
+        const totalWidth = levelWidth * 3; // Total width for all 3 levels
+        const newBounds = {
+            x: this.currentLevel * levelWidth,
+            y: 0,
+            width: levelWidth,
+            height: this.scale.height
+        };
+        
+        // Update physics world bounds
+        this.physics.world.setBounds(0, 0, totalWidth, 720);
+        
+        // Update camera bounds
+        if (this.cameraManager && this.cameraManager.camera) {
+            this.cameraManager.camera.setBounds(newBounds.x, newBounds.y, newBounds.width, newBounds.height);
         }
         
         // Play transition effect
         this.cameras.main.flash(500, 0, 0, 0, 0.3);
         
-        // Update music and other level-specific changes if music manager exists
+        // Reset transition flag after camera movement completes
+        this.time.delayedCall(1000, () => {
+            this.isTransitioning = false;
+            console.log(`Transition to level ${this.currentLevel} complete`);
+            this.onLevelChange();
+        });
+    }
+
+    onLevelChange() {
+        // Update music if music manager exists
         if (this.musicManager) {
-            // Stop current music
             this.musicManager.stop();
-            
-            // Set and play new music based on level
             const music = this.sound.add('bgMusic', { 
                 loop: true, 
                 volume: Math.max(0.4, 1 - (this.currentLevel * 0.2)) 
@@ -675,20 +737,21 @@ export class CombinedGtuLevel extends BaseScene {
             this.musicManager.play();
         }
         
-        // Save checkpoint at level transition
-        this.loadCheckpoint();
+        // Save checkpoint
+        this.saveCheckpoint();
     }
 
-    loadCheckpoint() {
-        const savedCheckpoint = localStorage.getItem('lastCheckpoint');
-        if (savedCheckpoint) {
-            const checkpoint = JSON.parse(savedCheckpoint);
-            this.currentLevel = checkpoint.level;
-            if (this.player) {
-                this.player.x = checkpoint.x;
-                this.player.y = checkpoint.y;
-                this.onLevelChange();
+    saveCheckpoint() {
+        const checkpoint = {
+            level: this.currentLevel,
+            playerState: {
+                x: this.player.x,
+                y: this.player.y,
+                health: this.registry.get('playerHP')
             }
-        }
+        };
+        
+        this.checkpoints.set(this.currentLevel, checkpoint);
+        console.log('Saved checkpoint for level', this.currentLevel);
     }
 }
