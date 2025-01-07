@@ -425,6 +425,55 @@ export class GtuTestLevel0 extends BaseScene {
         });
     }
 
+    setupTileBasedLevel() {
+        // Define tile dimensions based on camera view
+        const tileWidth = this.scale.width;
+        const tileHeight = this.scale.height;
+
+        // Create tile map for level layout (2x2 grid example)
+        this.levelTiles = [
+            // Tile 0,0 (starting area)
+            {
+                x: 0,
+                y: 0,
+                setup: () => {
+                    this.createPlatform(100, 300, 200, 20);
+                    this.createSlime(150, 250);
+                }
+            },
+            // Tile 1,0
+            {
+                x: tileWidth,
+                y: 0,
+                setup: () => {
+                    this.createPlatform(tileWidth + 100, 400, 200, 20);
+                    this.createMeleeWarrior(tileWidth + 150);
+                }
+            },
+            // Tile 0,1
+            {
+                x: 0,
+                y: tileHeight,
+                setup: () => {
+                    this.createPlatform(200, tileHeight + 350, 200, 20);
+                    this.createDrone(250, tileHeight + 200);
+                }
+            },
+            // Tile 1,1
+            {
+                x: tileWidth,
+                y: tileHeight,
+                setup: () => {
+                    this.createPlatform(tileWidth + 150, tileHeight + 300, 200, 20);
+                    this.createTurret(tileWidth + 200, tileHeight + 250);
+                }
+            }
+        ];
+
+        // Set up each tile
+        this.levelTiles.forEach(tile => tile.setup());
+    }
+
     startGame() {
         // Enable player controls
         if (this.player) {

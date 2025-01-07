@@ -425,6 +425,67 @@ export class GtuTestLevel1 extends BaseScene {
         });
     }
 
+    setupTileBasedLevel() {
+        // Define tile dimensions based on camera view
+        const tileWidth = this.scale.width;
+        const tileHeight = this.scale.height;
+
+        // Create tile map for level layout (2x2 grid with more challenging content)
+        this.levelTiles = [
+            // Tile 0,0 (starting area)
+            {
+                x: 0,
+                y: 0,
+                setup: () => {
+                    // Starting platform with a trampoline
+                    this.createPlatform(100, 300, 250, 20);
+                    this.createTrampoline(200, 280);
+                    this.createSlime(150, 250);
+                }
+            },
+            // Tile 1,0 (right side - combat area)
+            {
+                x: tileWidth,
+                y: 0,
+                setup: () => {
+                    // Multiple platforms with enemies
+                    this.createPlatform(tileWidth + 100, 400, 200, 20);
+                    this.createPlatform(tileWidth + 400, 300, 200, 20);
+                    this.createMeleeWarrior(tileWidth + 150);
+                    this.createDrone(tileWidth + 450, 200);
+                }
+            },
+            // Tile 0,1 (bottom - puzzle area)
+            {
+                x: 0,
+                y: tileHeight,
+                setup: () => {
+                    // Destructible blocks and disappearing platforms
+                    this.createPlatform(200, tileHeight + 350, 200, 20);
+                    this.createDestructibleBlock(100, tileHeight + 250);
+                    this.createDisappearingPlatform(300, tileHeight + 200);
+                    this.createTurret(250, tileHeight + 300);
+                }
+            },
+            // Tile 1,1 (bottom right - challenge area)
+            {
+                x: tileWidth,
+                y: tileHeight,
+                setup: () => {
+                    // Complex platform arrangement with multiple enemies
+                    this.createPlatform(tileWidth + 150, tileHeight + 300, 200, 20);
+                    this.createPlatform(tileWidth + 400, tileHeight + 200, 200, 20);
+                    this.createMeleeWarrior(tileWidth + 200);
+                    this.createDrone(tileWidth + 450, tileHeight + 150);
+                    this.createTrap(tileWidth + 300, tileHeight + 280);
+                }
+            }
+        ];
+
+        // Set up each tile
+        this.levelTiles.forEach(tile => tile.setup());
+    }
+
     startGame() {
         // Enable player controls
         if (this.player) {

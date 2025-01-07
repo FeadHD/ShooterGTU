@@ -425,6 +425,96 @@ export class GtuTestLevel2 extends BaseScene {
         });
     }
 
+    setupTileBasedLevel() {
+        // Define tile dimensions based on camera view
+        const tileWidth = this.scale.width;
+        const tileHeight = this.scale.height;
+
+        // Create tile map for level layout (2x3 grid for a more expansive final level)
+        this.levelTiles = [
+            // Tile 0,0 (starting area)
+            {
+                x: 0,
+                y: 0,
+                setup: () => {
+                    // Starting area with basic platforms and initial enemies
+                    this.createPlatform(100, 300, 250, 20);
+                    this.createPlatform(400, 200, 200, 20);
+                    this.createSlime(150, 250);
+                    this.createMeleeWarrior(450, 150);
+                }
+            },
+            // Tile 1,0 (right side - combat arena)
+            {
+                x: tileWidth,
+                y: 0,
+                setup: () => {
+                    // Multi-level combat area
+                    this.createPlatform(tileWidth + 100, 400, 200, 20);
+                    this.createPlatform(tileWidth + 400, 300, 200, 20);
+                    this.createPlatform(tileWidth + 250, 200, 150, 20);
+                    this.createDrone(tileWidth + 300, 150);
+                    this.createTurret(tileWidth + 450, 250);
+                }
+            },
+            // Tile 0,1 (middle - puzzle section)
+            {
+                x: 0,
+                y: tileHeight,
+                setup: () => {
+                    // Complex puzzle area with destructible blocks
+                    this.createPlatform(200, tileHeight + 350, 200, 20);
+                    this.createDestructibleBlock(100, tileHeight + 250);
+                    this.createDestructibleBlock(300, tileHeight + 250);
+                    this.createDisappearingPlatform(400, tileHeight + 200);
+                    this.createTrampoline(250, tileHeight + 330);
+                }
+            },
+            // Tile 1,1 (middle right - challenge area)
+            {
+                x: tileWidth,
+                y: tileHeight,
+                setup: () => {
+                    // Challenging platforming section
+                    this.createPlatform(tileWidth + 150, tileHeight + 300, 150, 20);
+                    this.createPlatform(tileWidth + 400, tileHeight + 200, 150, 20);
+                    this.createTrap(tileWidth + 300, tileHeight + 280);
+                    this.createTrap(tileWidth + 450, tileHeight + 180);
+                    this.createDrone(tileWidth + 350, tileHeight + 150);
+                }
+            },
+            // Tile 0,2 (bottom - pre-boss area)
+            {
+                x: 0,
+                y: tileHeight * 2,
+                setup: () => {
+                    // Preparation area before final challenge
+                    this.createPlatform(150, tileHeight * 2 + 300, 200, 20);
+                    this.createPlatform(400, tileHeight * 2 + 200, 200, 20);
+                    this.createMeleeWarrior(200, tileHeight * 2 + 250);
+                    this.createTurret(450, tileHeight * 2 + 150);
+                }
+            },
+            // Tile 1,2 (bottom right - final challenge)
+            {
+                x: tileWidth,
+                y: tileHeight * 2,
+                setup: () => {
+                    // Final challenge area
+                    this.createPlatform(tileWidth + 200, tileHeight * 2 + 350, 300, 20);
+                    this.createPlatform(tileWidth + 100, tileHeight * 2 + 250, 150, 20);
+                    this.createPlatform(tileWidth + 400, tileHeight * 2 + 150, 150, 20);
+                    this.createDrone(tileWidth + 300, tileHeight * 2 + 200);
+                    this.createMeleeWarrior(tileWidth + 450, tileHeight * 2 + 100);
+                    this.createTurret(tileWidth + 150, tileHeight * 2 + 200);
+                }
+            }
+        ];
+
+        // Set up each tile
+        this.levelTiles.forEach(tile => tile.setup());
+    }
+
     startGame() {
         // Enable player controls
         if (this.player) {

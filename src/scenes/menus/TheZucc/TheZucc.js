@@ -59,7 +59,7 @@ export class TheZucc extends Scene {
                 showProcedural: true
             },
             'Levels': {
-                scenes: ['LegacyGameScene1','GtuTestLevel0','GtuTestLevel1','GtuTestLevel2'],
+                scenes: ['LegacyGameScene1','GtuTestLevel0','GtuTestLevel1','GtuTestLevel2', 'CombinedGtuLevel'],
                 showConfig: false
             },
             'Menus': {

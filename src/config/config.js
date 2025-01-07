@@ -23,6 +23,7 @@ import { LegacyGameScene1 } from '../scenes/levels/LegacyGameScene1';
 import { GtuTestLevel0 } from '../scenes/levels/GtuTestLevel0';
 import { GtuTestLevel1 } from '../scenes/levels/GtuTestLevel1';
 import { GtuTestLevel2 } from '../scenes/levels/GtuTestLevel2';
+import { CombinedGtuLevel } from '../scenes/levels/CombinedGtuLevel';
 
 export const config = {
     type: Phaser.AUTO,
@@ -78,6 +79,7 @@ export const config = {
         LegacyGameScene1,
         GtuTestLevel0,
         GtuTestLevel1,
-        GtuTestLevel2
+        GtuTestLevel2,
+        CombinedGtuLevel
     ]
 };

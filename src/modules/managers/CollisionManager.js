@@ -4,6 +4,7 @@ export class CollisionManager {
     }
 
     setupCollisions() {
+        this.setupTileCollisions();
         this.setupEnemyCollisions();
         this.setupBulletCollisions();
         this.setupPlayerCollisions();
@@ -126,6 +127,64 @@ export class CollisionManager {
                     },
                     null,
                     this.scene
+                );
+            }
+        }
+    }
+
+    setupTileCollisions() {
+        // Get all tilemap layers
+        const tilemapLayers = this.scene.children.list.filter(child => 
+            child.type === 'TilemapLayer'
+        );
+
+        // Define solid tile IDs
+        const solidTileIds = [641, 642, 643, 644];
+
+        console.log('Setting up tile collisions for layers:', 
+            tilemapLayers.map(layer => layer.name)
+        );
+
+        tilemapLayers.forEach(layer => {
+            // Add collision between layer and game objects
+            if (this.scene.player) {
+                this.scene.physics.add.collider(this.scene.player, layer);
+            }
+            if (this.scene.enemies) {
+                this.scene.physics.add.collider(this.scene.enemies, layer);
+            }
+            if (this.scene.bullets) {
+                this.scene.physics.add.collider(
+                    this.scene.bullets, 
+                    layer,
+                    (bullet) => {
+                        if (this.scene.effectsManager) {
+                            this.scene.effectsManager.createHitEffect(bullet.x, bullet.y);
+                        }
+                        bullet.destroy();
+                    }
+                );
+            }
+        });
+
+        // Add collisions with platform rectangles
+        if (this.scene.platforms) {
+            if (this.scene.player) {
+                this.scene.physics.add.collider(this.scene.player, this.scene.platforms);
+            }
+            if (this.scene.enemies) {
+                this.scene.physics.add.collider(this.scene.enemies, this.scene.platforms);
+            }
+            if (this.scene.bullets) {
+                this.scene.physics.add.collider(
+                    this.scene.bullets,
+                    this.scene.platforms,
+                    (bullet) => {
+                        if (this.scene.effectsManager) {
+                            this.scene.effectsManager.createHitEffect(bullet.x, bullet.y);
+                        }
+                        bullet.destroy();
+                    }
                 );
             }
         }
