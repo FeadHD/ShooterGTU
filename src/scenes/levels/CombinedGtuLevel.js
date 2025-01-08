@@ -43,7 +43,7 @@ export class CombinedGtuLevel extends BaseScene {
         super.preload();
         
         // Load tileset with correct path
-        this.load.image('GtuTileset', 'assets/GtuTileset/GtuTileset.png');
+        this.load.image('GtuTileset', 'assets/levels/image/GtuTileset.png');
         
         // Load level data
         this.load.json('combined-level', 'assets/levels/Json/TestGTU.ldtk');
@@ -97,8 +97,10 @@ export class CombinedGtuLevel extends BaseScene {
     }
 
     create() {
+        super.create();
+
         // Initialize managers
-        this.cameraManager = new CombinedLevelCamera(this, 3840, 720); // Adjusted height for single level
+        this.cameraManager = new CombinedLevelCamera(this, 3840, 720);
         this.collisionManager = new CollisionManager(this);
         this.enemyManager = new EnemyManager(this);
         this.effectsManager = new EffectsManager(this);
@@ -108,13 +110,13 @@ export class CombinedGtuLevel extends BaseScene {
         this.enemies = this.physics.add.group();
         
         // Set up game dimensions
-        this.singleLevelWidth = this.scale.width;
+        this.singleLevelWidth = 800; // Adjust based on your level width
         this.totalLevels = 3;
         
-        // Create the base tilemap with total width for all levels
+        // Create the base tilemap
         this.map = this.make.tilemap({
             width: Math.ceil((this.singleLevelWidth * this.totalLevels) / 32),
-            height: Math.ceil(720 / 32), // Single level height
+            height: Math.ceil(720 / 32),
             tileWidth: 32,
             tileHeight: 32
         });
@@ -122,7 +124,7 @@ export class CombinedGtuLevel extends BaseScene {
         // Add the tileset
         this.tileset = this.map.addTilesetImage('GtuTileset');
         if (!this.tileset) {
-            console.error('Failed to load tileset');
+            console.error('Failed to load tileset GtuTileset');
             return;
         }
 
@@ -132,6 +134,15 @@ export class CombinedGtuLevel extends BaseScene {
             console.error('Failed to create platform layer');
             return;
         }
+
+        // Set collision for all tiles in the Solid layer
+        // These are the tile IDs we've seen in the LDTK file for solid tiles
+        const solidTileIds = [
+            257, 258,  // Basic ground and platform
+            642, 643, 644, 645,  // Platform variations
+            705, 706, 707, 708, 709  // Ground variations
+        ];
+        this.platformLayer.setCollision(solidTileIds, true);
 
         // Reset current level to 0
         this.currentLevel = 0;
@@ -144,6 +155,8 @@ export class CombinedGtuLevel extends BaseScene {
 
         // Set world bounds for physics
         this.physics.world.setBounds(0, 0, this.singleLevelWidth * this.totalLevels, 720);
+        
+        console.log('Scene creation complete');
     }
 
     loadLevelData(levelIndex) {
@@ -154,17 +167,30 @@ export class CombinedGtuLevel extends BaseScene {
         }
 
         const level = levelData.levels[levelIndex];
-        const xOffset = levelIndex * Math.floor(this.singleLevelWidth / 32); // Convert to tile coordinates
-
-        console.log(`Loading level ${levelIndex} data at offset ${xOffset * 32}px`);
-        console.log('Level data:', level);
-
+        console.log(`Loading level ${levelIndex} data at world position: ${level.worldX}px, ${level.worldY}px`);
+        
         // Process each layer
         level.layerInstances.forEach(layerInstance => {
             console.log('Processing layer:', layerInstance.__identifier);
             
-            if (layerInstance.__identifier === 'IntGrid') {
-                // Convert IntGrid to tiles
+            if (layerInstance.__identifier === 'Solid') {
+                // Handle auto-layer tiles (these are all solid since they're in the Solid layer)
+                if (layerInstance.autoLayerTiles) {
+                    layerInstance.autoLayerTiles.forEach(tile => {
+                        const worldX = Math.floor((tile.px[0] + level.worldX) / 32);
+                        const worldY = Math.floor((tile.px[1] + level.worldY) / 32);
+                        const tileId = tile.t;
+                        
+                        // Place the tile and ensure it has collision
+                        const placedTile = this.platformLayer.putTileAt(tileId, worldX, worldY);
+                        if (placedTile) {
+                            placedTile.setCollision(true);
+                            placedTile.properties = { ...placedTile.properties, isSolid: true };
+                        }
+                    });
+                }
+
+                // Process IntGrid values for additional collision areas
                 const width = layerInstance.__cWid;
                 const height = layerInstance.__cHei;
                 const csv = layerInstance.intGridCsv;
@@ -174,62 +200,47 @@ export class CombinedGtuLevel extends BaseScene {
                         const idx = y * width + x;
                         const value = csv[idx];
                         
-                        if (value === 1) {
-                            // Place tile at the correct horizontal offset
-                            const worldX = x + xOffset;
-                            const worldY = y; // Keep Y coordinate as is
-                            const tile = this.platformLayer.putTileAt(257, worldX, worldY);
+                        if (value > 0) {
+                            const worldX = Math.floor((x * 32 + level.worldX) / 32);
+                            const worldY = Math.floor((y * 32 + level.worldY) / 32);
+                            
+                            // Ensure any tile in this position has collision
+                            const tile = this.platformLayer.getTileAt(worldX, worldY);
                             if (tile) {
                                 tile.setCollision(true);
+                                tile.properties = { ...tile.properties, isSolid: true };
                             }
                         }
                     }
                 }
             } else if (layerInstance.__identifier === 'Entities') {
-                console.log('Found Entities layer:', layerInstance);
-                if (layerInstance.entityInstances && Array.isArray(layerInstance.entityInstances)) {
-                    // Create a new array to hold adjusted entities
-                    const adjustedEntities = [];
-
-                    // Process entities
+                if (layerInstance.entityInstances) {
                     layerInstance.entityInstances.forEach(entity => {
-                        // Don't apply offset for PlayerStart in level 0
-                        const shouldOffset = !(levelIndex === 0 && entity.__identifier === 'PlayerStart');
-                        const adjustedX = shouldOffset ? entity.__worldX + (levelIndex * this.singleLevelWidth) : entity.__worldX;
-                        
-                        // Keep Y coordinate as is
-                        const adjustedEntity = {
-                            ...entity,
-                            __worldX: adjustedX,
-                            __worldY: entity.__worldY // Keep original Y position
-                        };
-
-                        console.log('Entity after processing:', {
-                            id: entity.__identifier,
-                            x: adjustedX,
-                            y: entity.__worldY,
-                            level: levelIndex,
-                            shouldOffset
-                        });
-
-                        adjustedEntities.push(adjustedEntity);
+                        if (entity.__identifier === 'PlayerStart') {
+                            console.log('Found PlayerStart at:', entity.__worldX, entity.__worldY);
+                            if (!this.player) {
+                                this.player = new Player(this, entity.__worldX, entity.__worldY);
+                                this.add.existing(this.player);
+                                this.physics.add.existing(this.player);
+                                this.player.body.setCollideWorldBounds(true);
+                                
+                                if (this.cameraManager) {
+                                    this.cameraManager.followPlayer(this.player);
+                                }
+                            }
+                        }
                     });
-
-                    // Process all adjusted entities at once
-                    if (adjustedEntities.length > 0) {
-                        this.processEntities({ entityInstances: adjustedEntities });
-                    }
                 }
             }
         });
 
-        // Set camera bounds for the current level
+        // Set camera bounds based on actual level dimensions
         if (this.cameraManager) {
             const bounds = {
-                x: levelIndex * this.singleLevelWidth,
-                y: 0,
-                width: this.singleLevelWidth,
-                height: this.scale.height
+                x: level.worldX,
+                y: level.worldY,
+                width: level.pxWid,
+                height: level.pxHei
             };
             this.cameraManager.camera.setBounds(bounds.x, bounds.y, bounds.width, bounds.height);
         }
@@ -253,72 +264,51 @@ export class CombinedGtuLevel extends BaseScene {
     }
     
     processEntities(layer) {
-        if (!layer || !layer.entityInstances || !Array.isArray(layer.entityInstances)) {
-            console.error('Invalid entity layer:', layer);
-            return;
-        }
+        if (!layer || !layer.entityInstances) return;
 
         layer.entityInstances.forEach(entity => {
-            if (!entity || !entity.__identifier) {
-                console.error('Invalid entity:', entity);
-                return;
-            }
-
-            const x = entity.__worldX;
-            const y = entity.__worldY;
-            
-            console.log('Processing entity:', {
-                type: entity.__identifier,
-                x: x,
-                y: y,
-                raw: entity
-            });
-            
-            switch (entity.__identifier) {
-                case 'PlayerStart':
-                    if (!this.player) {
-                        console.log('Creating player at:', x, y);
-                        this.createPlayer(x, y);
+            if (entity.__identifier === 'PlayerStart') {
+                console.log('Found PlayerStart at:', entity.__worldX, entity.__worldY);
+                // Create player using the Player class
+                if (!this.player) {
+                    this.player = new Player(this, entity.__worldX, entity.__worldY);
+                    this.add.existing(this.player);
+                    this.physics.add.existing(this.player);
+                    this.player.body.setCollideWorldBounds(true);
+                    
+                    // Set up camera to follow player
+                    if (this.cameraManager) {
+                        this.cameraManager.followPlayer(this.player);
                     }
-                    break;
-                case 'Enemy':
-                    const enemy = new Enemy(this, x, y);
-                    this.enemies.add(enemy);
-                    break;
-                case 'MeleeWarrior':
-                    const warrior = new MeleeWarrior(this, x, y);
-                    this.enemies.add(warrior);
-                    break;
-                case 'Slime':
-                    const slime = new Slime(this, x, y);
-                    this.enemies.add(slime);
-                    break;
-                case 'Drone':
-                    const drone = new Drone(this, x, y);
-                    this.enemies.add(drone);
-                    break;
-                case 'Turret':
-                    const turret = new Turret(this, x, y);
-                    this.enemies.add(turret);
-                    break;
-                case 'Trap':
-                    const trap = new Trap(this, x, y);
-                    this.enemies.add(trap);
-                    break;
-                case 'Trampoline':
-                    new Trampoline(this, x, y);
-                    break;
-                case 'DestructibleBlock':
-                    new DestructibleBlock(this, x, y);
-                    break;
-                case 'DisappearingPlatform':
-                    new DisappearingPlatform(this, x, y);
-                    break;
-                case 'Bitcoin':
-                    new Bitcoin(this, x, y);
-                    break;
-                default:
-                    console.warn('Unknown entity type:', entity.__identifier);
+                }
+            } else if (entity.__identifier === 'Enemy') {
+                const enemy = new Enemy(this, entity.__worldX, entity.__worldY);
+                this.enemies.add(enemy);
+            } else if (entity.__identifier === 'MeleeWarrior') {
+                const warrior = new MeleeWarrior(this, entity.__worldX, entity.__worldY);
+                this.enemies.add(warrior);
+            } else if (entity.__identifier === 'Slime') {
+                const slime = new Slime(this, entity.__worldX, entity.__worldY);
+                this.enemies.add(slime);
+            } else if (entity.__identifier === 'Drone') {
+                const drone = new Drone(this, entity.__worldX, entity.__worldY);
+                this.enemies.add(drone);
+            } else if (entity.__identifier === 'Turret') {
+                const turret = new Turret(this, entity.__worldX, entity.__worldY);
+                this.enemies.add(turret);
+            } else if (entity.__identifier === 'Trap') {
+                const trap = new Trap(this, entity.__worldX, entity.__worldY);
+                this.enemies.add(trap);
+            } else if (entity.__identifier === 'Trampoline') {
+                new Trampoline(this, entity.__worldX, entity.__worldY);
+            } else if (entity.__identifier === 'DestructibleBlock') {
+                new DestructibleBlock(this, entity.__worldX, entity.__worldY);
+            } else if (entity.__identifier === 'DisappearingPlatform') {
+                new DisappearingPlatform(this, entity.__worldX, entity.__worldY);
+            } else if (entity.__identifier === 'Bitcoin') {
+                new Bitcoin(this, entity.__worldX, entity.__worldY);
+            } else {
+                console.warn('Unknown entity type:', entity.__identifier);
             }
         });
     }
