@@ -105,11 +105,18 @@ export class CombinedGtuLevel extends BaseScene {
         this.enemies = this.physics.add.group();
         
         // Set up game dimensions
-        this.singleLevelWidth = 1280; // Updated level width
+        this.singleLevelWidth = 1280; // Each level is 1280 pixels wide (40 tiles * 32)
         this.totalLevels = 3;
-        const levelWidth = this.singleLevelWidth * this.totalLevels;
+        const levelWidth = this.singleLevelWidth * this.totalLevels; // Total width: 3840 pixels
         const levelHeight = 720;
-        const worldHeight = 320; // New world height for physics boundaries
+        const worldHeight = 320;
+
+        console.log('World dimensions:', {
+            singleLevelWidth: this.singleLevelWidth,
+            totalWidth: levelWidth,
+            worldHeight: worldHeight,
+            levelHeight: levelHeight
+        });
 
         // Initialize managers
         this.cameraManager = new CombinedLevelCamera(this, levelWidth, levelHeight);
@@ -117,11 +124,11 @@ export class CombinedGtuLevel extends BaseScene {
         this.enemyManager = new EnemyManager(this);
         this.effectsManager = new EffectsManager(this);
         this.tileManager = new LDTKTileManager(this);
-        
+
         // Create the base tilemap
         this.map = this.make.tilemap({
             width: Math.ceil(levelWidth / 32),
-            height: Math.ceil(worldHeight / 32), // Use world height for tilemap
+            height: Math.ceil(worldHeight / 32),
             tileWidth: 32,
             tileHeight: 32
         });
@@ -141,7 +148,6 @@ export class CombinedGtuLevel extends BaseScene {
         }
 
         // Set collision for all tiles in the Solid layer
-        // These are the tile IDs we've seen in the LDTK file for solid tiles
         const solidTileIds = [
             257, 258,  // Basic ground and platform
             642, 643, 644, 645,  // Platform variations
@@ -149,23 +155,27 @@ export class CombinedGtuLevel extends BaseScene {
         ];
         this.platformLayer.setCollision(solidTileIds, true);
 
-        // Reset current level to 0
-        this.currentLevel = 0;
+        // Set world bounds
+        this.physics.world.setBounds(0, 0, levelWidth, worldHeight);
 
-        // Load initial level
-        this.loadLevelData(0);
-        
+        // Create player at the start
+        this.createPlayer(100, 100);
+
+        // Set up camera to follow player smoothly
+        if (this.cameraManager && this.cameraManager.camera) {
+            this.cameraManager.camera.setBounds(0, 0, levelWidth, levelHeight);
+            this.cameraManager.camera.startFollow(this.player, true, 0.1, 0.1);
+        }
+
+        // Load all levels at once
+        this.loadAllLevels();
+
         // Initialize UI
         this.setupUI();
 
-        // Set world bounds to match actual level dimensions
-        this.physics.world.setBounds(0, 0, levelWidth, worldHeight);
-        
-        console.log('Scene creation complete');
-
         // Add debug graphics for boundaries
         this.boundaryGraphics = this.add.graphics();
-        this.boundaryGraphics.setDepth(1000); // Make sure it's visible above other elements
+        this.boundaryGraphics.setDepth(1000);
         
         // Draw world boundaries in red
         this.boundaryGraphics.lineStyle(4, 0xff0000, 1);
@@ -180,6 +190,92 @@ export class CombinedGtuLevel extends BaseScene {
             cameraBounds.width,
             cameraBounds.height
         );
+    }
+
+    loadAllLevels() {
+        const levelData = this.cache.json.get('combined-level');
+        if (!levelData || !levelData.levels) {
+            console.error('Failed to load level data');
+            return;
+        }
+
+        // Load all levels at their respective positions
+        for (let i = 0; i < this.totalLevels; i++) {
+            const level = levelData.levels[i];
+            if (!level) {
+                console.error(`Missing level data for level ${i}`);
+                continue;
+            }
+
+            const worldX = i * this.singleLevelWidth;
+            console.log(`Loading level ${i} at position ${worldX}`);
+
+            // Create hitboxes for this level section
+            this.tileManager.createTileHitboxes(level, worldX, level.worldY);
+
+            // Process level tiles
+            if (level.layerInstances) {
+                level.layerInstances.forEach(layer => {
+                    if (layer.__identifier === 'Solid' || layer.__type === 'IntGrid') {
+                        // Handle auto-layer tiles
+                        if (layer.autoLayerTiles) {
+                            layer.autoLayerTiles.forEach(tile => {
+                                const tileX = Math.floor((tile.px[0] + worldX) / 32);
+                                const tileY = Math.floor(tile.px[1] / 32);
+                                this.platformLayer.putTileAt(tile.t, tileX, tileY);
+                            });
+                        }
+
+                        // Handle IntGrid tiles
+                        if (layer.intGridCsv) {
+                            const width = layer.__cWid;
+                            layer.intGridCsv.forEach((value, index) => {
+                                if (value === 1) {
+                                    const tileX = Math.floor(((index % width) * 32 + worldX) / 32);
+                                    const tileY = Math.floor((Math.floor(index / width) * 32) / 32);
+                                    this.platformLayer.putTileAt(257, tileX, tileY);
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        }
+
+        // Add collisions for enemies group
+        this.tileManager.addCollider(this.enemies);
+    }
+
+    update(time, delta) {
+        super.update(time, delta);
+        
+        if (this.player && this.cameraManager) {
+            // Update current level indicator based on player position
+            const currentLevel = Math.floor(this.player.x / this.singleLevelWidth);
+            if (currentLevel !== this.currentLevel && this.levelIndicatorText) {
+                this.currentLevel = currentLevel;
+                this.levelIndicatorText.setText(`Level ${currentLevel}`);
+            }
+        }
+        
+        // Update boundary visualization
+        if (this.boundaryGraphics) {
+            this.boundaryGraphics.clear();
+            
+            // Draw world boundaries in red
+            this.boundaryGraphics.lineStyle(4, 0xff0000, 1);
+            this.boundaryGraphics.strokeRect(0, 0, this.singleLevelWidth * this.totalLevels, 320);
+            
+            // Draw camera boundaries in blue
+            this.boundaryGraphics.lineStyle(4, 0x0000ff, 1);
+            const cameraBounds = this.cameras.main.getBounds();
+            this.boundaryGraphics.strokeRect(
+                cameraBounds.x,
+                cameraBounds.y,
+                cameraBounds.width,
+                cameraBounds.height
+            );
+        }
     }
 
     loadLevelData(levelIndex) {
@@ -679,187 +775,5 @@ export class CombinedGtuLevel extends BaseScene {
         this.createPlatform(x + 200, y + 350, 300, 20);
         this.createDrone(x + 300, y + 200);
         this.createTurret(x + 150, y + 200);
-    }
-
-    update(time, delta) {
-        super.update(time, delta);
-        
-        if (this.player && this.cameraManager) {
-            // Check for level transition
-            if (!this.isTransitioning) {
-                const playerX = this.player.x;
-                const currentLevelEnd = (this.currentLevel + 1) * this.singleLevelWidth;
-                const transitionThreshold = 100; // pixels before level end to trigger transition
-
-                // Check if player is near the end of current level
-                if (playerX > currentLevelEnd - transitionThreshold) {
-                    this.isTransitioning = true;
-                    this.loadNextLevel();
-                }
-            }
-        }
-        
-        // Update boundary visualization
-        if (this.boundaryGraphics) {
-            this.boundaryGraphics.clear();
-            
-            // Draw world boundaries in red
-            this.boundaryGraphics.lineStyle(4, 0xff0000, 1);
-            this.boundaryGraphics.strokeRect(0, 0, this.singleLevelWidth * this.totalLevels, 320);
-            
-            // Draw camera boundaries in blue
-            this.boundaryGraphics.lineStyle(4, 0x0000ff, 1);
-            const cameraBounds = this.cameras.main.getBounds();
-            this.boundaryGraphics.strokeRect(
-                cameraBounds.x,
-                cameraBounds.y,
-                cameraBounds.width,
-                cameraBounds.height
-            );
-
-            // Log camera bounds for debugging
-            console.log('Camera bounds:', cameraBounds);
-        }
-    }
-
-    loadNextLevel() {
-        const nextLevel = this.currentLevel + 1;
-        if (nextLevel >= this.totalLevels) {
-            this.isTransitioning = false;
-            return; // Don't load if we're at the last level
-        }
-
-        console.log(`Loading level ${nextLevel}`);
-
-        // Calculate new camera and world bounds
-        const worldBounds = {
-            x: 0,
-            y: 0,
-            width: this.singleLevelWidth * this.totalLevels,
-            height: 320
-        };
-
-        const cameraBounds = {
-            x: nextLevel * this.singleLevelWidth,
-            y: 0,
-            width: this.singleLevelWidth,
-            height: 720
-        };
-
-        // Update physics world bounds
-        this.physics.world.setBounds(
-            worldBounds.x,
-            worldBounds.y,
-            worldBounds.width,
-            worldBounds.height
-        );
-
-        // Start camera transition
-        if (this.cameraManager && this.cameraManager.camera) {
-            // Smoothly pan to new position
-            this.cameras.main.pan(
-                cameraBounds.x + (this.singleLevelWidth / 2), // Center of new level
-                this.cameras.main.scrollY,
-                1000, // Duration in ms
-                'Sine.easeInOut'
-            );
-
-            // Update camera bounds after pan
-            this.time.delayedCall(1000, () => {
-                this.cameraManager.camera.setBounds(
-                    cameraBounds.x,
-                    cameraBounds.y,
-                    cameraBounds.width,
-                    cameraBounds.height
-                );
-                
-                // Load the new level data
-                this.loadLevelData(nextLevel);
-                
-                // Update level indicator
-                if (this.levelIndicatorText) {
-                    this.levelIndicatorText.setText(`Level ${nextLevel}`);
-                }
-
-                // Update current level
-                this.currentLevel = nextLevel;
-                
-                // Clear old level hitboxes and create new ones
-                if (this.tileManager) {
-                    this.tileManager.clearHitboxes();
-                    const levelData = this.cache.json.get('combined-level');
-                    if (levelData && levelData.levels[nextLevel]) {
-                        this.tileManager.createTileHitboxes(
-                            levelData.levels[nextLevel],
-                            levelData.levels[nextLevel].worldX,
-                            levelData.levels[nextLevel].worldY
-                        );
-                        // Re-add colliders
-                        if (this.player) {
-                            this.tileManager.addCollider(this.player);
-                        }
-                        this.tileManager.addCollider(this.enemies);
-                    }
-                }
-
-                // Update boundary visualization
-                if (this.boundaryGraphics) {
-                    this.boundaryGraphics.clear();
-                    
-                    // Draw world boundaries in red
-                    this.boundaryGraphics.lineStyle(4, 0xff0000, 1);
-                    this.boundaryGraphics.strokeRect(
-                        worldBounds.x,
-                        worldBounds.y,
-                        worldBounds.width,
-                        worldBounds.height
-                    );
-                    
-                    // Draw camera boundaries in blue
-                    this.boundaryGraphics.lineStyle(4, 0x0000ff, 1);
-                    this.boundaryGraphics.strokeRect(
-                        cameraBounds.x,
-                        cameraBounds.y,
-                        cameraBounds.width,
-                        cameraBounds.height
-                    );
-                }
-
-                // Reset transition flag
-                this.isTransitioning = false;
-                console.log(`Transition to level ${this.currentLevel} complete`);
-                this.onLevelChange();
-            });
-        }
-    }
-
-    onLevelChange() {
-        // Update music if music manager exists
-        if (this.musicManager) {
-            this.musicManager.stop();
-            const music = this.sound.add('bgMusic', { 
-                loop: true, 
-                volume: Math.max(0.4, 1 - (this.currentLevel * 0.2)) 
-            });
-            this.musicManager.setCurrentMusic(music);
-            this.musicManager.play();
-        }
-        
-        // Save checkpoint
-        this.saveCheckpoint();
-    }
-
-    saveCheckpoint() {
-        const checkpoint = {
-            level: this.currentLevel,
-            playerState: {
-                x: this.player.x,
-                y: this.player.y,
-                health: this.registry.get('playerHP')
-            }
-        };
-        
-        this.checkpoints.set(this.currentLevel, checkpoint);
-        console.log('Saved checkpoint for level', this.currentLevel);
     }
 }
