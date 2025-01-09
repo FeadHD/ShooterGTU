@@ -112,7 +112,8 @@ export class IntroScene extends Scene {
         this.bullets = this.physics.add.group({
             classType: Bullet,
             maxSize: 10,
-            runChildUpdate: true
+            runChildUpdate: true,
+            allowGravity: false  // Disable gravity for all bullets in the group
         });
 
         // Initialize tutorial manager

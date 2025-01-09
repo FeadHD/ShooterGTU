@@ -19,7 +19,7 @@ import { DisappearingPlatform } from '../../prefabs/DisappearingPlatform';
 import { Turret } from '../../prefabs/Turret';
 import { EnemyManager } from '../../modules/managers/EnemyManager';
 import { EffectsManager } from '../../modules/managers/EffectsManager';
-import { BulletPool } from '../../modules/managers/pools/BulletPool';
+import { Bullet } from '../../prefabs/Bullet';
 import { GameConfig } from '../../config/GameConfig';
 import { CombinedLevelCamera } from '../../modules/managers/CombinedLevelCamera';
 import { LDTKTileManager } from '../../modules/managers/LDTKTileManager';
@@ -75,6 +75,12 @@ export class CombinedGtuLevel extends BaseScene {
         this.load.image('slime_jump', 'assets/enemys/slime/slime_jump.png');
         this.load.image('slime_death', 'assets/enemys/slime/slime_death.png');
         
+        // Load bullet sprite
+        this.load.spritesheet('bullet_animation', 'assets/sprites/bullet.png', {
+            frameWidth: 24,
+            frameHeight: 24
+        });
+
         // Load drone sprites
         this.load.image('drone', 'assets/enemys/drone/Bot1v1.png');
         
@@ -100,10 +106,25 @@ export class CombinedGtuLevel extends BaseScene {
     create() {
         super.create();
 
+        // Create bullet animation
+        this.anims.create({
+            key: 'bullet_anim',
+            frames: this.anims.generateFrameNumbers('bullet_animation', { start: 0, end: 3 }),
+            frameRate: 10,
+            repeat: -1
+        });
+
         // Create physics groups
         this.platforms = this.physics.add.staticGroup();
         this.enemies = this.physics.add.group();
-        this.bullets = new BulletPool(this);
+        
+        // Initialize bullets group (replacing BulletPool)
+        this.bullets = this.physics.add.group({
+            classType: Bullet,
+            maxSize: 20,
+            runChildUpdate: true,
+            allowGravity: false
+        });
         
         // Create a group for debug text
         this.debugTexts = this.add.group();
@@ -209,6 +230,22 @@ export class CombinedGtuLevel extends BaseScene {
             cameraBounds.width,
             cameraBounds.height
         );
+
+        // Setup collision handling for bullets
+        this.setupCollisions();
+    }
+
+    setupCollisions() {
+        // Add collisions between bullets and enemies
+        this.physics.add.overlap(this.bullets, this.enemies, (bullet, enemy) => {
+            bullet.destroy();
+            enemy.damage(10);
+        });
+
+        // Add collisions between bullets and platforms
+        this.physics.add.collider(this.bullets, this.platforms, (bullet) => {
+            bullet.destroy();
+        });
     }
 
     loadAllLevels() {

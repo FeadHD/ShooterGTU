@@ -91,14 +91,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     shoot(direction = 'right') {
-        const velocity = {
-            x: direction === 'right' ? 600 : -600,
-            y: 0
-        };
-        
-        const bullet = this.scene.bullets.get(this.x, this.y, velocity);
+        // Get a bullet from the scene's bullets group
+        const bullet = this.scene.bullets.get(this.x, this.y);
         if (!bullet) return;
         
+        // Fire the bullet
         bullet.fire(this.x, this.y, direction);
         
         // Only play sound if effectsManager exists
