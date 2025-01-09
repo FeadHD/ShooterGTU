@@ -38,6 +38,13 @@ export class CombinedGtuLevel extends BaseScene {
         this.isTransitioning = false;
         this.nextLevelBuffer = null; // Store next level's tiles
         this.bufferDistance = 200; // Distance before level end to start buffering
+        
+        // Progressive loading properties
+        this.loadedSections = new Set();
+        this.sectionWidth = 1280; // Width of each level section
+        this.activeEntities = new Set();
+        this.currentLevelData = null;
+        this.gameStarted = false;
     }
 
     preload() {
@@ -188,8 +195,18 @@ export class CombinedGtuLevel extends BaseScene {
         // Set world bounds
         this.physics.world.setBounds(0, 0, levelWidth, worldHeight);
 
-        // Load all levels
-        this.loadAllLevels();
+        // Load initial level data
+        this.currentLevelData = this.cache.json.get('combined-level');
+        
+        // Create initial level section
+        this.loadLevelSection(0);
+        
+        // Initialize camera
+        this.levelCamera = new CombinedLevelCamera(this);
+        this.levelCamera.init(this.player);
+        
+        // Set up collision detection
+        this.setupCollisions();
 
         // Create player at the start
         this.createPlayer(100, 200); // Moved player spawn point up to account for higher level
@@ -230,9 +247,6 @@ export class CombinedGtuLevel extends BaseScene {
             cameraBounds.width,
             cameraBounds.height
         );
-
-        // Setup collision handling for bullets
-        this.setupCollisions();
     }
 
     setupCollisions() {
@@ -248,37 +262,173 @@ export class CombinedGtuLevel extends BaseScene {
         });
     }
 
-    loadAllLevels() {
-        const levelData = this.cache.json.get('combined-level');
-        if (!levelData || !levelData.levels) {
-            console.error('Failed to load level data');
+    loadLevelSection(startX) {
+        if (this.loadedSections.has(startX)) return;
+        
+        // Mark this section as loaded
+        this.loadedSections.add(startX);
+        
+        // Calculate section bounds
+        const sectionEnd = startX + this.sectionWidth;
+        
+        if (!this.currentLevelData || !this.currentLevelData.levels) {
+            console.error('No level data available');
             return;
         }
 
-        // Clear any existing tiles
-        this.groundLayer.fill(-1);
-        this.platformLayer.fill(-1);
+        // Find the level that contains this section
+        const levelIndex = Math.floor(startX / this.singleLevelWidth);
+        const level = this.currentLevelData.levels[levelIndex];
+        
+        if (!level) {
+            console.error('No level data found for section at', startX);
+            return;
+        }
 
-        // Load each level
-        levelData.levels.forEach((level, i) => {
-            if (!level) return;
+        // Find the Solid layer
+        const solidLayer = level.layerInstances.find(layer => 
+            layer.__identifier === 'Solid' || layer.__type === 'IntGrid'
+        );
 
-            const worldX = i * this.singleLevelWidth;
-            const solidLayer = level.layerInstances.find(l => l.__identifier === 'Solid');
+        if (solidLayer) {
+            // Calculate the relative position within the level
+            const relativeStartX = startX % this.singleLevelWidth;
             
-            if (!solidLayer) return;
+            // Process auto-layer tiles
+            if (solidLayer.autoLayerTiles) {
+                solidLayer.autoLayerTiles.forEach(tile => {
+                    const tileX = tile.px[0] + level.worldX;
+                    const tileY = tile.px[1];
+                    
+                    // Only place tiles within the current section
+                    if (tileX >= startX && tileX < sectionEnd) {
+                        const gridX = Math.floor(tileX / 32);
+                        const gridY = Math.floor(tileY / 32);
+                        
+                        // Map LDTK tile IDs to our tileset IDs
+                        let tileId = tile.t;
+                        switch(tileId) {
+                            case 257: // Basic platform
+                                tileId = 642;
+                                break;
+                            case 258: // Platform variation
+                                tileId = 643;
+                                break;
+                            case 261: // Another platform variation
+                                tileId = 644;
+                                break;
+                            default:
+                                tileId = 642; // Default to basic platform
+                        }
+                        
+                        // Place the tile in both layers for visual and collision
+                        this.groundLayer.putTileAt(tileId, gridX, gridY);
+                        const platformTile = this.platformLayer.putTileAt(tileId, gridX, gridY);
+                        if (platformTile) {
+                            platformTile.setCollision(true);
+                        }
+                    }
+                });
+            }
 
-            // Process tiles
-            solidLayer.autoLayerTiles.forEach(tile => {
-                const tileX = Math.floor((tile.px[0] + worldX) / 32);
-                const tileY = Math.floor(tile.px[1] / 32);
-                
-                this.platformLayer.putTileAt(tile.t, tileX, tileY);
-            });
+            // Process IntGrid values
+            if (solidLayer.intGridCsv) {
+                const width = solidLayer.__cWid;
+                const height = solidLayer.__cHei;
+                const startTile = Math.floor(relativeStartX / 32);
+                const endTile = Math.ceil(sectionEnd / 32);
 
-            // Set collision for the entire layer
-            this.platformLayer.setCollisionByExclusion([-1]);
+                for (let y = 0; y < height; y++) {
+                    for (let x = startTile; x < endTile; x++) {
+                        const idx = y * width + x;
+                        const value = solidLayer.intGridCsv[idx];
+                        
+                        if (value > 0) {
+                            const worldX = Math.floor((x * 32 + level.worldX) / 32);
+                            const worldY = Math.floor(y);
+                            
+                            // Map IntGrid values to tileset IDs
+                            let tileId;
+                            switch(value) {
+                                case 1: // Ground
+                                    tileId = 642;
+                                    break;
+                                case 2: // Platform
+                                    tileId = 643;
+                                    break;
+                                default:
+                                    tileId = 642;
+                            }
+                            
+                            // Place tiles in both layers
+                            this.groundLayer.putTileAt(tileId, worldX, worldY);
+                            const platformTile = this.platformLayer.putTileAt(tileId, worldX, worldY);
+                            if (platformTile) {
+                                platformTile.setCollision(true);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Set collision for the platform layer
+        this.platformLayer.setCollisionByExclusion([-1]);
+        
+        // Spawn entities for this section
+        this.spawnEntitiesInSection(startX, sectionEnd);
+    }
+
+    loadNextLevelSection(cameraRight) {
+        const nextSectionStart = Math.floor(cameraRight / this.sectionWidth) * this.sectionWidth;
+        this.loadLevelSection(nextSectionStart);
+    }
+
+    cleanupBehindPlayer(cleanupX) {
+        // Remove entities that are too far behind
+        for (const entity of this.activeEntities) {
+            if (entity.x < cleanupX) {
+                entity.destroy();
+                this.activeEntities.delete(entity);
+            }
+        }
+        
+        // Remove tile hitboxes that are too far behind
+        this.tileManager.cleanupHitboxes(cleanupX);
+    }
+
+    spawnEntitiesInSection(startX, endX) {
+        if (!this.currentLevelData || !this.currentLevelData.layerInstances) return;
+        
+        // Find entities layer
+        const entitiesLayer = this.currentLevelData.layerInstances.find(
+            layer => layer.__identifier === 'Entities'
+        );
+        
+        if (!entitiesLayer) return;
+        
+        // Spawn entities within this section
+        entitiesLayer.entityInstances.forEach(entity => {
+            const entityX = entity.__worldX;
+            if (entityX >= startX && entityX < endX) {
+                const spawnedEntity = this.spawnEntity(entity);
+                if (spawnedEntity) {
+                    this.activeEntities.add(spawnedEntity);
+                }
+            }
         });
+    }
+
+    spawnEntity(entityData) {
+        // Implementation of entity spawning based on type
+        switch(entityData.__identifier) {
+            case 'Enemy':
+                return new Enemy(this, entityData.__worldX, entityData.__worldY);
+            case 'Bitcoin':
+                return new Bitcoin(this, entityData.__worldX, entityData.__worldY);
+            // Add other entity types as needed
+        }
+        return null;
     }
 
     update(time, delta) {
@@ -311,199 +461,82 @@ export class CombinedGtuLevel extends BaseScene {
                 cameraBounds.height
             );
         }
+        
+        // Load next level section if necessary
+        const cameraRight = this.cameras.main.worldView.right;
+        if (cameraRight > this.sectionWidth && !this.loadedSections.has(cameraRight)) {
+            this.loadNextLevelSection(cameraRight);
+        }
+        
+        // Clean up entities behind the player
+        const cleanupX = this.player.x - this.sectionWidth;
+        this.cleanupBehindPlayer(cleanupX);
     }
 
-    loadLevelData(levelIndex) {
-        const levelData = this.cache.json.get('combined-level');
-        if (!levelData || !levelData.levels || !levelData.levels[levelIndex]) {
-            console.error('Failed to load level data for level', levelIndex);
-            return;
+    setupUI() {
+        // Initialize game UI
+        this.gameUI = new GameUI(this);
+        if (this.gameUI.container) {
+            this.gameUI.container.setScrollFactor(0);
         }
 
-        const level = levelData.levels[levelIndex];
-        console.log(`Loading level ${levelIndex} data at world position: ${level.worldX}px, ${level.worldY}px`);
-        
-        // Create hitboxes for the level tiles
-        this.tileManager.createTileHitboxes(level, level.worldX, level.worldY);
-        
-        // Add collisions for player if it exists
+        // Set up initial player HP
+        const INITIAL_HP = 100;
+        this.registry.set('playerHP', INITIAL_HP);
+        this.registry.set('maxPlayerHP', INITIAL_HP);
+
+        // Create level indicator text
+        this.levelIndicatorText = this.add.text(16, 16, `Level ${this.currentLevel}`, {
+            fontFamily: 'Arial',
+            fontSize: '24px',
+            color: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 4
+        }).setScrollFactor(0).setDepth(1000);
+
+        // Show start message if gameUI exists
+        if (this.gameUI) {
+            this.gameUI.showStartMessage();
+        }
+
+        // Add space key listener for starting the game
+        const spaceKey = this.input.keyboard.addKey('SPACE');
+        spaceKey.once('down', () => {
+            if (!this.gameStarted) {
+                this.startGame();
+            }
+        });
+
+        // Add ESC key for pause menu
+        this.pauseKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
+        this.pauseKey.on('down', () => {
+            if (!this.gameStarted) return;
+            this.togglePause();
+        });
+    }
+
+    startGame() {
         if (this.player) {
-            this.tileManager.addCollider(this.player);
-        }
-        
-        // Add collisions for enemies group
-        this.tileManager.addCollider(this.enemies);
-        
-        // Process each layer
-        level.layerInstances.forEach(layerInstance => {
-            console.log('Processing layer:', layerInstance.__identifier);
-            
-            if (layerInstance.__identifier === 'Solid') {
-                // Handle auto-layer tiles (these are all solid since they're in the Solid layer)
-                if (layerInstance.autoLayerTiles) {
-                    layerInstance.autoLayerTiles.forEach(tile => {
-                        const tileX = Math.floor((tile.px[0] + level.worldX) / 32);
-                        const tileY = Math.floor((tile.px[1] + level.worldY) / 32);
-                        const tileId = tile.t;
-                        
-                        // Map LDTK tile IDs to our tileset IDs
-                        switch(tileId) {
-                            case 257: // Basic platform
-                                tileId = 642;
-                                break;
-                            case 258: // Platform variation
-                                tileId = 643;
-                                break;
-                            case 261: // Another platform variation
-                                tileId = 644;
-                                break;
-                            default:
-                                tileId = 642; // Default to basic platform
-                        }
-                        
-                        // Place the tile and ensure it has collision
-                        const placedTile = this.platformLayer.putTileAt(tileId, tileX, tileY);
-                        if (placedTile) {
-                            placedTile.setCollision(true);
-                            placedTile.properties = { ...placedTile.properties, isSolid: true };
-                        }
-                    });
-                }
-
-                // Process IntGrid values for additional collision areas
-                const width = layerInstance.__cWid;
-                const height = layerInstance.__cHei;
-                const csv = layerInstance.intGridCsv;
-
-                for (let y = 0; y < height; y++) {
-                    for (let x = 0; x < width; x++) {
-                        const idx = y * width + x;
-                        const value = csv[idx];
-                        
-                        if (value > 0) {
-                            const worldX = Math.floor((x * 32 + level.worldX) / 32);
-                            const worldY = Math.floor((y * 32 + level.worldY) / 32);
-                            
-                            // Map IntGrid values to tileset IDs
-                            let tileId;
-                            switch(value) {
-                                case 1: // GroundCover
-                                    tileId = 705;
-                                    break;
-                                case 2: // Platform
-                                    tileId = 642;
-                                    break;
-                                default:
-                                    tileId = 642; // Default to basic platform
-                            }
-                            
-                            // Ensure any tile in this position has collision
-                            const tile = this.platformLayer.getTileAt(worldX, worldY);
-                            if (tile) {
-                                tile.setCollision(true);
-                                tile.properties = { ...tile.properties, isSolid: true };
-                            }
-                        }
-                    }
-                }
-            } else if (layerInstance.__identifier === 'Entities') {
-                if (layerInstance.entityInstances) {
-                    layerInstance.entityInstances.forEach(entity => {
-                        if (entity.__identifier === 'PlayerStart') {
-                            console.log('Found PlayerStart at:', entity.__worldX, entity.__worldY);
-                            if (!this.player) {
-                                this.player = new Player(this, entity.__worldX, entity.__worldY);
-                                this.add.existing(this.player);
-                                this.physics.add.existing(this.player);
-                                this.player.body.setCollideWorldBounds(true);
-                                
-                                if (this.cameraManager) {
-                                    this.cameraManager.followPlayer(this.player);
-                                }
-                            }
-                        }
-                    });
-                }
+            this.player.controller.enabled = true;
+            this.gameStarted = true;
+            if (this.gameUI) {
+                this.gameUI.hideStartMessage();
             }
-        });
-
-        // Set camera bounds based on actual level dimensions
-        if (this.cameraManager) {
-            const bounds = {
-                x: level.worldX,
-                y: level.worldY,
-                width: level.pxWid,
-                height: level.pxHei
-            };
-            this.cameraManager.camera.setBounds(bounds.x, bounds.y, bounds.width, bounds.height);
         }
     }
 
-    bufferNextLevel() {
-        const nextLevel = this.currentLevel + 1;
-        if (nextLevel > 2) return;
-
-        console.log(`Buffering level ${nextLevel}`);
-        this.loadLevelData(nextLevel);
-    }
-
-    getLayerDepth(identifier) {
-        const depths = {
-            'Background': 0,
-            'Platforms': 1,
-            'Decorations': 2
-        };
-        return depths[identifier] || 0;
-    }
-    
-    processEntities(layer) {
-        if (!layer || !layer.entityInstances) return;
-
-        layer.entityInstances.forEach(entity => {
-            if (entity.__identifier === 'PlayerStart') {
-                console.log('Found PlayerStart at:', entity.__worldX, entity.__worldY);
-                // Create player using the Player class
-                if (!this.player) {
-                    this.player = new Player(this, entity.__worldX, entity.__worldY);
-                    this.add.existing(this.player);
-                    this.physics.add.existing(this.player);
-                    this.player.body.setCollideWorldBounds(true);
-                    
-                    // Set up camera to follow player
-                    if (this.cameraManager) {
-                        this.cameraManager.followPlayer(this.player);
-                    }
-                }
-            } else if (entity.__identifier === 'Enemy') {
-                const enemy = new Enemy(this, entity.__worldX, entity.__worldY);
-                this.enemies.add(enemy);
-            } else if (entity.__identifier === 'MeleeWarrior') {
-                const warrior = new MeleeWarrior(this, entity.__worldX, entity.__worldY);
-                this.enemies.add(warrior);
-            } else if (entity.__identifier === 'Slime') {
-                const slime = new Slime(this, entity.__worldX, entity.__worldY);
-                this.enemies.add(slime);
-            } else if (entity.__identifier === 'Drone') {
-                const drone = new Drone(this, entity.__worldX, entity.__worldY);
-                this.enemies.add(drone);
-            } else if (entity.__identifier === 'Turret') {
-                const turret = new Turret(this, entity.__worldX, entity.__worldY);
-                this.enemies.add(turret);
-            } else if (entity.__identifier === 'Trap') {
-                const trap = new Trap(this, entity.__worldX, entity.__worldY);
-                this.enemies.add(trap);
-            } else if (entity.__identifier === 'Trampoline') {
-                new Trampoline(this, entity.__worldX, entity.__worldY);
-            } else if (entity.__identifier === 'DestructibleBlock') {
-                new DestructibleBlock(this, entity.__worldX, entity.__worldY);
-            } else if (entity.__identifier === 'DisappearingPlatform') {
-                new DisappearingPlatform(this, entity.__worldX, entity.__worldY);
-            } else if (entity.__identifier === 'Bitcoin') {
-                new Bitcoin(this, entity.__worldX, entity.__worldY);
-            } else {
-                console.warn('Unknown entity type:', entity.__identifier);
+    togglePause() {
+        if (this.scene.isPaused('CombinedGtuLevel')) {
+            this.scene.resume('CombinedGtuLevel');
+            if (this.gameUI) {
+                this.gameUI.hidePauseMenu();
             }
-        });
+        } else {
+            this.scene.pause('CombinedGtuLevel');
+            if (this.gameUI) {
+                this.gameUI.showPauseMenu();
+            }
+        }
     }
 
     createPlayer(x, y) {
@@ -511,7 +544,7 @@ export class CombinedGtuLevel extends BaseScene {
             console.log('Player already exists, skipping creation');
             return;
         }
-        
+
         console.log('Creating player at exact coordinates:', x, y);
         this.player = new Player(this, x, y);
         this.add.existing(this.player);
@@ -548,61 +581,6 @@ export class CombinedGtuLevel extends BaseScene {
         });
     }
 
-    setupUI() {
-        // Initialize game UI
-        this.gameUI = new GameUI(this);
-        this.gameUI.container.setScrollFactor(0);
-        this.gameUI.updateCameraIgnoreList();
-
-        // Set up initial player HP
-        const INITIAL_HP = 100; // Default HP if config not available
-        this.registry.set('playerHP', INITIAL_HP);
-        this.registry.set('maxPlayerHP', INITIAL_HP);
-
-        // Create level indicator text
-        this.levelIndicatorText = this.add.text(16, 16, `Level ${this.currentLevel}`, {
-            fontFamily: 'Arial',
-            fontSize: '24px',
-            color: '#ffffff',
-            stroke: '#000000',
-            strokeThickness: 4
-        }).setScrollFactor(0).setDepth(1000);
-
-        // Set up the combined level structure
-        this.setupCombinedLevel();
-        this.setupCheckpoints();
-
-        // Show start message
-        if (this.gameUI) {
-            this.gameUI.showStartMessage();
-        }
-
-        // Add space key listener for starting the game
-        const spaceKey = this.input.keyboard.addKey('SPACE');
-        spaceKey.once('down', () => {
-            if (!this.gameStarted) {
-                this.startGame();
-            }
-        });
-
-        // Add ESC key for pause menu
-        this.pauseKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
-        this.pauseKey.on('down', () => {
-            if (!this.gameStarted) return;
-            this.togglePause();
-        });
-    }
-
-    startGame() {
-        if (this.player) {
-            this.player.controller.enabled = true;
-            this.gameStarted = true;
-            if (this.gameUI) {
-                this.gameUI.hideStartMessage();
-            }
-        }
-    }
-
     handlePlayerEnemyCollision(player, enemy) {
         if (player.invulnerableUntil <= this.time.now) {
             // Get current HP
@@ -615,12 +593,12 @@ export class CombinedGtuLevel extends BaseScene {
             
             // Create hit effect at player's position
             if (this.effectsManager) {
-                this.effectsManager.createHitEffect(player.x, player.y, 0xff0000); // Red color for damage
+                this.effectsManager.createHitEffect(player.x, player.y, 0xff0000);
                 this.effectsManager.playSound('hit');
             }
             
             // Make player temporarily invulnerable
-            player.invulnerableUntil = this.time.now + 1000; // 1 second of invulnerability
+            player.invulnerableUntil = this.time.now + 1000;
             
             // Check for game over
             if (newHP <= 0) {
@@ -630,197 +608,8 @@ export class CombinedGtuLevel extends BaseScene {
     }
 
     handlePlayerDeath() {
-        // TO DO: Implement game over logic
-    }
-
-    setupCombinedLevel() {
-        const tileWidth = this.scale.width;
-        const tileHeight = this.scale.height;
-
-        // Create level sections
-        this.levelSections = {
-            // Level 0 (Tiles 0,0 and 1,0)
-            level0: [
-                {
-                    x: 0,
-                    y: 0,
-                    setup: () => this.setupLevel0Tile1()
-                },
-                {
-                    x: tileWidth,
-                    y: 0,
-                    setup: () => this.setupLevel0Tile2()
-                }
-            ],
-            // Level 1 (Tiles 0,1 and 1,1)
-            level1: [
-                {
-                    x: 0,
-                    y: tileHeight,
-                    setup: () => this.setupLevel1Tile1()
-                },
-                {
-                    x: tileWidth,
-                    y: tileHeight,
-                    setup: () => this.setupLevel1Tile2()
-                }
-            ],
-            // Level 2 (Tiles 0,2 and 1,2)
-            level2: [
-                {
-                    x: 0,
-                    y: tileHeight * 2,
-                    setup: () => this.setupLevel2Tile1()
-                },
-                {
-                    x: tileWidth,
-                    y: tileHeight * 2,
-                    setup: () => this.setupLevel2Tile2()
-                }
-            ]
-        };
-
-        // Set up all level sections
-        Object.values(this.levelSections).flat().forEach(tile => tile.setup());
-    }
-
-    setupCheckpoints() {
-        // Add checkpoints at the transition points between levels
-        const { width, height } = this.scale;
-        
-        // Checkpoint for Level 0
-        this.checkpoints.set(0, {
-            x: width / 2,
-            y: height * 0.8,
-            level: 0
-        });
-
-        // Checkpoint for Level 1
-        this.checkpoints.set(1, {
-            x: width / 2,
-            y: height * 1.8,
-            level: 1
-        });
-
-        // Checkpoint for Level 2
-        this.checkpoints.set(2, {
-            x: width / 2,
-            y: height * 2.8,
-            level: 2
-        });
-
-        // Create checkpoint markers
-        this.checkpoints.forEach((checkpoint, level) => {
-            const marker = this.add.sprite(checkpoint.x, checkpoint.y, 'spark');
-            marker.setScale(2);
-            marker.setTint(0x00ff00);
-            
-            // Add pulsing effect
-            this.tweens.add({
-                targets: marker,
-                alpha: 0.5,
-                yoyo: true,
-                repeat: -1,
-                duration: 1000
-            });
-        });
-    }
-
-    // Platform creation methods
-    createPlatform(x, y, width, height) {
-        const platform = this.add.rectangle(x, y, width, height, 0x00ff00);
-        this.physics.add.existing(platform, true);
-        platform.body.allowGravity = false;
-        platform.body.immovable = true;
-        this.platforms.add(platform);
-        return platform;
-    }
-
-    createTrampoline(x, y) {
-        const trampoline = new Trampoline(this, x, y);
-        return trampoline;
-    }
-
-    createDestructibleBlock(x, y) {
-        const block = new DestructibleBlock(this, x, y);
-        return block;
-    }
-
-    createDisappearingPlatform(x, y) {
-        const platform = new DisappearingPlatform(this, x, y);
-        return platform;
-    }
-
-    // Enemy creation methods
-    createSlime(x, y) {
-        const slime = new Slime(this, x, y);
-        // Slime class creates its own sprite internally
-        if (slime.sprite) {
-            this.enemies.add(slime.sprite);
-        }
-        return slime;
-    }
-
-    createMeleeWarrior(x, y) {
-        const warrior = new MeleeWarrior(this, x, y);
-        // MeleeWarrior class creates its own sprite internally
-        if (warrior.sprite) {
-            this.enemies.add(warrior.sprite);
-        }
-        return warrior;
-    }
-
-    createDrone(x, y) {
-        const drone = new Drone(this, x, y);
-        // Drone class creates its own sprite internally
-        if (drone.sprite) {
-            this.enemies.add(drone.sprite);
-        }
-        return drone;
-    }
-
-    createTurret(x, y) {
-        const turret = new Turret(this, x, y);
-        // Turret is itself a sprite
-        this.add.existing(turret);
-        this.enemies.add(turret);
-        return turret;
-    }
-
-    createTrap(x, y) {
-        const trap = new Trap(this, x, y);
-        // Check if trap has a sprite property or is itself a sprite
-        if (trap.sprite) {
-            this.hazards.add(trap.sprite);
-        } else {
-            this.hazards.add(trap);
-        }
-        return trap;
-    }
-
-    // Level 0 tile setups
-    setupLevel0Tile1() {
-    }
-
-    setupLevel0Tile2() {
-    }
-
-    // Level 1 tile setups
-    setupLevel1Tile1() {
-    }
-
-    setupLevel1Tile2() {
-    }
-
-    // Level 2 tile setups
-    setupLevel2Tile1() {
-    }
-
-    setupLevel2Tile2() {
-    }
-
-    // Add method to toggle debug text visibility
-    toggleTileDebug() {
-        this.debugTexts.toggleVisible();
+        // Implement game over logic here
+        console.log('Player died!');
+        this.scene.restart();
     }
 }

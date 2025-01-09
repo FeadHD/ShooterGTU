@@ -15,15 +15,21 @@ export class CombinedLevelCamera {
         this.levelHeight = levelHeight;
         
         // Camera settings
-        this.followOffsetX = 0;
+        this.followOffsetX = width / 4; // Position player 1/4 from left of screen
         this.followOffsetY = 0;
         this.followLerpX = 0.1;
         this.followLerpY = 0.1;
+        this.deadZoneWidth = width / 3; // Mario-style deadzone
+        this.deadZoneHeight = height / 4;
+        
+        // Progressive loading
+        this.loadAheadDistance = width * 2; // Load 2 screens ahead
+        this.unloadBehindDistance = -width; // Unload 1 screen behind
         
         // Transition settings
-        this.transitionThreshold = 50; // pixels before triggering transition
+        this.transitionThreshold = 50;
         this.lastUpdateTime = 0;
-        this.updateInterval = 100; // ms between bound checks
+        this.updateInterval = 100;
         this.currentBounds = { x: 0, y: 0, width: width, height: height };
 
         // Find UI camera if it exists
@@ -36,7 +42,7 @@ export class CombinedLevelCamera {
     init(player) {
         this.player = player;
         
-        // Set up camera to follow player
+        // Set up camera to follow player with deadzone
         this.camera.startFollow(player, true, this.followLerpX, this.followLerpY);
         this.camera.setFollowOffset(this.followOffsetX, this.followOffsetY);
         this.camera.setZoom(this.defaultZoom);
@@ -45,19 +51,10 @@ export class CombinedLevelCamera {
         // Set initial camera bounds
         this.camera.setBounds(0, 0, this.levelWidth, this.levelHeight);
         
-        // Enable bounds for smooth camera movement
-        this.camera.setDeadzone(100, 100);
+        // Set up Mario-style deadzone
+        this.camera.setDeadzone(this.deadZoneWidth, this.deadZoneHeight);
         
-        console.log('Camera initialized with:', {
-            bounds: this.camera.getBounds(),
-            playerPos: { x: player.x, y: player.y },
-            zoom: this.camera.zoom
-        });
-
-        // Make sure UI camera ignores game objects
-        if (this.scene.gameUI) {
-            this.updateCameraIgnoreList();
-        }
+        console.log('Camera initialized with Mario-style following');
     }
 
     updateCameraBounds() {
@@ -136,9 +133,34 @@ export class CombinedLevelCamera {
         }
     }
 
-    update() {
-        if (!this.player || this.isIntroPlaying) return;
+    checkProgressiveLoading() {
+        if (!this.player) return;
+        
+        const cameraRight = this.camera.scrollX + this.camera.width;
+        const playerX = this.player.x;
+        
+        // If player is approaching the load ahead distance, trigger level generation
+        if (playerX > cameraRight - this.loadAheadDistance) {
+            this.scene.loadNextLevelSection(cameraRight);
+        }
+        
+        // If player has moved far enough, clean up behind them
+        if (playerX > this.camera.scrollX + Math.abs(this.unloadBehindDistance)) {
+            this.scene.cleanupBehindPlayer(this.camera.scrollX + this.unloadBehindDistance);
+        }
+    }
 
+    update() {
+        if (!this.player) return;
+        
+        // Check for progressive loading
+        this.checkProgressiveLoading();
+        
+        // Ensure camera doesn't go backwards
+        if (this.camera.scrollX < this.player.x - this.followOffsetX) {
+            this.camera.scrollX = this.player.x - this.followOffsetX;
+        }
+        
         const now = performance.now();
         if (now - this.lastUpdateTime < this.updateInterval) return;
         this.lastUpdateTime = now;

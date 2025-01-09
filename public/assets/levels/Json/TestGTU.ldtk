@@ -21,7 +21,7 @@
 			"levelIid": "06b1cda1-c210-11ef-9f77-4f888e06278c",
 			"layerIid": "f2296a20-c210-11ef-bf24-05b66ef25c1b",
 			"entityIid": "1258db00-c210-11ef-bf24-59aea57203c8"
-		}, "worldX": 64, "worldY": 448, "widPx": 32, "heiPx": 32, "fields" : {} }]
+		}, "worldX": 64, "worldY": 416, "widPx": 32, "heiPx": 32, "fields" : {} }]
 	}],
 	"worldLayout": "Free",
 	"worldGridWidth": 256,
@@ -855,7 +855,7 @@
 					"entityInstances": [
 						{
 							"__identifier": "PlayerStart",
-							"__grid": [2,14],
+							"__grid": [2,13],
 							"__pivot": [0,0],
 							"__tags": [],
 							"__tile": null,
@@ -864,10 +864,10 @@
 							"width": 32,
 							"height": 32,
 							"defUid": 85,
-							"px": [64,448],
+							"px": [64,416],
 							"fieldInstances": [],
 							"__worldX": 64,
-							"__worldY": 448
+							"__worldY": 416
 						}
 					]
 				}
