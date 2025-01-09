@@ -22,6 +22,7 @@ import { EffectsManager } from '../../modules/managers/EffectsManager';
 import { BulletPool } from '../../modules/managers/pools/BulletPool';
 import { GameConfig } from '../../config/GameConfig';
 import { CombinedLevelCamera } from '../../modules/managers/CombinedLevelCamera';
+import { LDTKTileManager } from '../../modules/managers/LDTKTileManager';
 import { Player } from '../../prefabs/Player';
 
 export class CombinedGtuLevel extends BaseScene {
@@ -115,6 +116,7 @@ export class CombinedGtuLevel extends BaseScene {
         this.collisionManager = new CollisionManager(this);
         this.enemyManager = new EnemyManager(this);
         this.effectsManager = new EffectsManager(this);
+        this.tileManager = new LDTKTileManager(this);
         
         // Create the base tilemap
         this.map = this.make.tilemap({
@@ -189,6 +191,17 @@ export class CombinedGtuLevel extends BaseScene {
 
         const level = levelData.levels[levelIndex];
         console.log(`Loading level ${levelIndex} data at world position: ${level.worldX}px, ${level.worldY}px`);
+        
+        // Create hitboxes for the level tiles
+        this.tileManager.createTileHitboxes(level, level.worldX, level.worldY);
+        
+        // Add collisions for player if it exists
+        if (this.player) {
+            this.tileManager.addCollider(this.player);
+        }
+        
+        // Add collisions for enemies group
+        this.tileManager.addCollider(this.enemies);
         
         // Process each layer
         level.layerInstances.forEach(layerInstance => {
@@ -672,22 +685,17 @@ export class CombinedGtuLevel extends BaseScene {
         super.update(time, delta);
         
         if (this.player && this.cameraManager) {
-            // Check if player has reached the end of current level section
-            const levelWidth = this.scale.width;
-            const nextLevelX = (this.currentLevel + 1) * levelWidth;
-            
-            // Start buffering next level's tiles when player is within buffer distance
-            if (this.player.x >= nextLevelX - this.bufferDistance && !this.nextLevelBuffer && !this.isTransitioning) {
-                this.bufferNextLevel();
-            }
-            
-            if (this.player.x >= nextLevelX - 100 && !this.isTransitioning) {
-                this.loadNextLevel();
-            }
+            // Check for level transition
+            if (!this.isTransitioning) {
+                const playerX = this.player.x;
+                const currentLevelEnd = (this.currentLevel + 1) * this.singleLevelWidth;
+                const transitionThreshold = 100; // pixels before level end to trigger transition
 
-            // Update camera
-            if (this.cameraManager) {
-                this.cameraManager.update();
+                // Check if player is near the end of current level
+                if (playerX > currentLevelEnd - transitionThreshold) {
+                    this.isTransitioning = true;
+                    this.loadNextLevel();
+                }
             }
         }
         
@@ -716,46 +724,113 @@ export class CombinedGtuLevel extends BaseScene {
 
     loadNextLevel() {
         const nextLevel = this.currentLevel + 1;
-        if (nextLevel > 2) return; // Don't load if we're at the last level
+        if (nextLevel >= this.totalLevels) {
+            this.isTransitioning = false;
+            return; // Don't load if we're at the last level
+        }
 
         console.log(`Loading level ${nextLevel}`);
-        this.loadLevelData(nextLevel);
-        
-        // Update level indicator
-        if (this.levelIndicatorText) {
-            this.levelIndicatorText.setText(`Level ${nextLevel}`);
-        }
 
-        // Transition to next level
-        this.currentLevel = nextLevel;
-        
-        // Calculate new bounds
-        const levelWidth = this.singleLevelWidth * this.totalLevels; // Total width for all 3 levels
-        const levelHeight = 720;
-        const newBounds = {
-            x: this.currentLevel * this.singleLevelWidth,
+        // Calculate new camera and world bounds
+        const worldBounds = {
+            x: 0,
+            y: 0,
+            width: this.singleLevelWidth * this.totalLevels,
+            height: 320
+        };
+
+        const cameraBounds = {
+            x: nextLevel * this.singleLevelWidth,
             y: 0,
             width: this.singleLevelWidth,
-            height: levelHeight
+            height: 720
         };
-        
+
         // Update physics world bounds
-        this.physics.world.setBounds(0, 0, levelWidth, 320);
-        
-        // Update camera bounds
+        this.physics.world.setBounds(
+            worldBounds.x,
+            worldBounds.y,
+            worldBounds.width,
+            worldBounds.height
+        );
+
+        // Start camera transition
         if (this.cameraManager && this.cameraManager.camera) {
-            this.cameraManager.camera.setBounds(newBounds.x, newBounds.y, newBounds.width, newBounds.height);
+            // Smoothly pan to new position
+            this.cameras.main.pan(
+                cameraBounds.x + (this.singleLevelWidth / 2), // Center of new level
+                this.cameras.main.scrollY,
+                1000, // Duration in ms
+                'Sine.easeInOut'
+            );
+
+            // Update camera bounds after pan
+            this.time.delayedCall(1000, () => {
+                this.cameraManager.camera.setBounds(
+                    cameraBounds.x,
+                    cameraBounds.y,
+                    cameraBounds.width,
+                    cameraBounds.height
+                );
+                
+                // Load the new level data
+                this.loadLevelData(nextLevel);
+                
+                // Update level indicator
+                if (this.levelIndicatorText) {
+                    this.levelIndicatorText.setText(`Level ${nextLevel}`);
+                }
+
+                // Update current level
+                this.currentLevel = nextLevel;
+                
+                // Clear old level hitboxes and create new ones
+                if (this.tileManager) {
+                    this.tileManager.clearHitboxes();
+                    const levelData = this.cache.json.get('combined-level');
+                    if (levelData && levelData.levels[nextLevel]) {
+                        this.tileManager.createTileHitboxes(
+                            levelData.levels[nextLevel],
+                            levelData.levels[nextLevel].worldX,
+                            levelData.levels[nextLevel].worldY
+                        );
+                        // Re-add colliders
+                        if (this.player) {
+                            this.tileManager.addCollider(this.player);
+                        }
+                        this.tileManager.addCollider(this.enemies);
+                    }
+                }
+
+                // Update boundary visualization
+                if (this.boundaryGraphics) {
+                    this.boundaryGraphics.clear();
+                    
+                    // Draw world boundaries in red
+                    this.boundaryGraphics.lineStyle(4, 0xff0000, 1);
+                    this.boundaryGraphics.strokeRect(
+                        worldBounds.x,
+                        worldBounds.y,
+                        worldBounds.width,
+                        worldBounds.height
+                    );
+                    
+                    // Draw camera boundaries in blue
+                    this.boundaryGraphics.lineStyle(4, 0x0000ff, 1);
+                    this.boundaryGraphics.strokeRect(
+                        cameraBounds.x,
+                        cameraBounds.y,
+                        cameraBounds.width,
+                        cameraBounds.height
+                    );
+                }
+
+                // Reset transition flag
+                this.isTransitioning = false;
+                console.log(`Transition to level ${this.currentLevel} complete`);
+                this.onLevelChange();
+            });
         }
-        
-        // Play transition effect
-        this.cameras.main.flash(500, 0, 0, 0, 0.3);
-        
-        // Reset transition flag after camera movement completes
-        this.time.delayedCall(1000, () => {
-            this.isTransitioning = false;
-            console.log(`Transition to level ${this.currentLevel} complete`);
-            this.onLevelChange();
-        });
     }
 
     onLevelChange() {
@@ -772,27 +847,6 @@ export class CombinedGtuLevel extends BaseScene {
         
         // Save checkpoint
         this.saveCheckpoint();
-    }
-
-    saveCheckpoint() {
-        const checkpoint = {
-            level: this.currentLevel,
-            playerState: {
-                x: this.player.x,
-                y: this.player.y,
-                health: this.registry.get('playerHP')
-            }
-        };
-        
-        this.checkpoints.set(this.currentLevel, checkpoint);
-        console.log('Saved checkpoint for level', this.currentLevel);
-    }
-
-    bufferNextLevel() {
-        const nextLevel = this.currentLevel + 1;
-        if (nextLevel > 2) return;
-        
-        this.loadLevelData(nextLevel);
     }
 
     saveCheckpoint() {
