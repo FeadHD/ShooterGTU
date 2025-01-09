@@ -103,6 +103,7 @@ export class CombinedGtuLevel extends BaseScene {
         // Create physics groups
         this.platforms = this.physics.add.staticGroup();
         this.enemies = this.physics.add.group();
+        this.bullets = this.add.group();
         
         // Set up game dimensions
         this.singleLevelWidth = 2048; // Each level is 2048 pixels wide (from LDTK pxWid)
@@ -119,7 +120,7 @@ export class CombinedGtuLevel extends BaseScene {
         });
 
         // Initialize managers
-        this.cameraManager = new CombinedLevelCamera(this, levelWidth, levelHeight);
+        this.cameraManager = new CombinedLevelCamera(this);
         this.collisionManager = new CollisionManager(this);
         this.enemyManager = new EnemyManager(this);
         this.effectsManager = new EffectsManager(this);
@@ -127,20 +128,20 @@ export class CombinedGtuLevel extends BaseScene {
 
         // Create the base tilemap
         this.map = this.make.tilemap({
-            width: Math.ceil(levelWidth / 32),
-            height: Math.ceil(worldHeight / 32),
             tileWidth: 32,
-            tileHeight: 32
+            tileHeight: 32,
+            width: Math.ceil(levelWidth / 32),
+            height: Math.ceil(worldHeight / 32)
         });
 
-        // Add the tileset
+        // Add tileset
         this.tileset = this.map.addTilesetImage('GtuTileset');
         if (!this.tileset) {
-            console.error('Failed to load tileset GtuTileset');
+            console.error('Failed to load tileset');
             return;
         }
 
-        // Create platform layer
+        // Create the platform layer for solid tiles
         this.platformLayer = this.map.createBlankLayer('Platforms', this.tileset);
         if (!this.platformLayer) {
             console.error('Failed to create platform layer');
@@ -158,17 +159,21 @@ export class CombinedGtuLevel extends BaseScene {
         // Set world bounds
         this.physics.world.setBounds(0, 0, levelWidth, worldHeight);
 
+        // Load all levels
+        this.loadAllLevels();
+
         // Create player at the start
         this.createPlayer(100, 100);
 
+        // Add colliders
+        this.physics.add.collider(this.player, this.platformLayer);
+        this.physics.add.collider(this.enemies, this.platformLayer);
+        
         // Set up camera to follow player smoothly
         if (this.cameraManager && this.cameraManager.camera) {
             this.cameraManager.camera.setBounds(0, 0, levelWidth, levelHeight);
             this.cameraManager.camera.startFollow(this.player, true, 0.1, 0.1);
         }
-
-        // Load all levels at once
-        this.loadAllLevels();
 
         // Initialize UI
         this.setupUI();
@@ -210,9 +215,6 @@ export class CombinedGtuLevel extends BaseScene {
             const worldX = i * this.singleLevelWidth;
             console.log(`Loading level ${i} at position ${worldX}`);
 
-            // Create hitboxes for this level section
-            this.tileManager.createTileHitboxes(level, worldX, level.worldY);
-
             // Process level tiles
             if (level.layerInstances) {
                 level.layerInstances.forEach(layer => {
@@ -222,28 +224,48 @@ export class CombinedGtuLevel extends BaseScene {
                             layer.autoLayerTiles.forEach(tile => {
                                 const tileX = Math.floor((tile.px[0] + worldX) / 32);
                                 const tileY = Math.floor(tile.px[1] / 32);
-                                this.platformLayer.putTileAt(tile.t, tileX, tileY);
+                                const tileId = tile.t;
+                                
+                                // Place the tile and ensure it has collision
+                                const placedTile = this.platformLayer.putTileAt(tileId, tileX, tileY);
+                                if (placedTile) {
+                                    placedTile.setCollision(true);
+                                }
                             });
                         }
 
                         // Handle IntGrid tiles
                         if (layer.intGridCsv) {
                             const width = layer.__cWid;
-                            layer.intGridCsv.forEach((value, index) => {
-                                if (value === 1) {
-                                    const tileX = Math.floor(((index % width) * 32 + worldX) / 32);
-                                    const tileY = Math.floor((Math.floor(index / width) * 32) / 32);
-                                    this.platformLayer.putTileAt(257, tileX, tileY);
+                            const height = layer.__cHei;
+                            const csv = layer.intGridCsv;
+
+                            for (let y = 0; y < height; y++) {
+                                for (let x = 0; x < width; x++) {
+                                    const idx = y * width + x;
+                                    const value = csv[idx];
+                                    
+                                    if (value > 0) {
+                                        const tileX = Math.floor((x * 32 + worldX) / 32);
+                                        const tileY = Math.floor(y);
+                                        
+                                        // Place solid tile and ensure it has collision
+                                        const placedTile = this.platformLayer.putTileAt(257, tileX, tileY);
+                                        if (placedTile) {
+                                            placedTile.setCollision(true);
+                                        }
+                                    }
                                 }
-                            });
+                            }
                         }
                     }
                 });
             }
         }
 
-        // Add collisions for enemies group
-        this.tileManager.addCollider(this.enemies);
+        // Enable collision on the platform layer
+        this.platformLayer.setCollisionByProperty({ isSolid: true });
+        this.platformLayer.setCollisionByExclusion([-1]);
     }
 
     update(time, delta) {
