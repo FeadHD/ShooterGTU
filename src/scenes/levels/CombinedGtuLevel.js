@@ -41,7 +41,7 @@ export class CombinedGtuLevel extends BaseScene {
         
         // Progressive loading properties
         this.loadedSections = new Set();
-        this.sectionWidth = 800; // Width of each level section
+        this.sectionWidth = 640; // Fixed section width of 20 tiles
         this.lastLoadedSection = -1; // Track the last loaded section
         this.activeEntities = new Set();
         this.currentLevelData = null;
@@ -129,11 +129,11 @@ export class CombinedGtuLevel extends BaseScene {
         const levelWidth = this.singleLevelWidth * this.totalLevels;
         const worldHeight = levelHeight;
 
-        console.log('World dimensions from LDTK:', {
+        console.log('World dimensions:', {
+            sectionWidth: this.sectionWidth,
             singleLevelWidth: this.singleLevelWidth,
             totalWidth: levelWidth,
             worldHeight: worldHeight,
-            levelHeight: levelHeight,
             totalLevels: this.totalLevels
         });
 
@@ -207,9 +207,9 @@ export class CombinedGtuLevel extends BaseScene {
         // Set up camera bounds and following
         const { width, height } = this.scale;
         this.cameras.main.setBounds(0, 0, levelWidth, worldHeight);
-        this.cameras.main.startFollow(this.player, true, 1, 1); // Immediate follow
-        this.cameras.main.setDeadzone(0); // No deadzone for tight following
-        this.cameras.main.setFollowOffset(0, -height/4); // Vertically center the player
+        this.cameras.main.startFollow(this.player, true, 1, 1);
+        this.cameras.main.setDeadzone(0);
+        this.cameras.main.setFollowOffset(0, -height/4);
 
         // Add colliders
         this.physics.add.collider(this.player, this.groundLayer);
@@ -231,13 +231,155 @@ export class CombinedGtuLevel extends BaseScene {
                 this.boundaryGraphics.clear();
             }
         });
+    }
+
+    loadLevelSection(startX) {
+        const sectionIndex = Math.floor(startX / this.sectionWidth);
+        if (this.loadedSections.has(sectionIndex)) {
+            return;
+        }
         
-        // Draw world boundaries in red
-        this.boundaryGraphics.lineStyle(4, 0xff0000, 1);
-        this.boundaryGraphics.strokeRect(0, 0, levelWidth, worldHeight);
+        console.log(`Loading section ${sectionIndex} at startX: ${startX}`);
         
-        // Draw camera boundaries in blue
-        this.boundaryGraphics.lineStyle(4, 0x0000ff, 1);
+        // Mark this section as loaded
+        this.loadedSections.add(sectionIndex);
+        this.lastLoadedSection = Math.max(this.lastLoadedSection, sectionIndex);
+        
+        if (!this.currentLevelData || !this.currentLevelData.levels) {
+            console.error('No level data available');
+            return;
+        }
+
+        // Calculate the level index and local coordinates
+        const levelIndex = Math.floor(startX / this.singleLevelWidth);
+        const level = this.currentLevelData.levels[levelIndex];
+        
+        if (!level) {
+            console.error(`No level data found for section ${sectionIndex}`);
+            return;
+        }
+
+        // Calculate section bounds
+        const sectionStartX = startX;
+        const sectionEndX = startX + this.sectionWidth;
+        
+        // Calculate which levels this section spans
+        const startLevelIndex = Math.floor(sectionStartX / this.singleLevelWidth);
+        const endLevelIndex = Math.floor((sectionEndX - 1) / this.singleLevelWidth);
+        
+        console.log(`Section ${sectionIndex} spans levels:`, {
+            startLevel: startLevelIndex,
+            endLevel: endLevelIndex,
+            sectionStartX,
+            sectionEndX
+        });
+
+        // Process each level that this section spans
+        for (let currentLevelIndex = startLevelIndex; currentLevelIndex <= endLevelIndex; currentLevelIndex++) {
+            const currentLevel = this.currentLevelData.levels[currentLevelIndex];
+            if (!currentLevel) continue;
+
+            const levelStartX = currentLevelIndex * this.singleLevelWidth;
+            const levelEndX = levelStartX + currentLevel.pxWid;
+            
+            // Find intersection between section and level
+            const intersectStartX = Math.max(sectionStartX, levelStartX);
+            const intersectEndX = Math.min(sectionEndX, levelEndX);
+            
+            if (intersectStartX >= intersectEndX) continue;
+
+            console.log(`Processing level ${currentLevelIndex} for section ${sectionIndex}:`, {
+                levelStartX,
+                levelEndX,
+                intersectStartX,
+                intersectEndX
+            });
+
+            // Find the Solid layer
+            const solidLayer = currentLevel.layerInstances.find(layer => 
+                layer.__identifier === 'Solid' || layer.__type === 'IntGrid'
+            );
+
+            if (solidLayer) {
+                // Convert world coordinates to level-local tile coordinates
+                const startTile = Math.floor((intersectStartX - levelStartX) / 32);
+                const endTile = Math.ceil((intersectEndX - levelStartX) / 32);
+                const width = solidLayer.__cWid;
+                const height = solidLayer.__cHei;
+
+                console.log(`Processing tiles for level ${currentLevelIndex}:`, {
+                    startTile,
+                    endTile,
+                    width,
+                    height
+                });
+
+                // Process IntGrid values
+                if (solidLayer.intGridCsv) {
+                    for (let y = 0; y < height; y++) {
+                        for (let x = startTile; x < endTile && x < width; x++) {
+                            const idx = y * width + x;
+                            const value = solidLayer.intGridCsv[idx];
+                            
+                            if (value > 0) {
+                                const worldX = Math.floor((x * 32 + levelStartX) / 32);
+                                const worldY = y;
+
+                                // Place tiles in both layers
+                                this.groundLayer.putTileAt(642, worldX, worldY, true);
+                                const platformTile = this.platformLayer.putTileAt(642, worldX, worldY, true);
+                                if (platformTile) {
+                                    platformTile.setCollision(true);
+                                }
+
+                                if (sectionIndex === 3) {
+                                    console.log(`Placed tile at (${worldX}, ${worldY}) from level ${currentLevelIndex}`);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Process auto-layer tiles
+                if (solidLayer.autoLayerTiles) {
+                    solidLayer.autoLayerTiles.forEach(tile => {
+                        const tileX = tile.px[0] + levelStartX;
+                        const tileY = tile.px[1];
+                        
+                        if (tileX >= intersectStartX && tileX < intersectEndX) {
+                            const gridX = Math.floor(tileX / 32);
+                            const gridY = Math.floor(tileY / 32);
+                            
+                            this.groundLayer.putTileAt(642, gridX, gridY, true);
+                            const platformTile = this.platformLayer.putTileAt(642, gridX, gridY, true);
+                            if (platformTile) {
+                                platformTile.setCollision(true);
+                            }
+                        }
+                    });
+                }
+            }
+        }
+
+        // Set collision for the platform layer
+        this.platformLayer.setCollisionByExclusion([-1]);
+        
+        // Spawn entities for this section
+        this.spawnEntitiesInSection(sectionStartX, sectionEndX);
+        
+        console.log(`Section ${sectionIndex} loaded successfully`);
+    }
+
+    loadNextLevelSection(cameraRight) {
+        const nextSectionIndex = Math.floor(cameraRight / this.sectionWidth);
+        
+        // Load all sections up to and including the next section
+        for (let i = 0; i <= nextSectionIndex + 1; i++) {
+            if (!this.loadedSections.has(i)) {
+                const sectionStart = i * this.sectionWidth;
+                this.loadLevelSection(sectionStart);
+            }
+        }
     }
 
     setupCollisions() {
@@ -253,107 +395,6 @@ export class CombinedGtuLevel extends BaseScene {
         });
     }
 
-    loadLevelSection(startX) {
-        const sectionIndex = Math.floor(startX / this.sectionWidth);
-        if (this.loadedSections.has(sectionIndex)) return;
-        
-        console.log('Loading section:', sectionIndex, 'at startX:', startX);
-        
-        // Mark this section as loaded
-        this.loadedSections.add(sectionIndex);
-        this.lastLoadedSection = sectionIndex;
-        
-        // Calculate section bounds
-        const sectionEnd = startX + this.sectionWidth;
-        
-        if (!this.currentLevelData || !this.currentLevelData.levels) {
-            console.error('No level data available');
-            return;
-        }
-
-        // Find the level that contains this section
-        const levelIndex = Math.floor(startX / this.singleLevelWidth);
-        const level = this.currentLevelData.levels[levelIndex];
-        
-        if (!level) {
-            console.error('No level data found for section at', startX);
-            return;
-        }
-
-        // Find the Solid layer
-        const solidLayer = level.layerInstances.find(layer => 
-            layer.__identifier === 'Solid' || layer.__type === 'IntGrid'
-        );
-
-        if (solidLayer) {
-            // Process tiles within this section
-            if (solidLayer.autoLayerTiles) {
-                solidLayer.autoLayerTiles.forEach(tile => {
-                    const tileX = tile.px[0] + level.worldX;
-                    const tileY = tile.px[1];
-                    
-                    // Only place tiles within the current section
-                    if (tileX >= startX && tileX < sectionEnd) {
-                        const gridX = Math.floor(tileX / 32);
-                        const gridY = Math.floor(tileY / 32);
-                        
-                        // Place tiles in both layers
-                        this.groundLayer.putTileAt(642, gridX, gridY, true);
-                        const platformTile = this.platformLayer.putTileAt(642, gridX, gridY, true);
-                        if (platformTile) {
-                            platformTile.setCollision(true);
-                        }
-                    }
-                });
-            }
-
-            // Process IntGrid values
-            if (solidLayer.intGridCsv) {
-                const width = solidLayer.__cWid;
-                const height = solidLayer.__cHei;
-                const relativeStartX = startX % this.singleLevelWidth;
-                const startTile = Math.floor(relativeStartX / 32);
-                const endTile = Math.ceil((relativeStartX + this.sectionWidth) / 32);
-
-                for (let y = 0; y < height; y++) {
-                    for (let x = startTile; x < endTile && x < width; x++) {
-                        const idx = y * width + x;
-                        const value = solidLayer.intGridCsv[idx];
-                        
-                        if (value > 0) {
-                            const worldX = Math.floor((x * 32 + level.worldX) / 32);
-                            const worldY = y;
-                            
-                            // Place tiles in both layers
-                            this.groundLayer.putTileAt(642, worldX, worldY, true);
-                            const platformTile = this.platformLayer.putTileAt(642, worldX, worldY, true);
-                            if (platformTile) {
-                                platformTile.setCollision(true);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // Set collision for the platform layer
-        this.platformLayer.setCollisionByExclusion([-1]);
-        
-        // Spawn entities for this section
-        this.spawnEntitiesInSection(startX, sectionEnd);
-        
-        console.log('Section', sectionIndex, 'loaded');
-    }
-
-    loadNextLevelSection(cameraRight) {
-        const nextSectionIndex = Math.floor(cameraRight / this.sectionWidth);
-        if (nextSectionIndex > this.lastLoadedSection) {
-            const nextSectionStart = nextSectionIndex * this.sectionWidth;
-            console.log('Loading next section:', nextSectionIndex, 'starting at:', nextSectionStart);
-            this.loadLevelSection(nextSectionStart);
-        }
-    }
-
     update(time, delta) {
         super.update(time, delta);
 
@@ -364,15 +405,61 @@ export class CombinedGtuLevel extends BaseScene {
             
             // Load next section when camera approaches current section boundary
             if (currentSectionIndex > this.lastLoadedSection) {
-                console.log('Need to load next section. Camera right:', cameraRight, 'Current section:', currentSectionIndex);
+                console.log(`Need to load next section. Camera right: ${cameraRight}, Current section: ${currentSectionIndex}`);
                 this.loadNextLevelSection(cameraRight);
             }
         }
 
         // Update debug graphics if enabled
         if (this.showDebug) {
-            this.updateDebugGraphics();
+            this.drawDebugGraphics();
+        } else if (this.boundaryGraphics) {
+            this.boundaryGraphics.clear();
         }
+    }
+
+    drawDebugGraphics() {
+        if (!this.boundaryGraphics) {
+            this.boundaryGraphics = this.add.graphics();
+        }
+
+        this.boundaryGraphics.clear();
+
+        // Draw world boundaries in red
+        this.boundaryGraphics.lineStyle(4, 0xff0000, 1);
+        const totalWidth = this.singleLevelWidth * this.totalLevels;
+        this.boundaryGraphics.strokeRect(0, 0, totalWidth, this.scale.height);
+
+        // Draw section boundaries in blue
+        this.boundaryGraphics.lineStyle(2, 0x0000ff, 1);
+        for (let i = 0; i <= this.lastLoadedSection + 1; i++) {
+            const sectionX = i * this.sectionWidth;
+            this.boundaryGraphics.strokeRect(sectionX, 0, this.sectionWidth, this.scale.height);
+        }
+
+        // Draw camera boundaries in green
+        this.boundaryGraphics.lineStyle(2, 0x00ff00, 1);
+        const camera = this.cameras.main;
+        this.boundaryGraphics.strokeRect(
+            camera.scrollX,
+            camera.scrollY,
+            camera.width,
+            camera.height
+        );
+
+        // Draw player position in yellow
+        if (this.player) {
+            this.boundaryGraphics.lineStyle(4, 0xffff00, 1);
+            this.boundaryGraphics.strokeRect(
+                this.player.x - 16,
+                this.player.y - 16,
+                32,
+                32
+            );
+        }
+
+        // Set graphics depth to be above everything
+        this.boundaryGraphics.setDepth(1000);
     }
 
     spawnEntitiesInSection(startX, endX) {
