@@ -141,20 +141,14 @@ export class CombinedGtuLevel extends BaseScene {
             return;
         }
 
-        // Create the platform layer for solid tiles
+        // Create separate layers for ground and platforms
+        this.groundLayer = this.map.createBlankLayer('Ground', this.tileset);
         this.platformLayer = this.map.createBlankLayer('Platforms', this.tileset);
-        if (!this.platformLayer) {
-            console.error('Failed to create platform layer');
+        
+        if (!this.groundLayer || !this.platformLayer) {
+            console.error('Failed to create layers');
             return;
         }
-
-        // Set collision for all tiles in the Solid layer
-        const solidTileIds = [
-            257, 258,  // Basic ground and platform
-            642, 643, 644, 645,  // Platform variations
-            705, 706, 707, 708, 709  // Ground variations
-        ];
-        this.platformLayer.setCollision(solidTileIds, true);
 
         // Set world bounds
         this.physics.world.setBounds(0, 0, levelWidth, worldHeight);
@@ -166,7 +160,9 @@ export class CombinedGtuLevel extends BaseScene {
         this.createPlayer(100, 100);
 
         // Add colliders
+        this.physics.add.collider(this.player, this.groundLayer);
         this.physics.add.collider(this.player, this.platformLayer);
+        this.physics.add.collider(this.enemies, this.groundLayer);
         this.physics.add.collider(this.enemies, this.platformLayer);
         
         // Set up camera to follow player smoothly
@@ -218,16 +214,15 @@ export class CombinedGtuLevel extends BaseScene {
             // Process level tiles
             if (level.layerInstances) {
                 level.layerInstances.forEach(layer => {
-                    if (layer.__identifier === 'Solid' || layer.__type === 'IntGrid') {
-                        // Handle auto-layer tiles
+                    if (layer.__identifier === 'Solid') {
+                        // Handle auto-layer tiles - these already have the correct tile IDs from LDTK
                         if (layer.autoLayerTiles) {
                             layer.autoLayerTiles.forEach(tile => {
                                 const tileX = Math.floor((tile.px[0] + worldX) / 32);
                                 const tileY = Math.floor(tile.px[1] / 32);
-                                const tileId = tile.t;
                                 
-                                // Place the tile and ensure it has collision
-                                const placedTile = this.platformLayer.putTileAt(tileId, tileX, tileY);
+                                // Use the tile ID directly from LDTK
+                                const placedTile = this.platformLayer.putTileAt(tile.t, tileX, tileY);
                                 if (placedTile) {
                                     placedTile.setCollision(true);
                                 }
@@ -245,12 +240,12 @@ export class CombinedGtuLevel extends BaseScene {
                                     const idx = y * width + x;
                                     const value = csv[idx];
                                     
-                                    if (value > 0) {
+                                    if (value === 2) { // Platform tiles
                                         const tileX = Math.floor((x * 32 + worldX) / 32);
                                         const tileY = Math.floor(y);
                                         
-                                        // Place solid tile and ensure it has collision
-                                        const placedTile = this.platformLayer.putTileAt(257, tileX, tileY);
+                                        // Let LDTK's auto-layer rules determine the tile ID
+                                        const placedTile = this.platformLayer.putTileAt(257, tileX, tileY); // Default to basic platform tile
                                         if (placedTile) {
                                             placedTile.setCollision(true);
                                         }
@@ -263,9 +258,8 @@ export class CombinedGtuLevel extends BaseScene {
             }
         }
 
-        // Enable collision on the platform layer
-        this.platformLayer.setCollisionByProperty({ isSolid: true });
-        this.platformLayer.setCollisionByExclusion([-1]);
+        // Set collision for all platform tiles from the tileset
+        this.platformLayer.setCollision([257, 258, 259, 260, 261], true);
     }
 
     update(time, delta) {
@@ -333,6 +327,21 @@ export class CombinedGtuLevel extends BaseScene {
                         const tileY = Math.floor((tile.px[1] + level.worldY) / 32);
                         const tileId = tile.t;
                         
+                        // Map LDTK tile IDs to our tileset IDs
+                        switch(tileId) {
+                            case 257: // Basic platform
+                                tileId = 642;
+                                break;
+                            case 258: // Platform variation
+                                tileId = 643;
+                                break;
+                            case 261: // Another platform variation
+                                tileId = 644;
+                                break;
+                            default:
+                                tileId = 642; // Default to basic platform
+                        }
+                        
                         // Place the tile and ensure it has collision
                         const placedTile = this.platformLayer.putTileAt(tileId, tileX, tileY);
                         if (placedTile) {
@@ -355,6 +364,19 @@ export class CombinedGtuLevel extends BaseScene {
                         if (value > 0) {
                             const worldX = Math.floor((x * 32 + level.worldX) / 32);
                             const worldY = Math.floor((y * 32 + level.worldY) / 32);
+                            
+                            // Map IntGrid values to tileset IDs
+                            let tileId;
+                            switch(value) {
+                                case 1: // GroundCover
+                                    tileId = 705;
+                                    break;
+                                case 2: // Platform
+                                    tileId = 642;
+                                    break;
+                                default:
+                                    tileId = 642; // Default to basic platform
+                            }
                             
                             // Ensure any tile in this position has collision
                             const tile = this.platformLayer.getTileAt(worldX, worldY);
