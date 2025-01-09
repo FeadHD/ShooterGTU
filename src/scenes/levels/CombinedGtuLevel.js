@@ -105,6 +105,9 @@ export class CombinedGtuLevel extends BaseScene {
         this.enemies = this.physics.add.group();
         this.bullets = this.add.group();
         
+        // Create a group for debug text
+        this.debugTexts = this.add.group();
+        
         // Set up game dimensions
         this.singleLevelWidth = 2048; // Each level is 2048 pixels wide (from LDTK pxWid)
         this.totalLevels = 3;
@@ -200,6 +203,9 @@ export class CombinedGtuLevel extends BaseScene {
             return;
         }
 
+        // Clear any existing debug text
+        this.debugTexts.clear(true, true);
+
         // Load all levels at their respective positions
         for (let i = 0; i < this.totalLevels; i++) {
             const level = levelData.levels[i];
@@ -215,7 +221,7 @@ export class CombinedGtuLevel extends BaseScene {
             if (level.layerInstances) {
                 level.layerInstances.forEach(layer => {
                     if (layer.__identifier === 'Solid') {
-                        // Handle auto-layer tiles - these already have the correct tile IDs from LDTK
+                        // Use auto-layer tiles from LDTK
                         if (layer.autoLayerTiles) {
                             layer.autoLayerTiles.forEach(tile => {
                                 const tileX = Math.floor((tile.px[0] + worldX) / 32);
@@ -225,33 +231,18 @@ export class CombinedGtuLevel extends BaseScene {
                                 const placedTile = this.platformLayer.putTileAt(tile.t, tileX, tileY);
                                 if (placedTile) {
                                     placedTile.setCollision(true);
+                                    
+                                    // Add debug text showing tile ID
+                                    const worldXPos = tileX * 32;
+                                    const worldYPos = tileY * 32;
+                                    const debugText = this.add.text(worldXPos + 2, worldYPos + 2, tile.t.toString(), {
+                                        fontSize: '10px',
+                                        color: '#ff0000',
+                                        backgroundColor: '#ffffff80'
+                                    });
+                                    this.debugTexts.add(debugText);
                                 }
                             });
-                        }
-
-                        // Handle IntGrid tiles
-                        if (layer.intGridCsv) {
-                            const width = layer.__cWid;
-                            const height = layer.__cHei;
-                            const csv = layer.intGridCsv;
-
-                            for (let y = 0; y < height; y++) {
-                                for (let x = 0; x < width; x++) {
-                                    const idx = y * width + x;
-                                    const value = csv[idx];
-                                    
-                                    if (value === 2) { // Platform tiles
-                                        const tileX = Math.floor((x * 32 + worldX) / 32);
-                                        const tileY = Math.floor(y);
-                                        
-                                        // Let LDTK's auto-layer rules determine the tile ID
-                                        const placedTile = this.platformLayer.putTileAt(257, tileX, tileY); // Default to basic platform tile
-                                        if (placedTile) {
-                                            placedTile.setCollision(true);
-                                        }
-                                    }
-                                }
-                            }
                         }
                     }
                 });
@@ -819,5 +810,10 @@ export class CombinedGtuLevel extends BaseScene {
         this.createPlatform(x + 200, y + 350, 300, 20);
         this.createDrone(x + 300, y + 200);
         this.createTurret(x + 150, y + 200);
+    }
+
+    // Add method to toggle debug text visibility
+    toggleTileDebug() {
+        this.debugTexts.toggleVisible();
     }
 }
