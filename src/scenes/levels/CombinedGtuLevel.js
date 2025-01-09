@@ -41,7 +41,8 @@ export class CombinedGtuLevel extends BaseScene {
         
         // Progressive loading properties
         this.loadedSections = new Set();
-        this.sectionWidth = 1280; // Width of each level section
+        this.sectionWidth = 800; // Width of each level section
+        this.lastLoadedSection = -1; // Track the last loaded section
         this.activeEntities = new Set();
         this.currentLevelData = null;
         this.gameStarted = false;
@@ -111,32 +112,7 @@ export class CombinedGtuLevel extends BaseScene {
     }
 
     create() {
-        super.create();
-
-        // Create bullet animation
-        this.anims.create({
-            key: 'bullet_anim',
-            frames: this.anims.generateFrameNumbers('bullet_animation', { start: 0, end: 3 }),
-            frameRate: 10,
-            repeat: -1
-        });
-
-        // Create physics groups
-        this.platforms = this.physics.add.staticGroup();
-        this.enemies = this.physics.add.group();
-        
-        // Initialize bullets group (replacing BulletPool)
-        this.bullets = this.physics.add.group({
-            classType: Bullet,
-            maxSize: 20,
-            runChildUpdate: true,
-            allowGravity: false
-        });
-        
-        // Create a group for debug text
-        this.debugTexts = this.add.group();
-        
-        // Load LDTK data to get dimensions
+        // Load LDTK data first to get dimensions
         const ldtkData = this.cache.json.get('combined-level');
         if (!ldtkData || !ldtkData.levels || ldtkData.levels.length === 0) {
             console.error('Failed to load LDTK data');
@@ -161,10 +137,30 @@ export class CombinedGtuLevel extends BaseScene {
             totalLevels: this.totalLevels
         });
 
+        // Initialize base scene without creating player yet
+        this.skipPlayerCreation = true;
+        super.create();
+        this.skipPlayerCreation = false;
+
+        // Create physics groups
+        this.platforms = this.physics.add.staticGroup();
+        this.enemies = this.physics.add.group();
+        this.bullets = this.physics.add.group({
+            classType: Bullet,
+            maxSize: 20,
+            runChildUpdate: true,
+            allowGravity: false
+        });
+
+        // Create bullet animation
+        this.anims.create({
+            key: 'bullet-travel',
+            frames: this.anims.generateFrameNumbers('bullet', { start: 0, end: 7 }),
+            frameRate: 16,
+            repeat: -1
+        });
+
         // Initialize managers
-        this.cameraManager = new CombinedLevelCamera(this);
-        this.collisionManager = new CollisionManager(this);
-        this.enemyManager = new EnemyManager(this);
         this.effectsManager = new EffectsManager(this);
         this.tileManager = new LDTKTileManager(this);
 
@@ -186,53 +182,55 @@ export class CombinedGtuLevel extends BaseScene {
         // Create separate layers for ground and platforms
         this.groundLayer = this.map.createBlankLayer('Ground', this.tileset);
         this.platformLayer = this.map.createBlankLayer('Platforms', this.tileset);
-        
-        if (!this.groundLayer || !this.platformLayer) {
-            console.error('Failed to create layers');
-            return;
-        }
 
         // Set world bounds
         this.physics.world.setBounds(0, 0, levelWidth, worldHeight);
 
-        // Load initial level data
-        this.currentLevelData = this.cache.json.get('combined-level');
+        // Store level data for later use
+        this.currentLevelData = ldtkData;
         
         // Create initial level section
         this.loadLevelSection(0);
         
-        // Initialize camera
-        this.levelCamera = new CombinedLevelCamera(this);
-        this.levelCamera.init(this.player);
+        // Initialize camera with proper dimensions
+        this.levelCamera = new CombinedLevelCamera(this, levelWidth, worldHeight);
         
         // Set up collision detection
         this.setupCollisions();
 
-        // Create player at the start
-        this.createPlayer(100, 200); // Moved player spawn point up to account for higher level
+        // NOW create the player after tiles are loaded
+        this.createPlayer(100, 384); // Y position set to be on top of tiles
+
+        // Initialize camera with player
+        this.levelCamera.init(this.player);
+
+        // Set up camera bounds and following
+        const { width, height } = this.scale;
+        this.cameras.main.setBounds(0, 0, levelWidth, worldHeight);
+        this.cameras.main.startFollow(this.player, true, 1, 1); // Immediate follow
+        this.cameras.main.setDeadzone(0); // No deadzone for tight following
+        this.cameras.main.setFollowOffset(0, -height/4); // Vertically center the player
 
         // Add colliders
         this.physics.add.collider(this.player, this.groundLayer);
         this.physics.add.collider(this.player, this.platformLayer);
         this.physics.add.collider(this.enemies, this.groundLayer);
         this.physics.add.collider(this.enemies, this.platformLayer);
-        
-        // Set up camera to follow player smoothly with the new height
-        if (this.cameraManager && this.cameraManager.camera) {
-            this.cameraManager.camera.setBounds(0, 0, levelWidth, worldHeight);
-            this.cameraManager.camera.startFollow(this.player, true, 0.1, 0.1);
-        }
 
-        // Set camera and world bounds
-        this.cameras.main.setBounds(0, 0, levelWidth, worldHeight);
-        this.physics.world.setBounds(0, 0, levelWidth, worldHeight);
-
-        // Initialize UI
+        // Setup UI and other elements
         this.setupUI();
-
+        
         // Add debug graphics for boundaries
         this.boundaryGraphics = this.add.graphics();
         this.boundaryGraphics.setDepth(1000);
+        this.showDebug = false;
+        this.debugKey = this.input.keyboard.addKey('E');
+        this.debugKey.on('down', () => {
+            this.showDebug = !this.showDebug;
+            if (!this.showDebug) {
+                this.boundaryGraphics.clear();
+            }
+        });
         
         // Draw world boundaries in red
         this.boundaryGraphics.lineStyle(4, 0xff0000, 1);
@@ -240,13 +238,6 @@ export class CombinedGtuLevel extends BaseScene {
         
         // Draw camera boundaries in blue
         this.boundaryGraphics.lineStyle(4, 0x0000ff, 1);
-        const cameraBounds = this.cameras.main.getBounds();
-        this.boundaryGraphics.strokeRect(
-            cameraBounds.x,
-            cameraBounds.y,
-            cameraBounds.width,
-            cameraBounds.height
-        );
     }
 
     setupCollisions() {
@@ -263,10 +254,14 @@ export class CombinedGtuLevel extends BaseScene {
     }
 
     loadLevelSection(startX) {
-        if (this.loadedSections.has(startX)) return;
+        const sectionIndex = Math.floor(startX / this.sectionWidth);
+        if (this.loadedSections.has(sectionIndex)) return;
+        
+        console.log('Loading section:', sectionIndex, 'at startX:', startX);
         
         // Mark this section as loaded
-        this.loadedSections.add(startX);
+        this.loadedSections.add(sectionIndex);
+        this.lastLoadedSection = sectionIndex;
         
         // Calculate section bounds
         const sectionEnd = startX + this.sectionWidth;
@@ -291,10 +286,7 @@ export class CombinedGtuLevel extends BaseScene {
         );
 
         if (solidLayer) {
-            // Calculate the relative position within the level
-            const relativeStartX = startX % this.singleLevelWidth;
-            
-            // Process auto-layer tiles
+            // Process tiles within this section
             if (solidLayer.autoLayerTiles) {
                 solidLayer.autoLayerTiles.forEach(tile => {
                     const tileX = tile.px[0] + level.worldX;
@@ -305,25 +297,9 @@ export class CombinedGtuLevel extends BaseScene {
                         const gridX = Math.floor(tileX / 32);
                         const gridY = Math.floor(tileY / 32);
                         
-                        // Map LDTK tile IDs to our tileset IDs
-                        let tileId = tile.t;
-                        switch(tileId) {
-                            case 257: // Basic platform
-                                tileId = 642;
-                                break;
-                            case 258: // Platform variation
-                                tileId = 643;
-                                break;
-                            case 261: // Another platform variation
-                                tileId = 644;
-                                break;
-                            default:
-                                tileId = 642; // Default to basic platform
-                        }
-                        
-                        // Place the tile in both layers for visual and collision
-                        this.groundLayer.putTileAt(tileId, gridX, gridY);
-                        const platformTile = this.platformLayer.putTileAt(tileId, gridX, gridY);
+                        // Place tiles in both layers
+                        this.groundLayer.putTileAt(642, gridX, gridY, true);
+                        const platformTile = this.platformLayer.putTileAt(642, gridX, gridY, true);
                         if (platformTile) {
                             platformTile.setCollision(true);
                         }
@@ -335,34 +311,22 @@ export class CombinedGtuLevel extends BaseScene {
             if (solidLayer.intGridCsv) {
                 const width = solidLayer.__cWid;
                 const height = solidLayer.__cHei;
+                const relativeStartX = startX % this.singleLevelWidth;
                 const startTile = Math.floor(relativeStartX / 32);
-                const endTile = Math.ceil(sectionEnd / 32);
+                const endTile = Math.ceil((relativeStartX + this.sectionWidth) / 32);
 
                 for (let y = 0; y < height; y++) {
-                    for (let x = startTile; x < endTile; x++) {
+                    for (let x = startTile; x < endTile && x < width; x++) {
                         const idx = y * width + x;
                         const value = solidLayer.intGridCsv[idx];
                         
                         if (value > 0) {
                             const worldX = Math.floor((x * 32 + level.worldX) / 32);
-                            const worldY = Math.floor(y);
-                            
-                            // Map IntGrid values to tileset IDs
-                            let tileId;
-                            switch(value) {
-                                case 1: // Ground
-                                    tileId = 642;
-                                    break;
-                                case 2: // Platform
-                                    tileId = 643;
-                                    break;
-                                default:
-                                    tileId = 642;
-                            }
+                            const worldY = y;
                             
                             // Place tiles in both layers
-                            this.groundLayer.putTileAt(tileId, worldX, worldY);
-                            const platformTile = this.platformLayer.putTileAt(tileId, worldX, worldY);
+                            this.groundLayer.putTileAt(642, worldX, worldY, true);
+                            const platformTile = this.platformLayer.putTileAt(642, worldX, worldY, true);
                             if (platformTile) {
                                 platformTile.setCollision(true);
                             }
@@ -377,24 +341,38 @@ export class CombinedGtuLevel extends BaseScene {
         
         // Spawn entities for this section
         this.spawnEntitiesInSection(startX, sectionEnd);
+        
+        console.log('Section', sectionIndex, 'loaded');
     }
 
     loadNextLevelSection(cameraRight) {
-        const nextSectionStart = Math.floor(cameraRight / this.sectionWidth) * this.sectionWidth;
-        this.loadLevelSection(nextSectionStart);
+        const nextSectionIndex = Math.floor(cameraRight / this.sectionWidth);
+        if (nextSectionIndex > this.lastLoadedSection) {
+            const nextSectionStart = nextSectionIndex * this.sectionWidth;
+            console.log('Loading next section:', nextSectionIndex, 'starting at:', nextSectionStart);
+            this.loadLevelSection(nextSectionStart);
+        }
     }
 
-    cleanupBehindPlayer(cleanupX) {
-        // Remove entities that are too far behind
-        for (const entity of this.activeEntities) {
-            if (entity.x < cleanupX) {
-                entity.destroy();
-                this.activeEntities.delete(entity);
+    update(time, delta) {
+        super.update(time, delta);
+
+        // Update camera and check for section loading
+        if (this.player && this.cameras.main) {
+            const cameraRight = this.cameras.main.scrollX + this.cameras.main.width;
+            const currentSectionIndex = Math.floor(cameraRight / this.sectionWidth);
+            
+            // Load next section when camera approaches current section boundary
+            if (currentSectionIndex > this.lastLoadedSection) {
+                console.log('Need to load next section. Camera right:', cameraRight, 'Current section:', currentSectionIndex);
+                this.loadNextLevelSection(cameraRight);
             }
         }
-        
-        // Remove tile hitboxes that are too far behind
-        this.tileManager.cleanupHitboxes(cleanupX);
+
+        // Update debug graphics if enabled
+        if (this.showDebug) {
+            this.updateDebugGraphics();
+        }
     }
 
     spawnEntitiesInSection(startX, endX) {
@@ -429,48 +407,6 @@ export class CombinedGtuLevel extends BaseScene {
             // Add other entity types as needed
         }
         return null;
-    }
-
-    update(time, delta) {
-        super.update(time, delta);
-        
-        if (this.player && this.cameraManager) {
-            // Update current level indicator based on player position
-            const currentLevel = Math.floor(this.player.x / this.singleLevelWidth);
-            if (currentLevel !== this.currentLevel && this.levelIndicatorText) {
-                this.currentLevel = currentLevel;
-                this.levelIndicatorText.setText(`Level ${currentLevel}`);
-            }
-        }
-        
-        // Update boundary visualization
-        if (this.boundaryGraphics) {
-            this.boundaryGraphics.clear();
-            
-            // Draw world boundaries in red
-            this.boundaryGraphics.lineStyle(4, 0xff0000, 1);
-            this.boundaryGraphics.strokeRect(0, 0, this.singleLevelWidth * this.totalLevels, 512);
-            
-            // Draw camera boundaries in blue
-            this.boundaryGraphics.lineStyle(4, 0x0000ff, 1);
-            const cameraBounds = this.cameras.main.getBounds();
-            this.boundaryGraphics.strokeRect(
-                cameraBounds.x,
-                cameraBounds.y,
-                cameraBounds.width,
-                cameraBounds.height
-            );
-        }
-        
-        // Load next level section if necessary
-        const cameraRight = this.cameras.main.worldView.right;
-        if (cameraRight > this.sectionWidth && !this.loadedSections.has(cameraRight)) {
-            this.loadNextLevelSection(cameraRight);
-        }
-        
-        // Clean up entities behind the player
-        const cleanupX = this.player.x - this.sectionWidth;
-        this.cleanupBehindPlayer(cleanupX);
     }
 
     setupUI() {

@@ -96,9 +96,11 @@ export class BaseScene extends Scene {
             this.destroyBullet(bullet);
         }, null, this);
 
-        // Create game elements
-        this.createPlayer(width);
-        this.boundaries.createBoundaries(this.player);
+        // Create game elements - only create player if not skipped
+        if (!this.skipPlayerCreation) {
+            this.createPlayer(width);
+            this.boundaries.createBoundaries(this.player);
+        }
 
         // Create UI
         this.createUI();
