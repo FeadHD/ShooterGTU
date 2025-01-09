@@ -99,24 +99,27 @@ export class CombinedGtuLevel extends BaseScene {
     create() {
         super.create();
 
-        // Initialize managers
-        this.cameraManager = new CombinedLevelCamera(this, 3840, 720);
-        this.collisionManager = new CollisionManager(this);
-        this.enemyManager = new EnemyManager(this);
-        this.effectsManager = new EffectsManager(this);
-        
         // Create physics groups
         this.platforms = this.physics.add.staticGroup();
         this.enemies = this.physics.add.group();
         
         // Set up game dimensions
-        this.singleLevelWidth = 800; // Adjust based on your level width
+        this.singleLevelWidth = 1280; // Updated level width
         this.totalLevels = 3;
+        const levelWidth = this.singleLevelWidth * this.totalLevels;
+        const levelHeight = 720;
+        const worldHeight = 320; // New world height for physics boundaries
+
+        // Initialize managers
+        this.cameraManager = new CombinedLevelCamera(this, levelWidth, levelHeight);
+        this.collisionManager = new CollisionManager(this);
+        this.enemyManager = new EnemyManager(this);
+        this.effectsManager = new EffectsManager(this);
         
         // Create the base tilemap
         this.map = this.make.tilemap({
-            width: Math.ceil((this.singleLevelWidth * this.totalLevels) / 32),
-            height: Math.ceil(720 / 32),
+            width: Math.ceil(levelWidth / 32),
+            height: Math.ceil(worldHeight / 32), // Use world height for tilemap
             tileWidth: 32,
             tileHeight: 32
         });
@@ -153,10 +156,28 @@ export class CombinedGtuLevel extends BaseScene {
         // Initialize UI
         this.setupUI();
 
-        // Set world bounds for physics
-        this.physics.world.setBounds(0, 0, this.singleLevelWidth * this.totalLevels, 720);
+        // Set world bounds to match actual level dimensions
+        this.physics.world.setBounds(0, 0, levelWidth, worldHeight);
         
         console.log('Scene creation complete');
+
+        // Add debug graphics for boundaries
+        this.boundaryGraphics = this.add.graphics();
+        this.boundaryGraphics.setDepth(1000); // Make sure it's visible above other elements
+        
+        // Draw world boundaries in red
+        this.boundaryGraphics.lineStyle(4, 0xff0000, 1);
+        this.boundaryGraphics.strokeRect(0, 0, levelWidth, worldHeight);
+        
+        // Draw camera boundaries in blue
+        this.boundaryGraphics.lineStyle(4, 0x0000ff, 1);
+        const cameraBounds = this.cameras.main.getBounds();
+        this.boundaryGraphics.strokeRect(
+            cameraBounds.x,
+            cameraBounds.y,
+            cameraBounds.width,
+            cameraBounds.height
+        );
     }
 
     loadLevelData(levelIndex) {
@@ -669,6 +690,28 @@ export class CombinedGtuLevel extends BaseScene {
                 this.cameraManager.update();
             }
         }
+        
+        // Update boundary visualization
+        if (this.boundaryGraphics) {
+            this.boundaryGraphics.clear();
+            
+            // Draw world boundaries in red
+            this.boundaryGraphics.lineStyle(4, 0xff0000, 1);
+            this.boundaryGraphics.strokeRect(0, 0, this.singleLevelWidth * this.totalLevels, 320);
+            
+            // Draw camera boundaries in blue
+            this.boundaryGraphics.lineStyle(4, 0x0000ff, 1);
+            const cameraBounds = this.cameras.main.getBounds();
+            this.boundaryGraphics.strokeRect(
+                cameraBounds.x,
+                cameraBounds.y,
+                cameraBounds.width,
+                cameraBounds.height
+            );
+
+            // Log camera bounds for debugging
+            console.log('Camera bounds:', cameraBounds);
+        }
     }
 
     loadNextLevel() {
@@ -687,17 +730,17 @@ export class CombinedGtuLevel extends BaseScene {
         this.currentLevel = nextLevel;
         
         // Calculate new bounds
-        const levelWidth = this.scale.width;
-        const totalWidth = levelWidth * 3; // Total width for all 3 levels
+        const levelWidth = this.singleLevelWidth * this.totalLevels; // Total width for all 3 levels
+        const levelHeight = 720;
         const newBounds = {
-            x: this.currentLevel * levelWidth,
+            x: this.currentLevel * this.singleLevelWidth,
             y: 0,
-            width: levelWidth,
-            height: this.scale.height
+            width: this.singleLevelWidth,
+            height: levelHeight
         };
         
         // Update physics world bounds
-        this.physics.world.setBounds(0, 0, totalWidth, 720);
+        this.physics.world.setBounds(0, 0, levelWidth, 320);
         
         // Update camera bounds
         if (this.cameraManager && this.cameraManager.camera) {
@@ -729,6 +772,27 @@ export class CombinedGtuLevel extends BaseScene {
         
         // Save checkpoint
         this.saveCheckpoint();
+    }
+
+    saveCheckpoint() {
+        const checkpoint = {
+            level: this.currentLevel,
+            playerState: {
+                x: this.player.x,
+                y: this.player.y,
+                health: this.registry.get('playerHP')
+            }
+        };
+        
+        this.checkpoints.set(this.currentLevel, checkpoint);
+        console.log('Saved checkpoint for level', this.currentLevel);
+    }
+
+    bufferNextLevel() {
+        const nextLevel = this.currentLevel + 1;
+        if (nextLevel > 2) return;
+        
+        this.loadLevelData(nextLevel);
     }
 
     saveCheckpoint() {

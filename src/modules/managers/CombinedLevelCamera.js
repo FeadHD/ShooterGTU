@@ -1,5 +1,5 @@
 export class CombinedLevelCamera {
-    constructor(scene, levelWidth = 3840, levelHeight = 3240) {
+    constructor(scene, levelWidth = 3840, levelHeight = 720) {
         this.scene = scene;
         this.camera = scene.cameras.main;
         this.isIntroPlaying = false;
@@ -43,8 +43,10 @@ export class CombinedLevelCamera {
         this.camera.setRoundPixels(true);
         
         // Set initial camera bounds
-        const levelWidth = this.scene.scale.width;
-        this.camera.setBounds(0, 0, levelWidth, this.scene.scale.height);
+        this.camera.setBounds(0, 0, this.levelWidth, this.levelHeight);
+        
+        // Enable bounds for smooth camera movement
+        this.camera.setDeadzone(100, 100);
         
         console.log('Camera initialized with:', {
             bounds: this.camera.getBounds(),
