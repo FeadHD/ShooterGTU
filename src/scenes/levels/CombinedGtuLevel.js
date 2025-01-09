@@ -763,44 +763,23 @@ export class CombinedGtuLevel extends BaseScene {
 
     // Level 0 tile setups
     setupLevel0Tile1() {
-        this.createPlatform(100, 300, 200, 20);
-        this.createSlime(150, 250);
     }
 
     setupLevel0Tile2() {
-        this.createPlatform(this.scale.width + 100, 400, 200, 20);
-        this.createMeleeWarrior(this.scale.width + 150);
     }
 
     // Level 1 tile setups
     setupLevel1Tile1() {
-        const y = this.scale.height;
-        this.createPlatform(200, y + 350, 200, 20);
-        this.createTrampoline(200, y + 280);
-        this.createSlime(150, y + 250);
     }
 
     setupLevel1Tile2() {
-        const x = this.scale.width;
-        const y = this.scale.height;
-        this.createPlatform(x + 150, y + 300, 200, 20);
-        this.createDrone(x + 450, y + 150);
     }
 
     // Level 2 tile setups
     setupLevel2Tile1() {
-        const y = this.scale.height * 2;
-        this.createPlatform(150, y + 300, 200, 20);
-        this.createPlatform(400, y + 200, 200, 20);
-        this.createMeleeWarrior(200, y + 250);
     }
 
     setupLevel2Tile2() {
-        const x = this.scale.width;
-        const y = this.scale.height * 2;
-        this.createPlatform(x + 200, y + 350, 300, 20);
-        this.createDrone(x + 300, y + 200);
-        this.createTurret(x + 150, y + 200);
     }
 
     // Add method to toggle debug text visibility
