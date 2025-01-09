@@ -105,10 +105,10 @@ export class CombinedGtuLevel extends BaseScene {
         this.enemies = this.physics.add.group();
         
         // Set up game dimensions
-        this.singleLevelWidth = 1280; // Each level is 1280 pixels wide (40 tiles * 32)
+        this.singleLevelWidth = 2048; // Each level is 2048 pixels wide (from LDTK pxWid)
         this.totalLevels = 3;
-        const levelWidth = this.singleLevelWidth * this.totalLevels; // Total width: 3840 pixels
-        const levelHeight = 720;
+        const levelWidth = this.singleLevelWidth * this.totalLevels; // Total width: 6144 pixels
+        const levelHeight = 320; // From LDTK pxHei
         const worldHeight = 320;
 
         console.log('World dimensions:', {
@@ -307,12 +307,12 @@ export class CombinedGtuLevel extends BaseScene {
                 // Handle auto-layer tiles (these are all solid since they're in the Solid layer)
                 if (layerInstance.autoLayerTiles) {
                     layerInstance.autoLayerTiles.forEach(tile => {
-                        const worldX = Math.floor((tile.px[0] + level.worldX) / 32);
-                        const worldY = Math.floor((tile.px[1] + level.worldY) / 32);
+                        const tileX = Math.floor((tile.px[0] + level.worldX) / 32);
+                        const tileY = Math.floor((tile.px[1] + level.worldY) / 32);
                         const tileId = tile.t;
                         
                         // Place the tile and ensure it has collision
-                        const placedTile = this.platformLayer.putTileAt(tileId, worldX, worldY);
+                        const placedTile = this.platformLayer.putTileAt(tileId, tileX, tileY);
                         if (placedTile) {
                             placedTile.setCollision(true);
                             placedTile.properties = { ...placedTile.properties, isSolid: true };
