@@ -156,10 +156,7 @@ export class CombinedLevelCamera {
         // Check for progressive loading
         this.checkProgressiveLoading();
         
-        // Ensure camera doesn't go backwards
-        if (this.camera.scrollX < this.player.x - this.followOffsetX) {
-            this.camera.scrollX = this.player.x - this.followOffsetX;
-        }
+        // Camera restriction removed to allow backward movement
         
         const now = performance.now();
         if (now - this.lastUpdateTime < this.updateInterval) return;
