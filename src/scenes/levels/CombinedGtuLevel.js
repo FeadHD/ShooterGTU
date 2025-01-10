@@ -24,6 +24,7 @@ import { GameConfig } from '../../config/GameConfig';
 import { CombinedLevelCamera } from '../../modules/managers/CombinedLevelCamera';
 import { LDTKTileManager } from '../../modules/managers/LDTKTileManager';
 import { Player } from '../../prefabs/Player';
+import { eventBus } from '../../modules/events/EventBus';
 
 export class CombinedGtuLevel extends BaseScene {
     constructor() {
@@ -46,6 +47,7 @@ export class CombinedGtuLevel extends BaseScene {
         this.activeEntities = new Set();
         this.currentLevelData = null;
         this.gameStarted = false;
+        this.loadedTilesCount = 0; // Add counter for loaded tiles
     }
 
     preload() {
@@ -118,6 +120,15 @@ export class CombinedGtuLevel extends BaseScene {
             console.error('Failed to load LDTK data');
             return;
         }
+
+        // Initialize debug text
+        this.debugText = this.add.text(16, 16, '', {
+            fontSize: '24px',
+            fill: '#00ff00',
+            backgroundColor: '#000000',
+            padding: { x: 10, y: 5 },
+            fixedWidth: 300
+        }).setScrollFactor(0).setDepth(1001).setVisible(false);
 
         // Get level dimensions from LDTK
         const firstLevel = ldtkData.levels[0];
@@ -249,6 +260,9 @@ export class CombinedGtuLevel extends BaseScene {
             console.error('No level data available');
             return;
         }
+
+        // Reset tile counter for this section
+        let sectionTilesCount = 0;
 
         // Calculate the level index and local coordinates
         const levelIndex = Math.floor(startX / this.singleLevelWidth);
@@ -398,12 +412,20 @@ export class CombinedGtuLevel extends BaseScene {
     update(time, delta) {
         super.update(time, delta);
 
-        // Update camera and check for section loading
+        // Update camera and check for section loading/unloading
         if (this.player && this.cameras.main) {
-            const cameraRight = this.cameras.main.scrollX + this.cameras.main.width;
-            const currentSectionIndex = Math.floor(cameraRight / this.sectionWidth);
+            const playerSection = Math.floor(this.player.x / this.sectionWidth);
+            
+            // Check sections that need to be unloaded (too far from player)
+            this.loadedSections.forEach(sectionIndex => {
+                if (Math.abs(sectionIndex - playerSection) > 2) { // Keep 2 sections buffer on each side
+                    this.unloadSection(sectionIndex);
+                }
+            });
             
             // Load next section when camera approaches current section boundary
+            const cameraRight = this.cameras.main.scrollX + this.cameras.main.width;
+            const currentSectionIndex = Math.floor(cameraRight / this.sectionWidth);
             if (currentSectionIndex > this.lastLoadedSection) {
                 console.log(`Need to load next section. Camera right: ${cameraRight}, Current section: ${currentSectionIndex}`);
                 this.loadNextLevelSection(cameraRight);
@@ -415,6 +437,39 @@ export class CombinedGtuLevel extends BaseScene {
             this.drawDebugGraphics();
         } else if (this.boundaryGraphics) {
             this.boundaryGraphics.clear();
+        }
+    }
+
+    unloadSection(sectionIndex) {
+        if (!this.loadedSections.has(sectionIndex)) return;
+
+        console.log(`Unloading section ${sectionIndex}`);
+
+        // Calculate section bounds
+        const sectionStartX = sectionIndex * this.sectionWidth;
+        const sectionEndX = sectionStartX + this.sectionWidth;
+
+        // Clear tiles in this section
+        const tileWidth = 32;
+        const startTileX = Math.floor(sectionStartX / tileWidth);
+        const endTileX = Math.ceil(sectionEndX / tileWidth);
+
+        // Remove tiles from both layers
+        if (this.groundLayer) {
+            for (let x = startTileX; x < endTileX; x++) {
+                for (let y = 0; y < this.groundLayer.height; y++) {
+                    this.groundLayer.removeTileAt(x, y);
+                    this.platformLayer.removeTileAt(x, y);
+                }
+            }
+        }
+
+        // Remove section from loaded sections
+        this.loadedSections.delete(sectionIndex);
+        
+        // Update last loaded section if necessary
+        if (sectionIndex === this.lastLoadedSection) {
+            this.lastLoadedSection = Math.max(...Array.from(this.loadedSections));
         }
     }
 

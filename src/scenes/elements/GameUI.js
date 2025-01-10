@@ -26,11 +26,20 @@ export class GameUI {
         // Bar properties
         this.barWidth = 200;
         this.barHeight = 10;
-        this.barPadding = 5;  // Padding between bars
-        this.maxHealth = GameConfig.PLAYER.INITIAL_HP;  // Use config value
+        this.barPadding = 5;
+        this.maxHealth = GameConfig.PLAYER.INITIAL_HP;
         
         // Set up UI elements
         this.setupUI();
+
+        // Create start message (hidden by default)
+        this.createStartMessage();
+
+        // Create debug info screen
+        this.createDebugInfo();
+
+        // Initial camera setup
+        this.updateCameraIgnoreList();
 
         // Create start message (hidden by default)
         this.createStartMessage();
@@ -642,5 +651,51 @@ export class GameUI {
 
         // Re-setup UI elements with current values
         this.setupUI();
+    }
+
+    createDebugInfo() {
+        const { width } = this.scene.scale;
+        
+        // Create black background
+        this.debugBackground = this.scene.add.rectangle(
+            width - 200, 10, 190, 120,
+            0x000000, 0.8
+        );
+        this.debugBackground.setOrigin(0, 0);
+        this.debugBackground.setScrollFactor(0);
+        this.container.add(this.debugBackground);
+
+        // Create debug text
+        this.debugInfo = this.scene.add.text(
+            width - 190, 15,
+            'Debug Info', {
+            fontSize: '16px',
+            fontFamily: 'Arial',
+            fill: '#ffffff',
+            padding: { x: 5, y: 5 }
+        });
+        this.debugInfo.setScrollFactor(0);
+        this.container.add(this.debugInfo);
+
+        // Update debug info every frame
+        this.scene.events.on('update', this.updateDebugInfo, this);
+    }
+
+    updateDebugInfo() {
+        if (!this.debugInfo || !this.scene.player) return;
+
+        const player = this.scene.player;
+        const currentSection = Math.floor(player.x / this.scene.sectionWidth);
+        const loadedSections = this.scene.loadedSections ? this.scene.loadedSections.size : 0;
+        const activeTiles = this.scene.groundLayer ? 
+            this.scene.groundLayer.getTilesWithin().filter(t => t.index !== -1).length +
+            this.scene.platformLayer.getTilesWithin().filter(t => t.index !== -1).length : 0;
+
+        this.debugInfo.setText(
+            `Sections: ${loadedSections}\n` +
+            `Current: ${currentSection}\n` +
+            `Active Tiles: ${activeTiles}\n` +
+            `Pos: ${Math.floor(player.x)},${Math.floor(player.y)}`
+        );
     }
 }
