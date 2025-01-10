@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LDTK Tile Manager Documentation</title>
+    <link rel="stylesheet" href="styles/documentation.css">
+</head>
+<body>
+    <div class="container">
+        <h1>LDTK Tile Manager Documentation</h1>
+        
+        <section>
+            <h2>Overview</h2>
+            <p>
+                The <code>LDTKTileManager</code> class is responsible for processing LDTK (Level Designer Toolkit) level data 
+                and creating physics-based hitboxes for solid tiles in the game. It manages tile collision systems and provides 
+                efficient cleanup mechanisms for level streaming.
+            </p>
+        </section>
+
+        <section>
+            <h2>Core Features</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>Tile Processing</h3>
+                    <ul>
+                        <li>Processes both auto-layer and IntGrid tiles</li>
+                        <li>Creates physics-enabled hitboxes</li>
+                        <li>Supports sectioned level loading</li>
+                        <li>Manages collision detection</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>Memory Management</h3>
+                    <ul>
+                        <li>Efficient hitbox cleanup system</li>
+                        <li>Section-based organization</li>
+                        <li>Dynamic collision management</li>
+                        <li>Optimized for level streaming</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Constructor</h2>
+            <div class="code-example">
+                <pre><code><span class="keyword">constructor</span>(<span class="function">scene</span>) {
+    this.scene = scene;
+    this.hitboxes = <span class="keyword">new</span> <span class="function">Map</span>();
+    this.sectionHitboxes = <span class="keyword">new</span> <span class="function">Map</span>();
+}</code></pre>
+            </div>
+            <p>
+                Initializes the tile manager with a Phaser scene and creates storage for hitboxes.
+            </p>
+        </section>
+
+        <section>
+            <h2>Key Methods</h2>
+            
+            <div class="card">
+                <h3>createTileHitboxes(levelData, worldX, worldY, sectionWidth)</h3>
+                <div class="code-example">
+                    <pre><code><span class="comment">// Create hitboxes for a section of the level</span>
+tileManager.<span class="function">createTileHitboxes</span>(
+    levelData,
+    <span class="number">0</span>,      <span class="comment">// worldX</span>
+    <span class="number">0</span>,      <span class="comment">// worldY</span>
+    <span class="number">1920</span>    <span class="comment">// sectionWidth</span>
+);</code></pre>
+                </div>
+                <p><strong>Parameters:</strong></p>
+                <ul>
+                    <li><code>levelData</code>: LDTK level data object</li>
+                    <li><code>worldX</code>: World X offset for the level section</li>
+                    <li><code>worldY</code>: World Y offset for the level section</li>
+                    <li><code>sectionWidth</code>: Width of the section to load</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>processAutoLayerTiles(tiles, worldX, worldY, sectionWidth, sectionHitboxes)</h3>
+                <p>Processes auto-layer tiles from LDTK and creates corresponding hitboxes.</p>
+                <div class="note">
+                    Only creates hitboxes for tiles within the specified section width.
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>processIntGridTiles(layer, worldX, worldY, sectionWidth, sectionHitboxes)</h3>
+                <p>Processes IntGrid tiles and creates hitboxes for solid tiles (value > 0).</p>
+                <div class="note">
+                    Uses a standard tile size of 32x32 pixels.
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>cleanupHitboxes(cleanupX)</h3>
+                <div class="code-example">
+                    <pre><code><span class="comment">// Remove hitboxes before specified X position</span>
+tileManager.<span class="function">cleanupHitboxes</span>(<span class="number">1920</span>);</code></pre>
+                </div>
+                <p>Removes hitboxes from sections that are before the specified X position.</p>
+            </div>
+
+            <div class="card">
+                <h3>addCollider(object)</h3>
+                <div class="code-example">
+                    <pre><code><span class="comment">// Add collision between player and all hitboxes</span>
+tileManager.<span class="function">addCollider</span>(player);</code></pre>
+                </div>
+                <p>Adds physics colliders between a game object and all existing hitboxes.</p>
+            </div>
+        </section>
+
+        <section>
+            <h2>System Architecture</h2>
+            <div class="diagram">
+LDTK Tile Manager System
+├── Tile Processing
+│   ├── Auto-Layer Processing
+│   │   └── Tile-specific hitbox creation
+│   └── IntGrid Processing
+│       └── Value-based hitbox creation
+├── Hitbox Management
+│   ├── Global Hitbox Map
+│   └── Section-based Organization
+└── Memory Management
+    ├── Section Cleanup
+    └── Dynamic Collision Updates</div>
+        </section>
+
+        <section>
+            <h2>Usage Example</h2>
+            <div class="code-example">
+                <pre><code><span class="keyword">class</span> <span class="function">GameScene</span> <span class="keyword">extends</span> Phaser.Scene {
+    <span class="function">create</span>() {
+        <span class="comment">// Initialize tile manager</span>
+        this.tileManager = <span class="keyword">new</span> <span class="function">LDTKTileManager</span>(this);
+
+        <span class="comment">// Load level section</span>
+        this.tileManager.<span class="function">createTileHitboxes</span>(
+            levelData,
+            worldX,
+            worldY,
+            sectionWidth
+        );
+
+        <span class="comment">// Add player collisions</span>
+        this.tileManager.<span class="function">addCollider</span>(this.player);
+
+        <span class="comment">// Cleanup old sections</span>
+        this.tileManager.<span class="function">cleanupHitboxes</span>(cleanupX);
+    }
+}</code></pre>
+            </div>
+        </section>
+
+        <section>
+            <h2>File Dependencies</h2>
+            <div class="card">
+                <h3>Location</h3>
+                <code>src/modules/managers/LDTKTileManager.js</code>
+                
+                <h3>Imports</h3>
+                <p>This class has no direct imports but requires:</p>
+                <ul>
+                    <li>Phaser.js framework for game object and physics management</li>
+                    <li>LDTK level data format for tile processing</li>
+                </ul>
+            </div>
+        </section>
+
+        <div class="warning">
+            <strong>Warning:</strong> Always ensure proper cleanup of sections to prevent memory leaks during level streaming.
+        </div>
+
+        <div class="note">
+            <strong>Note:</strong> The LDTKTileManager is designed to work with LDTK level data format. Make sure your level data follows the LDTK structure.
+        </div>
+    </div>
+</body>
+</html>

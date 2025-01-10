@@ -190,18 +190,19 @@ setupTileCollisions() {
 
         <section>
             <h2>File Dependencies</h2>
-            <div class="diagram">
-CollisionManager Dependencies:
-├── BaseScene
-│   └── All game scenes inherit collision setup
-├── EnemyManager
-│   └── Handles enemy-specific collision responses
-├── HazardManager
-│   └── Manages hazard and trap collisions
-├── Player
-│   └── Receives collision events and damage
-└── Bullet
-    └── Processes hit detection and destruction
+            <div class="card">
+                <h3>Location</h3>
+                <code>src/modules/managers/CollisionManager.js</code>
+                
+                <h3>Dependencies</h3>
+                <p>This class has no direct imports but interacts with:</p>
+                <ul>
+                    <li>Phaser.Physics system for collision detection</li>
+                    <li>Player object for player collisions</li>
+                    <li>Enemy objects for enemy collisions</li>
+                    <li>Bullet objects for projectile collisions</li>
+                    <li>Tile objects for environmental collisions</li>
+                </ul>
             </div>
         </section>
 

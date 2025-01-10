@@ -162,6 +162,27 @@ Scene Initialization Flow
     └── Animation System</div>
         </section>
 
+        <section>
+            <h2>File Dependencies</h2>
+            <div class="card">
+                <h3>Location</h3>
+                <code>src/modules/managers/SceneInitializer.js</code>
+                
+                <h3>Imports</h3>
+                <ul>
+                    <li><code>../../prefabs/Player</code>: Player class</li>
+                    <li><code>../../prefabs/Bullet</code>: Bullet class</li>
+                    <li><code>./StateManager</code>: Game state management</li>
+                    <li><code>./EffectsManager</code>: Visual effects handling</li>
+                    <li><code>./EnemyManager</code>: Enemy behavior and spawning</li>
+                    <li><code>./CollisionManager</code>: Physics collision handling</li>
+                    <li><code>./BoundaryManager</code>: Scene boundaries management</li>
+                    <li><code>./AnimationManager</code>: Sprite animation control</li>
+                    <li><code>../../_Debug/DebugSystem</code>: Debugging utilities</li>
+                </ul>
+            </div>
+        </section>
+
         <div class="note">
             <strong>Note:</strong> The SceneInitializer should be instantiated in the scene's create() method before any other game logic is implemented.
         </div>
