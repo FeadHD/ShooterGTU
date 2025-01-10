@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animation Manager Documentation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        h1, h2, h3 {
+            color: #2c3e50;
+            margin-top: 30px;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .code-example {
+            background-color: #1e1e1e;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        .code-example code {
+            color: #d4d4d4;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .comment { color: #6a9955; }
+        .keyword { color: #569cd6; }
+        .string { color: #ce9178; }
+        .function { color: #dcdcaa; }
+        .number { color: #b5cea8; }
+
+        .animation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .animation-card {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        .note {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f8f9fa;
+        }
+
+        .sprite-info {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Animation Manager Documentation</h1>
+        
+        <section>
+            <h2>Overview</h2>
+            <p>
+                The AnimationManager class handles the creation and management of all game animations, including
+                character movements, effects, and enemy animations. It provides a centralized system for defining
+                and controlling sprite animations in the game.
+            </p>
+        </section>
+
+        <section>
+            <h2>Character Animations</h2>
+            <div class="animation-grid">
+                <div class="animation-card">
+                    <h3>Idle Animation</h3>
+                    <div class="code-example">
+                        <pre><code><span class="comment">// Idle animation setup</span>
+this.scene.anims.create({
+    key: <span class="string">'character_Idle'</span>,
+    frames: this.scene.anims.generateFrameNumbers(
+        <span class="string">'character_idle'</span>, 
+        { start: <span class="number">0</span>, end: <span class="number">3</span> }
+    ),
+    frameRate: <span class="number">8</span>,
+    repeat: -<span class="number">1</span>
+});</code></pre>
+                    </div>
+                    <ul>
+                        <li>4 frames of animation</li>
+                        <li>8 FPS for smooth idle movement</li>
+                        <li>Loops continuously</li>
+                    </ul>
+                </div>
+
+                <div class="animation-card">
+                    <h3>Walking Animation</h3>
+                    <div class="code-example">
+                        <pre><code><span class="comment">// Walking animation setup</span>
+this.scene.anims.create({
+    key: <span class="string">'character_Walking'</span>,
+    frames: this.scene.anims.generateFrameNumbers(
+        <span class="string">'character_walking'</span>, 
+        { start: <span class="number">0</span>, end: <span class="number">5</span> }
+    ),
+    frameRate: <span class="number">10</span>,
+    repeat: -<span class="number">1</span>
+});</code></pre>
+                    </div>
+                    <ul>
+                        <li>6 frames of animation</li>
+                        <li>10 FPS for fluid walking motion</li>
+                        <li>Continuous looping</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Effect Animations</h2>
+            <div class="animation-grid">
+                <div class="animation-card">
+                    <h3>Bullet Animation</h3>
+                    <div class="code-example">
+                        <pre><code><span class="comment">// Bullet animation setup</span>
+this.scene.anims.create({
+    key: <span class="string">'bullet'</span>,
+    frames: this.scene.anims.generateFrameNumbers(
+        <span class="string">'bullet'</span>, 
+        { start: <span class="number">0</span>, end: <span class="number">1</span> }
+    ),
+    frameRate: <span class="number">10</span>,
+    repeat: -<span class="number">1</span>
+});</code></pre>
+                    </div>
+                </div>
+
+                <div class="animation-card">
+                    <h3>Hit Effect</h3>
+                    <div class="code-example">
+                        <pre><code><span class="comment">// Hit effect animation</span>
+this.scene.anims.create({
+    key: <span class="string">'hit-effect'</span>,
+    frames: this.scene.anims.generateFrameNumbers(
+        <span class="string">'hit-effect'</span>, 
+        { start: <span class="number">0</span>, end: <span class="number">4</span> }
+    ),
+    frameRate: <span class="number">15</span>,
+    repeat: <span class="number">0</span>
+});</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Enemy Animations</h2>
+            <div class="animation-grid">
+                <div class="animation-card">
+                    <h3>Warrior Animations</h3>
+                    <ul>
+                        <li>Idle state</li>
+                        <li>Attack sequences (3 variations)</li>
+                        <li>Walking and running</li>
+                        <li>Death animation</li>
+                    </ul>
+                </div>
+                <div class="animation-card">
+                    <h3>Slime Animations</h3>
+                    <ul>
+                        <li>Idle bouncing</li>
+                        <li>Jump preparation</li>
+                        <li>Death sequence</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Asset Requirements</h2>
+            <div class="sprite-info">
+                <h3>Required Sprite Sheets</h3>
+                <table>
+                    <tr>
+                        <th>Asset Name</th>
+                        <th>Description</th>
+                        <th>Frame Count</th>
+                    </tr>
+                    <tr>
+                        <td>character_idle</td>
+                        <td>Player idle animation</td>
+                        <td>4 frames</td>
+                    </tr>
+                    <tr>
+                        <td>character_walking</td>
+                        <td>Player walking animation</td>
+                        <td>6 frames</td>
+                    </tr>
+                    <tr>
+                        <td>character_jump</td>
+                        <td>Jump animation</td>
+                        <td>1 frame</td>
+                    </tr>
+                    <tr>
+                        <td>character_death</td>
+                        <td>Death sequence</td>
+                        <td>1 frame</td>
+                    </tr>
+                    <tr>
+                        <td>bullet</td>
+                        <td>Projectile animation</td>
+                        <td>2 frames</td>
+                    </tr>
+                    <tr>
+                        <td>hit-effect</td>
+                        <td>Impact visualization</td>
+                        <td>5 frames</td>
+                    </tr>
+                </table>
+            </div>
+        </section>
+
+        <section>
+            <h2>File Relationships and Dependencies</h2>
+            
+            <h3>Files Using AnimationManager</h3>
+            <div class="animation-card">
+                <h4>Core Scene Implementation</h4>
+                <ul>
+                    <li><strong>BaseScene</strong> (`scenes/elements/BaseScene.js`)
+                        <ul>
+                            <li>Core scene that all other scenes inherit from</li>
+                            <li>Receives AnimationManager through ManagerFactory injection</li>
+                            <li>Stores manager instance as `this.animations`</li>
+                            <li>Provides animation capabilities to all derived scenes</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="animation-card">
+                <h4>Derived Scene Files</h4>
+                <ul>
+                    <li><strong>IntroScene</strong> (`scenes/elements/IntroScene.js`)
+                        <ul>
+                            <li>Extends BaseScene</li>
+                            <li>Uses inherited animation manager for intro sequences</li>
+                        </ul>
+                    </li>
+                    <li><strong>Matrix640x360</strong> (`scenes/levels/Matrix640x360.js`)
+                        <ul>
+                            <li>Extends BaseScene</li>
+                            <li>Uses inherited animation system for game entities</li>
+                        </ul>
+                    </li>
+                    <li><strong>BlueTest</strong> (`scenes/levels/BlueTest.js`)
+                        <ul>
+                            <li>Extends BaseScene</li>
+                            <li>Uses inherited animation capabilities for testing</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="animation-card">
+                <h4>Manager Integration</h4>
+                <ul>
+                    <li><strong>ManagerFactory</strong> (`modules/di/ManagerFactory.js`)
+                        <ul>
+                            <li>Creates AnimationManager instance</li>
+                            <li>Injects it into BaseScene as `animations`</li>
+                            <li>Part of the core dependency injection system</li>
+                            <li>Registers manager in the service container</li>
+                        </ul>
+                    </li>
+                    <li><strong>SceneInitializer</strong> (`modules/managers/SceneInitializer.js`)
+                        <ul>
+                            <li>Works with BaseScene to ensure proper initialization</li>
+                            <li>Sets up animation system during scene boot</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="note">
+                <strong>Inheritance Hierarchy:</strong>
+                <pre>
+BaseScene (has AnimationManager)
+├── IntroScene
+├── Matrix640x360
+└── BlueTest
+                </pre>
+                <p>All scenes inherit animation capabilities from BaseScene through the `this.animations` property.</p>
+            </div>
+        </section>
+
+        <section>
+            <h2>Usage Guide</h2>
+            <div class="code-example">
+                <pre><code><span class="comment">// Initialize the Animation Manager</span>
+<span class="keyword">const</span> animationManager = <span class="keyword">new</span> AnimationManager(scene);
+
+<span class="comment">// Create all animations</span>
+animationManager.createAllAnimations();
+
+<span class="comment">// Play an animation on a sprite</span>
+sprite.play(<span class="string">'character_Walking'</span>, <span class="keyword">true</span>);</code></pre>
+            </div>
+
+            <div class="note">
+                <strong>Note:</strong> Always check if an animation exists before creating it to avoid duplicates:
+                <div class="code-example">
+                    <pre><code><span class="keyword">if</span> (!this.scene.anims.exists(<span class="string">'animationKey'</span>)) {
+    <span class="comment">// Create animation</span>
+}</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Best Practices</h2>
+            <div class="warning">
+                <strong>Important Considerations:</strong>
+                <ul>
+                    <li>Always preload sprite sheets before creating animations</li>
+                    <li>Use appropriate frame rates for smooth animations</li>
+                    <li>Consider memory usage with large sprite sheets</li>
+                    <li>Clean up animations when scenes are destroyed</li>
+                </ul>
+            </div>
+        </section>
+    </div>
+</body>
+</html>
