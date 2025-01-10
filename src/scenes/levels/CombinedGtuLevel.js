@@ -384,13 +384,18 @@ export class CombinedGtuLevel extends BaseScene {
         console.log(`Section ${sectionIndex} loaded successfully`);
     }
 
-    loadNextLevelSection(cameraRight) {
-        const nextSectionIndex = Math.floor(cameraRight / this.sectionWidth);
+    loadAdjacentSections(playerX) {
+        const playerSection = Math.floor(playerX / this.sectionWidth);
+        const bufferSections = 2; // Keep 2 sections loaded in each direction
         
-        // Load all sections up to and including the next section
-        for (let i = 0; i <= nextSectionIndex + 1; i++) {
-            if (!this.loadedSections.has(i)) {
-                const sectionStart = i * this.sectionWidth;
+        // Load sections in both directions
+        for (let offset = -bufferSections; offset <= bufferSections; offset++) {
+            const sectionToLoad = playerSection + offset;
+            
+            // Don't try to load sections before the start of the level
+            if (sectionToLoad >= 0 && !this.loadedSections.has(sectionToLoad)) {
+                const sectionStart = sectionToLoad * this.sectionWidth;
+                console.log(`Loading section ${sectionToLoad} around player position`);
                 this.loadLevelSection(sectionStart);
             }
         }
@@ -412,24 +417,18 @@ export class CombinedGtuLevel extends BaseScene {
     update(time, delta) {
         super.update(time, delta);
 
-        // Update camera and check for section loading/unloading
         if (this.player && this.cameras.main) {
             const playerSection = Math.floor(this.player.x / this.sectionWidth);
             
-            // Check sections that need to be unloaded (too far from player)
+            // Always load sections around player position
+            this.loadAdjacentSections(this.player.x);
+            
+            // Clean up sections that are too far away
             this.loadedSections.forEach(sectionIndex => {
-                if (Math.abs(sectionIndex - playerSection) > 2) { // Keep 2 sections buffer on each side
+                if (Math.abs(sectionIndex - playerSection) > 2) {
                     this.unloadSection(sectionIndex);
                 }
             });
-            
-            // Load next section when camera approaches current section boundary
-            const cameraRight = this.cameras.main.scrollX + this.cameras.main.width;
-            const currentSectionIndex = Math.floor(cameraRight / this.sectionWidth);
-            if (currentSectionIndex > this.lastLoadedSection) {
-                console.log(`Need to load next section. Camera right: ${cameraRight}, Current section: ${currentSectionIndex}`);
-                this.loadNextLevelSection(cameraRight);
-            }
         }
 
         // Update debug graphics if enabled

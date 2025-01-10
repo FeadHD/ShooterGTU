@@ -137,16 +137,15 @@ export class CombinedLevelCamera {
         if (!this.player) return;
         
         const cameraRight = this.camera.scrollX + this.camera.width;
+        const cameraLeft = this.camera.scrollX;
         const playerX = this.player.x;
         
-        // If player is approaching the load ahead distance, trigger level generation
-        if (playerX > cameraRight - this.loadAheadDistance) {
-            this.scene.loadNextLevelSection(cameraRight);
-        }
+        // Check both directions from player position
+        this.scene.loadAdjacentSections(playerX);
         
-        // If player has moved far enough, clean up behind them
-        if (playerX > this.camera.scrollX + Math.abs(this.unloadBehindDistance)) {
-            this.scene.cleanupBehindPlayer(this.camera.scrollX + this.unloadBehindDistance);
+        // Update unloading to work in both directions
+        if (Math.abs(playerX - this.camera.scrollX) > Math.abs(this.unloadBehindDistance)) {
+            this.scene.cleanupBehindPlayer(playerX);
         }
     }
 
