@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collision Manager Documentation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        h1, h2, h3 {
+            color: #2c3e50;
+            margin-top: 30px;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .code-example {
+            background-color: #1e1e1e;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        .code-example code {
+            color: #d4d4d4;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .comment { color: #6a9955; }
+        .keyword { color: #569cd6; }
+        .string { color: #ce9178; }
+        .function { color: #dcdcaa; }
+        .number { color: #b5cea8; }
+
+        .collision-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .collision-card {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        .note {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f8f9fa;
+        }
+
+        .diagram {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Collision Manager Documentation</h1>
+        
+        <section>
+            <h2>Overview</h2>
+            <p>
+                The CollisionManager class handles all physics-based interactions between game entities in the ShooterGTU game.
+                It manages collisions between players, enemies, bullets, tiles, and other game objects using Phaser's physics system.
+            </p>
+        </section>
+
+        <section>
+            <h2>Core Collision Systems</h2>
+            <div class="collision-grid">
+                <div class="collision-card">
+                    <h3>Player Collisions</h3>
+                    <div class="code-example">
+                        <pre><code><span class="comment">// Player collision setup</span>
+<span class="keyword">if</span> (this.scene.player) {
+    this.scene.physics.add.collider(
+        this.scene.player,
+        this.scene.mapLayer
+    );
+    
+    <span class="comment">// Enemy collision with damage check</span>
+    this.scene.physics.add.overlap(
+        this.scene.player,
+        this.scene.slimes,
+        (player, enemy) => {
+            <span class="keyword">if</span> (canApplyDamage()) {
+                this.scene.hitEnemy(player, enemy);
+            }
+        }
+    );
+}</code></pre>
+                    </div>
+                </div>
+
+                <div class="collision-card">
+                    <h3>Enemy Collisions</h3>
+                    <div class="code-example">
+                        <pre><code><span class="comment">// Enemy-enemy collision</span>
+this.scene.physics.add.collider(
+    this.scene.slimes,
+    this.scene.slimes,
+    this.handleEnemyCollision,
+    <span class="keyword">null</span>,
+    this.scene
+);</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Collision Types</h2>
+            <table>
+                <tr>
+                    <th>Type</th>
+                    <th>Description</th>
+                    <th>Handler</th>
+                </tr>
+                <tr>
+                    <td>Solid Collisions</td>
+                    <td>Physical blocking between entities</td>
+                    <td>physics.add.collider()</td>
+                </tr>
+                <tr>
+                    <td>Trigger Overlaps</td>
+                    <td>Non-blocking interaction zones</td>
+                    <td>physics.add.overlap()</td>
+                </tr>
+                <tr>
+                    <td>Bullet Hits</td>
+                    <td>Projectile impact detection</td>
+                    <td>handleBulletHit()</td>
+                </tr>
+                <tr>
+                    <td>Hazard Zones</td>
+                    <td>Damage-dealing areas</td>
+                    <td>handleHazardCollision()</td>
+                </tr>
+            </table>
+        </section>
+
+        <section>
+            <h2>Integration with Other Systems</h2>
+            <div class="collision-grid">
+                <div class="collision-card">
+                    <h3>Enemy Manager Integration</h3>
+                    <ul>
+                        <li>Bullet hit processing</li>
+                        <li>Enemy health management</li>
+                        <li>Death handling</li>
+                        <li>Collision response behaviors</li>
+                    </ul>
+                </div>
+                <div class="collision-card">
+                    <h3>Hazard Manager Integration</h3>
+                    <ul>
+                        <li>Trap activation</li>
+                        <li>Damage zones</li>
+                        <li>Environmental hazards</li>
+                        <li>Timed damage intervals</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Tile Collision System</h2>
+            <div class="code-example">
+                <pre><code><span class="comment">// Tile collision setup</span>
+setupTileCollisions() {
+    <span class="keyword">const</span> solidTileIds = [<span class="number">641</span>, <span class="number">642</span>, <span class="number">643</span>, <span class="number">644</span>];
+    
+    tilemapLayers.forEach(<span class="keyword">layer</span> => {
+        <span class="keyword">if</span> (this.scene.player) {
+            this.scene.physics.add.collider(
+                this.scene.player,
+                layer
+            );
+        }
+    });
+}</code></pre>
+            </div>
+
+            <div class="note">
+                <strong>Tile Properties:</strong>
+                <ul>
+                    <li>Solid tiles: Used for platforms and walls</li>
+                    <li>One-way platforms: Allow jump-through from below</li>
+                    <li>Hazard tiles: Cause damage on contact</li>
+                </ul>
+            </div>
+        </section>
+
+        <section>
+            <h2>Collision Response System</h2>
+            <div class="collision-grid">
+                <div class="collision-card">
+                    <h3>Enemy Collision Response</h3>
+                    <div class="code-example">
+                        <pre><code>handleEnemyCollision(enemy1, enemy2) {
+    <span class="comment">// Reverse direction on collision</span>
+    <span class="keyword">if</span> (enemy1.enemy) {
+        enemy1.enemy.reverseDirection();
+        enemy1.setVelocityY(-<span class="number">150</span>);
+    }
+    
+    <span class="comment">// Apply push force</span>
+    <span class="keyword">const</span> pushForce = <span class="number">100</span>;
+    enemy1.setVelocityX(-pushForce);
+    enemy2.setVelocityX(pushForce);
+}</code></pre>
+                    </div>
+                </div>
+
+                <div class="collision-card">
+                    <h3>Bullet Hit Response</h3>
+                    <div class="code-example">
+                        <pre><code>handleBulletHit(bullet, enemySprite) {
+    <span class="comment">// Store hit position for AI</span>
+    <span class="keyword">if</span> (enemySprite.getData(<span class="string">'type'</span>) === <span class="string">'warrior'</span>) {
+        warrior.lastBulletHitPos = {
+            x: bullet.x,
+            y: bullet.y
+        };
+    }
+    
+    bullet.destroy();
+    this.scene.enemyManager.handleBulletHit(
+        bullet,
+        enemySprite
+    );
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>File Dependencies</h2>
+            <div class="diagram">
+CollisionManager Dependencies:
+├── BaseScene
+│   └── All game scenes inherit collision setup
+├── EnemyManager
+│   └── Handles enemy-specific collision responses
+├── HazardManager
+│   └── Manages hazard and trap collisions
+├── Player
+│   └── Receives collision events and damage
+└── Bullet
+    └── Processes hit detection and destruction
+            </div>
+        </section>
+
+        <section>
+            <h2>Best Practices</h2>
+            <div class="warning">
+                <strong>Important Considerations:</strong>
+                <ul>
+                    <li>Always check entity validity before processing collisions</li>
+                    <li>Use appropriate collision shapes for better performance</li>
+                    <li>Implement proper cleanup for removed entities</li>
+                    <li>Consider using collision groups for complex interactions</li>
+                    <li>Handle edge cases in collision callbacks</li>
+                </ul>
+            </div>
+        </section>
+    </div>
+</body>
+</html>
