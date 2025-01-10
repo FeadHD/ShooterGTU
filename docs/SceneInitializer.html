@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SceneInitializer Documentation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #2980b9;
+            margin-top: 30px;
+        }
+        h3 {
+            color: #34495e;
+        }
+        code {
+            background-color: #f8f9fa;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: 'Consolas', monospace;
+            color: #e74c3c;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            border: 1px solid #ddd;
+        }
+        .method {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #3498db;
+            border-radius: 0 5px 5px 0;
+        }
+        .parameter {
+            margin-left: 20px;
+            color: #666;
+        }
+        .returns {
+            margin-top: 10px;
+            color: #27ae60;
+        }
+        .example {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SceneInitializer Documentation</h1>
+
+        <h2>Overview</h2>
+        <p>
+            The <code>SceneInitializer</code> class is responsible for setting up and initializing various components 
+            of a game scene in the ShooterGTU game. It handles essential setup tasks such as camera configuration, 
+            physics setup, game object group creation, player initialization, and manager instantiation.
+        </p>
+
+        <h2>Constructor</h2>
+        <div class="method">
+            <h3>constructor(scene)</h3>
+            <div class="parameter">
+                <strong>Parameters:</strong>
+                <ul>
+                    <li><code>scene</code>: The Phaser scene instance to be initialized</li>
+                </ul>
+            </div>
+        </div>
+
+        <h2>Methods</h2>
+
+        <div class="method">
+            <h3>initializeScene()</h3>
+            <p>Main initialization method that orchestrates the entire scene setup process. Calls all other setup methods in sequence.</p>
+            <div class="returns">
+                <strong>Returns:</strong> An object containing all initialized managers
+            </div>
+        </div>
+
+        <div class="method">
+            <h3>setupCamera()</h3>
+            <p>Configures the main camera for the scene with the following settings:</p>
+            <ul>
+                <li>Sets viewport to 1920x1080</li>
+                <li>Configures camera bounds based on room dimensions</li>
+                <li>Sets background color to black</li>
+                <li>Calculates and applies appropriate zoom level</li>
+                <li>Centers the camera on the room</li>
+            </ul>
+        </div>
+
+        <div class="method">
+            <h3>setupPhysics()</h3>
+            <p>Initializes the physics system:</p>
+            <ul>
+                <li>Enables collision bounds on all sides</li>
+                <li>Sets physics world bounds according to room dimensions</li>
+            </ul>
+        </div>
+
+        <div class="method">
+            <h3>createGroups()</h3>
+            <p>Creates and initializes various physics and non-physics groups for game objects:</p>
+            <ul>
+                <li><code>enemies</code>: Physics group for enemy entities</li>
+                <li><code>slimes</code>: Physics group for slime entities</li>
+                <li><code>drones</code>: Physics group for drone entities</li>
+                <li><code>bitcoins</code>: Regular group for collectibles</li>
+                <li><code>bullets</code>: Physics group with Bullet class type (max 10 bullets)</li>
+                <li><code>platforms</code>: Static physics group for platforms</li>
+            </ul>
+        </div>
+
+        <div class="method">
+            <h3>createPlayer()</h3>
+            <p>Creates and initializes the player character:</p>
+            <ul>
+                <li>Spawns player at 10% of screen width on X-axis and Y position 100</li>
+                <li>Sets initial velocity to zero</li>
+                <li>Stores spawn point for debug purposes</li>
+            </ul>
+        </div>
+
+        <div class="method">
+            <h3>setupDebug()</h3>
+            <p>Initializes debugging tools:</p>
+            <ul>
+                <li>Creates debug graphics</li>
+                <li>Instantiates the debug system</li>
+            </ul>
+        </div>
+
+        <div class="method">
+            <h3>setupManagers()</h3>
+            <p>Creates and returns an object containing all necessary game managers:</p>
+            <ul>
+                <li><code>stateManager</code>: Handles game state</li>
+                <li><code>effectsManager</code>: Manages game effects</li>
+                <li><code>enemyManager</code>: Controls enemy behavior and spawning</li>
+                <li><code>collisionManager</code>: Handles collision detection and response</li>
+                <li><code>boundaryManager</code>: Manages scene boundaries</li>
+                <li><code>animationManager</code>: Controls animations</li>
+            </ul>
+        </div>
+
+        <h2>Dependencies</h2>
+        <p>The SceneInitializer relies on several other classes and managers:</p>
+        <ul>
+            <li>Player</li>
+            <li>Bullet</li>
+            <li>StateManager</li>
+            <li>EffectsManager</li>
+            <li>EnemyManager</li>
+            <li>CollisionManager</li>
+            <li>SceneBoundaryManager</li>
+            <li>AnimationManager</li>
+            <li>DebugSystem</li>
+        </ul>
+
+        <h2>Usage Example</h2>
+        <div class="example">
+            <pre><code>class GameScene extends Phaser.Scene {
+    create() {
+        const sceneInitializer = new SceneInitializer(this);
+        const managers = sceneInitializer.initializeScene();
+        
+        // Access managers as needed
+        this.stateManager = managers.stateManager;
+        this.enemyManager = managers.enemyManager;
+        // etc...
+    }
+}</code></pre>
+        </div>
+    </div>
+</body>
+</html>
