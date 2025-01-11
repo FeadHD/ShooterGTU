@@ -50,6 +50,7 @@ export class BaseScene extends Scene {
         this.effects = managers.effects;
         this.boundaries = managers.boundaries;
         this.debug = managers.debug;
+        this.collisionManager = managers.collision;
 
         // Initialize background music with volume from registry
         const bgMusic = this.sound.add('bgMusic', { loop: true });
@@ -91,10 +92,8 @@ export class BaseScene extends Scene {
             immovable: true  // Make bullets not affected by collisions
         });
 
-        // Add collision between bullets and platforms
-        this.physics.add.collider(this.bullets, this.platforms, (bullet) => {
-            this.destroyBullet(bullet);
-        }, null, this);
+        // Set up all collisions using CollisionManager
+        this.collisionManager.setupCollisions();
 
         // Create game elements - only create player if not skipped
         if (!this.skipPlayerCreation) {

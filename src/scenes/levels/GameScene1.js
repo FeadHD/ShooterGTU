@@ -514,7 +514,6 @@ export class GameScene1 extends BaseScene {
 
     setupRestOfScene() {
         // Initialize managers and UI
-        this.collisionManager = new CollisionManager(this);
         this.gameUI = new GameUI(this);
         this.trapManager = new TrapManager(this);
         this.enemyManager = new EnemyManager(this);
@@ -585,6 +584,10 @@ export class GameScene1 extends BaseScene {
                 spawnPointsForWarriors.splice(spawnIndex, 1);
             }
         }
+
+        // Create collision manager after enemies are created
+        this.collisionManager = new CollisionManager(this);
+        this.collisionManager.setupCollisions();
 
         // Spawn bitcoins after map is loaded
         const bitcoinSpawnPoints = this.findSpawnPointsForBitcoins();
@@ -924,11 +927,10 @@ export class GameScene1 extends BaseScene {
             return;
         }
         
-        // Destroy the bullet first
-        bullet.destroy();
-        
         // Use the EnemyManager to handle the bullet hit
-        this.enemyManager.handleBulletHit(bullet, enemySprite);
+        if (this.enemyManager) {
+            this.enemyManager.handleBulletHit(bullet, enemySprite);
+        }
         
         // Update remaining enemies count
         this.remainingEnemies = Math.max(0, this.remainingEnemies - 1);

@@ -36,54 +36,85 @@ export class CollisionManager {
     }
 
     setupBulletCollisions() {
+        if (!this.scene.bullets) return;
+
         // Bullet collisions with map
-        if (this.scene.mapLayer && this.scene.bullets) {
+        if (this.scene.mapLayer) {
             this.scene.physics.add.collider(
                 this.scene.bullets,
                 this.scene.mapLayer,
-                (bullet) => {
-                    this.scene.effectsManager.createHitEffect(bullet.x, bullet.y);
-                    bullet.destroy();
-                },
+                this.handleBulletCollision,
                 null,
-                this.scene
+                this
             );
         }
 
-        // Bullet collisions with enemies
-        if (this.scene.bullets) {
-            // Slimes
-            if (this.scene.slimes) {
-                this.scene.physics.add.overlap(
-                    this.scene.bullets,
-                    this.scene.slimes,
-                    this.handleBulletHit,
-                    this.canHitEnemy,
-                    this
-                );
-            }
+        // Bullet collisions with platforms
+        if (this.scene.platforms) {
+            this.scene.physics.add.collider(
+                this.scene.bullets,
+                this.scene.platforms,
+                this.handleBulletCollision,
+                null,
+                this
+            );
+        }
 
-            // Drones
-            if (this.scene.drones) {
-                this.scene.physics.add.overlap(
-                    this.scene.bullets,
-                    this.scene.drones,
-                    this.handleBulletHit,
-                    this.canHitEnemy,
-                    this
-                );
-            }
+        // Set up bullet collisions with all enemy groups
+        if (this.scene.enemies) {
+            this.scene.physics.add.overlap(
+                this.scene.bullets,
+                this.scene.enemies,
+                (bullet, enemySprite) => {
+                    if (this.scene.enemyManager) {
+                        this.scene.enemyManager.handleBulletHit(bullet, enemySprite);
+                    }
+                },
+                null,
+                this
+            );
+        }
 
-            // Melee Warriors
-            if (this.scene.enemies) {
-                this.scene.physics.add.overlap(
-                    this.scene.bullets,
-                    this.scene.enemies,
-                    this.handleBulletHit,
-                    this.canHitEnemy,
-                    this
-                );
-            }
+        if (this.scene.slimes) {
+            this.scene.physics.add.overlap(
+                this.scene.bullets,
+                this.scene.slimes,
+                (bullet, enemySprite) => {
+                    if (this.scene.enemyManager) {
+                        this.scene.enemyManager.handleBulletHit(bullet, enemySprite);
+                    }
+                },
+                null,
+                this
+            );
+        }
+
+        if (this.scene.drones) {
+            this.scene.physics.add.overlap(
+                this.scene.bullets,
+                this.scene.drones,
+                (bullet, enemySprite) => {
+                    if (this.scene.enemyManager) {
+                        this.scene.enemyManager.handleBulletHit(bullet, enemySprite);
+                    }
+                },
+                null,
+                this
+            );
+        }
+
+        if (this.scene.meleeWarriors) {
+            this.scene.physics.add.overlap(
+                this.scene.bullets,
+                this.scene.meleeWarriors,
+                (bullet, enemySprite) => {
+                    if (this.scene.enemyManager) {
+                        this.scene.enemyManager.handleBulletHit(bullet, enemySprite);
+                    }
+                },
+                null,
+                this
+            );
         }
     }
 
@@ -190,26 +221,11 @@ export class CollisionManager {
         }
     }
 
-    handleBulletHit(bullet, enemySprite) {
-        if (!enemySprite.active || !enemySprite.body || !enemySprite.body.enable) {
-            bullet.destroy();
-            return;
+    handleBulletCollision(bullet) {
+        if (this.scene.effectsManager) {
+            this.scene.effectsManager.createHitEffect(bullet.x, bullet.y);
         }
-
-        // Store bullet hit position for warrior defense behavior
-        if (enemySprite.getData('type') === 'warrior') {
-            const warrior = enemySprite.getData('enemy');
-            if (warrior) {
-                warrior.lastBulletHitPos = { x: bullet.x, y: bullet.y };
-            }
-        }
-
         bullet.destroy();
-        this.scene.enemyManager.handleBulletHit(bullet, enemySprite);
-    }
-
-    canHitEnemy(bullet, enemySprite) {
-        return enemySprite.enemy && !enemySprite.enemy.isInvincible;
     }
 
     handleEnemyCollision(enemy1, enemy2) {

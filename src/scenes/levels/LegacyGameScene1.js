@@ -946,7 +946,9 @@ export class LegacyGameScene1 extends BaseScene {
         }
 
         // Update bullet pool to check for out-of-bounds bullets
-        this.bulletPool.update();
+        if (this.bulletPool) {
+            this.bulletPool.update();
+        }
 
         // Update all turrets
         this.turrets.getChildren().forEach(turret => turret.update());
