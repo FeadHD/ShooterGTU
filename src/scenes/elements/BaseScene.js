@@ -1,17 +1,14 @@
 // @ai-do-not-touch
 
 import { Scene } from 'phaser';
-import { container } from '../../modules/di/ServiceContainer';
 import { ManagerFactory } from '../../modules/di/ManagerFactory';
 import { GameUI } from './GameUI';
 import { Bullet } from '../../prefabs/Bullet';
 import { ParallaxBackground } from '../../prefabs/ParallaxBackground';
 import { Player } from '../../prefabs/Player';
-import { DebugSystem } from '../../_Debug/DebugSystem';
-import { GameConfig, getGroundTop, getSpawnHeight } from '../../config/GameConfig';
+import { GameConfig, getGroundTop } from '../../config/GameConfig';
 import { Store } from '../../modules/state/Store';
 import { ActionTypes, GameStatus, PlayerState } from '../../modules/state/types';
-import { updateScore, updateHealth, updateLives, updateBitcoins, updatePlayerState } from '../../modules/state/actions';
 
 export class BaseScene extends Scene {
     constructor(config) {
@@ -47,20 +44,42 @@ export class BaseScene extends Scene {
     }
 
     create() {
-        // Prevent right-click context menu
-        this.game.canvas.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            return false;
-        }, false);
+        this.#disableRightClickMenu();
+        const { width, height } = this.#setupCanvasDimensions();
+        this.#initializeManagers();
+        this.#setupMusic();
+        this.#enableKeyboardInput();
+        this.#setupWorldPhysics(width, height);
+        this.#createParallaxBackground();
+        this.#createPlatforms();
+        this.#storeSpawnInfo(width, height);
+        this.#initializeGameSystems();
+        this.#createBulletGroup();
+        this.#setupCollisions();
+        this.#createPlayerIfNeeded(width);
+        this.createUI();
+        this.#registerSceneEvents();
+        this.initializeController();
+        this.debug.initialize();
+        this.initializeSceneState();
+    }
 
-        // Get the canvas dimensions
-        const width = this.cameras.main.width;
-        const height = this.cameras.main.height;
+    /** Disable right-click context menu */
+    #disableRightClickMenu() {
+        this.input.mouse.disableContextMenu();
+    }
 
-        // Initialize managers using factory
+    /** Get canvas dimensions */
+    #setupCanvasDimensions() {
+        return {
+            width: this.cameras.main.width,
+            height: this.cameras.main.height
+        };
+    }
+
+    /** Initialize and assign all game managers */
+    #initializeManagers() {
         const managers = ManagerFactory.createManagers(this);
-        
-        // Assign managers to scene
         this.gameState = managers.gameState;
         this.persistence = managers.persistence;
         this.soundManager = managers.sound;
@@ -73,181 +92,73 @@ export class BaseScene extends Scene {
         this.boundaries = managers.boundaries;
         this.debug = managers.debug;
         this.collisionManager = managers.collision;
+    }
 
-        // Initialize background music with volume from registry
+    /** Set up background music with volume from registry */
+    #setupMusic() {
         const bgMusic = this.sound.add('bgMusic', { loop: true });
         const musicVolume = this.registry.get('musicVolume') || 1;
         bgMusic.setVolume(musicVolume);
         this.musicManager.setCurrentMusic(bgMusic);
         this.musicManager.play();
+    }
 
-        this.input.keyboard.enabled = true;  // Ensure keyboard is enabled on scene start
+    /** Enable keyboard input for the scene */
+    #enableKeyboardInput() {
+        this.input.keyboard.enabled = true;
+    }
 
-        // Set up world physics
+    /** Configure world physics boundaries */
+    #setupWorldPhysics(width, height) {
         this.physics.world.setBounds(0, 0, width, height);
+    }
 
-        // Create parallax background first, before other elements
+    /** Create parallax background layers */
+    #createParallaxBackground() {
         this.parallaxBackground = new ParallaxBackground(this);
+    }
 
-        // Create platforms group for collision
+    /** Create static platforms group for collision */
+    #createPlatforms() {
         this.platforms = this.physics.add.staticGroup();
-        
-        // Store reference for spawning entities
+    }
+
+    /** Store ground top and player spawn point references */
+    #storeSpawnInfo(width, height) {
         this.groundTop = getGroundTop(height);
-        
-        // Default spawn point (can be overridden by child scenes)
         this.playerSpawnPoint = {
             x: width * GameConfig.PLAYER.SPAWN_OFFSET_X,
-            y: getSpawnHeight(this.groundTop)
+            y: this.getSpawnHeight()
         };
+    }
 
-        // Initialize game state and animations
+    /** Initialize game state and create animations */
+    #initializeGameSystems() {
         this.gameState.initializeGameState();
         this.animations.createAllAnimations();
+    }
 
-        // Create bullet group with physics
+    /** Create and configure bullet group with physics */
+    #createBulletGroup() {
         this.bullets = this.physics.add.group({
             classType: Bullet,
-            maxSize: -1,  // Remove bullet limit
-            runChildUpdate: true,  // This will call preUpdate on each bullet
-            allowGravity: false,  // Disable gravity for all bullets in the group
-            immovable: true  // Make bullets not affected by collisions
+            maxSize: -1,
+            runChildUpdate: true,
+            allowGravity: false,
+            immovable: true
         });
+    }
 
-        // Set up all collisions using CollisionManager
+    /** Set up all collision detection */
+    #setupCollisions() {
         this.collisionManager.setupCollisions();
+    }
 
-        // Create game elements - only create player if not skipped
+    /** Create player if not skipped */
+    #createPlayerIfNeeded(width) {
         if (!this.skipPlayerCreation) {
             this.createPlayer(width);
             this.boundaries.createBoundaries(this.player);
-        }
-
-        // Create UI
-        this.createUI();
-        
-        // Listen for scene events
-        this.events.on('wake', this.onSceneWake, this);
-        this.events.on('resume', this.onSceneResume, this);
-        this.events.on('shutdown', this.cleanup, this);
-        this.events.on('sleep', this.cleanup, this);
-
-        // Initialize debug system
-        this.debug.initialize();
-
-        // Initialize controller
-        this.initializeController();
-
-        // Initialize scene state
-        this.initializeSceneState();
-    }
-
-    initializeSceneState() {
-        try {
-            // Get global state from Store
-            const globalState = this.store.getState();
-            
-            // Sync scene with global state
-            this.registry.set('lives', globalState.game.lives);
-            this.registry.set('score', globalState.game.score);
-            this.registry.set('playerHP', globalState.player.health);
-            this.registry.set('bitcoins', globalState.player.bitcoins);
-            
-            // Set up scene-specific state
-            this.gameState.initializeGameState();
-            
-            // Listen for store changes
-            this.store.subscribe((state, action) => {
-                this.handleStoreUpdate(state, action);
-            });
-
-            // Update scene status
-            this.sceneState.isLoading = false;
-            this.sceneState.isReady = true;
-            this.store.dispatch(updatePlayerState(PlayerState.IDLE));
-
-            console.log('Scene state initialized!');
-        } catch (error) {
-            this.handleError(error, 'state');
-        }
-    }
-
-    handleStoreUpdate(state, action) {
-        try {
-            switch(action.type) {
-                case ActionTypes.UPDATE_SCORE:
-                    this.gameState.set('score', state.game.score);
-                    this.sceneState.levelData.currentScore = state.game.score;
-                    break;
-                case ActionTypes.UPDATE_HEALTH:
-                    this.gameState.set('playerHP', state.player.health);
-                    if (state.player.health <= 0) {
-                        this.store.dispatch({ type: ActionTypes.UPDATE_GAME_STATUS, payload: GameStatus.GAME_OVER });
-                    }
-                    break;
-                case ActionTypes.UPDATE_LIVES:
-                    this.gameState.set('lives', state.game.lives);
-                    break;
-                case ActionTypes.UPDATE_BITCOINS:
-                    this.gameState.set('bitcoins', state.game.bitcoins);
-                    break;
-                case ActionTypes.UPDATE_GAME_STATUS:
-                    this.handleGameStatusChange(state.game.status);
-                    break;
-                case ActionTypes.UPDATE_PLAYER_STATE:
-                    if (this.player) {
-                        this.player.setState(state.player.state);
-                    }
-                    break;
-            }
-        } catch (error) {
-            this.handleError(error, 'storeUpdate');
-        }
-    }
-
-    handleGameStatusChange(status) {
-        switch(status) {
-            case GameStatus.PAUSED:
-                this.scene.pause();
-                this.sceneState.isPlaying = false;
-                break;
-            case GameStatus.PLAYING:
-                this.scene.resume();
-                this.sceneState.isPlaying = true;
-                break;
-            case GameStatus.GAME_OVER:
-                this.gameOver = true;
-                this.sceneState.isPlaying = false;
-                break;
-            case GameStatus.MENU:
-                this.scene.start('MainMenu');
-                break;
-        }
-    }
-
-    updateSceneState() {
-        if (this.sceneState.isPlaying) {
-            // Update time elapsed
-            this.sceneState.levelData.timeElapsed = 
-                Math.floor((Date.now() - this.sceneState.startTime) / 1000);
-            
-            // Sync with store
-            const state = this.store.getState();
-            this.sceneState.levelData.currentScore = state.game.score;
-            
-            // Update checkpoint if needed
-            if (this.checkpoints && this.player) {
-                const currentCheckpoint = this.checkpoints.find(cp => 
-                    this.player.x >= cp.x && !this.sceneState.levelData.checkpoints.includes(cp.id)
-                );
-                if (currentCheckpoint) {
-                    this.sceneState.levelData.checkpoints.push(currentCheckpoint.id);
-                    this.store.dispatch({ 
-                        type: ActionTypes.UPDATE_CHECKPOINT, 
-                        payload: currentCheckpoint 
-                    });
-                }
-            }
         }
     }
 
@@ -554,8 +465,127 @@ export class BaseScene extends Scene {
         super.shutdown();
     }
 
-    // Helper method to get spawn height for entities
+    #registerSceneEvents() {
+        this.events.on('wake', this.onSceneWake, this);
+        this.events.on('resume', this.onSceneResume, this);
+        this.events.on('shutdown', this.cleanup, this);
+        this.events.on('sleep', this.cleanup, this);
+    }
+
+    initializeSceneState() {
+        try {
+            // Get global state from Store
+            const globalState = this.store.getState();
+            
+            // Sync scene with global state
+            this.registry.set('lives', globalState.game.lives);
+            this.registry.set('score', globalState.game.score);
+            this.registry.set('playerHP', globalState.player.health);
+            this.registry.set('bitcoins', globalState.player.bitcoins);
+            
+            // Set up scene-specific state
+            this.gameState.initializeGameState();
+            
+            // Listen for store changes
+            this.store.subscribe((state, action) => {
+                this.handleStoreUpdate(state, action);
+            });
+
+            // Update scene status
+            this.sceneState.isLoading = false;
+            this.sceneState.isReady = true;
+            this.store.dispatch({ type: ActionTypes.UPDATE_PLAYER_STATE, payload: PlayerState.IDLE });
+
+            console.log('Scene state initialized!');
+        } catch (error) {
+            this.handleError(error, 'state');
+        }
+    }
+
+    handleStoreUpdate(state, action) {
+        try {
+            switch(action.type) {
+                case ActionTypes.UPDATE_SCORE:
+                    this.gameState.set('score', state.game.score);
+                    this.sceneState.levelData.currentScore = state.game.score;
+                    break;
+                case ActionTypes.UPDATE_HEALTH:
+                    this.gameState.set('playerHP', state.player.health);
+                    if (state.player.health <= 0) {
+                        this.store.dispatch({ type: ActionTypes.UPDATE_GAME_STATUS, payload: GameStatus.GAME_OVER });
+                    }
+                    break;
+                case ActionTypes.UPDATE_LIVES:
+                    this.gameState.set('lives', state.game.lives);
+                    break;
+                case ActionTypes.UPDATE_BITCOINS:
+                    this.gameState.set('bitcoins', state.game.bitcoins);
+                    break;
+                case ActionTypes.UPDATE_GAME_STATUS:
+                    this.handleGameStatusChange(state.game.status);
+                    break;
+                case ActionTypes.UPDATE_PLAYER_STATE:
+                    if (this.player) {
+                        this.player.setState(state.player.state);
+                    }
+                    break;
+            }
+        } catch (error) {
+            this.handleError(error, 'storeUpdate');
+        }
+    }
+
+    handleGameStatusChange(status) {
+        switch(status) {
+            case GameStatus.PAUSED:
+                this.scene.pause();
+                this.sceneState.isPlaying = false;
+                break;
+            case GameStatus.PLAYING:
+                this.scene.resume();
+                this.sceneState.isPlaying = true;
+                break;
+            case GameStatus.GAME_OVER:
+                this.gameOver = true;
+                this.sceneState.isPlaying = false;
+                break;
+            case GameStatus.MENU:
+                this.scene.start('MainMenu');
+                break;
+        }
+    }
+
+    updateSceneState() {
+        if (this.sceneState.isPlaying) {
+            // Update time elapsed
+            this.sceneState.levelData.timeElapsed = 
+                Math.floor((Date.now() - this.sceneState.startTime) / 1000);
+            
+            // Sync with store
+            const state = this.store.getState();
+            this.sceneState.levelData.currentScore = state.game.score;
+            
+            // Update checkpoint if needed
+            if (this.checkpoints && this.player) {
+                const currentCheckpoint = this.checkpoints.find(cp => 
+                    this.player.x >= cp.x && !this.sceneState.levelData.checkpoints.includes(cp.id)
+                );
+                if (currentCheckpoint) {
+                    this.sceneState.levelData.checkpoints.push(currentCheckpoint.id);
+                    this.store.dispatch({ 
+                        type: ActionTypes.UPDATE_CHECKPOINT, 
+                        payload: currentCheckpoint 
+                    });
+                }
+            }
+        }
+    }
+
     getSpawnHeight() {
         return this.groundTop - 16;
+    }
+
+    #initializeDebug() {
+        this.debug.initialize();
     }
 }
