@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Object Pool Documentation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        h1, h2, h3 {
+            color: #2c3e50;
+            margin-top: 30px;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .code-example {
+            background-color: #1e1e1e;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        .code-example code {
+            color: #d4d4d4;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .comment { color: #6a9955; }
+        .keyword { color: #569cd6; }
+        .string { color: #ce9178; }
+        .function { color: #dcdcaa; }
+        .number { color: #b5cea8; }
+
+        .method-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .method-card {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        .note {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Object Pool Manager</h1>
+        
+        <section>
+            <h2>Overview</h2>
+            <p>
+                The Object Pool Manager is a performance optimization system that manages the reuse of game objects. Instead of creating and destroying objects repeatedly, which can be computationally expensive, the pool maintains a collection of reusable objects.
+            </p>
+        </section>
+
+        <section>
+            <h2>Key Features</h2>
+            <ul>
+                <li>Pre-initialization of objects for improved performance</li>
+                <li>Automatic pool expansion when needed</li>
+                <li>Active object tracking</li>
+                <li>Memory management through object reuse</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Usage Example</h2>
+            <div class="code-example">
+                <pre><code><span class="comment">// Create a bullet pool</span>
+<span class="keyword">class</span> <span class="function">BulletPool</span> <span class="keyword">extends</span> ObjectPool {
+    <span class="function">constructor</span>(scene) {
+        <span class="keyword">super</span>(scene, <span class="string">'bullet'</span>, <span class="number">20</span>);
+    }
+
+    <span class="function">createNewObject</span>() {
+        <span class="keyword">return</span> <span class="keyword">new</span> Bullet(this.scene);
+    }
+}
+
+<span class="comment">// Using the pool</span>
+<span class="keyword">const</span> bulletPool = <span class="keyword">new</span> <span class="function">BulletPool</span>(scene);
+<span class="keyword">const</span> bullet = bulletPool.<span class="function">get</span>();  <span class="comment">// Get an object from pool</span>
+bulletPool.<span class="function">release</span>(bullet);  <span class="comment">// Return object to pool</span></code></pre>
+            </div>
+        </section>
+
+        <section>
+            <h2>Core Methods</h2>
+            <div class="method-grid">
+                <div class="method-card">
+                    <h3>constructor(scene, type, initialSize)</h3>
+                    <p>Creates a new object pool with specified initial size.</p>
+                    <ul>
+                        <li><strong>scene:</strong> The game scene context</li>
+                        <li><strong>type:</strong> Type identifier for the pooled objects</li>
+                        <li><strong>initialSize:</strong> Initial pool size (default: 20)</li>
+                    </ul>
+                </div>
+
+                <div class="method-card">
+                    <h3>get()</h3>
+                    <p>Retrieves an object from the pool or creates a new one if pool is empty.</p>
+                    <p>Returns: An activated game object ready for use.</p>
+                </div>
+
+                <div class="method-card">
+                    <h3>release(obj)</h3>
+                    <p>Returns an object to the pool for future reuse.</p>
+                    <ul>
+                        <li><strong>obj:</strong> The object to return to the pool</li>
+                    </ul>
+                </div>
+
+                <div class="method-card">
+                    <h3>releaseAll()</h3>
+                    <p>Returns all active objects to the pool.</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Implementation Notes</h2>
+            <div class="note">
+                <p>The ObjectPool class is designed to be extended. Implement the createNewObject() method in your derived class to define object creation logic.</p>
+            </div>
+            <div class="warning">
+                <p>Remember to release objects back to the pool when they're no longer needed to prevent memory leaks and maintain optimal performance.</p>
+            </div>
+        </section>
+
+        <section>
+            <h2>Properties</h2>
+            <table>
+                <tr>
+                    <th>Property</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td>pool</td>
+                    <td>Array</td>
+                    <td>Contains inactive objects available for reuse</td>
+                </tr>
+                <tr>
+                    <td>active</td>
+                    <td>Set</td>
+                    <td>Tracks currently active objects from the pool</td>
+                </tr>
+                <tr>
+                    <td>initialSize</td>
+                    <td>Number</td>
+                    <td>Initial number of objects created in pool</td>
+                </tr>
+            </table>
+        </section>
+
+        <section>
+            <h2>System Dependencies</h2>
+            <table>
+                <tr>
+                    <th>Dependency</th>
+                    <th>Purpose</th>
+                    <th>Required Version</th>
+                </tr>
+                <tr>
+                    <td>Phaser</td>
+                    <td>Game framework for object management and scene handling</td>
+                    <td>3.x</td>
+                </tr>
+            </table>
+        </section>
+
+        <section>
+            <h2>File Dependencies</h2>
+            <div class="note">
+                <p>The ObjectPool class serves as a base class for various specialized pools in the game.</p>
+            </div>
+            <h3>Files Using ObjectPool:</h3>
+            <table>
+                <tr>
+                    <th>File</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td>modules/managers/pools/BulletPool.js</td>
+                    <td>Manages pool of bullet objects for weapon systems</td>
+                </tr>
+                <tr>
+                    <td>modules/managers/pools/ParticlePool.js</td>
+                    <td>Handles particle effect object pooling for visual effects</td>
+                </tr>
+                <tr>
+                    <td>modules/managers/__tests__/ObjectPool.test.js</td>
+                    <td>Test suite for ObjectPool functionality</td>
+                </tr>
+            </table>
+            <div class="warning">
+                <p>When extending ObjectPool, ensure your derived class properly implements the createNewObject() method and handles any specific cleanup requirements.</p>
+            </div>
+        </section>
+
+        <section>
+            <h2>Best Practices</h2>
+            <ul>
+                <li>Set an appropriate initial pool size based on expected usage</li>
+                <li>Always release objects when they're no longer needed</li>
+                <li>Use releaseAll() during scene transitions or cleanup</li>
+                <li>Implement proper cleanup in createNewObject() for specific object types</li>
+            </ul>
+        </section>
+    </div>
+</body>
+</html>
