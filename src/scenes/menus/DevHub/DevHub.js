@@ -146,17 +146,6 @@ export class DevHub extends Scene {
         ).setOrigin(0);
         optionsContainer.add(optionsBackground);
 
-        // Create mask
-        const maskGraphics = this.add.graphics()
-            .fillStyle(0xffffff)
-            .fillRect(
-                dropdownX,
-                currentY + dropdownHeight,
-                dropdownWidth,
-                maxVisibleOptions * itemHeight
-            );
-        optionsContainer.setMask(new Phaser.Display.Masks.GeometryMask(this, maskGraphics));
-
         // Add options
         items.forEach((item, index) => {
             const bg = this.add.rectangle(
