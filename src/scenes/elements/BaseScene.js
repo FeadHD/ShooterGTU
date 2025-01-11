@@ -34,6 +34,15 @@ const TILE_CONSTANTS = {
     COLLIDING_TILES: [257, 260, 261, 641, 642, 643, 644, 645, 705, 706, 707]  // Tile IDs that should have collision
 };
 
+const MONITORING_CONSTANTS = {
+    FPS_THRESHOLD: 30,           // Minimum acceptable FPS
+    TEXTURE_CHECK_INTERVAL: 1000, // How often to check textures (in ms)
+    ENEMY_CHECK_INTERVAL: 500,    // How often to check enemies (in ms)
+    MEMORY_THRESHOLD: 0.9,        // 90% memory usage threshold
+    NETWORK_TIMEOUT: 5000,        // Network timeout in ms
+    AUDIO_CHECK_INTERVAL: 2000    // How often to verify audio (in ms)
+};
+
 /**
  * Base scene class that handles game initialization, updates, and cleanup.
  * This class serves as a foundation for all game scenes.
@@ -81,10 +90,28 @@ export class BaseScene extends Scene {
      */
     create() {
         // Setup core systems
-        this.#initializeManagers();
-        this.#setupInput();
-        this.#initializeDebug();
-        const { width, height } = this.#setupCanvasDimensions();
+        const managers = ManagerFactory.createManagers(this);
+        this.gameState = managers.gameState;
+        this.persistence = managers.persistence;
+        this.soundManager = managers.sound;
+        this.musicManager = managers.music;
+        this.entityManager = managers.entityManager;
+        this.enemies = managers.enemies;
+        this.hazards = managers.hazards;
+        this.animations = managers.animations;
+        this.effects = managers.effects;
+        this.boundaries = managers.boundaries;
+        this.debug = managers.debug;
+        this.collisionManager = managers.collision;
+
+        // Disable right-click context menu and enable keyboard input
+        this.input.mouse.disableContextMenu();
+        this.input.keyboard.enabled = true;
+
+        const { width, height } = {
+            width: this.cameras.main.width,
+            height: this.cameras.main.height
+        };
         
         // Setup physics and world
         this.#setupWorldPhysics(width, height);
@@ -108,68 +135,13 @@ export class BaseScene extends Scene {
         this.#initializeController();
         this.#registerSceneEvents();
         this.#initializeSceneState();
+        
+        // Initialize error detection
+        this.#initializeErrorDetection();
     }
 
     // =====================
     // Core System Methods
-    // =====================
-    
-    /** Initialize and assign all game managers for handling game state, collisions, audio, etc. */
-    #initializeManagers() {
-        const managers = ManagerFactory.createManagers(this);
-        this.gameState = managers.gameState;
-        this.persistence = managers.persistence;
-        this.soundManager = managers.sound;
-        this.musicManager = managers.music;
-        this.entityManager = managers.entityManager;
-        this.enemies = managers.enemies;
-        this.hazards = managers.hazards;
-        this.animations = managers.animations;
-        this.effects = managers.effects;
-        this.boundaries = managers.boundaries;
-        this.debug = managers.debug;
-        this.collisionManager = managers.collision;
-    }
-
-    /** Setup all input-related configurations */
-    #setupInput() {
-        this.#disableRightClickMenu();
-        this.#enableKeyboardInput();
-    }
-
-    /** Disable the right-click context menu to prevent accidental browser menu opening */
-    #disableRightClickMenu() {
-        this.input.mouse.disableContextMenu();
-    }
-
-    /** Enable keyboard input for the scene */
-    #enableKeyboardInput() {
-        this.input.keyboard.enabled = true;
-    }
-
-    /** Get the canvas dimensions for setting up the game world */
-    #setupCanvasDimensions() {
-        return {
-            width: this.cameras.main.width,
-            height: this.cameras.main.height
-        };
-    }
-
-    // =====================
-    // Audio Methods
-    // =====================
-    
-    /** Set up background music with volume from registry */
-    #setupMusic() {
-        const bgMusic = this.sound.add('bgMusic', { loop: true });
-        const musicVolume = this.registry.get('musicVolume') || 1;
-        bgMusic.setVolume(musicVolume);
-        this.musicManager.setCurrentMusic(bgMusic);
-        this.musicManager.play();
-    }
-
-    // =====================
-    // Physics and World Methods
     // =====================
     
     /** Configure world physics boundaries */
@@ -188,7 +160,20 @@ export class BaseScene extends Scene {
     }
 
     // =====================
-    // Visual Methods
+    // Audio Methods
+    // =====================
+    
+    /** Set up background music with volume from registry */
+    #setupMusic() {
+        const bgMusic = this.sound.add('bgMusic', { loop: true });
+        const musicVolume = this.registry.get('musicVolume') || 1;
+        bgMusic.setVolume(musicVolume);
+        this.musicManager.setCurrentMusic(bgMusic);
+        this.musicManager.play();
+    }
+
+    // =====================
+    // Physics and World Methods
     // =====================
     
     /** Create parallax background layers for a sense of depth and movement */
@@ -483,29 +468,252 @@ export class BaseScene extends Scene {
         // Attempt recovery based on context
         switch(context) {
             case 'controller':
-                // Try to reinitialize controller
-                if (this.controller) {
-                    if (typeof this.controller.destroy === 'function') {
-                        this.controller.destroy();
-                    }
-                    this.controller = null;
-                    // Try to create controller again after a short delay
-                    this.time.delayedCall(ERROR_CONSTANTS.CONTROLLER_RETRY_DELAY, () => {
-                        this.initializeController();
-                    });
-                }
+            case 'sound':
+            case 'network':
+                // Try to reinitialize the failed component
+                this.#reinitializeComponent(context);
                 break;
+            
             case 'player':
-                // Reset player position if there's an error
-                if (this.player && this.playerSpawnPoint) {
-                    this.player.setPosition(this.playerSpawnPoint.x, this.playerSpawnPoint.y);
-                }
+            case 'ui':
+            case 'graphics':
+                // Reset position or recreate visual elements
+                this.#resetGameElement(context);
                 break;
+
+            case 'save':
+            case 'memory':
+                // Handle data and resource management issues
+                this.#handleResourceError(context);
+                break;
+                
             case 'physics':
                 if (this.physics && this.physics.world) {
                     this.physics.world.resume();
                 }
                 break;
+        }
+    }
+
+    /**
+     * Helper method to reinitialize components that can be recreated
+     */
+    #reinitializeComponent(context) {
+        switch(context) {
+            case 'controller':
+                if (this.controller) {
+                    if (typeof this.controller.destroy === 'function') {
+                        this.controller.destroy();
+                    }
+                    this.controller = null;
+                    this.time.delayedCall(ERROR_CONSTANTS.CONTROLLER_RETRY_DELAY, () => {
+                        this.#initializeController();
+                    });
+                }
+                break;
+            case 'sound':
+                if (this.musicManager) {
+                    this.musicManager.stop();
+                    this.time.delayedCall(ERROR_CONSTANTS.CONTROLLER_RETRY_DELAY, () => {
+                        this.#setupMusic();
+                    });
+                }
+                break;
+            case 'network':
+                // Try to reconnect to network services
+                this.time.delayedCall(ERROR_CONSTANTS.CONTROLLER_RETRY_DELAY, () => {
+                    if (this.network) {
+                        this.network.reconnect();
+                    }
+                });
+                break;
+        }
+    }
+
+    /**
+     * Helper method to reset game elements to a known good state
+     */
+    #resetGameElement(context) {
+        switch(context) {
+            case 'player':
+                if (this.player && this.playerSpawnPoint) {
+                    this.player.setPosition(this.playerSpawnPoint.x, this.playerSpawnPoint.y);
+                }
+                break;
+            case 'ui':
+                if (this.gameUI) {
+                    // Recreate UI if it exists but is in a bad state
+                    this.gameUI.destroy();
+                    this.gameUI = new GameUI(this);
+                    this.gameUI.container.setScrollFactor(0);
+                    this.gameUI.updateCameraIgnoreList();
+                }
+                break;
+            case 'graphics':
+                // Try to recover graphics by resetting the renderer
+                if (this.game.renderer) {
+                    this.game.renderer.reset();
+                    // Refresh all visible game objects
+                    this.children.list.forEach(child => {
+                        if (child.texture) {
+                            child.texture.refresh();
+                        }
+                    });
+                }
+                break;
+        }
+    }
+
+    /**
+     * Helper method to handle data and resource management errors
+     */
+    #handleResourceError(context) {
+        switch(context) {
+            case 'save':
+                // Try to save again or recover last good save
+                if (this.persistence) {
+                    console.warn('Save error detected, attempting to recover last good save...');
+                    this.persistence.recoverLastGoodSave().then(() => {
+                        // Notify player that save was recovered
+                        this.events.emit('saveRecovered');
+                    }).catch(err => {
+                        console.error('Failed to recover save:', err);
+                        // Create a fresh save if recovery fails
+                        this.persistence.createNewSave();
+                    });
+                }
+                break;
+            case 'memory':
+                console.warn('Memory issue detected, attempting cleanup...');
+                // Clear texture caches
+                this.textures.each(texture => {
+                    if (!texture.key.startsWith('__default')) {
+                        this.textures.remove(texture);
+                    }
+                });
+                // Clear audio
+                this.sound.removeAll();
+                // Force garbage collection if possible
+                if (typeof window.gc === 'function') {
+                    window.gc();
+                }
+                // Reload essential textures
+                this.load.once('complete', () => {
+                    console.log('Essential resources reloaded');
+                });
+                this.load.start();
+                break;
+        }
+    }
+
+    /**
+     * Initialize monitoring systems for error detection
+     */
+    #initializeErrorDetection() {
+        // Monitor frame rate
+        this.time.addEvent({
+            delay: 1000,
+            callback: this.#checkPerformance,
+            callbackScope: this,
+            loop: true
+        });
+
+        // Monitor enemy rendering
+        this.time.addEvent({
+            delay: MONITORING_CONSTANTS.ENEMY_CHECK_INTERVAL,
+            callback: this.#checkEnemyRendering,
+            callbackScope: this,
+            loop: true
+        });
+
+        // Monitor memory usage
+        this.time.addEvent({
+            delay: 5000,
+            callback: this.#checkMemoryUsage,
+            callbackScope: this,
+            loop: true
+        });
+
+        // Monitor audio system
+        this.time.addEvent({
+            delay: MONITORING_CONSTANTS.AUDIO_CHECK_INTERVAL,
+            callback: this.#checkAudioSystem,
+            callbackScope: this,
+            loop: true
+        });
+    }
+
+    /**
+     * Check game performance (FPS)
+     */
+    #checkPerformance() {
+        const currentFPS = this.game.loop.actualFps;
+        if (currentFPS < MONITORING_CONSTANTS.FPS_THRESHOLD) {
+            console.warn(`Low FPS detected: ${currentFPS}`);
+            this.handleError(new Error(`FPS dropped below ${MONITORING_CONSTANTS.FPS_THRESHOLD}`), 'memory');
+        }
+    }
+
+    /**
+     * Check if enemies are rendering correctly
+     */
+    #checkEnemyRendering() {
+        if (this.enemies) {
+            this.enemies.getChildren().forEach(enemy => {
+                // Check if enemy sprites are visible when they should be
+                if (enemy.active && enemy.visible) {
+                    const bounds = enemy.getBounds();
+                    const camera = this.cameras.main;
+                    
+                    // If enemy is in camera view but texture isn't loaded
+                    if (camera.worldView.contains(bounds.x, bounds.y)) {
+                        if (!enemy.texture || !enemy.texture.key) {
+                            console.warn('Enemy texture not loaded properly:', enemy);
+                            this.handleError(new Error('Enemy rendering failed'), 'graphics');
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    /**
+     * Monitor memory usage
+     */
+    #checkMemoryUsage() {
+        if (window.performance && window.performance.memory) {
+            const memoryInfo = window.performance.memory;
+            const usageRatio = memoryInfo.usedJSHeapSize / memoryInfo.jsHeapSizeLimit;
+
+            if (usageRatio > MONITORING_CONSTANTS.MEMORY_THRESHOLD) {
+                console.warn(`High memory usage detected: ${(usageRatio * 100).toFixed(2)}%`);
+                this.handleError(new Error('High memory usage'), 'memory');
+            }
+        }
+    }
+
+    /**
+     * Check audio system status
+     */
+    #checkAudioSystem() {
+        try {
+            // First check if we have sound and music manager
+            if (!this.sound || !this.musicManager) {
+                return;
+            }
+
+            // Check if background music exists and is playing
+            const bgMusic = this.sound.get('bgMusic');
+            
+            // Only check if we have background music and sound isn't muted
+            if (bgMusic && !this.game.sound.mute) {
+                if (!bgMusic.isPlaying) {
+                    console.warn('Background music stopped unexpectedly');
+                    this.handleError(new Error('Audio system failure'), 'sound');
+                }
+            }
+        } catch (error) {
+            console.warn('Error checking audio system:', error);
         }
     }
 
