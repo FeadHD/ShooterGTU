@@ -1,5 +1,36 @@
 // @ai-do-not-touch
 
+/**
+ * BaseScene.js
+ * ============
+ * 
+ * System Dependencies:
+ * -------------------
+ * - Phaser 3.x Game Framework
+ * - Web Browser with ES6+ support
+ * - WebGL or Canvas rendering support
+ * - Local storage for game state persistence
+ * - Audio system support
+ * 
+ * File Dependencies:
+ * -----------------
+ * Core:
+ * - /modules/di/ManagerFactory.js      : Creates and manages game systems
+ * - /modules/state/Store.js            : Global state management
+ * - /modules/state/types.js            : Game state type definitions
+ * 
+ * UI Elements:
+ * - /scenes/elements/GameUI.js         : Game interface components
+ * 
+ * Game Objects:
+ * - /prefabs/Bullet.js                 : Projectile management
+ * - /prefabs/ParallaxBackground.js     : Scrolling background
+ * - /prefabs/Player.js                 : Player character
+ * 
+ * Configuration:
+ * - /config/GameConfig.js              : Game settings and constants
+ */
+
 import { Scene } from 'phaser';
 import { ManagerFactory } from '../../modules/di/ManagerFactory';
 import { GameUI } from './GameUI';
@@ -9,6 +40,7 @@ import { Player } from '../../prefabs/Player';
 import { GameConfig, getGroundTop } from '../../config/GameConfig';
 import { Store } from '../../modules/state/Store';
 import { ActionTypes, GameStatus, PlayerState } from '../../modules/state/types';
+import { ErrorSystem } from '../../systems/ErrorSystem';
 
 // Game Constants
 const PLAYER_CONSTANTS = {
@@ -21,26 +53,8 @@ const PLAYER_CONSTANTS = {
     FLASH_REPEATS: 4                // Number of times to repeat flash effect
 };
 
-const ERROR_CONSTANTS = {
-    DEBUG_TEXT_X: 10,               // X position of debug text
-    DEBUG_TEXT_Y: 10,               // Y position of debug text
-    DEBUG_TEXT_SIZE: '16px',        // Font size for debug text
-    DEBUG_TEXT_COLOR: '#ff0000',    // Color for debug text
-    DEBUG_TEXT_DURATION: 3000,      // How long to show debug text
-    CONTROLLER_RETRY_DELAY: 100     // Delay before retrying controller initialization
-};
-
 const TILE_CONSTANTS = {
     COLLIDING_TILES: [257, 260, 261, 641, 642, 643, 644, 645, 705, 706, 707]  // Tile IDs that should have collision
-};
-
-const MONITORING_CONSTANTS = {
-    FPS_THRESHOLD: 30,           // Minimum acceptable FPS
-    TEXTURE_CHECK_INTERVAL: 1000, // How often to check textures (in ms)
-    ENEMY_CHECK_INTERVAL: 500,    // How often to check enemies (in ms)
-    MEMORY_THRESHOLD: 0.9,        // 90% memory usage threshold
-    NETWORK_TIMEOUT: 5000,        // Network timeout in ms
-    AUDIO_CHECK_INTERVAL: 2000    // How often to verify audio (in ms)
 };
 
 /**
@@ -104,6 +118,9 @@ export class BaseScene extends Scene {
         this.debug = managers.debug;
         this.collisionManager = managers.collision;
 
+        // Initialize error system
+        this.errorSystem = new ErrorSystem(this);
+
         // Disable right-click context menu and enable keyboard input
         this.input.mouse.disableContextMenu();
         this.input.keyboard.enabled = true;
@@ -135,9 +152,6 @@ export class BaseScene extends Scene {
         this.#initializeController();
         this.#registerSceneEvents();
         this.#initializeSceneState();
-        
-        // Initialize error detection
-        this.#initializeErrorDetection();
     }
 
     // =====================
@@ -250,7 +264,7 @@ export class BaseScene extends Scene {
                 this.controller = new PlayerController(this);
             }
         } catch (error) {
-            this.handleError(error, 'controller');
+            this.errorSystem.handleError(error, 'controller');
         }
     }
 
@@ -289,7 +303,7 @@ export class BaseScene extends Scene {
 
             console.log('Scene state initialized!');
         } catch (error) {
-            this.handleError(error, 'state');
+            this.errorSystem.handleError(error, 'state');
         }
     }
 
@@ -439,285 +453,6 @@ export class BaseScene extends Scene {
     }
 
     /**
-     * Handle errors gracefully with debug output and recovery attempts.
-     */
-    handleError(error, context) {
-        console.error(`Error in ${context}:`, error);
-        
-        // Log error but don't crash the game
-        if (this.debug && this.debug.enabled) {
-            // Create debug text for error
-            const errorText = this.add.text(
-                ERROR_CONSTANTS.DEBUG_TEXT_X,
-                ERROR_CONSTANTS.DEBUG_TEXT_Y,
-                `Error: ${error.message} in ${context}`,
-                {
-                    fontSize: ERROR_CONSTANTS.DEBUG_TEXT_SIZE,
-                    fill: ERROR_CONSTANTS.DEBUG_TEXT_COLOR
-                }
-            );
-            errorText.setScrollFactor(0);
-            errorText.setDepth(1000);
-            
-            // Remove text after delay
-            this.time.delayedCall(ERROR_CONSTANTS.DEBUG_TEXT_DURATION, () => {
-                errorText.destroy();
-            });
-        }
-        
-        // Attempt recovery based on context
-        switch(context) {
-            case 'controller':
-            case 'sound':
-            case 'network':
-                // Try to reinitialize the failed component
-                this.#reinitializeComponent(context);
-                break;
-            
-            case 'player':
-            case 'ui':
-            case 'graphics':
-                // Reset position or recreate visual elements
-                this.#resetGameElement(context);
-                break;
-
-            case 'save':
-            case 'memory':
-                // Handle data and resource management issues
-                this.#handleResourceError(context);
-                break;
-                
-            case 'physics':
-                if (this.physics && this.physics.world) {
-                    this.physics.world.resume();
-                }
-                break;
-        }
-    }
-
-    /**
-     * Helper method to reinitialize components that can be recreated
-     */
-    #reinitializeComponent(context) {
-        switch(context) {
-            case 'controller':
-                if (this.controller) {
-                    if (typeof this.controller.destroy === 'function') {
-                        this.controller.destroy();
-                    }
-                    this.controller = null;
-                    this.time.delayedCall(ERROR_CONSTANTS.CONTROLLER_RETRY_DELAY, () => {
-                        this.#initializeController();
-                    });
-                }
-                break;
-            case 'sound':
-                if (this.musicManager) {
-                    this.musicManager.stop();
-                    this.time.delayedCall(ERROR_CONSTANTS.CONTROLLER_RETRY_DELAY, () => {
-                        this.#setupMusic();
-                    });
-                }
-                break;
-            case 'network':
-                // Try to reconnect to network services
-                this.time.delayedCall(ERROR_CONSTANTS.CONTROLLER_RETRY_DELAY, () => {
-                    if (this.network) {
-                        this.network.reconnect();
-                    }
-                });
-                break;
-        }
-    }
-
-    /**
-     * Helper method to reset game elements to a known good state
-     */
-    #resetGameElement(context) {
-        switch(context) {
-            case 'player':
-                if (this.player && this.playerSpawnPoint) {
-                    this.player.setPosition(this.playerSpawnPoint.x, this.playerSpawnPoint.y);
-                }
-                break;
-            case 'ui':
-                if (this.gameUI) {
-                    // Recreate UI if it exists but is in a bad state
-                    this.gameUI.destroy();
-                    this.gameUI = new GameUI(this);
-                    this.gameUI.container.setScrollFactor(0);
-                    this.gameUI.updateCameraIgnoreList();
-                }
-                break;
-            case 'graphics':
-                // Try to recover graphics by resetting the renderer
-                if (this.game.renderer) {
-                    this.game.renderer.reset();
-                    // Refresh all visible game objects
-                    this.children.list.forEach(child => {
-                        if (child.texture) {
-                            child.texture.refresh();
-                        }
-                    });
-                }
-                break;
-        }
-    }
-
-    /**
-     * Helper method to handle data and resource management errors
-     */
-    #handleResourceError(context) {
-        switch(context) {
-            case 'save':
-                // Try to save again or recover last good save
-                if (this.persistence) {
-                    console.warn('Save error detected, attempting to recover last good save...');
-                    this.persistence.recoverLastGoodSave().then(() => {
-                        // Notify player that save was recovered
-                        this.events.emit('saveRecovered');
-                    }).catch(err => {
-                        console.error('Failed to recover save:', err);
-                        // Create a fresh save if recovery fails
-                        this.persistence.createNewSave();
-                    });
-                }
-                break;
-            case 'memory':
-                console.warn('Memory issue detected, attempting cleanup...');
-                // Clear texture caches
-                this.textures.each(texture => {
-                    if (!texture.key.startsWith('__default')) {
-                        this.textures.remove(texture);
-                    }
-                });
-                // Clear audio
-                this.sound.removeAll();
-                // Force garbage collection if possible
-                if (typeof window.gc === 'function') {
-                    window.gc();
-                }
-                // Reload essential textures
-                this.load.once('complete', () => {
-                    console.log('Essential resources reloaded');
-                });
-                this.load.start();
-                break;
-        }
-    }
-
-    /**
-     * Initialize monitoring systems for error detection
-     */
-    #initializeErrorDetection() {
-        // Monitor frame rate
-        this.time.addEvent({
-            delay: 1000,
-            callback: this.#checkPerformance,
-            callbackScope: this,
-            loop: true
-        });
-
-        // Monitor enemy rendering
-        this.time.addEvent({
-            delay: MONITORING_CONSTANTS.ENEMY_CHECK_INTERVAL,
-            callback: this.#checkEnemyRendering,
-            callbackScope: this,
-            loop: true
-        });
-
-        // Monitor memory usage
-        this.time.addEvent({
-            delay: 5000,
-            callback: this.#checkMemoryUsage,
-            callbackScope: this,
-            loop: true
-        });
-
-        // Monitor audio system
-        this.time.addEvent({
-            delay: MONITORING_CONSTANTS.AUDIO_CHECK_INTERVAL,
-            callback: this.#checkAudioSystem,
-            callbackScope: this,
-            loop: true
-        });
-    }
-
-    /**
-     * Check game performance (FPS)
-     */
-    #checkPerformance() {
-        const currentFPS = this.game.loop.actualFps;
-        if (currentFPS < MONITORING_CONSTANTS.FPS_THRESHOLD) {
-            console.warn(`Low FPS detected: ${currentFPS}`);
-            this.handleError(new Error(`FPS dropped below ${MONITORING_CONSTANTS.FPS_THRESHOLD}`), 'memory');
-        }
-    }
-
-    /**
-     * Check if enemies are rendering correctly
-     */
-    #checkEnemyRendering() {
-        if (this.enemies) {
-            this.enemies.getChildren().forEach(enemy => {
-                // Check if enemy sprites are visible when they should be
-                if (enemy.active && enemy.visible) {
-                    const bounds = enemy.getBounds();
-                    const camera = this.cameras.main;
-                    
-                    // If enemy is in camera view but texture isn't loaded
-                    if (camera.worldView.contains(bounds.x, bounds.y)) {
-                        if (!enemy.texture || !enemy.texture.key) {
-                            console.warn('Enemy texture not loaded properly:', enemy);
-                            this.handleError(new Error('Enemy rendering failed'), 'graphics');
-                        }
-                    }
-                }
-            });
-        }
-    }
-
-    /**
-     * Monitor memory usage
-     */
-    #checkMemoryUsage() {
-        if (window.performance && window.performance.memory) {
-            const memoryInfo = window.performance.memory;
-            const usageRatio = memoryInfo.usedJSHeapSize / memoryInfo.jsHeapSizeLimit;
-
-            if (usageRatio > MONITORING_CONSTANTS.MEMORY_THRESHOLD) {
-                console.warn(`High memory usage detected: ${(usageRatio * 100).toFixed(2)}%`);
-                this.handleError(new Error('High memory usage'), 'memory');
-            }
-        }
-    }
-
-    /**
-     * Check audio system status
-     */
-    #checkAudioSystem() {
-        try {
-            // First check if we have sound and music manager
-            if (!this.sound || !this.musicManager) {
-                return;
-            }
-
-            // Check if background music exists and is playing
-            const bgMusic = this.sound.get('bgMusic');
-            
-            // Only check if we have background music and sound isn't muted
-            if (bgMusic && !this.game.sound.mute) {
-                if (!bgMusic.isPlaying) {
-                    console.warn('Background music stopped unexpectedly');
-                    this.handleError(new Error('Audio system failure'), 'sound');
-                }
-            }
-        } catch (error) {
-            console.warn('Error checking audio system:', error);
-        }
-    }
-
-    /**
      * Update game state each frame, handling player movement, debug info, and game over state
      */
     update(time, delta) {
@@ -748,7 +483,7 @@ export class BaseScene extends Scene {
                 this.scene.start('MainMenu');
             }
         } catch (error) {
-            this.handleError(error, 'update');
+            this.errorSystem.handleError(error, 'update');
         }
     }
 
@@ -861,7 +596,7 @@ export class BaseScene extends Scene {
                     break;
             }
         } catch (error) {
-            this.handleError(error, 'storeUpdate');
+            this.errorSystem.handleError(error, 'storeUpdate');
         }
     }
 
@@ -922,12 +657,5 @@ export class BaseScene extends Scene {
      */
     getSpawnHeight() {
         return this.groundTop - 16;
-    }
-
-    /**
-     * Initialize debug tools and displays when needed.
-     */
-    #initializeDebug() {
-        this.debug.initialize();
     }
 }
