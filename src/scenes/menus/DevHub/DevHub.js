@@ -39,6 +39,8 @@ export class DevHub extends Scene {
         this.createQuickLaunchSection();
         this.buttonY += 20;  // Add extra spacing between sections
         this.createDocumentationSection();
+        this.buttonY += 20;  // Add extra spacing between sections
+        this.createSoundTestingSection();
 
         // Back button
         const backButton = this.add.text(
@@ -115,6 +117,32 @@ export class DevHub extends Scene {
             { key: 'scene-initializer-documentation', title: 'Scene Initializer', path: 'scene-initializer-documentation.html' },
             { key: 'state-manager-documentation', title: 'State Manager', path: 'state-manager-documentation.html' }
         ]);
+    }
+
+    createSoundTestingSection() {
+        const sectionTitle = this.add.text(
+            this.cameras.main.centerX,
+            this.buttonY,
+            'Sound Testing',
+            { fontSize: '24px', fill: '#00ff00', fontFamily: 'Courier' }
+        ).setOrigin(0.5);
+        this.mainContainer.add(sectionTitle);
+        this.buttonY += 50;
+
+        const soundTesterButton = this.add.text(
+            this.cameras.main.centerX,
+            this.buttonY,
+            'Open Sound Tester',
+            { fontSize: '20px', fill: '#ffffff', fontFamily: 'Courier' }
+        )
+        .setOrigin(0.5)
+        .setInteractive({ useHandCursor: true })
+        .on('pointerover', () => soundTesterButton.setStyle({ fill: '#0ff' }))
+        .on('pointerout', () => soundTesterButton.setStyle({ fill: '#ffffff' }))
+        .on('pointerdown', () => this.scene.start('SoundTester'));
+
+        this.mainContainer.add(soundTesterButton);
+        this.buttonY += 40;
     }
 
     createDropdown(placeholder, items) {

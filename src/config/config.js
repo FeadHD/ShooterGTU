@@ -25,6 +25,7 @@ import { GtuTestLevel0 } from '../scenes/levels/GtuTestLevel0';
 import { GtuTestLevel1 } from '../scenes/levels/GtuTestLevel1';
 import { GtuTestLevel2 } from '../scenes/levels/GtuTestLevel2';
 import { CombinedGtuLevel } from '../scenes/levels/CombinedGtuLevel';
+import { SoundTester } from '../scenes/menus/DevHub/SoundTester';
 
 export const config = {
     type: Phaser.AUTO,
@@ -60,8 +61,11 @@ export const config = {
     scene: [
         Preloader,
         TitleScene,
-        MainMenu,
         IntroScene,
+        MainMenu,
+        Settings,
+        ControlsSettings,
+        SoundSettings,
         GameScene1,
         GameScene2,
         GameScene3,
@@ -69,12 +73,9 @@ export const config = {
         GameScene5,
         Matrix640x360,
         BlueTest,
-        GameOver,
-        Settings,
-        ControlsSettings,
-        SoundSettings,
         Leaderboard,
         MissionComplete,
+        GameOver,
         PauseMenu,
         DevHub,
         Credits,
@@ -82,6 +83,7 @@ export const config = {
         GtuTestLevel0,
         GtuTestLevel1,
         GtuTestLevel2,
-        CombinedGtuLevel
+        CombinedGtuLevel,
+        SoundTester
     ]
 };
