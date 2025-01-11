@@ -5,7 +5,7 @@ export class DevHub extends Scene {
     constructor() {
         super({ key: 'DevHub' });
         this.buttonY = 100;
-        this.spacing = 40;
+        this.currentOpenDropdown = null;  // Track currently open dropdown
     }
 
     create() {
@@ -99,6 +99,11 @@ export class DevHub extends Scene {
         const dropdownHeight = 40;
         const dropdownX = this.cameras.main.centerX - (dropdownWidth / 2);
         const currentY = this.buttonY;
+        let dropdownState = {
+            optionsContainer: null,
+            arrow: null,
+            isOpen: false
+        };
 
         // Create dropdown header
         const header = this.add.container(0, currentY);
@@ -124,12 +129,14 @@ export class DevHub extends Scene {
             '▼',
             { fontSize: '18px', fill: '#fff' }
         );
+        dropdownState.arrow = arrow;
 
         header.add([dropdownBg, dropdownText, arrow]);
         this.dropdownContainer.add(header);
 
         // Create options container
-        const optionsContainer = this.add.container(0, currentY + dropdownHeight);
+        const optionsContainer = this.add.container(dropdownX + dropdownWidth + 10, currentY);
+        dropdownState.optionsContainer = optionsContainer;
         this.dropdownContainer.add(optionsContainer);
 
         // Calculate visible options
@@ -138,7 +145,7 @@ export class DevHub extends Scene {
 
         // Create options background
         const optionsBackground = this.add.rectangle(
-            dropdownX,
+            0,
             0,
             dropdownWidth,
             Math.min(items.length, maxVisibleOptions) * itemHeight,
@@ -149,7 +156,7 @@ export class DevHub extends Scene {
         // Add options
         items.forEach((item, index) => {
             const bg = this.add.rectangle(
-                dropdownX,
+                0,
                 index * itemHeight,
                 dropdownWidth,
                 itemHeight,
@@ -157,7 +164,7 @@ export class DevHub extends Scene {
             ).setOrigin(0);
 
             const text = this.add.text(
-                dropdownX + 10,
+                10,
                 index * itemHeight + 10,
                 item.title,
                 { fontSize: '18px', fill: '#fff' }
@@ -202,7 +209,7 @@ export class DevHub extends Scene {
                     } else {
                         this.scene.start(item.key);
                     }
-                    isOpen = false;
+                    dropdownState.isOpen = false;
                     optionsContainer.setVisible(false);
                     arrow.setText('▼');
                 });
@@ -211,27 +218,47 @@ export class DevHub extends Scene {
         });
 
         // Handle dropdown toggle
-        let isOpen = false;
         let scrollOffset = 0;
+
+        const closeDropdown = () => {
+            dropdownState.isOpen = false;
+            optionsContainer.setVisible(false);
+            arrow.setText('▼');
+            this.currentOpenDropdown = null;
+        };
+
+        const openDropdown = () => {
+            // Close currently open dropdown if exists
+            if (this.currentOpenDropdown && this.currentOpenDropdown !== dropdownState) {
+                this.currentOpenDropdown.isOpen = false;
+                this.currentOpenDropdown.optionsContainer.setVisible(false);
+                this.currentOpenDropdown.arrow.setText('▼');
+            }
+            dropdownState.isOpen = true;
+            optionsContainer.setVisible(true);
+            arrow.setText('▲');
+            this.currentOpenDropdown = dropdownState;
+        };
 
         dropdownBg.setInteractive({ useHandCursor: true })
             .on('pointerdown', () => {
-                isOpen = !isOpen;
-                optionsContainer.setVisible(isOpen);
-                arrow.setText(isOpen ? '▲' : '▼');
+                if (dropdownState.isOpen) {
+                    closeDropdown();
+                } else {
+                    openDropdown();
+                }
                 scrollOffset = 0;
-                optionsContainer.y = currentY + dropdownHeight;
             });
 
         // Add scroll handling
         this.input.on('wheel', (pointer, gameObjects, deltaX, deltaY) => {
-            if (isOpen && pointer.y > currentY + dropdownHeight) {
+            if (dropdownState.isOpen && pointer.y > currentY + dropdownHeight) {
                 scrollOffset = Phaser.Math.Clamp(
                     scrollOffset + deltaY,
                     -Math.max(0, (items.length - maxVisibleOptions) * itemHeight),
                     0
                 );
-                optionsContainer.y = currentY + dropdownHeight + scrollOffset;
+                optionsContainer.y = currentY + scrollOffset;
             }
         });
 
