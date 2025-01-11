@@ -4,29 +4,40 @@ import { createRetroButton } from '../ui-helpers';
 export class DevHub extends Scene {
     constructor() {
         super({ key: 'DevHub' });
-        this.buttonY = 100;
-        this.currentOpenDropdown = null;  // Track currently open dropdown
+        this.buttonY = 150;  // Start sections lower down
+        this.currentOpenDropdown = null;
+        this.matrixChars = [];
+        this.streams = [];
     }
 
     create() {
         this.cameras.main.setBackgroundColor('#2c3e50');
         
+        // Create Matrix background
+        this.createMatrixBackground();
+        
+        // Create a dark overlay to improve text readability
+        this.add.rectangle(0, 0, this.cameras.main.width, this.cameras.main.height, 0x000000, 0.7)
+            .setOrigin(0)
+            .setDepth(1);
+
         // Create containers for different sections with proper depth
-        this.mainContainer = this.add.container(0, 0);
-        this.dropdownContainer = this.add.container(0, 0).setDepth(100);
+        this.mainContainer = this.add.container(0, 0).setDepth(2);
+        this.dropdownContainer = this.add.container(0, 0).setDepth(2);
 
         // Title
         const title = this.add.text(
             this.cameras.main.centerX,
-            20,
+            80,
             'Developer Hub',
-            { fontSize: '32px', fill: '#fff', fontFamily: 'Courier New' }
-        ).setOrigin(0.5);
+            { fontSize: '32px', fill: '#00ff00', fontFamily: 'Courier' }
+        ).setOrigin(0.5).setDepth(2);
         this.mainContainer.add(title);
 
-        this.buttonY = 50;
+        this.buttonY = 150;
 
         this.createQuickLaunchSection();
+        this.buttonY += 20;  // Add extra spacing between sections
         this.createDocumentationSection();
 
         // Back button
@@ -34,21 +45,27 @@ export class DevHub extends Scene {
             this.cameras.main.centerX,
             this.cameras.main.height - 50,
             'Back to Main Menu',
-            { fontSize: '24px', fill: '#fff', fontFamily: 'Courier New' }
+            { fontSize: '24px', fill: '#00ff00', fontFamily: 'Courier New' }
         ).setOrigin(0.5)
           .setInteractive({ useHandCursor: true })
           .on('pointerover', () => backButton.setStyle({ fill: '#0ff' }))
-          .on('pointerout', () => backButton.setStyle({ fill: '#fff' }))
+          .on('pointerout', () => backButton.setStyle({ fill: '#00ff00' }))
           .on('pointerdown', () => this.scene.start('MainMenu'));
         this.mainContainer.add(backButton);
     }
 
     createQuickLaunchSection() {
         // Section title
-        const quickLaunchTitle = this.add.text(20, this.buttonY, 'Quick Launch:', {
-            fontSize: '24px',
-            fill: '#fff'
-        });
+        const quickLaunchTitle = this.add.text(
+            this.cameras.main.centerX,
+            this.buttonY,
+            'Quick Launch:',
+            {
+                fontSize: '24px',
+                fill: '#00ff00',
+                fontFamily: 'Courier'
+            }
+        ).setOrigin(0.5).setDepth(2);
         this.mainContainer.add(quickLaunchTitle);
         this.buttonY += 40;
 
@@ -70,10 +87,16 @@ export class DevHub extends Scene {
 
     createDocumentationSection() {
         // Section title
-        const docTitle = this.add.text(20, this.buttonY, 'Documentation:', {
-            fontSize: '24px',
-            fill: '#fff'
-        });
+        const docTitle = this.add.text(
+            this.cameras.main.centerX,
+            this.buttonY,
+            'Documentation:',
+            {
+                fontSize: '24px',
+                fill: '#00ff00',
+                fontFamily: 'Courier'
+            }
+        ).setOrigin(0.5).setDepth(2);
         this.mainContainer.add(docTitle);
         this.buttonY += 40;
 
@@ -113,22 +136,30 @@ export class DevHub extends Scene {
             0,
             dropdownWidth,
             dropdownHeight,
-            0x4a6fa5
-        ).setOrigin(0);
+            0x2c3e50
+        ).setOrigin(0).setDepth(2);
 
         const dropdownText = this.add.text(
             dropdownX + 10,
             10,
             placeholder,
-            { fontSize: '18px', fill: '#fff' }
-        );
+            { 
+                fontSize: '18px', 
+                fill: '#00ff00',
+                fontFamily: 'Courier' 
+            }
+        ).setDepth(2);
 
         const arrow = this.add.text(
             dropdownX + dropdownWidth - 30,
             10,
             '▼',
-            { fontSize: '18px', fill: '#fff' }
-        );
+            { 
+                fontSize: '18px', 
+                fill: '#00ff00',
+                fontFamily: 'Courier' 
+            }
+        ).setDepth(2);
         dropdownState.arrow = arrow;
 
         header.add([dropdownBg, dropdownText, arrow]);
@@ -167,7 +198,11 @@ export class DevHub extends Scene {
                 10,
                 index * itemHeight + 10,
                 item.title,
-                { fontSize: '18px', fill: '#fff' }
+                { 
+                    fontSize: '18px', 
+                    fill: '#00ff00',
+                    fontFamily: 'Courier' 
+                }
             );
 
             bg.setInteractive({ useHandCursor: true })
@@ -264,5 +299,86 @@ export class DevHub extends Scene {
 
         optionsContainer.setVisible(false);
         this.buttonY += dropdownHeight + 40;
+    }
+
+    createMatrixBackground() {
+        // Matrix green color
+        const matrixGreen = '#00ff00';
+        
+        // Create character streams
+        const streamCount = Math.floor(this.cameras.main.width / 20); // Space streams every 20 pixels
+        
+        for (let i = 0; i < streamCount; i++) {
+            const x = i * 20;
+            const speed = Phaser.Math.Between(2, 5);
+            const startDelay = Phaser.Math.Between(0, 2000);
+            
+            const stream = {
+                x: x,
+                y: -20,
+                speed: speed,
+                chars: [],
+                delay: startDelay,
+                update: 0
+            };
+            
+            // Create characters in the stream
+            const streamLength = Phaser.Math.Between(5, 15);
+            for (let j = 0; j < streamLength; j++) {
+                const char = this.add.text(x, -20 - (j * 20), this.getRandomMatrixChar(), {
+                    fontSize: '20px',
+                    fontFamily: 'Courier',
+                    color: matrixGreen,
+                    alpha: j === 0 ? 1 : 0.5 // First character brighter
+                }).setDepth(0);  // Set matrix characters to depth 0
+                stream.chars.push(char);
+                this.matrixChars.push(char);
+            }
+            
+            this.streams.push(stream);
+        }
+        
+        // Update the streams
+        this.time.addEvent({
+            delay: 50,
+            callback: () => {
+                if (!this.scene.isActive()) return;  // Don't update if scene is not active
+                
+                this.streams.forEach(stream => {
+                    if (stream.delay > 0) {
+                        stream.delay -= 50;
+                        return;
+                    }
+
+                    stream.update += 50;
+                    if (stream.update >= 100) {
+                        stream.update = 0;
+                        
+                        stream.chars.forEach(char => {
+                            if (char && char.active) {  // Check if character still exists and is active
+                                char.y += stream.speed;
+                                
+                                // Randomly change characters
+                                if (Phaser.Math.Between(0, 20) === 0) {
+                                    char.setText(this.getRandomMatrixChar());
+                                }
+                                
+                                // Reset if off screen
+                                if (char.y > this.cameras.main.height) {
+                                    char.y = -20;
+                                }
+                            }
+                        });
+                    }
+                });
+            },
+            callbackScope: this,
+            loop: true
+        });
+    }
+
+    getRandomMatrixChar() {
+        const chars = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ1234567890@#$%&*';
+        return chars[Math.floor(Math.random() * chars.length)];
     }
 }
