@@ -48,18 +48,39 @@
         .function { color: #dcdcaa; }
         .number { color: #b5cea8; }
 
-        .method-grid {
+        .initializer-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 20px;
             margin: 20px 0;
         }
 
-        .method-card {
+        .initializer-card {
             background-color: white;
             padding: 20px;
             border-radius: 5px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background-color: #f5f5f5;
         }
     </style>
 </head>
@@ -69,133 +90,269 @@
         
         <section>
             <h2>Overview</h2>
-            <p>BaseScene serves as the foundation for all game scenes, handling core functionality like physics setup, music, player creation, and game state management.</p>
+            <p>
+                The BaseScene class is the foundational scene class in ShooterGTU, providing essential game functionality and 
+                structure for all derived scenes. It handles core game mechanics including physics setup, player management, 
+                enemy interactions, and state management. This class ensures consistent behavior and standardized initialization 
+                across all game scenes.
+            </p>
         </section>
 
         <section>
-            <h2>Core Methods</h2>
-            
-            <div class="method-card">
-                <h3>create()</h3>
-                <p>Main initialization method that sets up the entire scene in a structured way.</p>
-                <div class="code-example">
-                    <code>
-                        <span class="function">create</span>() {<br>
-                        &nbsp;&nbsp;<span class="comment">// 1. Basic Setup</span><br>
-                        &nbsp;&nbsp;this.<span class="function">#disableRightClickMenu</span>();<br>
-                        &nbsp;&nbsp;const { width, height } = this.<span class="function">#setupCanvasDimensions</span>();<br>
-                        &nbsp;&nbsp;this.<span class="function">#initializeManagers</span>();<br><br>
-                        &nbsp;&nbsp;<span class="comment">// 2. Audio & Input</span><br>
-                        &nbsp;&nbsp;this.<span class="function">#setupMusic</span>();<br>
-                        &nbsp;&nbsp;this.<span class="function">#enableKeyboardInput</span>();<br>
-                        &nbsp;&nbsp;<span class="comment">// ... and more initialization steps</span><br>
-                        }
-                    </code>
-                </div>
-            </div>
-        </section>
+            <h2>File Dependencies</h2>
 
-        <section>
-            <h2>Private Helper Methods</h2>
-            <div class="method-grid">
-                <div class="method-card">
-                    <h3>#disableRightClickMenu()</h3>
-                    <p>Disables browser context menu for better game experience</p>
-                    <div class="code-example">
-                        <code>
-                            <span class="function">#disableRightClickMenu</span>() {<br>
-                            &nbsp;&nbsp;this.input.mouse.<span class="function">disableContextMenu</span>();<br>
-                            }
-                        </code>
-                    </div>
-                </div>
+            <h3>Required Dependencies</h3>
+            <table>
+                <tr>
+                    <th>File Path</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td><code>/modules/di/ManagerFactory.js</code></td>
+                    <td>Creates and injects core game managers</td>
+                </tr>
+                <tr>
+                    <td><code>/modules/state/Store.js</code></td>
+                    <td>Global state management system</td>
+                </tr>
+                <tr>
+                    <td><code>/scenes/elements/GameUI.js</code></td>
+                    <td>Game interface and HUD components</td>
+                </tr>
+                <tr>
+                    <td><code>/prefabs/Player.js</code></td>
+                    <td>Player character implementation</td>
+                </tr>
+                <tr>
+                    <td><code>/prefabs/ParallaxBackground.js</code></td>
+                    <td>Background scrolling system</td>
+                </tr>
+                <tr>
+                    <td><code>/config/GameConfig.js</code></td>
+                    <td>Game constants and configuration</td>
+                </tr>
+                <tr>
+                    <td><code>/modules/state/types.js</code></td>
+                    <td>Game state and action type definitions</td>
+                </tr>
+                <tr>
+                    <td><code>/systems/ErrorSystem.js</code></td>
+                    <td>Error handling and recovery system</td>
+                </tr>
+            </table>
 
-                <div class="method-card">
-                    <h3>#setupCanvasDimensions()</h3>
-                    <p>Gets game canvas dimensions for proper scaling</p>
-                    <div class="code-example">
-                        <code>
-                            <span class="function">#setupCanvasDimensions</span>() {<br>
-                            &nbsp;&nbsp;<span class="keyword">return</span> {<br>
-                            &nbsp;&nbsp;&nbsp;&nbsp;width: this.cameras.main.width,<br>
-                            &nbsp;&nbsp;&nbsp;&nbsp;height: this.cameras.main.height<br>
-                            &nbsp;&nbsp;};<br>
-                            }
-                        </code>
-                    </div>
-                </div>
+            <h3>Dependent Scenes</h3>
+            <p>Game levels that extend BaseScene:</p>
 
-                <div class="method-card">
-                    <h3>#setupMusic()</h3>
-                    <p>Initializes background music with volume settings</p>
-                    <div class="code-example">
-                        <code>
-                            <span class="function">#setupMusic</span>() {<br>
-                            &nbsp;&nbsp;const bgMusic = this.sound.<span class="function">add</span>(<span class="string">'bgMusic'</span>, { loop: true });<br>
-                            &nbsp;&nbsp;const musicVolume = this.registry.<span class="function">get</span>(<span class="string">'musicVolume'</span>) || <span class="number">1</span>;<br>
-                            &nbsp;&nbsp;bgMusic.<span class="function">setVolume</span>(musicVolume);<br>
-                            }
-                        </code>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section>
-            <h2>Public Methods</h2>
-            <div class="method-grid">
-                <div class="method-card">
-                    <h3>getSpawnHeight()</h3>
-                    <p>Returns the correct spawn height for entities</p>
-                    <div class="code-example">
-                        <code>
-                            <span class="function">getSpawnHeight</span>() {<br>
-                            &nbsp;&nbsp;<span class="keyword">return</span> this.groundTop - <span class="number">16</span>;<br>
-                            }
-                        </code>
-                    </div>
-                </div>
-
-                <div class="method-card">
-                    <h3>createUI()</h3>
-                    <p>Creates and initializes the game UI</p>
-                    <div class="code-example">
-                        <code>
-                            <span class="function">createUI</span>() {<br>
-                            &nbsp;&nbsp;this.gameUI = <span class="keyword">new</span> <span class="function">GameUI</span>(this);<br>
-                            }
-                        </code>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section>
-            <h2>Best Practices</h2>
             <ul>
-                <li>Always call super.create() first in child scenes</li>
-                <li>Use private methods (#) for internal scene logic</li>
-                <li>Use public methods for functionality needed by other scenes</li>
-                <li>Keep methods focused on single responsibilities</li>
-                <li>Use the scene state for tracking game progress</li>
-                <li>Handle errors appropriately in each method</li>
+                <li><strong>Main Game Levels</strong>
+                    <ul>
+                        <li><code>/scenes/levels/GameScene1.js</code></li>
+                        <li><code>/scenes/levels/GameScene2.js</code></li>
+                        <li><code>/scenes/levels/GameScene3.js</code></li>
+                        <li><code>/scenes/levels/GameScene4.js</code></li>
+                        <li><code>/scenes/levels/GameScene5.js</code></li>
+                    </ul>
+                </li>
+                <li><strong>Test Levels</strong>
+                    <ul>
+                        <li><code>/scenes/levels/GtuTestLevel0.js</code></li>
+                        <li><code>/scenes/levels/GtuTestLevel1.js</code></li>
+                        <li><code>/scenes/levels/GtuTestLevel2.js</code></li>
+                        <li><code>/scenes/levels/BlueTest.js</code></li>
+                    </ul>
+                </li>
+                <li><strong>Special Scenes</strong>
+                    <ul>
+                        <li><code>/scenes/levels/Matrix640x360.js</code></li>
+                        <li><code>/scenes/levels/CombinedGtuLevel.js</code></li>
+                        <li><code>/scenes/levels/LegacyGameScene1.js</code></li>
+                    </ul>
+                </li>
+            </ul>
+
+            <h3>Testing Dependencies</h3>
+            <ul>
+                <li>
+                    <strong>Mock Implementation</strong>
+                    <p><code>/scenes/levels/__mocks__/baseScene.mock.js</code></p>
+                    <p>Provides a mock version of BaseScene for testing</p>
+                </li>
+                <li>
+                    <strong>Test Files</strong>
+                    <p><code>/scenes/levels/__tests__/GameScene1.test.js</code></p>
+                    <p>Contains test cases for scene functionality</p>
+                </li>
             </ul>
         </section>
 
         <section>
-            <h2>Example Usage</h2>
-            <div class="code-example">
-                <code>
-                    <span class="keyword">class</span> <span class="function">MyGameScene</span> <span class="keyword">extends</span> BaseScene {<br>
-                    &nbsp;&nbsp;<span class="function">create</span>() {<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// Call parent create method first</span><br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">super</span>.<span class="function">create</span>();<br><br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// Add custom scene setup</span><br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;const spawnY = this.<span class="function">getSpawnHeight</span>();<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// Create enemies, items, etc.</span><br>
-                    &nbsp;&nbsp;}<br>
-                    }
-                </code>
+            <h2>Core Initialization Systems</h2>
+            <div class="initializer-grid">
+                <div class="initializer-card">
+                    <h3>Scene Setup</h3>
+                    <div class="code-example">
+                        <pre><code><span class="comment">// Scene initialization</span>
+<span class="keyword">class</span> <span class="function">BaseScene</span> <span class="keyword">extends</span> Scene {
+    <span class="function">create</span>() {
+        <span class="comment">// Initialize managers</span>
+        this.<span class="function">#initializeManagers</span>();
+        
+        <span class="comment">// Setup core systems</span>
+        this.<span class="function">#setupMusic</span>();
+        this.<span class="function">#initializeController</span>();
+        
+        <span class="comment">// Register event handlers</span>
+        this.<span class="function">#registerSceneEvents</span>();
+    }
+}</code></pre>
+                    </div>
+                </div>
+
+                <div class="initializer-card">
+                    <h3>State Management</h3>
+                    <div class="code-example">
+                        <pre><code><span class="comment">// State initialization</span>
+<span class="function">#initializeSceneState</span>() {
+    <span class="comment">// Set initial state</span>
+    this.store.<span class="function">dispatch</span>({
+        type: ActionTypes.SET_GAME_STATUS,
+        payload: GameStatus.PLAYING
+    });
+
+    <span class="comment">// Initialize player state</span>
+    this.store.<span class="function">dispatch</span>({
+        type: ActionTypes.SET_PLAYER_STATE,
+        payload: PlayerState.ALIVE
+    });
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Game Object Groups</h2>
+            <table>
+                <tr>
+                    <th>Group Name</th>
+                    <th>Type</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td>player</td>
+                    <td>Physics Sprite</td>
+                    <td>Main player character with physics and collision</td>
+                </tr>
+                <tr>
+                    <td>enemies</td>
+                    <td>Physics Group</td>
+                    <td>Collection of all enemy entities</td>
+                </tr>
+                <tr>
+                    <td>bullets</td>
+                    <td>Physics Group</td>
+                    <td>Player and enemy projectiles</td>
+                </tr>
+                <tr>
+                    <td>parallaxBackground</td>
+                    <td>Sprite Group</td>
+                    <td>Multi-layered scrolling background</td>
+                </tr>
+                <tr>
+                    <td>gameUI</td>
+                    <td>Container</td>
+                    <td>HUD and interface elements</td>
+                </tr>
+            </table>
+        </section>
+
+        <section>
+            <h2>Manager Integration</h2>
+            <div class="initializer-grid">
+                <div class="initializer-card">
+                    <h3>Core Managers</h3>
+                    <ul>
+                        <li>
+                            <strong>Store Manager</strong>
+                            <p>Handles global game state and events</p>
+                        </li>
+                        <li>
+                            <strong>Music Manager</strong>
+                            <p>Controls background music and sound effects</p>
+                        </li>
+                        <li>
+                            <strong>Debug Manager</strong>
+                            <p>Provides debugging tools and performance monitoring</p>
+                        </li>
+                        <li>
+                            <strong>Collision Manager</strong>
+                            <p>Manages physics collisions and interactions</p>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="initializer-card">
+                    <h3>Event Handlers</h3>
+                    <ul>
+                        <li>
+                            <strong>Store Updates</strong>
+                            <p>Responds to global state changes</p>
+                            <code>this.store.subscribe(this.#handleStoreUpdate)</code>
+                        </li>
+                        <li>
+                            <strong>Scene Events</strong>
+                            <p>Handles scene lifecycle events</p>
+                            <code>this.events.on('shutdown', this.#cleanup)</code>
+                        </li>
+                        <li>
+                            <strong>Player Events</strong>
+                            <p>Manages player-specific events</p>
+                            <code>this.events.on('playerDeath', this.#handlePlayerDeath)</code>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Error Handling</h2>
+            <div class="initializer-grid">
+                <div class="initializer-card">
+                    <h3>Error Recovery</h3>
+                    <ul>
+                        <li>
+                            <strong>Component Reinitialization</strong>
+                            <p>Automatically recovers from component failures</p>
+                        </li>
+                        <li>
+                            <strong>State Recovery</strong>
+                            <p>Restores scene state after errors</p>
+                        </li>
+                        <li>
+                            <strong>Resource Management</strong>
+                            <p>Handles texture and audio loading errors</p>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="initializer-card">
+                    <h3>Monitoring Systems</h3>
+                    <ul>
+                        <li>
+                            <strong>Performance Monitoring</strong>
+                            <p>Tracks FPS and memory usage</p>
+                        </li>
+                        <li>
+                            <strong>Asset Validation</strong>
+                            <p>Verifies texture and audio assets</p>
+                        </li>
+                        <li>
+                            <strong>Error Logging</strong>
+                            <p>Detailed error tracking and reporting</p>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </section>
     </div>
