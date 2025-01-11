@@ -19,6 +19,7 @@ import ControlsSettings from '../scenes/menus/ControlsSettings';
 import SoundSettings from '../scenes/menus/SoundSettings';
 import { PauseMenu } from '../scenes/elements/PauseMenu';
 import { DevHub } from '../scenes/menus/DevHub/DevHub';
+import { Credits } from '../scenes/menus/Credits';
 import { LegacyGameScene1 } from '../scenes/levels/LegacyGameScene1';
 import { GtuTestLevel0 } from '../scenes/levels/GtuTestLevel0';
 import { GtuTestLevel1 } from '../scenes/levels/GtuTestLevel1';
@@ -76,6 +77,7 @@ export const config = {
         MissionComplete,
         PauseMenu,
         DevHub,
+        Credits,
         LegacyGameScene1,
         GtuTestLevel0,
         GtuTestLevel1,

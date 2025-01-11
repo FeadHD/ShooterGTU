@@ -1,5 +1,8 @@
 import { Scene } from 'phaser';
 import { PauseMenu } from './PauseMenu';
+import { MainMenu } from '../menus/MainMenu';
+import { DevHub } from '../menus/DevHub/DevHub';
+import { Credits } from '../menus/Credits';
 
 export class Game extends Scene {
     constructor() {
@@ -94,6 +97,11 @@ export class Game extends Scene {
             null,
             this
         );
+        
+        // Add scenes
+        this.scene.add('MainMenu', MainMenu);
+        this.scene.add('DevHub', DevHub);
+        this.scene.add('Credits', Credits);
     }
 
     update() {

@@ -208,22 +208,13 @@ export class MainMenu extends Scene {
     }
 
     createGameButtons(canvasWidth, canvasHeight) {
-        const buttonStyle = this.styles.menuButton;
-        const buttonSpacing = 100;
-        const startY = canvasHeight / 2;
+        const startY = canvasHeight * 0.4;  // Start buttons from 40% of screen height
+        const buttonSpacing = 80;  // Space between buttons
 
-        // Helper function to play confirmation sound
-        const playConfirmSound = () => {
-            const sfxVolume = this.registry.get('sfxVolume') ?? 1;
-            const confirmSound = this.sound.add('confirmSound', { volume: sfxVolume });
-            confirmSound.play();
-        };
-
-        // Create "START GAME" button
         const startButton = TextStyleManager.createText(
             this,
-            canvasWidth / 2,
-            startY - buttonSpacing,
+            canvasWidth/2,
+            startY,
             'START',
             'menuButton',
             0.5,
@@ -233,7 +224,7 @@ export class MainMenu extends Scene {
         const settingsButton = TextStyleManager.createText(
             this,
             canvasWidth/2,
-            startY,
+            startY + buttonSpacing,
             'SETTINGS',
             'menuButton',
             0.5,
@@ -243,18 +234,8 @@ export class MainMenu extends Scene {
         const leaderboardButton = TextStyleManager.createText(
             this,
             canvasWidth/2,
-            startY + buttonSpacing,
-            'LEADERBOARD',
-            'menuButton',
-            0.5,
-            true
-        );
-
-        const rulesButton = TextStyleManager.createText(
-            this,
-            canvasWidth/2,
             startY + buttonSpacing * 2,
-            'RULES',
+            'LEADERBOARD',
             'menuButton',
             0.5,
             true
@@ -270,8 +251,23 @@ export class MainMenu extends Scene {
             true
         );
 
+        const creditsButton = TextStyleManager.createText(
+            this,
+            canvasWidth/2,
+            startY + buttonSpacing * 4,
+            'CREDITS',
+            'menuButton',
+            0.5,
+            true
+        );
+
         // Add click handlers
         startButton.on('pointerdown', () => {
+            const playConfirmSound = () => {
+                const sfxVolume = this.registry.get('sfxVolume') ?? 1;
+                const confirmSound = this.sound.add('confirmSound', { volume: sfxVolume });
+                confirmSound.play();
+            };
             playConfirmSound();
             // Reset game state
             this.registry.set('score', 0);
@@ -300,24 +296,44 @@ export class MainMenu extends Scene {
             this.scene.start('IntroScene');
         });
         settingsButton.on('pointerdown', () => {
+            const playConfirmSound = () => {
+                const sfxVolume = this.registry.get('sfxVolume') ?? 1;
+                const confirmSound = this.sound.add('confirmSound', { volume: sfxVolume });
+                confirmSound.play();
+            };
             playConfirmSound();
             this.scene.start('Settings');
         });
         leaderboardButton.on('pointerdown', () => {
+            const playConfirmSound = () => {
+                const sfxVolume = this.registry.get('sfxVolume') ?? 1;
+                const confirmSound = this.sound.add('confirmSound', { volume: sfxVolume });
+                confirmSound.play();
+            };
             playConfirmSound();
             this.scene.start('Leaderboard');
         });
-        rulesButton.on('pointerdown', () => {
-            playConfirmSound();
-            // Add rules functionality here
-        });
         devHubButton.on('pointerdown', () => {
+            const playConfirmSound = () => {
+                const sfxVolume = this.registry.get('sfxVolume') ?? 1;
+                const confirmSound = this.sound.add('confirmSound', { volume: sfxVolume });
+                confirmSound.play();
+            };
             playConfirmSound();
             // Stop menu music before starting DevHub
             if (this.sound.get('bgMusic')) {
                 this.sound.get('bgMusic').stop();
             }
             this.scene.start('DevHub');
+        });
+        creditsButton.on('pointerdown', () => {
+            const playConfirmSound = () => {
+                const sfxVolume = this.registry.get('sfxVolume') ?? 1;
+                const confirmSound = this.sound.add('confirmSound', { volume: sfxVolume });
+                confirmSound.play();
+            };
+            playConfirmSound();
+            this.scene.start('Credits');
         });
     }
 
