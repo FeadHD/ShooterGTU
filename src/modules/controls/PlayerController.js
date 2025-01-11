@@ -213,10 +213,18 @@ export class PlayerController {
     }
 
     destroy() {
-        Object.values(this.controls).forEach(control => {
-            if (control.destroy) {
-                control.destroy();
-            }
-        });
+        // Clean up all controls
+        if (this.controls) {
+            Object.values(this.controls).forEach(control => {
+                if (control && typeof control.destroy === 'function') {
+                    control.destroy();
+                }
+            });
+        }
+        
+        // Clear references
+        this.controls = null;
+        this.scene = null;
+        this.enabled = false;
     }
 }

@@ -23,6 +23,7 @@ import { Bullet } from '../../prefabs/Bullet';
 import { GameConfig } from '../../config/GameConfig';
 import { CombinedLevelCamera } from '../../modules/managers/CombinedLevelCamera';
 import { LDTKTileManager } from '../../modules/managers/LDTKTileManager';
+import { BulletPool } from '../../modules/managers/pools/BulletPool';
 import { Player } from '../../prefabs/Player';
 import { eventBus } from '../../modules/events/EventBus';
 
@@ -214,6 +215,11 @@ export class CombinedGtuLevel extends BaseScene {
 
         // Initialize camera with player
         this.levelCamera.init(this.player);
+
+        // Initialize managers after player and tiles are loaded
+        this.enemyManager = new EnemyManager(this);
+        this.trapManager = new TrapManager(this);
+        this.bulletPool = new BulletPool(this);
 
         // Set up camera bounds and following
         const { width, height } = this.scale;
@@ -416,6 +422,11 @@ export class CombinedGtuLevel extends BaseScene {
 
     update(time, delta) {
         super.update(time, delta);
+
+        // Update bullet pool if it exists
+        if (this.bulletPool) {
+            this.bulletPool.update();
+        }
 
         if (this.player && this.cameras.main) {
             const playerSection = Math.floor(this.player.x / this.sectionWidth);
@@ -688,5 +699,22 @@ export class CombinedGtuLevel extends BaseScene {
         // Implement game over logic here
         console.log('Player died!');
         this.scene.restart();
+    }
+
+    cleanup() {
+        super.cleanup();
+        
+        // Clean up managers
+        if (this.enemyManager) this.enemyManager.cleanup();
+        if (this.effectsManager) this.effectsManager.cleanup();
+        if (this.trapManager) this.trapManager.cleanup();
+        if (this.bulletPool) this.bulletPool.destroy();
+        
+        // Clean up physics groups
+        if (this.enemies) this.enemies.clear(true, true);
+        
+        // Clear loaded sections
+        this.loadedSections.clear();
+        this.activeEntities.clear();
     }
 }

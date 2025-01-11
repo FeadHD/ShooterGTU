@@ -13,11 +13,3 @@ export const DEFAULT_TRAP_CONFIG = {
     cooldown: 3000,
     cost: 50
 };
-
-export const DEFAULT_PROCEDURAL_CONFIG = {
-    roomSize: 800,
-    corridorWidth: 100,
-    minRooms: 5,
-    maxRooms: 10,
-    enemiesPerRoom: 3
-};

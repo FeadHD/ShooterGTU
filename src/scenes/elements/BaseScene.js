@@ -9,8 +9,30 @@ import { ParallaxBackground } from '../../prefabs/ParallaxBackground';
 import { Player } from '../../prefabs/Player';
 import { DebugSystem } from '../../_Debug/DebugSystem';
 import { GameConfig, getGroundTop, getSpawnHeight } from '../../config/GameConfig';
+import { Store } from '../../modules/state/Store';
+import { ActionTypes, GameStatus, PlayerState } from '../../modules/state/types';
+import { updateScore, updateHealth, updateLives, updateBitcoins, updatePlayerState } from '../../modules/state/actions';
 
 export class BaseScene extends Scene {
+    constructor(config) {
+        super(config);
+        this.store = new Store();
+        this.sceneState = {
+            isReady: false,
+            isPlaying: false,
+            isLoading: true,
+            startTime: Date.now(),
+            levelData: {
+                currentScore: 0,
+                enemiesDefeated: 0,
+                timeElapsed: 0,
+                checkpoints: []
+            }
+        };
+        this.gameOver = false;
+        this.spaceKey = null;
+    }
+
     preload() {
         // Load character spritesheet if not already loaded
         if (!this.textures.exists('character')) {
@@ -112,6 +134,121 @@ export class BaseScene extends Scene {
 
         // Initialize debug system
         this.debug.initialize();
+
+        // Initialize controller
+        this.initializeController();
+
+        // Initialize scene state
+        this.initializeSceneState();
+    }
+
+    initializeSceneState() {
+        try {
+            // Get global state from Store
+            const globalState = this.store.getState();
+            
+            // Sync scene with global state
+            this.registry.set('lives', globalState.game.lives);
+            this.registry.set('score', globalState.game.score);
+            this.registry.set('playerHP', globalState.player.health);
+            this.registry.set('bitcoins', globalState.player.bitcoins);
+            
+            // Set up scene-specific state
+            this.gameState.initializeGameState();
+            
+            // Listen for store changes
+            this.store.subscribe((state, action) => {
+                this.handleStoreUpdate(state, action);
+            });
+
+            // Update scene status
+            this.sceneState.isLoading = false;
+            this.sceneState.isReady = true;
+            this.store.dispatch(updatePlayerState(PlayerState.IDLE));
+
+            console.log('Scene state initialized!');
+        } catch (error) {
+            this.handleError(error, 'state');
+        }
+    }
+
+    handleStoreUpdate(state, action) {
+        try {
+            switch(action.type) {
+                case ActionTypes.UPDATE_SCORE:
+                    this.gameState.set('score', state.game.score);
+                    this.sceneState.levelData.currentScore = state.game.score;
+                    break;
+                case ActionTypes.UPDATE_HEALTH:
+                    this.gameState.set('playerHP', state.player.health);
+                    if (state.player.health <= 0) {
+                        this.store.dispatch({ type: ActionTypes.UPDATE_GAME_STATUS, payload: GameStatus.GAME_OVER });
+                    }
+                    break;
+                case ActionTypes.UPDATE_LIVES:
+                    this.gameState.set('lives', state.game.lives);
+                    break;
+                case ActionTypes.UPDATE_BITCOINS:
+                    this.gameState.set('bitcoins', state.game.bitcoins);
+                    break;
+                case ActionTypes.UPDATE_GAME_STATUS:
+                    this.handleGameStatusChange(state.game.status);
+                    break;
+                case ActionTypes.UPDATE_PLAYER_STATE:
+                    if (this.player) {
+                        this.player.setState(state.player.state);
+                    }
+                    break;
+            }
+        } catch (error) {
+            this.handleError(error, 'storeUpdate');
+        }
+    }
+
+    handleGameStatusChange(status) {
+        switch(status) {
+            case GameStatus.PAUSED:
+                this.scene.pause();
+                this.sceneState.isPlaying = false;
+                break;
+            case GameStatus.PLAYING:
+                this.scene.resume();
+                this.sceneState.isPlaying = true;
+                break;
+            case GameStatus.GAME_OVER:
+                this.gameOver = true;
+                this.sceneState.isPlaying = false;
+                break;
+            case GameStatus.MENU:
+                this.scene.start('MainMenu');
+                break;
+        }
+    }
+
+    updateSceneState() {
+        if (this.sceneState.isPlaying) {
+            // Update time elapsed
+            this.sceneState.levelData.timeElapsed = 
+                Math.floor((Date.now() - this.sceneState.startTime) / 1000);
+            
+            // Sync with store
+            const state = this.store.getState();
+            this.sceneState.levelData.currentScore = state.game.score;
+            
+            // Update checkpoint if needed
+            if (this.checkpoints && this.player) {
+                const currentCheckpoint = this.checkpoints.find(cp => 
+                    this.player.x >= cp.x && !this.sceneState.levelData.checkpoints.includes(cp.id)
+                );
+                if (currentCheckpoint) {
+                    this.sceneState.levelData.checkpoints.push(currentCheckpoint.id);
+                    this.store.dispatch({ 
+                        type: ActionTypes.UPDATE_CHECKPOINT, 
+                        payload: currentCheckpoint 
+                    });
+                }
+            }
+        }
     }
 
     createPlayer(width) {
@@ -261,32 +398,113 @@ export class BaseScene extends Scene {
         this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
     }
 
-    update() {
-        if (this.player) {
-            this.player.update();
+    initializeController() {
+        try {
+            // Create controller if player exists
+            if (this.player) {
+                this.controller = new PlayerController(this);
+            }
+        } catch (error) {
+            this.handleError(error, 'controller');
         }
+    }
 
-        if (this.debug) {
-            this.debug.update();
-        }
-
-        // Check for space key press during game over
-        if (this.gameOver && this.spaceKey && this.spaceKey.isDown) {
-            // Clean up current scene
-            this.cleanup();
+    handleError(error, context) {
+        console.error(`Error in ${context}:`, error);
+        
+        // Log error but don't crash the game
+        if (this.debug && this.debug.enabled) {
+            // Create debug text for error
+            const errorText = this.add.text(10, 10, `Error: ${error.message} in ${context}`, {
+                fontSize: '16px',
+                fill: '#ff0000'
+            });
+            errorText.setScrollFactor(0);
+            errorText.setDepth(1000);
             
-            // Reset registry values
-            this.registry.set('lives', 3);
-            this.registry.set('playerHP', 100);
-            this.registry.set('score', 0);
-            this.registry.set('bitcoins', 0);
+            // Remove text after 3 seconds
+            this.time.delayedCall(3000, () => {
+                errorText.destroy();
+            });
+        }
+        
+        // Attempt recovery based on context
+        switch(context) {
+            case 'controller':
+                // Try to reinitialize controller
+                if (this.controller) {
+                    if (typeof this.controller.destroy === 'function') {
+                        this.controller.destroy();
+                    }
+                    this.controller = null;
+                    // Try to create controller again after a short delay
+                    this.time.delayedCall(100, () => {
+                        this.initializeController();
+                    });
+                }
+                break;
+            case 'player':
+                // Reset player position if there's an error
+                if (this.player && this.playerSpawnPoint) {
+                    this.player.setPosition(this.playerSpawnPoint.x, this.playerSpawnPoint.y);
+                }
+                break;
+            case 'physics':
+                if (this.physics && this.physics.world) {
+                    this.physics.world.resume();
+                }
+                break;
+        }
+    }
 
-            // Stop current scene and start from MainMenu
-            this.scene.start('MainMenu');
+    update(time, delta) {
+        try {
+            // Update base components
+            super.update(time, delta);
+
+            // Update player if exists
+            if (this.player) {
+                this.player.update();
+            }
+
+            // Update debug if exists
+            if (this.debug) {
+                this.debug.update();
+            }
+
+            // Update scene state
+            this.updateSceneState();
+
+            // Handle game over state
+            if (this.gameOver && this.controller && this.controller.controls.jump.isDown) {
+                this.cleanup();
+                this.registry.set('lives', 3);
+                this.registry.set('playerHP', 100);
+                this.registry.set('score', 0);
+                this.registry.set('bitcoins', 0);
+                this.scene.start('MainMenu');
+            }
+        } catch (error) {
+            this.handleError(error, 'update');
         }
     }
 
     cleanup() {
+        // Clean up input first to prevent callbacks during cleanup
+        if (this.input) {
+            this.input.keyboard.enabled = false;
+            this.input.keyboard.removeAllKeys();
+            this.input.removeAllListeners();
+        }
+
+        // Clean up controller
+        if (this.controller) {
+            if (typeof this.controller.destroy === 'function') {
+                this.controller.destroy();
+            }
+            this.controller = null;
+        }
+
         // Clean up game objects
         if (this.player) {
             this.player.destroy();
@@ -317,13 +535,6 @@ export class BaseScene extends Scene {
         if (this.effects) this.effects = null;
         if (this.boundaries) this.boundaries = null;
         if (this.debug) this.debug = null;
-
-        // Clean up input
-        if (this.input) {
-            this.input.keyboard.enabled = false;
-            this.input.keyboard.removeAllKeys();
-            this.input.removeAllListeners();
-        }
 
         // Reset flags
         this.gameOver = false;
