@@ -79,6 +79,7 @@ export class BaseScene extends Scene {
         };
         this.gameOver = false;
         this.spaceKey = null;
+        this.isDying = false;
     }
 
     /**
@@ -117,9 +118,12 @@ export class BaseScene extends Scene {
         this.boundaries = managers.boundaries;
         this.debug = managers.debug;
         this.collisionManager = managers.collision;
-
-        // Initialize error system
         this.errorSystem = new ErrorSystem(this);
+        this.eventManager = managers.events;
+
+        // Initialize core systems
+        this.animations.initialize();
+        this.eventManager.initialize();
 
         // Disable right-click context menu and enable keyboard input
         this.input.mouse.disableContextMenu();
@@ -330,7 +334,10 @@ export class BaseScene extends Scene {
         // Don't process damage if player is already dying or dead
         if (player.isDying || this.gameState.get('playerHP') <= 0) {
             if (!this.isDying) {
-                this.handlePlayerDeath();
+                this.eventManager.emit(GameEvents.PLAYER_DEATH, {
+                    position: { x: player.x, y: player.y },
+                    cause: 'enemy_collision'
+                });
             }
             return;
         }
@@ -346,6 +353,14 @@ export class BaseScene extends Scene {
         this.gameState.set('playerHP', newHP);
         this.gameUI.updateHP(newHP);
 
+        // Emit health change event
+        this.eventManager.emit(GameEvents.HEALTH_CHANGE, {
+            oldHealth: currentHP,
+            newHealth: newHP,
+            damage: damage,
+            source: enemy
+        });
+
         // Set invulnerability period
         this.invulnerableUntil = this.time.now + PLAYER_CONSTANTS.INVULNERABILITY_DURATION;
         
@@ -354,7 +369,11 @@ export class BaseScene extends Scene {
         
         // Check for player death
         if (newHP <= 0 && !this.isDying) {
-            this.handlePlayerDeath();
+            this.eventManager.emit(GameEvents.PLAYER_DEATH, {
+                position: { x: player.x, y: player.y },
+                cause: 'enemy_damage',
+                enemy: enemy
+            });
         }
     }
 
@@ -362,32 +381,36 @@ export class BaseScene extends Scene {
      * Handle player death sequence, animations, and life system.
      */
     handlePlayerDeath() {
-        if (this.isDying) return; // Prevent multiple death handlers
-        
-        this.isDying = true;
-        this.player.setVelocity(0, 0);
-        this.player.body.moves = false;
-        
-        // Decrease lives using StateManager
-        const lives = this.gameState.decrement('lives');
-        this.gameUI.updateLives(lives);
-    
-        // Play death animation if it exists
-        if (this.anims.exists('character_Death')) {
-            this.player.play('character_Death');
-            this.player.once('animationcomplete', () => {
+        if (this.player && !this.isDying) {
+            this.isDying = true;
+            
+            // Disable player input and physics
+            this.player.disableBody();
+            this.player.setVelocity(0);
+            
+            // Play death animation if available
+            if (this.animations.hasAnimation('character_Death')) {
+                this.animations.play(this.player, 'character_Death');
+            }
+            
+            // Update game state
+            this.gameOver = true;
+            const lives = this.registry.get('lives') - 1;
+            this.registry.set('lives', lives);
+            
+            // Wait for death animation or timeout
+            this.time.delayedCall(2000, () => {
                 if (lives <= 0) {
-                    this.gameState.handleGameOver();
+                    this.eventManager.emit(GameEvents.GAME_OVER, {
+                        finalScore: this.gameState.get('score'),
+                        totalTime: this.time.now - this.sceneState.startTime
+                    });
+                    this.handleGameOver();
                 } else {
-                    this.handleRespawn();
-                }
-            });
-        } else {
-            // If no death animation, wait a moment then proceed
-            this.time.delayedCall(1000, () => {
-                if (lives <= 0) {
-                    this.gameState.handleGameOver();
-                } else {
+                    this.eventManager.emit(GameEvents.PLAYER_RESPAWN, {
+                        position: this.playerSpawnPoint,
+                        remainingLives: lives
+                    });
                     this.handleRespawn();
                 }
             });
@@ -395,9 +418,31 @@ export class BaseScene extends Scene {
     }
 
     /**
+     * Handle complete game over state
+     */
+    handleGameOver() {
+        this.store.dispatch({ type: ActionTypes.UPDATE_GAME_STATUS, payload: GameStatus.GAME_OVER });
+        this.handleFullRestart();
+    }
+
+    /**
+     * Perform a full scene restart, resetting all game state
+     */
+    handleFullRestart() {
+        this.cleanup();
+        this.registry.set('lives', PLAYER_CONSTANTS.INITIAL_LIVES);
+        this.registry.set('playerHP', PLAYER_CONSTANTS.INITIAL_HP);
+        this.registry.set('score', 0);
+        this.registry.set('bitcoins', 0);
+        this.scene.restart();
+    }
+
+    /**
      * Reset player position and state after death, with temporary invulnerability.
      */
     handleRespawn() {
+        if (!this.player) return;
+
         // Get spawn point from current scene if available
         const currentScene = this.scene.get(this.scene.key);
         const spawnPoint = currentScene.playerSpawnPoint || this.playerSpawnPoint;
@@ -408,7 +453,8 @@ export class BaseScene extends Scene {
         
         // Reset player state
         this.isDying = false;
-        this.player.body.moves = true;
+        this.gameOver = false;
+        this.player.enableBody();
         this.player.setAlpha(1);
         
         // Reset player HP
@@ -431,8 +477,8 @@ export class BaseScene extends Scene {
         });
 
         // Reset player animations if needed
-        if (this.player.play) {
-            this.player.play('character_Idle');
+        if (this.animations.hasAnimation('character_Idle')) {
+            this.animations.play(this.player, 'character_Idle');
         }
     }
 
@@ -491,7 +537,12 @@ export class BaseScene extends Scene {
      * Clean up all game objects and managers before scene shutdown
      */
     cleanup() {
-        // Clean up input first to prevent callbacks during cleanup
+        // Clean up managers first
+        if (this.eventManager) {
+            this.eventManager.destroy();
+        }
+
+        // Clean up input
         if (this.input) {
             this.input.keyboard.enabled = false;
             this.input.keyboard.removeAllKeys();

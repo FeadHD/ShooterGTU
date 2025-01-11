@@ -1,6 +1,35 @@
 export class AnimationManager {
     constructor(scene) {
         this.scene = scene;
+        this.initialized = false;
+    }
+
+    /**
+     * Initialize all game animations
+     */
+    initialize() {
+        if (!this.initialized) {
+            this.createAllAnimations();
+            this.initialized = true;
+        }
+    }
+
+    /**
+     * Check if an animation exists
+     */
+    hasAnimation(key) {
+        return this.scene.anims.exists(key);
+    }
+
+    /**
+     * Play an animation on a game object if it exists
+     */
+    play(gameObject, key, ignoreIfPlaying = true) {
+        if (this.hasAnimation(key)) {
+            gameObject.play(key, ignoreIfPlaying);
+            return true;
+        }
+        return false;
     }
 
     createBulletAnimation() {
@@ -168,10 +197,12 @@ export class AnimationManager {
     }
 
     createAllAnimations() {
+        console.log('Creating all game animations...');
         this.createBulletAnimation();
         this.createHitEffectAnimation();
         this.createCharacterAnimations();
         this.createEnemyAnimations();
         this.createWarriorAnimations();
+        console.log('All animations created successfully');
     }
 }

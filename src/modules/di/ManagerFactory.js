@@ -10,6 +10,7 @@ import { EffectsManager } from '../managers/EffectsManager';
 import { SceneBoundaryManager } from '../managers/BoundaryManager';
 import { DebugSystem } from '../../_Debug/DebugSystem';
 import { CollisionManager } from '../managers/CollisionManager';
+import { EventManager } from '../managers/EventManager';
 import { container } from './ServiceContainer';
 import { eventBus } from '../events/EventBus';
 
@@ -38,6 +39,7 @@ export class ManagerFactory {
         const boundaries = new SceneBoundaryManager(scene);
         const debug = new DebugSystem(scene);
         const collision = new CollisionManager(scene);
+        const events = new EventManager(scene);
         
         // Register all managers
         container.register('gameState', gameState);
@@ -52,7 +54,11 @@ export class ManagerFactory {
         container.register('boundaries', boundaries);
         container.register('debug', debug);
         container.register('collision', collision);
+        container.register('events', events);
 
+        // Initialize event system
+        events.initialize();
+        
         return {
             gameState,
             persistence,
@@ -65,7 +71,8 @@ export class ManagerFactory {
             effects,
             boundaries,
             debug,
-            collision
+            collision,
+            events
         };
     }
 }
