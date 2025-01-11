@@ -10,6 +10,34 @@ import { GameConfig, getGroundTop } from '../../config/GameConfig';
 import { Store } from '../../modules/state/Store';
 import { ActionTypes, GameStatus, PlayerState } from '../../modules/state/types';
 
+// Game Constants
+const PLAYER_CONSTANTS = {
+    INVULNERABILITY_DURATION: 2000,  // Duration of invulnerability in milliseconds
+    DEFAULT_ENEMY_DAMAGE: 25,        // Default damage when no specific enemy damage is set
+    INITIAL_HP: 100,                // Starting/max player HP
+    INITIAL_LIVES: 3,               // Starting number of lives
+    FLASH_DURATION: 200,            // Duration of flash effect in milliseconds
+    FLASH_ALPHA: 0.5,               // Alpha value during flash effect
+    FLASH_REPEATS: 4                // Number of times to repeat flash effect
+};
+
+const ERROR_CONSTANTS = {
+    DEBUG_TEXT_X: 10,               // X position of debug text
+    DEBUG_TEXT_Y: 10,               // Y position of debug text
+    DEBUG_TEXT_SIZE: '16px',        // Font size for debug text
+    DEBUG_TEXT_COLOR: '#ff0000',    // Color for debug text
+    DEBUG_TEXT_DURATION: 3000,      // How long to show debug text
+    CONTROLLER_RETRY_DELAY: 100     // Delay before retrying controller initialization
+};
+
+const TILE_CONSTANTS = {
+    COLLIDING_TILES: [257, 260, 261, 641, 642, 643, 644, 645, 705, 706, 707]  // Tile IDs that should have collision
+};
+
+/**
+ * Base scene class that handles game initialization, updates, and cleanup.
+ * This class serves as a foundation for all game scenes.
+ */
 export class BaseScene extends Scene {
     constructor(config) {
         super(config);
@@ -30,6 +58,10 @@ export class BaseScene extends Scene {
         this.spaceKey = null;
     }
 
+    /**
+     * Preload assets required for the scene.
+     * This includes character spritesheets and particle textures.
+     */
     preload() {
         // Load character spritesheet if not already loaded
         if (!this.textures.exists('character')) {
@@ -43,41 +75,46 @@ export class BaseScene extends Scene {
         this.load.image('particle', 'assets/particle.png');
     }
 
+    /**
+     * Create and initialize game objects, managers, and systems.
+     * This includes setting up the canvas, physics, input, and audio.
+     */
     create() {
-        this.#disableRightClickMenu();
-        const { width, height } = this.#setupCanvasDimensions();
+        // Setup core systems
         this.#initializeManagers();
-        this.#setupMusic();
-        this.#enableKeyboardInput();
+        this.#setupInput();
+        this.#initializeDebug();
+        const { width, height } = this.#setupCanvasDimensions();
+        
+        // Setup physics and world
         this.#setupWorldPhysics(width, height);
-        this.#createParallaxBackground();
         this.#createPlatforms();
+        this.#setupCollisions();
+        
+        // Setup audio
+        this.#setupMusic();
+        
+        // Setup visuals
+        this.#createParallaxBackground();
+        this.#createUI();
+        
+        // Setup gameplay elements
         this.#storeSpawnInfo(width, height);
         this.#initializeGameSystems();
         this.#createBulletGroup();
-        this.#setupCollisions();
         this.#createPlayerIfNeeded(width);
-        this.createUI();
+        
+        // Setup state and events
+        this.#initializeController();
         this.#registerSceneEvents();
-        this.initializeController();
-        this.debug.initialize();
-        this.initializeSceneState();
+        this.#initializeSceneState();
     }
 
-    /** Disable right-click context menu */
-    #disableRightClickMenu() {
-        this.input.mouse.disableContextMenu();
-    }
-
-    /** Get canvas dimensions */
-    #setupCanvasDimensions() {
-        return {
-            width: this.cameras.main.width,
-            height: this.cameras.main.height
-        };
-    }
-
-    /** Initialize and assign all game managers */
+    // =====================
+    // Core System Methods
+    // =====================
+    
+    /** Initialize and assign all game managers for handling game state, collisions, audio, etc. */
     #initializeManagers() {
         const managers = ManagerFactory.createManagers(this);
         this.gameState = managers.gameState;
@@ -94,6 +131,34 @@ export class BaseScene extends Scene {
         this.collisionManager = managers.collision;
     }
 
+    /** Setup all input-related configurations */
+    #setupInput() {
+        this.#disableRightClickMenu();
+        this.#enableKeyboardInput();
+    }
+
+    /** Disable the right-click context menu to prevent accidental browser menu opening */
+    #disableRightClickMenu() {
+        this.input.mouse.disableContextMenu();
+    }
+
+    /** Enable keyboard input for the scene */
+    #enableKeyboardInput() {
+        this.input.keyboard.enabled = true;
+    }
+
+    /** Get the canvas dimensions for setting up the game world */
+    #setupCanvasDimensions() {
+        return {
+            width: this.cameras.main.width,
+            height: this.cameras.main.height
+        };
+    }
+
+    // =====================
+    // Audio Methods
+    // =====================
+    
     /** Set up background music with volume from registry */
     #setupMusic() {
         const bgMusic = this.sound.add('bgMusic', { loop: true });
@@ -103,27 +168,47 @@ export class BaseScene extends Scene {
         this.musicManager.play();
     }
 
-    /** Enable keyboard input for the scene */
-    #enableKeyboardInput() {
-        this.input.keyboard.enabled = true;
-    }
-
+    // =====================
+    // Physics and World Methods
+    // =====================
+    
     /** Configure world physics boundaries */
     #setupWorldPhysics(width, height) {
         this.physics.world.setBounds(0, 0, width, height);
     }
 
-    /** Create parallax background layers */
-    #createParallaxBackground() {
-        this.parallaxBackground = new ParallaxBackground(this);
-    }
-
-    /** Create static platforms group for collision */
+    /** Create static platforms that the player can collide with and stand on */
     #createPlatforms() {
         this.platforms = this.physics.add.staticGroup();
     }
 
-    /** Store ground top and player spawn point references */
+    /** Set up all necessary collision detection between game entities */
+    #setupCollisions() {
+        this.collisionManager.setupCollisions();
+    }
+
+    // =====================
+    // Visual Methods
+    // =====================
+    
+    /** Create parallax background layers for a sense of depth and movement */
+    #createParallaxBackground() {
+        this.parallaxBackground = new ParallaxBackground(this);
+    }
+
+    /** Create and configure the heads-up display (HUD) for score, health, etc. */
+    #createUI() {
+        // Create UI
+        this.gameUI = new GameUI(this);
+        this.gameUI.container.setScrollFactor(0);
+        this.gameUI.updateCameraIgnoreList();
+    }
+
+    // =====================
+    // Gameplay Methods
+    // =====================
+    
+    /** Store ground level and player spawn coordinates for respawning and level setup */
     #storeSpawnInfo(width, height) {
         this.groundTop = getGroundTop(height);
         this.playerSpawnPoint = {
@@ -132,13 +217,13 @@ export class BaseScene extends Scene {
         };
     }
 
-    /** Initialize game state and create animations */
+    /** Initialize game state and create all character/enemy animations */
     #initializeGameSystems() {
         this.gameState.initializeGameState();
         this.animations.createAllAnimations();
     }
 
-    /** Create and configure bullet group with physics */
+    /** Create a physics group for bullets with specific properties for projectile behavior */
     #createBulletGroup() {
         this.bullets = this.physics.add.group({
             classType: Bullet,
@@ -149,12 +234,7 @@ export class BaseScene extends Scene {
         });
     }
 
-    /** Set up all collision detection */
-    #setupCollisions() {
-        this.collisionManager.setupCollisions();
-    }
-
-    /** Create player if not skipped */
+    /** Create the player character if not explicitly skipped by the scene */
     #createPlayerIfNeeded(width) {
         if (!this.skipPlayerCreation) {
             this.createPlayer(width);
@@ -162,6 +242,7 @@ export class BaseScene extends Scene {
         }
     }
 
+    /** Create and configure the player character with proper physics and collision */
     createPlayer(width) {
         // Create player using the Player prefab
         this.player = new Player(this, width * GameConfig.PLAYER.SPAWN_OFFSET_X, this.playerSpawnPoint.y);
@@ -172,23 +253,80 @@ export class BaseScene extends Scene {
         return this.player;
     }
 
-    createUI() {
-        // Create UI
-        this.gameUI = new GameUI(this);
-        this.gameUI.container.setScrollFactor(0);
-        this.gameUI.updateCameraIgnoreList();
+    // =====================
+    // State and Event Methods
+    // =====================
+    
+    /** Initialize the player controller for handling input and movement */
+    #initializeController() {
+        try {
+            // Create controller if player exists
+            if (this.player) {
+                this.controller = new PlayerController(this);
+            }
+        } catch (error) {
+            this.handleError(error, 'controller');
+        }
     }
 
+    /** Register event handlers for scene lifecycle events */
+    #registerSceneEvents() {
+        this.events.on('wake', this.onSceneWake, this);
+        this.events.on('resume', this.onSceneResume, this);
+        this.events.on('shutdown', this.shutdown, this);
+        this.events.on('sleep', this.cleanup, this);
+    }
+
+    /** Initialize and sync scene state with global game state */
+    #initializeSceneState() {
+        try {
+            // Get global state from Store
+            const globalState = this.store.getState();
+            
+            // Sync scene with global state
+            this.registry.set('lives', globalState.game.lives);
+            this.registry.set('score', globalState.game.score);
+            this.registry.set('playerHP', globalState.player.health);
+            this.registry.set('bitcoins', globalState.player.bitcoins);
+            
+            // Set up scene-specific state
+            this.gameState.initializeGameState();
+            
+            // Listen for store changes
+            this.store.subscribe((state, action) => {
+                this.handleStoreUpdate(state, action);
+            });
+
+            // Update scene status
+            this.sceneState.isLoading = false;
+            this.sceneState.isReady = true;
+            this.store.dispatch({ type: ActionTypes.UPDATE_PLAYER_STATE, payload: PlayerState.IDLE });
+
+            console.log('Scene state initialized!');
+        } catch (error) {
+            this.handleError(error, 'state');
+        }
+    }
+
+    /**
+     * Safely clean up bullet objects when they hit something or go off screen.
+     */
     destroyBullet(bullet) {
         bullet.setActive(false);
         bullet.setVisible(false);
         bullet.body.enable = false;
     }
 
+    /**
+     * Handle collision between player bullets and enemies, including damage calculation.
+     */
     hitEnemyWithBullet(bullet, enemySprite) {
         this.enemies.handleBulletHit(bullet, enemySprite);
     }
 
+    /**
+     * Process player damage when colliding with enemies, including invulnerability period.
+     */
     hitEnemy(player, enemy) {
         // Don't process damage if player is already dying or dead
         if (player.isDying || this.gameState.get('playerHP') <= 0) {
@@ -202,15 +340,15 @@ export class BaseScene extends Scene {
         const currentHP = this.gameState.get('playerHP');
         
         // Get enemy damage amount
-        const damage = enemy.enemy ? enemy.enemy.damageAmount : 25;
+        const damage = enemy.enemy ? enemy.enemy.damageAmount : PLAYER_CONSTANTS.DEFAULT_ENEMY_DAMAGE;
         
         // Calculate new HP but don't let it go below 0
         const newHP = Math.max(0, currentHP - damage);
         this.gameState.set('playerHP', newHP);
         this.gameUI.updateHP(newHP);
 
-        // Set invulnerability period (2 seconds for all enemies)
-        this.invulnerableUntil = this.time.now + 2000;
+        // Set invulnerability period
+        this.invulnerableUntil = this.time.now + PLAYER_CONSTANTS.INVULNERABILITY_DURATION;
         
         // Visual feedback
         this.effects.createFlashEffect(player);
@@ -221,6 +359,9 @@ export class BaseScene extends Scene {
         }
     }
 
+    /**
+     * Handle player death sequence, animations, and life system.
+     */
     handlePlayerDeath() {
         if (this.isDying) return; // Prevent multiple death handlers
         
@@ -254,6 +395,9 @@ export class BaseScene extends Scene {
         }
     }
 
+    /**
+     * Reset player position and state after death, with temporary invulnerability.
+     */
     handleRespawn() {
         // Get spawn point from current scene if available
         const currentScene = this.scene.get(this.scene.key);
@@ -269,19 +413,19 @@ export class BaseScene extends Scene {
         this.player.setAlpha(1);
         
         // Reset player HP
-        this.gameState.set('playerHP', 100);
-        this.gameUI.updateHP(100);
+        this.gameState.set('playerHP', PLAYER_CONSTANTS.INITIAL_HP);
+        this.gameUI.updateHP(PLAYER_CONSTANTS.INITIAL_HP);
         
         // Add temporary invulnerability
-        this.invulnerableUntil = this.time.now + 2000; // 2 seconds of invulnerability
+        this.invulnerableUntil = this.time.now + PLAYER_CONSTANTS.INVULNERABILITY_DURATION;
         
         // Flash effect to show invulnerability
         this.tweens.add({
             targets: this.player,
-            alpha: 0.5,
-            duration: 200,
+            alpha: PLAYER_CONSTANTS.FLASH_ALPHA,
+            duration: PLAYER_CONSTANTS.FLASH_DURATION,
             yoyo: true,
-            repeat: 4,
+            repeat: PLAYER_CONSTANTS.FLASH_REPEATS,
             onComplete: () => {
                 this.player.setAlpha(1);
             }
@@ -293,12 +437,12 @@ export class BaseScene extends Scene {
         }
     }
 
+    /**
+     * Set up collision detection for specific tile types in the level.
+     */
     setupTileCollisions(map, layer) {
-        // These are the tile IDs that should collide based on the JSON
-        const collidingTiles = [257, 260, 261, 641, 642, 643, 644, 645, 705, 706, 707];
-        
         // Set collision for specific tile IDs
-        layer.setCollision(collidingTiles);
+        layer.setCollision(TILE_CONSTANTS.COLLIDING_TILES);
         
         // Add collision between player and layer
         if (this.player) {
@@ -309,32 +453,29 @@ export class BaseScene extends Scene {
         this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
     }
 
-    initializeController() {
-        try {
-            // Create controller if player exists
-            if (this.player) {
-                this.controller = new PlayerController(this);
-            }
-        } catch (error) {
-            this.handleError(error, 'controller');
-        }
-    }
-
+    /**
+     * Handle errors gracefully with debug output and recovery attempts.
+     */
     handleError(error, context) {
         console.error(`Error in ${context}:`, error);
         
         // Log error but don't crash the game
         if (this.debug && this.debug.enabled) {
             // Create debug text for error
-            const errorText = this.add.text(10, 10, `Error: ${error.message} in ${context}`, {
-                fontSize: '16px',
-                fill: '#ff0000'
-            });
+            const errorText = this.add.text(
+                ERROR_CONSTANTS.DEBUG_TEXT_X,
+                ERROR_CONSTANTS.DEBUG_TEXT_Y,
+                `Error: ${error.message} in ${context}`,
+                {
+                    fontSize: ERROR_CONSTANTS.DEBUG_TEXT_SIZE,
+                    fill: ERROR_CONSTANTS.DEBUG_TEXT_COLOR
+                }
+            );
             errorText.setScrollFactor(0);
             errorText.setDepth(1000);
             
-            // Remove text after 3 seconds
-            this.time.delayedCall(3000, () => {
+            // Remove text after delay
+            this.time.delayedCall(ERROR_CONSTANTS.DEBUG_TEXT_DURATION, () => {
                 errorText.destroy();
             });
         }
@@ -349,7 +490,7 @@ export class BaseScene extends Scene {
                     }
                     this.controller = null;
                     // Try to create controller again after a short delay
-                    this.time.delayedCall(100, () => {
+                    this.time.delayedCall(ERROR_CONSTANTS.CONTROLLER_RETRY_DELAY, () => {
                         this.initializeController();
                     });
                 }
@@ -368,6 +509,9 @@ export class BaseScene extends Scene {
         }
     }
 
+    /**
+     * Update game state each frame, handling player movement, debug info, and game over state
+     */
     update(time, delta) {
         try {
             // Update base components
@@ -389,8 +533,8 @@ export class BaseScene extends Scene {
             // Handle game over state
             if (this.gameOver && this.controller && this.controller.controls.jump.isDown) {
                 this.cleanup();
-                this.registry.set('lives', 3);
-                this.registry.set('playerHP', 100);
+                this.registry.set('lives', PLAYER_CONSTANTS.INITIAL_LIVES);
+                this.registry.set('playerHP', PLAYER_CONSTANTS.INITIAL_HP);
                 this.registry.set('score', 0);
                 this.registry.set('bitcoins', 0);
                 this.scene.start('MainMenu');
@@ -400,6 +544,9 @@ export class BaseScene extends Scene {
         }
     }
 
+    /**
+     * Clean up all game objects and managers before scene shutdown
+     */
     cleanup() {
         // Clean up input first to prevent callbacks during cleanup
         if (this.input) {
@@ -452,56 +599,31 @@ export class BaseScene extends Scene {
         this.spaceKey = null;
     }
 
+    /**
+     * Re-enable keyboard input when scene wakes from sleep.
+     */
     onSceneWake() {
         this.input.keyboard.enabled = true;
     }
 
+    /**
+     * Re-enable keyboard input when scene resumes from pause.
+     */
     onSceneResume() {
         this.input.keyboard.enabled = true;
     }
 
+    /**
+     * Clean up resources and call parent shutdown when scene is destroyed
+     */
     shutdown() {
         this.cleanup();
         super.shutdown();
     }
 
-    #registerSceneEvents() {
-        this.events.on('wake', this.onSceneWake, this);
-        this.events.on('resume', this.onSceneResume, this);
-        this.events.on('shutdown', this.cleanup, this);
-        this.events.on('sleep', this.cleanup, this);
-    }
-
-    initializeSceneState() {
-        try {
-            // Get global state from Store
-            const globalState = this.store.getState();
-            
-            // Sync scene with global state
-            this.registry.set('lives', globalState.game.lives);
-            this.registry.set('score', globalState.game.score);
-            this.registry.set('playerHP', globalState.player.health);
-            this.registry.set('bitcoins', globalState.player.bitcoins);
-            
-            // Set up scene-specific state
-            this.gameState.initializeGameState();
-            
-            // Listen for store changes
-            this.store.subscribe((state, action) => {
-                this.handleStoreUpdate(state, action);
-            });
-
-            // Update scene status
-            this.sceneState.isLoading = false;
-            this.sceneState.isReady = true;
-            this.store.dispatch({ type: ActionTypes.UPDATE_PLAYER_STATE, payload: PlayerState.IDLE });
-
-            console.log('Scene state initialized!');
-        } catch (error) {
-            this.handleError(error, 'state');
-        }
-    }
-
+    /**
+     * Handle updates to global game state and update local scene accordingly.
+     */
     handleStoreUpdate(state, action) {
         try {
             switch(action.type) {
@@ -535,6 +657,9 @@ export class BaseScene extends Scene {
         }
     }
 
+    /**
+     * Process game status changes like pause, resume, and game over.
+     */
     handleGameStatusChange(status) {
         switch(status) {
             case GameStatus.PAUSED:
@@ -555,6 +680,9 @@ export class BaseScene extends Scene {
         }
     }
 
+    /**
+     * Update scene-specific state like time elapsed and checkpoints.
+     */
     updateSceneState() {
         if (this.sceneState.isPlaying) {
             // Update time elapsed
@@ -581,10 +709,16 @@ export class BaseScene extends Scene {
         }
     }
 
+    /**
+     * Calculate appropriate spawn height relative to ground level.
+     */
     getSpawnHeight() {
         return this.groundTop - 16;
     }
 
+    /**
+     * Initialize debug tools and displays when needed.
+     */
     #initializeDebug() {
         this.debug.initialize();
     }
