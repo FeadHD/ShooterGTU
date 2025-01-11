@@ -110,16 +110,16 @@ export class BlueTest extends BaseScene{
     }
 
     create() {
-        // Get trap config from scene data or TheZucc scene
+        // Get trap config from scene data or DevHub scene
         const sceneData = this.scene.settings.data;
-        const zuccScene = this.scene.get('TheZucc');
+        const devHub = this.scene.get('DevHub');
         
         // Try to get alarm count from multiple sources
         const alarmCount = (
             // First try scene data (passed when starting scene)
             sceneData?.trapConfig?.AlarmTrigger !== undefined ? sceneData.trapConfig.AlarmTrigger :
-            // Then try getting it from TheZucc scene
-            zuccScene?.trapConfig?.AlarmTrigger !== undefined ? zuccScene.trapConfig.AlarmTrigger :
+            // Then try getting it from DevHub scene
+            devHub?.trapConfig?.AlarmTrigger !== undefined ? devHub.trapConfig.AlarmTrigger :
             // Default to 1 if neither exists
             1
         );
@@ -130,7 +130,7 @@ export class BlueTest extends BaseScene{
         
         console.log('Matrix: Got alarm count:', this.trapConfig.AlarmTrigger, 
                     'from:', sceneData?.trapConfig ? 'scene data' : 
-                            zuccScene?.trapConfig ? 'TheZucc scene' : 
+                            devHub?.trapConfig ? 'DevHub scene' : 
                             'default');
 
         // Stop any existing background music and play thezucc

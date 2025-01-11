@@ -260,11 +260,11 @@ export class MainMenu extends Scene {
             true
         );
 
-        const theZuccButton = TextStyleManager.createText(
+        const devHubButton = TextStyleManager.createText(
             this,
             canvasWidth/2,
             startY + buttonSpacing * 3,
-            'THE ZUCC',
+            'DEVELOPER HUB',
             'menuButton',
             0.5,
             true
@@ -311,13 +311,13 @@ export class MainMenu extends Scene {
             playConfirmSound();
             // Add rules functionality here
         });
-        theZuccButton.on('pointerdown', () => {
+        devHubButton.on('pointerdown', () => {
             playConfirmSound();
-            // Stop menu music before starting TheZucc
+            // Stop menu music before starting DevHub
             if (this.sound.get('bgMusic')) {
                 this.sound.get('bgMusic').stop();
             }
-            this.scene.start('TheZucc');
+            this.scene.start('DevHub');
         });
     }
 

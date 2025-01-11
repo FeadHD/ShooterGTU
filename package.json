@@ -11,7 +11,8 @@
         "test": "jest",
         "test:watch": "jest --watch",
         "test:e2e": "cypress open",
-        "test:e2e:headless": "cypress run"
+        "test:e2e:headless": "cypress run",
+        "start": "node server.js"
     },
     "repository": {
         "type": "git",
@@ -49,6 +50,13 @@
     },
     "dependencies": {
         "body-parser": "^1.20.3",
+        "express": "^4.21.2",
         "phaser": "^3.87.0"
-    }
+    },
+    "description": "A 2D action platformer game built with Phaser 3, featuring dynamic combat, enemy AI, and procedurally generated levels.",
+    "directories": {
+        "doc": "docs",
+        "test": "tests"
+    },
+    "keywords": []
 }

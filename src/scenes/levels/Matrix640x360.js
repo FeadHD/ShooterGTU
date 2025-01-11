@@ -50,10 +50,10 @@ export class Matrix640x360 extends BaseScene {
     create() {
         // Get trap config
         const sceneData = this.scene.settings.data;
-        const zuccScene = this.scene.get('TheZucc');
+        const devHub = this.scene.get('DevHub');
         this.trapConfig = {
             AlarmTrigger: sceneData?.trapConfig?.AlarmTrigger ?? 
-                         zuccScene?.trapConfig?.AlarmTrigger ?? 1
+                         devHub?.trapConfig?.AlarmTrigger ?? 1
         };
 
         // Setup background music
