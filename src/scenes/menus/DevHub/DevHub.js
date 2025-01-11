@@ -104,6 +104,7 @@ export class DevHub extends Scene {
 
         this.createDropdown('Select Documentation...', [
             { key: 'animation-manager-documentation', title: 'Animation Manager', path: 'animation-manager-documentation.html' },
+            { key: 'base-scene-manager-documentation', title: 'Base Scene', path: 'base-scene-manager-documentation.html' },
             { key: 'boundary-manager-documentation', title: 'Boundary Manager', path: 'boundary-manager-documentation.html' },
             { key: 'collision-manager-documentation', title: 'Collision Manager', path: 'collision-manager-documentation.html' },
             { key: 'combined-level-documentation', title: 'Combined Level', path: 'combined-level-documentation.html' },
