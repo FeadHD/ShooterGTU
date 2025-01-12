@@ -32,10 +32,10 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
         this.health = this.maxHealth;
         this.damage = 50; // Shock damage
         this.speed = 100;
-        this.attackRange = 60; // Changed to 60px
+        this.attackRange = 60;
         this.attackCooldown = 2000;
         this.lastAttackTime = 0;
-        this.awakenRange = 100; // Changed to 100px
+        this.awakenRange = 100;
         this.isHit = false;
         this.hitCooldown = 200;
         this.lastHitTime = 0;
@@ -52,12 +52,6 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
         this.shockSprite.body.immovable = true;
         this.shockSprite.body.enable = false;
 
-        // Create shock hitbox outline
-        this.shockOutline = scene.add.graphics();
-        this.shockOutline.setDepth(3); // Below shock sprite
-        this.shockOutline.lineStyle(2, 0x0000FF, 1); // Blue outline
-        this.updateShockOutline();
-
         // Add collision between shock and player
         if (scene.player) {
             scene.physics.add.overlap(scene.player, this.shockSprite, () => {
@@ -66,11 +60,6 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
                 }
             });
         }
-
-        // Create detection range lines
-        this.detectionGraphics = scene.add.graphics();
-        this.detectionGraphics.setDepth(4); // Below the Zapper
-        this.updateDetectionRange();
 
         // Create health bar
         this.healthBar = scene.add.graphics();
@@ -119,143 +108,42 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
         this.healthBar.fillRect(x, y, healthWidth, height);
     }
 
-    updateDetectionRange() {
-        if (!this.detectionGraphics || !this.scene) return;
-
-        this.detectionGraphics.clear();
-
-        // Draw detection range (black)
-        this.detectionGraphics.lineStyle(2, 0x000000, 1);
-
-        // Draw left line
-        this.detectionGraphics.beginPath();
-        this.detectionGraphics.moveTo(this.x - this.awakenRange, this.y - 20);
-        this.detectionGraphics.lineTo(this.x - this.awakenRange, this.y + 20);
-        this.detectionGraphics.strokePath();
-
-        // Draw right line
-        this.detectionGraphics.beginPath();
-        this.detectionGraphics.moveTo(this.x + this.awakenRange, this.y - 20);
-        this.detectionGraphics.lineTo(this.x + this.awakenRange, this.y + 20);
-        this.detectionGraphics.strokePath();
-
-        // Draw connecting lines for detection range
-        this.detectionGraphics.lineStyle(2, 0x000000, 0.3);
-        this.detectionGraphics.beginPath();
-        this.detectionGraphics.moveTo(this.x - this.awakenRange, this.y);
-        this.detectionGraphics.lineTo(this.x + this.awakenRange, this.y);
-        this.detectionGraphics.strokePath();
-
-        // Draw attack range (red)
-        this.detectionGraphics.lineStyle(2, 0xFF0000, 1);
-
-        // Draw left line
-        this.detectionGraphics.beginPath();
-        this.detectionGraphics.moveTo(this.x - this.attackRange, this.y - 15);
-        this.detectionGraphics.lineTo(this.x - this.attackRange, this.y + 15);
-        this.detectionGraphics.strokePath();
-
-        // Draw right line
-        this.detectionGraphics.beginPath();
-        this.detectionGraphics.moveTo(this.x + this.attackRange, this.y - 15);
-        this.detectionGraphics.lineTo(this.x + this.attackRange, this.y + 15);
-        this.detectionGraphics.strokePath();
-
-        // Draw connecting lines for attack range
-        this.detectionGraphics.lineStyle(2, 0xFF0000, 0.3);
-        this.detectionGraphics.beginPath();
-        this.detectionGraphics.moveTo(this.x - this.attackRange, this.y);
-        this.detectionGraphics.lineTo(this.x + this.attackRange, this.y);
-        this.detectionGraphics.strokePath();
-    }
-
-    updateShockOutline() {
-        if (!this.shockOutline || !this.shockSprite) return;
-
-        this.shockOutline.clear();
-        
-        if (this.shockSprite.visible) {
-            // Get shock hitbox dimensions and position
-            const width = this.shockSprite.body.width * this.shockSprite.scaleX;
-            const height = this.shockSprite.body.height * this.shockSprite.scaleY;
-            const x = this.shockSprite.x - width/2;
-            const y = this.shockSprite.y - height/2;
-
-            // Draw outline
-            this.shockOutline.lineStyle(2, 0x0000FF, 1);
-            this.shockOutline.strokeRect(x, y, width, height);
-        }
-    }
-
     takeDamage(amount) {
         if (this.isDying || this.isDead) {
             console.log('Already dying/dead, ignoring damage');
             return;
         }
 
-        this.health = Math.max(0, this.health - amount);
-        console.log(`Zapper took ${amount} damage. Health: ${this.health}/${this.maxHealth}`);
-        this.updateHealthBar();
-        
-        // Play hit animation if not on cooldown
-        const currentTime = this.scene.time.now;
-        if (currentTime > this.lastHitTime + this.hitCooldown) {
-            this.lastHitTime = currentTime;
-            
-            // Store current animation
-            if (this.anims.currentAnim) {
-                this.previousAnim = {
-                    key: this.anims.currentAnim.key,
-                    repeat: this.anims.currentAnim.repeat
-                };
-            }
-            
-            // Play hit animation
-            if (this.scene && this.scene.anims.exists('zapper_hit')) {
-                console.log('Playing hit animation');
-                this.setTexture('zapper_hit');
-                this.anims.play('zapper_hit').once('animationcomplete', () => {
-                    // Return to previous animation if it exists
-                    if (this.previousAnim && !this.isDying && !this.isDead) {
-                        this.setTexture(this.previousAnim.key);
-                        this.anims.play(this.previousAnim.key, true);
-                    }
-                });
-            }
+        // Make invulnerable during idle and wake-up
+        if (!this.isAwake || this.isWakingUp) {
+            console.log('Zapper is invulnerable during idle/wake-up');
+            return;
         }
-        
+
+        // Check hit cooldown
+        const currentTime = this.scene.time.now;
+        if (currentTime < this.lastHitTime + this.hitCooldown) {
+            return;
+        }
+        this.lastHitTime = currentTime;
+
+        this.health -= amount;
+        console.log(`Zapper took ${amount} damage, health: ${this.health}`);
+
+        // Show health bar when hit
+        if (this.healthBar) {
+            this.healthBar.visible = true;
+            this.updateHealthBar();
+        }
+
+        // Flash red when hit
+        this.setTint(0xff0000);
+        this.scene.time.delayedCall(100, () => {
+            this.clearTint();
+        });
+
         if (this.health <= 0) {
-            console.log('Zapper health reached 0, dying...');
-            this.isDying = true;
-            
-            // Only modify physics if we still can
-            if (this.body) {
-                this.body.enable = false;
-                this.setVelocity(0, 0);
-                this.setAcceleration(0, 0);
-                this.setImmovable(true);
-            }
-            
-            // Play death animation if it exists
-            if (this.scene && this.scene.anims.exists('zapper_death')) {
-                console.log('Playing death animation');
-                this.setTexture('zapper_death');
-                this.anims.play('zapper_death').once('animationcomplete', () => {
-                    console.log('Death animation complete, destroying Zapper');
-                    if (this.healthBar) {
-                        this.healthBar.visible = false;
-                    }
-                    this.isDead = true;
-                    this.destroy();
-                });
-            } else {
-                console.warn('Death animation not found, destroying immediately');
-                if (this.healthBar) {
-                    this.healthBar.visible = false;
-                }
-                this.isDead = true;
-                this.destroy();
-            }
+            this.die();
         }
     }
 
@@ -265,15 +153,11 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
         
         super.preUpdate(time, delta);
 
-        // Update shock sprite position and outline if visible
+        // Update shock sprite position if visible
         if (this.shockSprite && this.shockSprite.visible) {
             this.shockSprite.setPosition(this.x + (this.facingRight ? 32 : -32), this.y);
             this.shockSprite.setFlipX(!this.facingRight);
-            this.updateShockOutline();
         }
-
-        // Update detection range visualization
-        this.updateDetectionRange();
 
         if (this.isDying) {
             // Only set velocity if we still can
@@ -417,18 +301,44 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
         this.lastAttackTime = this.scene.time.now;
     }
 
-    destroy(fromScene) {
-        // Clean up shock outline
-        if (this.shockOutline) {
-            this.shockOutline.destroy();
+    die() {
+        console.log('Zapper health reached 0, dying...');
+        this.isDying = true;
+        
+        // Only modify physics if we still can
+        if (this.body) {
+            this.body.enable = false;
+            this.setVelocity(0, 0);
+            this.setAcceleration(0, 0);
+            this.setImmovable(true);
         }
+        
+        // Play death animation if it exists
+        if (this.scene && this.scene.anims.exists('zapper_death')) {
+            console.log('Playing death animation');
+            this.setTexture('zapper_death');
+            this.anims.play('zapper_death').once('animationcomplete', () => {
+                console.log('Death animation complete, destroying Zapper');
+                if (this.healthBar) {
+                    this.healthBar.visible = false;
+                }
+                this.isDead = true;
+                this.destroy();
+            });
+        } else {
+            console.warn('Death animation not found, destroying immediately');
+            if (this.healthBar) {
+                this.healthBar.visible = false;
+            }
+            this.isDead = true;
+            this.destroy();
+        }
+    }
+
+    destroy(fromScene) {
         // Clean up shock sprite
         if (this.shockSprite) {
             this.shockSprite.destroy();
-        }
-        // Clean up detection graphics
-        if (this.detectionGraphics) {
-            this.detectionGraphics.destroy();
         }
         // Clean up health bar when destroyed
         if (this.healthBar) {

@@ -331,14 +331,6 @@ export class TestingGroundScene extends BaseScene {
         // Store zapper reference for update
         this.zapper = zapper;
 
-        // Debug: Show hitboxes
-        this.physics.world.createDebugGraphic();
-        this.debugGraphics = this.add.graphics();
-        
-        // Debug: Show spritesheet frames
-        console.log('Zapper texture:', this.textures.get('zapper_wake'));
-        console.log('Zapper frames:', this.anims.get('zapper_wake').frames);
-
         // Set up player movement keys
         this.cursors = this.input.keyboard.createCursorKeys();
         this.keys = {
@@ -370,19 +362,6 @@ export class TestingGroundScene extends BaseScene {
     }
 
     update(time, delta) {
-        // Update debug visualization
-        if (this.debugGraphics && this.zapper) {
-            this.debugGraphics.clear();
-            this.debugGraphics.lineStyle(1, 0x00ff00);
-            // Draw sprite bounds (scaled size)
-            this.debugGraphics.strokeRect(
-                this.zapper.x - (32 * 1.5)/2, 
-                this.zapper.y - (32 * 1.5)/2, 
-                32 * 1.5, 
-                32 * 1.5
-            );
-        }
-
         // Update player
         if (this.player) {
             // Handle player movement
