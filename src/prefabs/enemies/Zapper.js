@@ -35,20 +35,25 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
         this.attackRange = 200;
         this.attackCooldown = 2000;
         this.lastAttackTime = 0;
-        this.awakenRange = 50;
+        this.awakenRange = 100; // Changed to 100px
         this.isHit = false;
-        this.hitCooldown = 200; // Time between hit animations
+        this.hitCooldown = 200;
         this.lastHitTime = 0;
+
+        // Create detection range lines
+        this.detectionGraphics = scene.add.graphics();
+        this.detectionGraphics.setDepth(4); // Below the Zapper
+        this.updateDetectionRange();
 
         // Create health bar
         this.healthBar = scene.add.graphics();
         this.healthBar.setDepth(5);
         this.updateHealthBar();
-        this.healthBar.visible = false; // Start hidden
+        this.healthBar.visible = false;
 
         // State
         this.isAwake = false;
-        this.isWakingUp = false;  // New state for wake animation
+        this.isWakingUp = false;
         this.isAttacking = false;
         this.isDying = false;
         this.isDead = false;
@@ -85,6 +90,32 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
         const healthWidth = (this.health / this.maxHealth) * width;
         this.healthBar.fillStyle(0x00ff00);
         this.healthBar.fillRect(x, y, healthWidth, height);
+    }
+
+    updateDetectionRange() {
+        if (!this.detectionGraphics || !this.scene) return;
+
+        this.detectionGraphics.clear();
+        this.detectionGraphics.lineStyle(2, 0x000000, 1);
+
+        // Draw left line
+        this.detectionGraphics.beginPath();
+        this.detectionGraphics.moveTo(this.x - this.awakenRange, this.y - 20);
+        this.detectionGraphics.lineTo(this.x - this.awakenRange, this.y + 20);
+        this.detectionGraphics.strokePath();
+
+        // Draw right line
+        this.detectionGraphics.beginPath();
+        this.detectionGraphics.moveTo(this.x + this.awakenRange, this.y - 20);
+        this.detectionGraphics.lineTo(this.x + this.awakenRange, this.y + 20);
+        this.detectionGraphics.strokePath();
+
+        // Draw connecting lines
+        this.detectionGraphics.lineStyle(2, 0x000000, 0.3);
+        this.detectionGraphics.beginPath();
+        this.detectionGraphics.moveTo(this.x - this.awakenRange, this.y);
+        this.detectionGraphics.lineTo(this.x + this.awakenRange, this.y);
+        this.detectionGraphics.strokePath();
     }
 
     takeDamage(amount) {
@@ -165,6 +196,9 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
         
         super.preUpdate(time, delta);
 
+        // Update detection range visualization
+        this.updateDetectionRange();
+
         if (this.isDying) {
             // Only set velocity if we still can
             if (this.body && this.body.enable) {
@@ -182,10 +216,10 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
         const player = this.scene.player;
         if (!player) return;
 
-        // Check if player is in range to wake up
+        // Check if player is in range to wake up (horizontal distance only)
         if (player && !this.isAwake && !this.isWakingUp) {
-            const distance = Phaser.Math.Distance.Between(this.x, this.y, player.x, player.y);
-            if (distance < this.awakenRange) {
+            const horizontalDistance = Math.abs(this.x - player.x);
+            if (horizontalDistance < this.awakenRange) {
                 this.wakeUp();
             }
         }
@@ -198,7 +232,8 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
         // Update facing direction
         if (this.isAwake && !this.isWakingUp) {
             // Attack if in range and cooldown is over
-            if (Phaser.Math.Distance.Between(this.x, this.y, player.x, player.y) <= this.attackRange && time > this.lastAttackTime + this.attackCooldown) {
+            const horizontalDistance = Math.abs(this.x - player.x);
+            if (horizontalDistance <= this.attackRange && time > this.lastAttackTime + this.attackCooldown) {
                 this.attack();
             }
         } else {
@@ -274,11 +309,15 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
         });
     }
 
-    destroy() {
+    destroy(fromScene) {
+        // Clean up detection graphics
+        if (this.detectionGraphics) {
+            this.detectionGraphics.destroy();
+        }
         // Clean up health bar when destroyed
         if (this.healthBar) {
             this.healthBar.destroy();
         }
-        super.destroy();
+        super.destroy(fromScene);
     }
 }
