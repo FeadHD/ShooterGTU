@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Dependencies Documentation</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        h1, h2, h3 {
+            color: #2c3e50;
+            margin-top: 30px;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .graph-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            overflow: auto;
+            min-width: 100%;
+            width: fit-content;
+            max-width: none;
+            height: 2000px;
+            max-height: 95vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid #eee;
+        }
+
+        .mermaid {
+            min-width: 2500px;
+            min-height: 1800px;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 16px;
+        }
+
+        .mermaid svg {
+            height: 100%;
+            width: 100%;
+        }
+
+        .mermaid .node rect,
+        .mermaid .node circle,
+        .mermaid .node ellipse,
+        .mermaid .node polygon,
+        .mermaid .node path {
+            stroke-width: 2px;
+        }
+
+        .mermaid .node text {
+            font-size: 16px;
+        }
+
+        .mermaid .edgeLabel {
+            font-size: 14px;
+            background-color: white;
+            padding: 2px 4px;
+        }
+
+        .mermaid .cluster rect {
+            stroke-width: 2px;
+            rx: 5px;
+            ry: 5px;
+        }
+
+        .module-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Game Dependencies Documentation</h1>
+        
+        <section>
+            <h2>System Architecture Overview</h2>
+            <div class="graph-container">
+                <pre class="mermaid">
+graph TD
+    %% Dependency Injection System
+    subgraph "DI System"
+        BaseManager[BaseManager.js]
+        ServiceContainer[ServiceContainer.js]
+        ManagerFactory[ManagerFactory.js]
+        EventBus[EventBus.js]
+        
+        ManagerFactory --> ServiceContainer
+        BaseManager --> ServiceContainer
+        EventBus --> ServiceContainer
+    end
+
+    %% Core Managers
+    subgraph "Core Managers"
+        EventManager[EventManager.js]
+        StateManager[StateManager.js]
+        AnimManager[AnimationManager.js]
+        CameraManager[CameraManager.js]
+        EffectsManager[EffectsManager.js]
+        CollisionManager[CollisionManager.js]
+        BoundaryManager[SceneBoundaryManager.js]
+        DebugSystem[DebugSystem.js]
+        
+        subgraph "State Management"
+            GameStateManager[GameStateManager.js]
+            PersistenceManager[PersistenceManager.js]
+            PersistenceManager --> GameStateManager
+        end
+
+        subgraph "Audio System"
+            SoundManager[SoundManager.js]
+            MusicManager[MusicManager.js]
+            MusicManager --> SoundManager
+        end
+
+        subgraph "Entity Management"
+            EntityManager[EntityManager.js]
+            EnemyManager[EnemyManager.js]
+            HazardManager[HazardManager.js]
+            EnemyManager --> EntityManager
+            HazardManager --> EntityManager
+        end
+        
+        EventManager --> BaseManager
+        StateManager --> BaseManager
+        AnimManager --> BaseManager
+        CameraManager --> BaseManager
+        SoundManager --> BaseManager
+        MusicManager --> BaseManager
+        EffectsManager --> BaseManager
+        CollisionManager --> BaseManager
+        EntityManager --> BaseManager
+        GameStateManager --> BaseManager
+        PersistenceManager --> BaseManager
+        BoundaryManager --> BaseManager
+        DebugSystem --> BaseManager
+        
+        EffectsManager --> SoundManager
+        CollisionManager --> EntityManager
+        EventManager --> EventBus
+
+        %% ManagerFactory creation relationships
+        ManagerFactory -.->|creates| EventManager
+        ManagerFactory -.->|creates| StateManager
+        ManagerFactory -.->|creates| AnimManager
+        ManagerFactory -.->|creates| SoundManager
+        ManagerFactory -.->|creates| MusicManager
+        ManagerFactory -.->|creates| EffectsManager
+        ManagerFactory -.->|creates| CollisionManager
+        ManagerFactory -.->|creates| EntityManager
+        ManagerFactory -.->|creates| GameStateManager
+        ManagerFactory -.->|creates| PersistenceManager
+        ManagerFactory -.->|creates| EnemyManager
+        ManagerFactory -.->|creates| HazardManager
+        ManagerFactory -.->|creates| BoundaryManager
+        ManagerFactory -.->|creates| DebugSystem
+    end
+
+    %% Scene Management
+    subgraph "Scenes"
+        BaseScene[BaseScene.js]
+        BootScene[Boot.js]
+        MainMenu[MainMenu.js]
+        GameScene[Game.js]
+        
+        BootScene --> BaseScene
+        MainMenu --> BaseScene
+        GameScene --> BaseScene
+        
+        BaseScene --> EventManager
+        BaseScene --> StateManager
+        BaseScene --> ManagerFactory
+    end
+
+    %% Game Entities
+    subgraph "Game Entities"
+        Player[Player.js]
+        Enemy[Enemy.js]
+        Bullet[Bullet.js]
+        Trap[Trap.js]
+        
+        Player --> PlayerController[PlayerController.js]
+        Enemy --> EnemyTypes[EnemyTypes.js]
+        Player --> Bullet
+        Enemy --> Bullet
+        Enemy --> EntityManager
+        Trap --> EntityManager
+    end
+
+    %% Level Management
+    subgraph "Level Systems"
+        LevelLoader[LevelLoader.js]
+        TileManager[LDTKTileManager.js]
+        ProcGen[ProceduralGenerator.js]
+        
+        LevelLoader --> TileManager
+        LevelLoader --> ProcGen
+        LevelLoader --> EntityManager
+    end
+
+    style BaseManager fill:#bbf,stroke:#333,stroke-width:2px
+    style ServiceContainer fill:#bbf,stroke:#333,stroke-width:2px
+    style ManagerFactory fill:#bbf,stroke:#333,stroke-width:2px
+    style EventBus fill:#bbf,stroke:#333,stroke-width:2px
+    style EventManager fill:#dfd,stroke:#333,stroke-width:2px
+    style StateManager fill:#dfd,stroke:#333,stroke-width:2px
+    style AnimManager fill:#dfd,stroke:#333,stroke-width:2px
+    style CameraManager fill:#dfd,stroke:#333,stroke-width:2px
+    style EffectsManager fill:#dfd,stroke:#333,stroke-width:2px
+    style CollisionManager fill:#dfd,stroke:#333,stroke-width:2px
+    style EntityManager fill:#dfd,stroke:#333,stroke-width:2px
+    style SoundManager fill:#dfd,stroke:#333,stroke-width:2px
+    style MusicManager fill:#dfd,stroke:#333,stroke-width:2px
+    style GameStateManager fill:#dfd,stroke:#333,stroke-width:2px
+    style PersistenceManager fill:#dfd,stroke:#333,stroke-width:2px
+    style BoundaryManager fill:#dfd,stroke:#333,stroke-width:2px
+    style DebugSystem fill:#dfd,stroke:#333,stroke-width:2px
+    style Player fill:#fdd,stroke:#333,stroke-width:2px
+    style Enemy fill:#fdd,stroke:#333,stroke-width:2px
+    style Bullet fill:#fdd,stroke:#333,stroke-width:2px
+    style Trap fill:#fdd,stroke:#333,stroke-width:2px
+                </pre>
+            </div>
+        </section>
+
+        <section>
+            <h2>Module Descriptions</h2>
+            
+            <div class="module-section">
+                <h3>Core System</h3>
+                <ul>
+                    <li><strong>main.js</strong> - Entry point of the game, initializes core systems</li>
+                    <li><strong>config.js</strong> - Game configuration and settings</li>
+                    <li><strong>Constants.js</strong> - Game-wide constants and enums</li>
+                </ul>
+            </div>
+
+            <div class="module-section">
+                <h3>Dependency Injection</h3>
+                <ul>
+                    <li><strong>BaseManager.js</strong> - Base class for all managers, provides DI capabilities</li>
+                    <li><strong>ServiceContainer.js</strong> - Central service registry</li>
+                    <li><strong>ManagerFactory.js</strong> - Creates and registers all managers in the correct order</li>
+                    <li><strong>EventBus.js</strong> - Event bus for decoupling managers</li>
+                </ul>
+            </div>
+
+            <div class="module-section">
+                <h3>Core Managers</h3>
+                <ul>
+                    <li><strong>EventManager.js</strong> - Handles game-wide events</li>
+                    <li><strong>StateManager.js</strong> - Manages game state</li>
+                    <li><strong>AnimationManager.js</strong> - Controls game animations</li>
+                    <li><strong>CameraManager.js</strong> - Manages camera behavior</li>
+                    <li><strong>EffectsManager.js</strong> - Manages game effects</li>
+                    <li><strong>CollisionManager.js</strong> - Handles collision detection</li>
+                    <li><strong>BoundaryManager.js</strong> - Manages scene boundaries</li>
+                    <li><strong>DebugSystem.js</strong> - Provides debugging tools</li>
+                </ul>
+            </div>
+
+            <div class="module-section">
+                <h3>Game Entities</h3>
+                <ul>
+                    <li><strong>Player.js</strong> - Player character implementation</li>
+                    <li><strong>Enemy.js</strong> - Base enemy class</li>
+                    <li><strong>EnemyTypes.js</strong> - Different enemy configurations</li>
+                    <li><strong>Bullet.js</strong> - Projectile implementation</li>
+                    <li><strong>Trap.js</strong> - Trap implementation</li>
+                </ul>
+            </div>
+
+            <div class="module-section">
+                <h3>Level Systems</h3>
+                <ul>
+                    <li><strong>LevelLoader.js</strong> - Loads and initializes levels</li>
+                    <li><strong>LDTKTileManager.js</strong> - Handles tile-based level data</li>
+                    <li><strong>ProceduralGenerator.js</strong> - Generates procedural content</li>
+                </ul>
+            </div>
+        </section>
+
+        <section>
+            <h2>Key Dependencies</h2>
+            <ul>
+                <li>All managers extend BaseManager for DI functionality</li>
+                <li>All scenes extend BaseScene for common functionality</li>
+                <li>Game entities depend on their respective managers for functionality</li>
+                <li>Level systems work together to create and manage game environments</li>
+            </ul>
+        </section>
+    </div>
+
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: false,
+                htmlLabels: true,
+                curve: 'basis',
+                rankSpacing: 150,
+                nodeSpacing: 150,
+                ranker: 'tight-tree',
+                fontSize: 16
+            }
+        });
+    </script>
+</body>
+</html>

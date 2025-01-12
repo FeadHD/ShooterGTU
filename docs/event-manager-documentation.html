@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Manager Documentation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        h1, h2, h3 {
+            color: #2c3e50;
+            margin-top: 30px;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .code-example {
+            background-color: #1e1e1e;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        .code-example code {
+            color: #d4d4d4;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .comment { color: #6a9955; }
+        .keyword { color: #569cd6; }
+        .string { color: #ce9178; }
+        .function { color: #dcdcaa; }
+        .number { color: #b5cea8; }
+
+        .initializer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .initializer-card {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            border: 1px solid #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Event Manager Documentation</h1>
+        
+        <section>
+            <h2>Overview</h2>
+            <p>
+                The EventManager is a core component that provides a centralized event handling system for the game.
+                It extends BaseManager and uses Phaser's built-in event emitter to manage game-wide events.
+            </p>
+        </section>
+
+        <section>
+            <h2>Game Events</h2>
+            <div class="initializer-grid">
+                <div class="initializer-card">
+                    <h3>Entity Events</h3>
+                    <ul>
+                        <li><code>PLAYER_DEATH</code> - Triggered when the player dies</li>
+                        <li><code>PLAYER_RESPAWN</code> - Triggered when the player respawns</li>
+                        <li><code>ENEMY_DEATH</code> - Triggered when an enemy is defeated</li>
+                        <li><code>ENEMY_SPAWN</code> - Triggered when an enemy spawns</li>
+                        <li><code>BOSS_SPAWN</code> - Triggered when a boss appears</li>
+                        <li><code>BOSS_PHASE_CHANGE</code> - Triggered when a boss changes phase</li>
+                    </ul>
+                </div>
+                <div class="initializer-card">
+                    <h3>Gameplay Events</h3>
+                    <ul>
+                        <li><code>SCORE_CHANGE</code> - Triggered when the score changes</li>
+                        <li><code>HEALTH_CHANGE</code> - Triggered when health changes</li>
+                        <li><code>LEVEL_COMPLETE</code> - Triggered when a level is completed</li>
+                        <li><code>CHECKPOINT_REACHED</code> - Triggered at checkpoints</li>
+                        <li><code>GAME_OVER</code> - Triggered when the game ends</li>
+                    </ul>
+                </div>
+                <div class="initializer-card">
+                    <h3>Item Events</h3>
+                    <ul>
+                        <li><code>ITEM_PICKUP</code> - Triggered when items are collected</li>
+                        <li><code>ITEM_USE</code> - Triggered when items are used</li>
+                        <li><code>POWERUP_START</code> - Triggered when powerups activate</li>
+                        <li><code>POWERUP_END</code> - Triggered when powerups expire</li>
+                    </ul>
+                </div>
+                <div class="initializer-card">
+                    <h3>System Events</h3>
+                    <ul>
+                        <li><code>SCENE_READY</code> - Triggered when a scene is ready</li>
+                        <li><code>RESOURCES_LOADED</code> - Triggered when resources finish loading</li>
+                        <li><code>ERROR_OCCURRED</code> - Triggered when an error occurs</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Usage Example</h2>
+            <div class="code-example">
+                <pre><code><span class="comment">// Initialize the Event Manager</span>
+<span class="keyword">const</span> eventManager = <span class="keyword">new</span> <span class="function">EventManager</span>(scene);
+eventManager.<span class="function">initialize</span>();
+
+<span class="comment">// Listen for player death event</span>
+eventManager.<span class="function">on</span>(GameEvents.<span class="string">PLAYER_DEATH</span>, ({ position, cause }) => {
+    console.<span class="function">log</span>(`Player died at position ${position.x},${position.y} due to ${cause}`);
+});
+
+<span class="comment">// Emit an event</span>
+eventManager.<span class="function">emit</span>(GameEvents.<span class="string">SCORE_CHANGE</span>, { 
+    newScore: 1000, 
+    increment: 100 
+});</code></pre>
+            </div>
+        </section>
+
+        <section>
+            <h2>Core Methods</h2>
+            <div class="initializer-grid">
+                <div class="initializer-card">
+                    <h3>initialize()</h3>
+                    <p>Initializes the event system and registers default event handlers.</p>
+                </div>
+                <div class="initializer-card">
+                    <h3>on(eventName, callback)</h3>
+                    <p>Registers an event listener for the specified event.</p>
+                </div>
+                <div class="initializer-card">
+                    <h3>emit(eventName, data)</h3>
+                    <p>Emits an event with optional data payload.</p>
+                </div>
+                <div class="initializer-card">
+                    <h3>registerDefaultEvents()</h3>
+                    <p>Sets up core event handlers for common game events.</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Best Practices</h2>
+            <div class="initializer-grid">
+                <div class="initializer-card">
+                    <h3>Event Naming</h3>
+                    <p>Use the predefined GameEvents constants to prevent typos and enable autocomplete.</p>
+                </div>
+                <div class="initializer-card">
+                    <h3>Event Data</h3>
+                    <p>Always pass relevant data as an object to maintain extensibility.</p>
+                </div>
+                <div class="initializer-card">
+                    <h3>Error Handling</h3>
+                    <p>Use the ERROR_OCCURRED event to handle and log errors consistently.</p>
+                </div>
+                <div class="initializer-card">
+                    <h3>Cleanup</h3>
+                    <p>Remember to remove event listeners when they are no longer needed to prevent memory leaks.</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>File Dependencies</h2>
+            <div class="initializer-grid">
+                <div class="initializer-card">
+                    <h3>Required Files</h3>
+                    <ul>
+                        <li><code>src/modules/di/BaseManager.js</code> - Base class for all managers</li>
+                        <li><code>src/modules/managers/EventManager.js</code> - Main event manager implementation</li>
+                    </ul>
+                </div>
+                <div class="initializer-card">
+                    <h3>Import Structure</h3>
+                    <div class="code-example">
+                        <pre><code><span class="keyword">import</span> { BaseManager } <span class="keyword">from</span> <span class="string">'../di/BaseManager'</span>;
+<span class="keyword">import</span> { EventManager } <span class="keyword">from</span> <span class="string">'../managers/EventManager'</span>;</code></pre>
+                    </div>
+                </div>
+                <div class="initializer-card">
+                    <h3>Framework Dependencies</h3>
+                    <ul>
+                        <li><code>Phaser.Events.EventEmitter</code> - Used internally for event handling</li>
+                        <li><code>Phaser.Scene</code> - Required for scene context</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

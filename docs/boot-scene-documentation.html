@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boot Scene Documentation</title>
+    <link rel="stylesheet" href="styles/documentation.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Boot Scene Documentation</h1>
+        
+        <section>
+            <h2>Overview</h2>
+            <p>
+                The Boot scene is the initial scene in ShooterGTU's game lifecycle. It serves as the entry point for the game,
+                handling the basic setup required before any assets are loaded. This scene is responsible for configuring the
+                base URL for asset loading and transitioning to the Preloader scene.
+            </p>
+        </section>
+
+        <section>
+            <h2>Core Functionality</h2>
+            <div class="code-example">
+                <pre><code>export class Boot extends Scene {
+    constructor() {
+        super('Boot');
+    }
+
+    preload() {
+        this.load.setBaseURL(window.location.href);
+    }
+
+    create() {
+        this.scene.start('Preloader');
+    }
+}</code></pre>
+            </div>
+
+            <table>
+                <tr>
+                    <th>Method</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td><code>constructor()</code></td>
+                    <td>Initializes the Boot scene with the key 'Boot'</td>
+                </tr>
+                <tr>
+                    <td><code>preload()</code></td>
+                    <td>Sets the base URL for asset loading to the current window location</td>
+                </tr>
+                <tr>
+                    <td><code>create()</code></td>
+                    <td>Transitions to the Preloader scene once initialization is complete</td>
+                </tr>
+            </table>
+        </section>
+
+        <section>
+            <h2>Scene Flow</h2>
+            <div class="flow-diagram">
+                <table>
+                    <tr>
+                        <th>Stage</th>
+                        <th>Description</th>
+                    </tr>
+                    <tr>
+                        <td>1. Initialization</td>
+                        <td>Scene is created and registered with Phaser's scene manager</td>
+                    </tr>
+                    <tr>
+                        <td>2. URL Configuration</td>
+                        <td>Base URL is set for asset loading during preload phase</td>
+                    </tr>
+                    <tr>
+                        <td>3. Transition</td>
+                        <td>Scene transitions to Preloader scene for asset loading</td>
+                    </tr>
+                </table>
+            </div>
+        </section>
+
+        <section>
+            <h2>File Dependencies</h2>
+            <h3>Required Dependencies</h3>
+            <table>
+                <tr>
+                    <th>File Path</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td><code>phaser</code></td>
+                    <td>Core Phaser framework, provides Scene class</td>
+                </tr>
+            </table>
+
+            <h3>Scene Dependencies</h3>
+            <table>
+                <tr>
+                    <th>Scene</th>
+                    <th>Relationship</th>
+                </tr>
+                <tr>
+                    <td><code>Preloader</code></td>
+                    <td>Next scene in the game flow, handles asset loading</td>
+                </tr>
+            </table>
+        </section>
+
+        <section>
+            <h2>Usage Notes</h2>
+            <ul>
+                <li>The Boot scene should be the first scene added to the game configuration</li>
+                <li>No game assets should be loaded in this scene - asset loading is handled by the Preloader</li>
+                <li>The scene's primary purpose is to set up the asset loading URL and quickly transition to the Preloader</li>
+                <li>Minimal processing should occur in this scene to ensure fast game startup</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Best Practices</h2>
+            <ul>
+                <li>Keep the Boot scene lightweight and focused on initialization</li>
+                <li>Avoid adding game logic or asset loading in this scene</li>
+                <li>Ensure proper error handling for URL configuration</li>
+                <li>Maintain the simple transition flow to the Preloader scene</li>
+            </ul>
+        </section>
+    </div>
+</body>
+</html>

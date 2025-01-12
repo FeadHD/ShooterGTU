@@ -23,6 +23,7 @@ import { EnemyManager } from '../../modules/managers/EnemyManager';
 import { EffectsManager } from '../../modules/managers/EffectsManager';
 import { BulletPool } from '../../modules/managers/pools/BulletPool';
 import { AntivirusWall } from '../../prefabs/AntivirusWall';
+import { Ramp } from '../../prefabs/Ramp.js';
 
 export class GameScene1 extends BaseScene {
     constructor() {
@@ -310,6 +311,11 @@ export class GameScene1 extends BaseScene {
                     trap.triggerAlarm();
                 }
             );
+
+            // Add a ramp on top of a tile
+            const rampX = 15 * 32; // 15 tiles from the left
+            const rampY = 14 * 32; // 14 tiles from the top
+            this.ramp = new Ramp(this, rampX, rampY, 64, 32);
 
             // Debug level data loading
             const levelData = this.cache.json.get('level1');

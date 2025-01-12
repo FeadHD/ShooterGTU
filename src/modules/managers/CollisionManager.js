@@ -119,47 +119,56 @@ export class CollisionManager {
     }
 
     setupPlayerCollisions() {
-        if (this.scene.player) {
-            // Player collision with map and platforms
-            if (this.scene.mapLayer) {
-                this.scene.physics.add.collider(this.scene.player, this.scene.mapLayer);
-                this.scene.physics.add.collider(this.scene.player, this.scene.platforms);
-            }
+        if (!this.scene.player) return;
 
-            // Helper function to check if damage can be applied
-            const canApplyDamage = () => {
-                return !this.scene.isDying && 
-                       (!this.scene.invulnerableUntil || this.scene.time.now >= this.scene.invulnerableUntil);
-            };
+        // Add collision between player and map layer
+        if (this.scene.mapLayer) {
+            this.scene.physics.add.collider(this.scene.player, this.scene.mapLayer);
+        }
 
-            // Player collision with enemies
-            if (this.scene.slimes) {
-                this.scene.physics.add.overlap(
-                    this.scene.player,
-                    this.scene.slimes,
-                    (player, enemySprite) => {
-                        if (enemySprite.enemy && canApplyDamage()) {
-                            this.scene.hitEnemy(player, enemySprite);
-                        }
-                    },
-                    null,
-                    this.scene
-                );
-            }
+        // Add collision between player and platforms
+        if (this.scene.platforms) {
+            this.scene.physics.add.collider(this.scene.player, this.scene.platforms);
+        }
 
-            if (this.scene.drones) {
-                this.scene.physics.add.overlap(
-                    this.scene.player,
-                    this.scene.drones,
-                    (player, droneSprite) => {
-                        if (droneSprite.enemy && canApplyDamage()) {
-                            this.scene.hitEnemy(player, droneSprite);
-                        }
-                    },
-                    null,
-                    this.scene
-                );
-            }
+        // Add collision between player and ramp
+        if (this.scene.ramp) {
+            this.scene.physics.add.collider(this.scene.player, this.scene.ramp);
+        }
+
+        // Helper function to check if damage can be applied
+        const canApplyDamage = () => {
+            return !this.scene.isDying && 
+                   (!this.scene.invulnerableUntil || this.scene.time.now >= this.scene.invulnerableUntil);
+        };
+
+        // Player collision with enemies
+        if (this.scene.slimes) {
+            this.scene.physics.add.overlap(
+                this.scene.player,
+                this.scene.slimes,
+                (player, enemySprite) => {
+                    if (enemySprite.enemy && canApplyDamage()) {
+                        this.scene.hitEnemy(player, enemySprite);
+                    }
+                },
+                null,
+                this.scene
+            );
+        }
+
+        if (this.scene.drones) {
+            this.scene.physics.add.overlap(
+                this.scene.player,
+                this.scene.drones,
+                (player, droneSprite) => {
+                    if (droneSprite.enemy && canApplyDamage()) {
+                        this.scene.hitEnemy(player, droneSprite);
+                    }
+                },
+                null,
+                this.scene
+            );
         }
     }
 
