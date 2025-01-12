@@ -50,6 +50,14 @@ export class TestingGroundScene extends BaseScene {
             frameWidth: 32,
             frameHeight: 32
         });
+        this.load.spritesheet('zapper_death', 'assets/zapper/zapper_death.png', {
+            frameWidth: 32,
+            frameHeight: 32
+        });
+        this.load.spritesheet('zapper_hit', 'assets/zapper/zapper_hit.png', {
+            frameWidth: 32,
+            frameHeight: 32
+        });
 
         // Debug loading
         this.load.on('filecomplete-spritesheet-zapper_wake', (key, type, data) => {
@@ -82,6 +90,36 @@ export class TestingGroundScene extends BaseScene {
                 repeat: -1 // Loop continuously
             });
             console.log('Zapper walk animation created');
+        });
+
+        // Create death animation after loading
+        this.load.on('filecomplete-spritesheet-zapper_death', (key, type, data) => {
+            console.log('Zapper death spritesheet loaded:', data);
+            this.anims.create({
+                key: 'zapper_death',
+                frames: this.anims.generateFrameNumbers('zapper_death', { 
+                    start: 0, 
+                    end: 5
+                }),
+                frameRate: 10,
+                repeat: 0
+            });
+            console.log('Zapper death animation created');
+        });
+
+        // Create hit animation after loading
+        this.load.on('filecomplete-spritesheet-zapper_hit', (key, type, data) => {
+            console.log('Zapper hit spritesheet loaded:', data);
+            this.anims.create({
+                key: 'zapper_hit',
+                frames: this.anims.generateFrameNumbers('zapper_hit', { 
+                    start: 0, 
+                    end: 3
+                }),
+                frameRate: 15,
+                repeat: 0
+            });
+            console.log('Zapper hit animation created');
         });
 
         // Load character spritesheets with correct casing
@@ -237,9 +275,14 @@ export class TestingGroundScene extends BaseScene {
         this.physics.add.collider(this.player, zapper, () => {
             this.player.takeDamage();
         });
-        this.physics.add.collider(this.bullets, zapper, (bullet, enemy) => {
+
+        // Add collision between bullets and zapper
+        this.physics.add.overlap(this.bullets, zapper, (bullet, enemy) => {
+            console.log('Bullet hit Zapper');
             bullet.destroy();
-            enemy.takeDamage(GameConfig.PLAYER.BULLET_DAMAGE);
+            const damage = GameConfig.PLAYER.BULLET_DAMAGE || 25; // Default to 25 if not set
+            console.log(`Applying ${damage} damage to Zapper`);
+            enemy.takeDamage(damage);
         });
 
         // Store zapper reference for update

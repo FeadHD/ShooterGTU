@@ -15,6 +15,7 @@ export const GameConfig = {
     PLAYER: {
         INITIAL_HP: 100,
         DAMAGE: 25,
+        BULLET_DAMAGE: 25,
         INVULNERABLE_DURATION: 2000,
         GROUND_OFFSET: 16,
         SPAWN_OFFSET_X: 0.1,

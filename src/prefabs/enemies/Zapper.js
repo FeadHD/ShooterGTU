@@ -36,6 +36,9 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
         this.attackCooldown = 2000;
         this.lastAttackTime = 0;
         this.awakenRange = 50;
+        this.isHit = false;
+        this.hitCooldown = 200; // Time between hit animations
+        this.lastHitTime = 0;
 
         // Create health bar
         this.healthBar = scene.add.graphics();
@@ -48,7 +51,11 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
         this.isWakingUp = false;  // New state for wake animation
         this.isAttacking = false;
         this.isDying = false;
+        this.isDead = false;
         this.facingRight = true;
+
+        // Store previous animation key
+        this.previousAnim = null;
 
         // Create wake animation if it doesn't exist
         if (!scene.anims.exists('zapper_wake')) {
@@ -81,29 +88,93 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
     }
 
     takeDamage(amount) {
-        if (this.isDying) return;
+        if (this.isDying || this.isDead) {
+            console.log('Already dying/dead, ignoring damage');
+            return;
+        }
 
         this.health = Math.max(0, this.health - amount);
+        console.log(`Zapper took ${amount} damage. Health: ${this.health}/${this.maxHealth}`);
         this.updateHealthBar();
         
+        // Play hit animation if not on cooldown
+        const currentTime = this.scene.time.now;
+        if (currentTime > this.lastHitTime + this.hitCooldown) {
+            this.lastHitTime = currentTime;
+            
+            // Store current animation
+            if (this.anims.currentAnim) {
+                this.previousAnim = {
+                    key: this.anims.currentAnim.key,
+                    repeat: this.anims.currentAnim.repeat
+                };
+            }
+            
+            // Play hit animation
+            if (this.scene && this.scene.anims.exists('zapper_hit')) {
+                console.log('Playing hit animation');
+                this.setTexture('zapper_hit');
+                this.anims.play('zapper_hit').once('animationcomplete', () => {
+                    // Return to previous animation if it exists
+                    if (this.previousAnim && !this.isDying && !this.isDead) {
+                        this.setTexture(this.previousAnim.key);
+                        this.anims.play(this.previousAnim.key, true);
+                    }
+                });
+            }
+        }
+        
         if (this.health <= 0) {
+            console.log('Zapper health reached 0, dying...');
             this.isDying = true;
-            this.body.enable = false;
-            this.setVelocity(0, 0);
-            this.destroy();
+            
+            // Only modify physics if we still can
+            if (this.body) {
+                this.body.enable = false;
+                this.setVelocity(0, 0);
+                this.setAcceleration(0, 0);
+                this.setImmovable(true);
+            }
+            
+            // Play death animation if it exists
+            if (this.scene && this.scene.anims.exists('zapper_death')) {
+                console.log('Playing death animation');
+                this.setTexture('zapper_death');
+                this.anims.play('zapper_death').once('animationcomplete', () => {
+                    console.log('Death animation complete, destroying Zapper');
+                    if (this.healthBar) {
+                        this.healthBar.visible = false;
+                    }
+                    this.isDead = true;
+                    this.destroy();
+                });
+            } else {
+                console.warn('Death animation not found, destroying immediately');
+                if (this.healthBar) {
+                    this.healthBar.visible = false;
+                }
+                this.isDead = true;
+                this.destroy();
+            }
         }
     }
 
     preUpdate(time, delta) {
+        // Don't update if destroyed
+        if (!this.scene || this.isDead) return;
+        
         super.preUpdate(time, delta);
 
         if (this.isDying) {
-            this.setVelocity(0, 0);
+            // Only set velocity if we still can
+            if (this.body && this.body.enable) {
+                this.setVelocity(0, 0);
+            }
             return;
         }
 
         // Update health bar position
-        if (this.healthBar.visible) {
+        if (this.healthBar && this.healthBar.visible) {
             this.updateHealthBar();
         }
 
@@ -132,7 +203,9 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
             }
         } else {
             // Stay still if not awake or during wake animation
-            this.setVelocityX(0);
+            if (this.body && this.body.enable) {
+                this.setVelocityX(0);
+            }
         }
     }
 
@@ -165,7 +238,7 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
     }
 
     moveTowardsPlayer(player) {
-        if (this.isDying) return;
+        if (this.isDying || this.isDead || !this.body || !this.body.enable) return;
 
         // Calculate direction to player
         const directionX = player.x - this.x;
@@ -179,21 +252,25 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
         this.setFlipX(!this.facingRight);
 
         // Play walk animation
-        if (this.scene.anims.exists('zapper_walk')) {
+        if (this.scene && this.scene.anims.exists('zapper_walk')) {
             this.anims.play('zapper_walk', true);
         }
     }
 
     attack() {
-        if (this.isDying) return;
+        if (this.isDying || this.isDead) return;
 
         this.isAttacking = true;
-        this.setVelocityX(0);
+        if (this.body && this.body.enable) {
+            this.setVelocityX(0);
+        }
         this.lastAttackTime = this.scene.time.now;
 
         // Reset attacking state after cooldown
         this.scene.time.delayedCall(500, () => {
-            this.isAttacking = false;
+            if (!this.isDead) {
+                this.isAttacking = false;
+            }
         });
     }
 
