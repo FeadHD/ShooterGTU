@@ -40,9 +40,49 @@ export class TestingGroundScene extends BaseScene {
         // Load tileset
         this.load.image('tileset', 'assets/tilesets/tileset.png');
 
-        // Load Zapper sprite as a single image
+        // Load Zapper sprites
         this.load.image('zapper_idle', 'assets/zapper/zapper_idle.png');
-        console.log('Loading zapper_idle image...');
+        this.load.spritesheet('zapper_wake', 'assets/zapper/zapper_wake.png', {
+            frameWidth: 32,
+            frameHeight: 32
+        });
+        this.load.spritesheet('zapper_walk', 'assets/zapper/zapper_walk.png', {
+            frameWidth: 32,
+            frameHeight: 32
+        });
+
+        // Debug loading
+        this.load.on('filecomplete-spritesheet-zapper_wake', (key, type, data) => {
+            console.log('Zapper wake spritesheet loaded:', data);
+            // Create animation right after loading
+            this.anims.create({
+                key: 'zapper_wake',
+                frames: this.anims.generateFrameNumbers('zapper_wake', { 
+                    start: 0, 
+                    end: 5,
+                    first: 0 
+                }),
+                frameRate: 8,
+                repeat: 0,
+                yoyo: false
+            });
+            console.log('Zapper wake animation created');
+        });
+
+        // Create walk animation after loading
+        this.load.on('filecomplete-spritesheet-zapper_walk', (key, type, data) => {
+            console.log('Zapper walk spritesheet loaded:', data);
+            this.anims.create({
+                key: 'zapper_walk',
+                frames: this.anims.generateFrameNumbers('zapper_walk', { 
+                    start: 0, 
+                    end: 3
+                }),
+                frameRate: 8,
+                repeat: -1 // Loop continuously
+            });
+            console.log('Zapper walk animation created');
+        });
 
         // Load character spritesheets with correct casing
         this.load.spritesheet('character_idle', 'assets/character/character_Idle.png', {
@@ -202,6 +242,17 @@ export class TestingGroundScene extends BaseScene {
             enemy.takeDamage(GameConfig.PLAYER.BULLET_DAMAGE);
         });
 
+        // Store zapper reference for update
+        this.zapper = zapper;
+
+        // Debug: Show hitboxes
+        this.physics.world.createDebugGraphic();
+        this.debugGraphics = this.add.graphics();
+        
+        // Debug: Show spritesheet frames
+        console.log('Zapper texture:', this.textures.get('zapper_wake'));
+        console.log('Zapper frames:', this.anims.get('zapper_wake').frames);
+
         // Set up player movement keys
         this.cursors = this.input.keyboard.createCursorKeys();
         this.keys = {
@@ -233,6 +284,19 @@ export class TestingGroundScene extends BaseScene {
     }
 
     update(time, delta) {
+        // Update debug visualization
+        if (this.debugGraphics && this.zapper) {
+            this.debugGraphics.clear();
+            this.debugGraphics.lineStyle(1, 0x00ff00);
+            // Draw sprite bounds (scaled size)
+            this.debugGraphics.strokeRect(
+                this.zapper.x - (32 * 1.5)/2, 
+                this.zapper.y - (32 * 1.5)/2, 
+                32 * 1.5, 
+                32 * 1.5
+            );
+        }
+
         // Update player
         if (this.player) {
             // Handle player movement
