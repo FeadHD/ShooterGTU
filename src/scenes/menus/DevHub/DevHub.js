@@ -4,10 +4,10 @@ import { createRetroButton } from '../ui-helpers';
 export class DevHub extends Scene {
     constructor() {
         super({ key: 'DevHub' });
-        this.buttonY = 150;  // Start sections lower down
+        this.buttonY = 0;
         this.currentOpenDropdown = null;
-        this.matrixChars = [];
-        this.streams = [];
+        this.baseDropdownDepth = 10;
+        this.currentMaxDepth = this.baseDropdownDepth;
     }
 
     create() {
@@ -23,7 +23,8 @@ export class DevHub extends Scene {
 
         // Create containers for different sections with proper depth
         this.mainContainer = this.add.container(0, 0).setDepth(2);
-        this.dropdownContainer = this.add.container(0, 0).setDepth(2);
+        this.dropdownContainer = this.add.container(0, 0).setDepth(10);
+        this.activeDropdownContainer = this.add.container(0, 0).setDepth(1000);
 
         // Title
         const title = this.add.text(
@@ -52,7 +53,8 @@ export class DevHub extends Scene {
           .setInteractive({ useHandCursor: true })
           .on('pointerover', () => backButton.setStyle({ fill: '#0ff' }))
           .on('pointerout', () => backButton.setStyle({ fill: '#00ff00' }))
-          .on('pointerdown', () => this.scene.start('MainMenu'));
+          .on('pointerdown', () => this.scene.start('MainMenu'))
+          .setDepth(2);
         this.mainContainer.add(backButton);
     }
 
@@ -102,22 +104,51 @@ export class DevHub extends Scene {
         this.mainContainer.add(docTitle);
         this.buttonY += 40;
 
-        this.createDropdown('Select Documentation...', [
-            { key: 'animation-manager-documentation', title: 'Animation Manager', path: 'animation-manager-documentation.html' },
-            { key: 'base-scene-manager-documentation', title: 'Base Scene', path: 'base-scene-manager-documentation.html' },
-            { key: 'boundary-manager-documentation', title: 'Boundary Manager', path: 'boundary-manager-documentation.html' },
-            { key: 'collision-manager-documentation', title: 'Collision Manager', path: 'collision-manager-documentation.html' },
-            { key: 'combined-level-documentation', title: 'Combined Level', path: 'combined-level-documentation.html' },
-            { key: 'enemy-manager-documentation', title: 'Enemy Manager', path: 'enemy-manager-documentation.html' },
-            { key: 'ldtk-documentation', title: 'LDtk Documentation', path: 'ldtk-documentation.html' },
-            { key: 'ldtk-tile-manager-documentation', title: 'LDtk Tile Manager', path: 'ldtk-tile-manager-documentation.html' },
-            { key: 'level-loader-documentation', title: 'Level Loader', path: 'level-loader-documentation.html' },
-            { key: 'manager-factory-documentation', title: 'Manager Factory', path: 'manager-factory-documentation.html' },
-            { key: 'object-pool-documentation', title: 'Object Pool', path: 'object-pool-documentation.html' },
-            { key: 'player-documentation', title: 'Player Documentation', path: 'player-documentation.html' },
-            { key: 'scene-initializer-documentation', title: 'Scene Initializer', path: 'scene-initializer-documentation.html' },
-            { key: 'state-manager-documentation', title: 'State Manager', path: 'state-manager-documentation.html' }
-        ]);
+        // Documentation files from the docs directory
+        const documentationFiles = [
+            { path: 'animation-manager-documentation.html', title: 'Animation Manager' },
+            { path: 'base-manager-documentation.html', title: 'Base Manager' },
+            { path: 'base-scene-manager-documentation.html', title: 'Base Scene Manager' },
+            { path: 'boot-scene-documentation.html', title: 'Boot Scene' },
+            { path: 'boundary-manager-documentation.html', title: 'Boundary Manager' },
+            { path: 'collision-manager-documentation.html', title: 'Collision Manager' },
+            { path: 'combined-level-documentation.html', title: 'Combined Level' },
+            { path: 'dependency-injection-documentation.html', title: 'Dependency Injection' },
+            { path: 'enemy-manager-documentation.html', title: 'Enemy Manager' },
+            { path: 'event-manager-documentation.html', title: 'Event Manager' },
+            { path: 'game-config-documentation.html', title: 'Game Configuration' },
+            { path: 'game-dependencies-documentation.html', title: 'Game Dependencies' },
+            { path: 'game-scene-documentation.html', title: 'Game Scene' },
+            { path: 'ldtk-documentation.html', title: 'LDtk' },
+            { path: 'ldtk-tile-manager-documentation.html', title: 'LDtk Tile Manager' },
+            { path: 'level-loader-documentation.html', title: 'Level Loader' },
+            { path: 'manager-factory-documentation.html', title: 'Manager Factory' },
+            { path: 'object-pool-documentation.html', title: 'Object Pool' },
+            { path: 'phaser-api-documentation.html', title: 'Phaser API' },
+            { path: 'player-documentation.html', title: 'Player' },
+            { path: 'preloader-documentation.html', title: 'Preloader' },
+            { path: 'scene-initializer-documentation.html', title: 'Scene Initializer' },
+            { path: 'service-container-documentation.html', title: 'Service Container' },
+            { path: 'state-manager-documentation.html', title: 'State Manager' }
+        ];
+
+        // Create dropdown items with proper formatting
+        const dropdownItems = documentationFiles.map(doc => ({
+            key: doc.path.replace('.html', ''),
+            title: doc.title,
+            path: doc.path
+        }));
+
+        // Create the dropdown with the documentation items
+        this.createDropdown('Select Documentation...', dropdownItems);
+    }
+
+    handleDocumentationSelect(item) {
+        // Open documentation in a new window/tab
+        if (item && item.path) {
+            const docPath = `${window.location.origin}/docs/${item.path}`;
+            window.open(docPath, '_blank');
+        }
     }
 
     createSoundTestingSection() {
@@ -146,19 +177,64 @@ export class DevHub extends Scene {
         this.buttonY += 40;
     }
 
+    closeDropdown() {
+        if (this.currentOpenDropdown) {
+            // Move elements back to regular container
+            this.dropdownContainer.add([
+                this.currentOpenDropdown.header,
+                this.currentOpenDropdown.optionsContainer
+            ]);
+            if (this.currentOpenDropdown.scrollbar) {
+                this.dropdownContainer.add(this.currentOpenDropdown.scrollbar);
+            }
+            
+            this.currentOpenDropdown.isOpen = false;
+            this.currentOpenDropdown.arrow.setText('▼');
+            this.currentOpenDropdown.optionsContainer.setVisible(false);
+            if (this.currentOpenDropdown.scrollbar) {
+                this.currentOpenDropdown.scrollbar.setVisible(false);
+            }
+            this.currentOpenDropdown = null;
+        }
+    }
+
+    setDropdownDepth(dropdownState, depth) {
+        // Set depths for all dropdown components
+        dropdownState.header.setDepth(depth);
+        dropdownState.optionsContainer.setDepth(depth + 1);
+        if (dropdownState.scrollbar) {
+            dropdownState.scrollbar.setDepth(depth + 2);
+        }
+        
+        // Set depth for all children in the options container
+        dropdownState.optionsContainer.each(child => {
+            child.setDepth(depth + 1);
+        });
+        
+        // Set depth for all children in the header
+        dropdownState.header.each(child => {
+            child.setDepth(depth);
+        });
+    }
+
     createDropdown(placeholder, items) {
         const dropdownWidth = 300;
         const dropdownHeight = 40;
         const dropdownX = this.cameras.main.centerX - (dropdownWidth / 2);
         const currentY = this.buttonY;
+        const maxDropdownHeight = 400; // Maximum height for the dropdown
         let dropdownState = {
             optionsContainer: null,
+            header: null,
             arrow: null,
-            isOpen: false
+            scrollbar: null,
+            isOpen: false,
+            baseDepth: this.baseDropdownDepth // Store the base depth for this dropdown
         };
 
-        // Create dropdown header
+        // Create dropdown header with initial depth
         const header = this.add.container(0, currentY);
+        dropdownState.header = header;
         
         const dropdownBg = this.add.rectangle(
             dropdownX,
@@ -166,7 +242,7 @@ export class DevHub extends Scene {
             dropdownWidth,
             dropdownHeight,
             0x2c3e50
-        ).setOrigin(0).setDepth(2);
+        ).setOrigin(0);
 
         const dropdownText = this.add.text(
             dropdownX + 10,
@@ -177,7 +253,7 @@ export class DevHub extends Scene {
                 fill: '#00ff00',
                 fontFamily: 'Courier' 
             }
-        ).setDepth(2);
+        );
 
         const arrow = this.add.text(
             dropdownX + dropdownWidth - 30,
@@ -188,44 +264,78 @@ export class DevHub extends Scene {
                 fill: '#00ff00',
                 fontFamily: 'Courier' 
             }
-        ).setDepth(2);
+        );
         dropdownState.arrow = arrow;
 
         header.add([dropdownBg, dropdownText, arrow]);
         this.dropdownContainer.add(header);
 
-        // Create options container
-        const optionsContainer = this.add.container(dropdownX + dropdownWidth + 10, currentY);
+        // Create scrollable container for options with proper depth
+        const optionsContainer = this.add.container(dropdownX, currentY + dropdownHeight);
+        optionsContainer.setDepth(dropdownState.baseDepth);
         dropdownState.optionsContainer = optionsContainer;
         this.dropdownContainer.add(optionsContainer);
 
-        // Calculate visible options
-        const maxVisibleOptions = Math.floor((this.cameras.main.height - currentY - dropdownHeight - 100) / 40);
-        const itemHeight = 40;
-
-        // Create options background
+        // Create options background with semi-transparent black
         const optionsBackground = this.add.rectangle(
             0,
             0,
             dropdownWidth,
-            Math.min(items.length, maxVisibleOptions) * itemHeight,
-            0x2c3e50
+            items.length * dropdownHeight,
+            0x000000,
+            0.9
         ).setOrigin(0);
         optionsContainer.add(optionsBackground);
+
+        // Add scrollbar if needed
+        const contentHeight = items.length * dropdownHeight;
+        if (contentHeight > maxDropdownHeight) {
+            const scrollbarWidth = 8;
+            const scrollbarHeight = (maxDropdownHeight / contentHeight) * maxDropdownHeight;
+            
+            const scrollbar = this.add.rectangle(
+                dropdownX + dropdownWidth - scrollbarWidth - 2,
+                currentY + dropdownHeight,
+                scrollbarWidth,
+                scrollbarHeight,
+                0x4a6fa5
+            ).setOrigin(0)
+            .setVisible(false)
+            .setDepth(dropdownState.baseDepth + 3);
+            
+            dropdownState.scrollbar = scrollbar;
+
+            // Make scrollbar interactive
+            this.input.on('wheel', (pointer, gameObjects, deltaX, deltaY) => {
+                if (dropdownState.isOpen && pointer.y > currentY + dropdownHeight && pointer.y < currentY + dropdownHeight + maxDropdownHeight) {
+                    const newY = Phaser.Math.Clamp(
+                        optionsContainer.y + (deltaY * -0.5),
+                        currentY + dropdownHeight - (contentHeight - maxDropdownHeight),
+                        currentY + dropdownHeight
+                    );
+                    optionsContainer.y = newY;
+
+                    // Update scrollbar position
+                    const scrollProgress = (currentY + dropdownHeight - optionsContainer.y) / (contentHeight - maxDropdownHeight);
+                    const scrollbarY = currentY + dropdownHeight + (scrollProgress * (maxDropdownHeight - scrollbarHeight));
+                    scrollbar.y = scrollbarY;
+                }
+            });
+        }
 
         // Add options
         items.forEach((item, index) => {
             const bg = this.add.rectangle(
                 0,
-                index * itemHeight,
+                index * dropdownHeight,
                 dropdownWidth,
-                itemHeight,
+                dropdownHeight,
                 0x2c3e50
             ).setOrigin(0);
 
             const text = this.add.text(
                 10,
-                index * itemHeight + 10,
+                index * dropdownHeight + 10,
                 item.title,
                 { 
                     fontSize: '18px', 
@@ -273,64 +383,58 @@ export class DevHub extends Scene {
                     } else {
                         this.scene.start(item.key);
                     }
-                    dropdownState.isOpen = false;
-                    optionsContainer.setVisible(false);
-                    arrow.setText('▼');
+                    this.closeDropdown();
                 });
 
             optionsContainer.add([bg, text]);
         });
 
-        // Handle dropdown toggle
-        let scrollOffset = 0;
-
-        const closeDropdown = () => {
-            dropdownState.isOpen = false;
-            optionsContainer.setVisible(false);
-            arrow.setText('▼');
-            this.currentOpenDropdown = null;
-        };
-
-        const openDropdown = () => {
-            // Close currently open dropdown if exists
-            if (this.currentOpenDropdown && this.currentOpenDropdown !== dropdownState) {
-                this.currentOpenDropdown.isOpen = false;
-                this.currentOpenDropdown.optionsContainer.setVisible(false);
-                this.currentOpenDropdown.arrow.setText('▼');
-            }
-            dropdownState.isOpen = true;
-            optionsContainer.setVisible(true);
-            arrow.setText('▲');
-            this.currentOpenDropdown = dropdownState;
-        };
-
+        // Make dropdown header interactive
         dropdownBg.setInteractive({ useHandCursor: true })
             .on('pointerdown', () => {
                 if (dropdownState.isOpen) {
-                    closeDropdown();
+                    this.closeDropdown();
                 } else {
-                    openDropdown();
+                    if (this.currentOpenDropdown) {
+                        // Move current dropdown back to regular container
+                        this.dropdownContainer.add([
+                            this.currentOpenDropdown.header,
+                            this.currentOpenDropdown.optionsContainer
+                        ]);
+                        if (this.currentOpenDropdown.scrollbar) {
+                            this.dropdownContainer.add(this.currentOpenDropdown.scrollbar);
+                        }
+                        this.closeDropdown();
+                    }
+                    
+                    this.currentOpenDropdown = dropdownState;
+                    dropdownState.isOpen = true;
+                    arrow.setText('▲');
+                    optionsContainer.setVisible(true);
+                    if (dropdownState.scrollbar) {
+                        dropdownState.scrollbar.setVisible(true);
+                    }
+                    
+                    // Move active dropdown to top container
+                    this.activeDropdownContainer.add([header, optionsContainer]);
+                    if (dropdownState.scrollbar) {
+                        this.activeDropdownContainer.add(dropdownState.scrollbar);
+                    }
                 }
-                scrollOffset = 0;
             });
 
-        // Add scroll handling
-        this.input.on('wheel', (pointer, gameObjects, deltaX, deltaY) => {
-            if (dropdownState.isOpen && pointer.y > currentY + dropdownHeight) {
-                scrollOffset = Phaser.Math.Clamp(
-                    scrollOffset + deltaY,
-                    -Math.max(0, (items.length - maxVisibleOptions) * itemHeight),
-                    0
-                );
-                optionsContainer.y = currentY + scrollOffset;
-            }
-        });
-
+        // Initially hide options
         optionsContainer.setVisible(false);
-        this.buttonY += dropdownHeight + 40;
+        
+        this.buttonY += dropdownHeight + 20;
+        return dropdownState;
     }
 
     createMatrixBackground() {
+        // Initialize arrays
+        this.matrixChars = [];
+        this.streams = [];
+        
         // Matrix green color
         const matrixGreen = '#00ff00';
         

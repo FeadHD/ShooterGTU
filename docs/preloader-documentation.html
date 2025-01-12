@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preloader Scene Documentation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        h1, h2, h3 {
+            color: #2c3e50;
+            margin-top: 30px;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .code-example {
+            background-color: #1e1e1e;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        .code-example code {
+            color: #d4d4d4;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .comment { color: #6a9955; }
+        .keyword { color: #569cd6; }
+        .string { color: #ce9178; }
+        .function { color: #dcdcaa; }
+        .number { color: #b5cea8; }
+
+        .asset-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .asset-table th,
+        .asset-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .asset-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+
+        .asset-table tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border: 1px solid #ffeeba;
+        }
+
+        .note {
+            background-color: #e7f5ff;
+            color: #004085;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border: 1px solid #b8daff;
+        }
+
+        .api-reference {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-left: 4px solid #007bff;
+            margin: 10px 0;
+        }
+
+        .asset-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .asset-card {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Preloader Scene Documentation</h1>
+        
+        <section>
+            <h2>Overview</h2>
+            <p>
+                The Preloader scene is responsible for loading all game assets before the game starts. It includes a visual
+                loading bar, comprehensive error handling, and debug logging for asset loading progress.
+            </p>
+            <div class="note">
+                This scene must complete loading before any other scene can access the assets.
+            </div>
+        </section>
+
+        <section>
+            <h2>Loading UI</h2>
+            <div class="code-example">
+                <pre><code><span class="comment">// Create loading text</span>
+<span class="keyword">const</span> loadingText = this.add.<span class="function">text</span>(
+    this.scale.width/<span class="number">2</span>,
+    this.scale.height/<span class="number">2</span>,
+    <span class="string">'Loading...'</span>,
+    {
+        fontFamily: <span class="string">'Arial'</span>,
+        fontSize: <span class="string">'24px'</span>,
+        color: <span class="string">'#ffffff'</span>
+    }
+).setOrigin(<span class="number">0.5</span>);
+
+<span class="comment">// Create progress bar</span>
+progressBox.<span class="function">fillStyle</span>(<span class="number">0x222222</span>, <span class="number">0.8</span>);
+progressBox.<span class="function">fillRect</span>(width/<span class="number">2</span> - <span class="number">160</span>, height/<span class="number">2</span> + <span class="number">20</span>, <span class="number">320</span>, <span class="number">28</span>);</code></pre>
+            </div>
+            <div class="api-reference">
+                <strong>API Reference:</strong> See <a href="https://photonstorm.github.io/phaser3-docs/Phaser.GameObjects.Graphics.html">Phaser.GameObjects.Graphics</a>
+            </div>
+        </section>
+
+        <section>
+            <h2>Asset Categories</h2>
+            <div class="asset-grid">
+                <div class="asset-card">
+                    <h3>Fonts and Styles</h3>
+                    <ul>
+                        <li>WebFont (Google Fonts)</li>
+                        <li>Custom fonts CSS</li>
+                        <li>Retronoid font family</li>
+                    </ul>
+                </div>
+                <div class="asset-card">
+                    <h3>Background Layers</h3>
+                    <ul>
+                        <li>Main menu background</li>
+                        <li>9 parallax layers (bg-1 to bg-9)</li>
+                        <li>Special effects layers (3fx, 6fx, 8fx)</li>
+                    </ul>
+                </div>
+                <div class="asset-card">
+                    <h3>Character Sprites</h3>
+                    <ul>
+                        <li>Idle animation (5 frames)</li>
+                        <li>Walking animation (7 frames)</li>
+                        <li>Running animation (7 frames)</li>
+                        <li>Jump animation (2 frames)</li>
+                        <li>Death animation (9 frames)</li>
+                    </ul>
+                </div>
+                <div class="asset-card">
+                    <h3>Enemy Sprites</h3>
+                    <ul>
+                        <li>Slime (idle, jump, death)</li>
+                        <li>Melee Warrior (8 animations)</li>
+                        <li>Drone (Bot1v1)</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Sprite Configurations</h2>
+            <table class="asset-table">
+                <tr>
+                    <th>Sprite</th>
+                    <th>Frame Size</th>
+                    <th>Frames</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td>Character</td>
+                    <td>48x48</td>
+                    <td>Various</td>
+                    <td>Player character animations</td>
+                </tr>
+                <tr>
+                    <td>Slime</td>
+                    <td>32x32</td>
+                    <td>3-5</td>
+                    <td>Basic enemy animations</td>
+                </tr>
+                <tr>
+                    <td>Melee Warrior</td>
+                    <td>96x84</td>
+                    <td>3-8</td>
+                    <td>Advanced enemy with multiple states</td>
+                </tr>
+                <tr>
+                    <td>Bullet</td>
+                    <td>32x32</td>
+                    <td>4</td>
+                    <td>Projectile animations</td>
+                </tr>
+            </table>
+        </section>
+
+        <section>
+            <h2>Audio Assets</h2>
+            <div class="asset-grid">
+                <div class="asset-card">
+                    <h3>Sound Effects</h3>
+                    <ul>
+                        <li>laser.wav - Shooting sound</li>
+                        <li>hit.wav - Impact sound</li>
+                        <li>bitcoin_collect.mp3 - Collection sound</li>
+                    </ul>
+                </div>
+                <div class="asset-card">
+                    <h3>Music</h3>
+                    <ul>
+                        <li>bgMusic - Main menu theme</li>
+                        <li>thezucc.wav - Special theme</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Error Handling</h2>
+            <div class="code-example">
+                <pre><code><span class="comment">// General loader error</span>
+this.load.<span class="function">on</span>(<span class="string">'loaderror'</span>, (file) => {
+    console.<span class="function">error</span>(<span class="string">'Error loading file:'</span>, file.src);
+});
+
+<span class="comment">// Audio-specific error</span>
+this.load.<span class="function">on</span>(<span class="string">'loaderror'</span>, (file) => {
+    <span class="keyword">if</span> (file.type === <span class="string">'audio'</span>) {
+        console.<span class="function">error</span>(<span class="string">'Audio load error:'</span>, file.key);
+    }
+});</code></pre>
+            </div>
+        </section>
+
+        <section>
+            <h2>Debug Features</h2>
+            <div class="asset-grid">
+                <div class="asset-card">
+                    <h3>Asset Loading Logs</h3>
+                    <ul>
+                        <li>File completion events</li>
+                        <li>Texture dimensions</li>
+                        <li>Frame configurations</li>
+                        <li>Audio load status</li>
+                    </ul>
+                </div>
+                <div class="asset-card">
+                    <h3>Font Loading</h3>
+                    <ul>
+                        <li>WebFont success/failure events</li>
+                        <li>Fallback font handling</li>
+                        <li>Timeout handling (3s)</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Scene Flow</h2>
+            <div class="code-example">
+                <pre><code><span class="comment">// On successful load</span>
+this.load.<span class="function">on</span>(<span class="string">'complete'</span>, () => {
+    <span class="comment">// Verify all textures</span>
+    textureKeys.<span class="function">forEach</span>(key => {
+        <span class="keyword">if</span> (this.textures.<span class="function">exists</span>(key)) {
+            console.<span class="function">log</span>(`${key} loaded successfully`);
+        }
+    });
+    
+    <span class="comment">// Start main menu</span>
+    this.scene.<span class="function">start</span>(<span class="string">'MainMenu'</span>);
+});</code></pre>
+            </div>
+        </section>
+
+        <section>
+            <h2>Dependencies and Scene Flow</h2>
+            <div class="note">
+                The following diagram shows how the Preloader scene interacts with other components in the game.
+            </div>
+            <div class="mermaid">
+                graph TD
+                    Boot[Boot Scene] -->|Starts| Preloader
+                    TitleScene[Title Scene] -->|Can Start| Preloader
+                    Config[config.js] -->|Registers| Preloader
+                    
+                    subgraph PreloaderScene[Preloader Scene]
+                        LoadAssets[Load Assets] -->|On Complete| StartMainMenu
+                        LoadAssets -->|Loads| Assets
+                        
+                        subgraph Assets
+                            Sprites[Sprite Sheets]
+                            Backgrounds[Background Images]
+                            Audio[Sound Effects & Music]
+                            Fonts[WebFonts & CSS]
+                        end
+                    end
+                    
+                    Preloader -->|Success| MainMenu[Main Menu Scene]
+                    
+                    subgraph GameScenes[Game Scenes]
+                        GameScene1[Game Scene 1]
+                        GameScene2[Game Scene 2]
+                        GameScene3[Game Scene 3]
+                        GameScene4[Game Scene 4]
+                        GameScene5[Game Scene 5]
+                        Matrix[Matrix 640x360]
+                    end
+                    
+                    MainMenu -->|Start Game| GameScenes
+                    
+                    subgraph AssetDependencies[Asset Dependencies]
+                        Sprites --> Character[Character Animations]
+                        Sprites --> Enemies[Enemy Sprites]
+                        Sprites --> Bullets[Bullet Effects]
+                        Backgrounds --> Parallax[Parallax Layers]
+                        Audio --> SFX[Sound Effects]
+                        Audio --> Music[Background Music]
+                    end
+                    
+                    Assets --> GameScenes
+                    
+                    style PreloaderScene fill:#f9f,stroke:#333,stroke-width:2px
+                    style Assets fill:#bbf,stroke:#333,stroke-width:1px
+                    style AssetDependencies fill:#bfb,stroke:#333,stroke-width:1px
+                    style GameScenes fill:#fbf,stroke:#333,stroke-width:1px
+            </div>
+            <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+            <script>
+                mermaid.initialize({ startOnLoad: true });
+            </script>
+        </section>
+
+        <section>
+            <h2>Best Practices</h2>
+            <div class="warning">
+                <strong>Important Considerations:</strong>
+                <ul>
+                    <li>Always provide loading feedback to users</li>
+                    <li>Implement comprehensive error handling</li>
+                    <li>Use appropriate file formats for different asset types</li>
+                    <li>Optimize asset sizes for better loading performance</li>
+                    <li>Implement fallbacks for critical resources</li>
+                </ul>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

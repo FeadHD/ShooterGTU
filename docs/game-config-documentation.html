@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Configuration Documentation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        h1, h2, h3 {
+            color: #2c3e50;
+            margin-top: 30px;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .code-example {
+            background-color: #1e1e1e;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        .code-example code {
+            color: #d4d4d4;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .comment { color: #6a9955; }
+        .keyword { color: #569cd6; }
+        .string { color: #ce9178; }
+        .function { color: #dcdcaa; }
+        .number { color: #b5cea8; }
+
+        .property-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .property-table th,
+        .property-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .property-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+
+        .property-table tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border: 1px solid #ffeeba;
+        }
+
+        .note {
+            background-color: #e7f5ff;
+            color: #004085;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border: 1px solid #b8daff;
+        }
+
+        .api-reference {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-left: 4px solid #007bff;
+            margin: 10px 0;
+        }
+
+        .scene-list {
+            list-style: none;
+            padding: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 10px;
+        }
+
+        .scene-item {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Game Configuration Documentation</h1>
+        
+        <section>
+            <h2>Overview</h2>
+            <p>
+                This documentation details the core configuration settings for the game engine. The configuration
+                defines the fundamental behavior, rendering options, and scene management for the Phaser 3 game instance.
+            </p>
+            <div class="note">
+                Configuration is defined in <code>src/config/config.js</code> and is used to initialize the main Phaser.Game instance.
+            </div>
+        </section>
+
+        <section>
+            <h2>Renderer Configuration</h2>
+            <div class="code-example">
+                <pre><code><span class="keyword">export const</span> config = {
+    type: Phaser.AUTO,
+    pixelArt: <span class="keyword">true</span>
+};</code></pre>
+            </div>
+            <table class="property-table">
+                <tr>
+                    <th>Property</th>
+                    <th>Value</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td>type</td>
+                    <td>Phaser.AUTO</td>
+                    <td>Automatically chooses between WebGL and Canvas rendering based on browser support. WebGL is preferred for better performance.</td>
+                </tr>
+                <tr>
+                    <td>pixelArt</td>
+                    <td>true</td>
+                    <td>Enables crisp pixel art rendering by disabling texture smoothing and using nearest-neighbor scaling.</td>
+                </tr>
+            </table>
+            <div class="api-reference">
+                <strong>API Reference:</strong> See <a href="https://photonstorm.github.io/phaser3-docs/Phaser.Core.Config.html">Phaser.Core.Config</a>
+            </div>
+        </section>
+
+        <section>
+            <h2>Scale Configuration</h2>
+            <div class="code-example">
+                <pre><code>scale: {
+    mode: Phaser.Scale.NONE,
+    parent: <span class="string">'game-container'</span>,
+    width: <span class="number">1920</span>,
+    height: <span class="number">1080</span>,
+    autoRound: <span class="keyword">true</span>,
+    zoom: <span class="number">1</span>,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    fullscreenTarget: <span class="string">'game-container'</span>,
+    expandParent: <span class="keyword">true</span>
+}</code></pre>
+            </div>
+            <table class="property-table">
+                <tr>
+                    <th>Property</th>
+                    <th>Value</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td>mode</td>
+                    <td>Phaser.Scale.NONE</td>
+                    <td>No scaling applied. The game canvas maintains its exact dimensions.</td>
+                </tr>
+                <tr>
+                    <td>parent</td>
+                    <td>'game-container'</td>
+                    <td>ID of the HTML element that will contain the game canvas.</td>
+                </tr>
+                <tr>
+                    <td>width</td>
+                    <td>1920</td>
+                    <td>Base width of the game canvas in pixels (1080p resolution).</td>
+                </tr>
+                <tr>
+                    <td>height</td>
+                    <td>1080</td>
+                    <td>Base height of the game canvas in pixels (1080p resolution).</td>
+                </tr>
+                <tr>
+                    <td>autoRound</td>
+                    <td>true</td>
+                    <td>Automatically rounds scaled dimensions to prevent sub-pixel rendering.</td>
+                </tr>
+                <tr>
+                    <td>zoom</td>
+                    <td>1</td>
+                    <td>Initial zoom level of the game canvas.</td>
+                </tr>
+                <tr>
+                    <td>autoCenter</td>
+                    <td>Phaser.Scale.CENTER_BOTH</td>
+                    <td>Centers the game canvas both horizontally and vertically within its parent container.</td>
+                </tr>
+                <tr>
+                    <td>fullscreenTarget</td>
+                    <td>'game-container'</td>
+                    <td>Element to be used for fullscreen mode.</td>
+                </tr>
+                <tr>
+                    <td>expandParent</td>
+                    <td>true</td>
+                    <td>Automatically expands the parent container to fit the game canvas.</td>
+                </tr>
+            </table>
+            <div class="api-reference">
+                <strong>API Reference:</strong> See <a href="https://photonstorm.github.io/phaser3-docs/Phaser.Scale.ScaleManager.html">Phaser.Scale.ScaleManager</a>
+            </div>
+        </section>
+
+        <section>
+            <h2>DOM Configuration</h2>
+            <div class="code-example">
+                <pre><code>dom: {
+    createContainer: <span class="keyword">true</span>
+}</code></pre>
+            </div>
+            <table class="property-table">
+                <tr>
+                    <th>Property</th>
+                    <th>Value</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td>createContainer</td>
+                    <td>true</td>
+                    <td>Creates a DOM container for HTML elements. Required for UI overlays and HTML-based interfaces.</td>
+                </tr>
+            </table>
+            <div class="api-reference">
+                <strong>API Reference:</strong> See <a href="https://photonstorm.github.io/phaser3-docs/Phaser.DOM.html">Phaser.DOM</a>
+            </div>
+        </section>
+
+        <section>
+            <h2>Physics Configuration</h2>
+            <div class="code-example">
+                <pre><code>physics: {
+    default: <span class="string">'arcade'</span>,
+    arcade: {
+        debug: <span class="keyword">false</span>,
+        gravity: { y: <span class="number">400</span> },
+        tileBias: <span class="number">32</span>
+    }
+}</code></pre>
+            </div>
+            <table class="property-table">
+                <tr>
+                    <th>Property</th>
+                    <th>Value</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td>default</td>
+                    <td>'arcade'</td>
+                    <td>Uses Arcade Physics system, optimized for AABB (Axis-Aligned Bounding Box) collision detection.</td>
+                </tr>
+                <tr>
+                    <td>debug</td>
+                    <td>false</td>
+                    <td>When true, shows physics bodies and velocity vectors for debugging.</td>
+                </tr>
+                <tr>
+                    <td>gravity.y</td>
+                    <td>400</td>
+                    <td>Vertical gravity force in pixels per second squared. Positive values pull downward.</td>
+                </tr>
+                <tr>
+                    <td>tileBias</td>
+                    <td>32</td>
+                    <td>Extra padding for tile collision detection, helps prevent sprite tunneling.</td>
+                </tr>
+            </table>
+            <div class="api-reference">
+                <strong>API Reference:</strong> See <a href="https://photonstorm.github.io/phaser3-docs/Phaser.Physics.Arcade.html">Phaser.Physics.Arcade</a>
+            </div>
+        </section>
+
+        <section>
+            <h2>Input Configuration</h2>
+            <div class="code-example">
+                <pre><code>input: {
+    mouse: {
+        preventDefaultWheel: <span class="keyword">true</span>,
+        preventDefaultContextMenu: <span class="keyword">true</span>
+    }
+}</code></pre>
+            </div>
+            <table class="property-table">
+                <tr>
+                    <th>Property</th>
+                    <th>Value</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td>preventDefaultWheel</td>
+                    <td>true</td>
+                    <td>Prevents the browser's default wheel behavior, useful for custom scroll implementations.</td>
+                </tr>
+                <tr>
+                    <td>preventDefaultContextMenu</td>
+                    <td>true</td>
+                    <td>Disables the browser's context menu on right-click within the game canvas.</td>
+                </tr>
+            </table>
+            <div class="api-reference">
+                <strong>API Reference:</strong> See <a href="https://photonstorm.github.io/phaser3-docs/Phaser.Input.InputManager.html">Phaser.Input.InputManager</a>
+            </div>
+        </section>
+
+        <section>
+            <h2>Scene Configuration</h2>
+            <p>The game includes multiple scenes organized by type:</p>
+            
+            <h3>Core Scenes</h3>
+            <ul class="scene-list">
+                <li class="scene-item">Preloader - Asset loading and initialization</li>
+                <li class="scene-item">TitleScene - Main title screen</li>
+                <li class="scene-item">IntroScene - Game introduction</li>
+            </ul>
+
+            <h3>Menu Scenes</h3>
+            <ul class="scene-list">
+                <li class="scene-item">MainMenu - Primary navigation</li>
+                <li class="scene-item">Settings - Game settings</li>
+                <li class="scene-item">ControlsSettings - Input configuration</li>
+                <li class="scene-item">SoundSettings - Audio settings</li>
+                <li class="scene-item">PauseMenu - In-game pause</li>
+                <li class="scene-item">Leaderboard - High scores</li>
+                <li class="scene-item">Credits - Game credits</li>
+            </ul>
+
+            <h3>Game Scenes</h3>
+            <ul class="scene-list">
+                <li class="scene-item">GameScene1-5 - Main game levels</li>
+                <li class="scene-item">Matrix640x360 - Special matrix level</li>
+                <li class="scene-item">BlueTest - Test environment</li>
+                <li class="scene-item">GtuTestLevel0-2 - GTU test levels</li>
+                <li class="scene-item">CombinedGtuLevel - Combined test level</li>
+            </ul>
+
+            <h3>Development Scenes</h3>
+            <ul class="scene-list">
+                <li class="scene-item">DevHub - Developer tools and testing</li>
+                <li class="scene-item">SoundTester - Audio testing utility</li>
+            </ul>
+
+            <div class="note">
+                Scenes are loaded in the order they appear in the configuration. The Preloader scene is loaded first
+                to ensure all assets are available before other scenes initialize.
+            </div>
+            <div class="api-reference">
+                <strong>API Reference:</strong> See <a href="https://photonstorm.github.io/phaser3-docs/Phaser.Scenes.SceneManager.html">Phaser.Scenes.SceneManager</a>
+            </div>
+        </section>
+
+        <section>
+            <h2>Best Practices</h2>
+            <div class="warning">
+                <strong>Important Considerations:</strong>
+                <ul>
+                    <li>Keep debug mode disabled in production for better performance</li>
+                    <li>Adjust gravity and tileBias based on game physics requirements</li>
+                    <li>Consider device capabilities when setting resolution and scale mode</li>
+                    <li>Organize scenes in a logical order for proper loading sequence</li>
+                </ul>
+            </div>
+        </section>
+    </div>
+</body>
+</html>
