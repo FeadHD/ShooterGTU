@@ -24,8 +24,8 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
         this.body.setImmovable(true);
 
         // Set hitbox size to match sprite dimensions exactly
-        this.body.setSize(32, 32); // New sprite size
-        this.body.setOffset(0, 0); // No offset needed since we're using the full size
+        this.body.setSize(16, 24); // Smaller hitbox for more precise hits
+        this.body.setOffset(8, 8); // Center horizontally and align to bottom
 
         // Combat properties
         this.maxHealth = 50;
