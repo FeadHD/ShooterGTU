@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windsurf Documentation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .nav-container {
+            margin-bottom: 20px;
+        }
+
+        .nav-dropdown {
+            padding: 8px;
+            font-size: 16px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            background-color: white;
+            min-width: 200px;
+        }
+
+        .feature-section {
+            background-color: #f8f9fa;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border-left: 5px solid #2196f3;
+        }
+
+        .code-block {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            overflow-x: auto;
+        }
+
+        .key-feature {
+            background-color: #e3f2fd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 5px solid #2196f3;
+        }
+
+        .note {
+            background-color: #fff3e0;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 5px solid #ff9800;
+        }
+    </style>
+    <script>
+        function navigateToDoc() {
+            const select = document.getElementById('docSelect');
+            if (select.value) {
+                window.location.href = select.value;
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-container">
+            <select id="docSelect" class="nav-dropdown" onchange="navigateToDoc()">
+                <option value="">Select Documentation</option>
+                <option value="animation-manager-documentation.html">Animation Manager</option>
+                <option value="arcade-physics-documentation.html">Arcade Physics</option>
+                <option value="base-manager-documentation.html">Base Manager</option>
+                <option value="collision-manager-documentation.html">Collision Manager</option>
+                <option value="game-dependencies-documentation.html">Game Dependencies</option>
+                <option value="windsurf-documentation.html" selected>Windsurf</option>
+            </select>
+        </div>
+
+        <h1>Windsurf Documentation</h1>
+        
+        <div class="feature-section">
+            <h2>Overview</h2>
+            <p>
+                Windsurf is a powerful development environment designed to enhance the game development experience. 
+                It provides an integrated set of tools and features specifically tailored for Phaser.js game development.
+            </p>
+        </div>
+
+        <div class="key-feature">
+            <h2>Key Features</h2>
+            <ul>
+                <li><strong>Developer Hub:</strong> A centralized interface for managing game development tasks</li>
+                <li><strong>Documentation Browser:</strong> Easy access to all game components documentation</li>
+                <li><strong>Quick Launch:</strong> Rapid access to different game scenes and levels</li>
+                <li><strong>Sound Testing:</strong> Integrated tools for testing game audio</li>
+            </ul>
+        </div>
+
+        <div class="feature-section">
+            <h2>Related Documentation</h2>
+            <ul>
+                <li><a href="game-dependencies-documentation.html">Game Dependencies</a> - Understanding core game dependencies</li>
+                <li><a href="game-config-documentation.html">Game Configuration</a> - Game configuration settings</li>
+                <li><a href="state-manager-documentation.html">State Manager</a> - Game state management system</li>
+                <li><a href="event-manager-documentation.html">Event Manager</a> - Event handling system</li>
+                <li><a href="scene-initializer-documentation.html">Scene Initializer</a> - Scene initialization process</li>
+            </ul>
+        </div>
+
+        <h2>Developer Hub Interface</h2>
+        <p>
+            The Developer Hub provides a comprehensive interface for managing your game development workflow:
+        </p>
+        <ul>
+            <li><strong>Scene Selection:</strong> Quick access to test different game scenes</li>
+            <li><strong>Documentation Access:</strong> Browse and search through component documentation</li>
+            <li><strong>Development Tools:</strong> Access to debugging and testing utilities</li>
+        </ul>
+
+        <div class="feature-section">
+            <h2>Core Components</h2>
+            <h3>Physics System</h3>
+            <p>Windsurf integrates with various physics systems:</p>
+            <ul>
+                <li><a href="arcade-physics-documentation.html">Arcade Physics</a> - Simple and efficient physics system</li>
+                <li><a href="collision-manager-documentation.html">Collision Manager</a> - Advanced collision detection</li>
+            </ul>
+
+            <h3>Animation System</h3>
+            <p>Comprehensive animation management:</p>
+            <ul>
+                <li><a href="animation-manager-documentation.html">Animation Manager</a> - Sprite animation control</li>
+            </ul>
+
+            <h3>Asset Management</h3>
+            <p>Efficient asset handling:</p>
+            <ul>
+                <li><a href="preloader-documentation.html">Preloader</a> - Asset loading and management</li>
+                <li><a href="object-pool-documentation.html">Object Pool</a> - Performance optimization</li>
+            </ul>
+        </div>
+
+        <div class="note">
+            <h3>External Resources</h3>
+            <ul>
+                <li><a href="phaser-api-documentation.html">Phaser API Documentation</a> - Core Phaser.js documentation</li>
+                <li><a href="ldtk-documentation.html">LDtk Documentation</a> - Level design tool integration</li>
+            </ul>
+        </div>
+
+        <div class="feature-section">
+            <h2>Development Tools</h2>
+            <h3>Scene Management</h3>
+            <ul>
+                <li><a href="base-scene-manager-documentation.html">Base Scene Manager</a> - Core scene management</li>
+                <li><a href="game-scene-documentation.html">Game Scene</a> - Main game scene implementation</li>
+                <li><a href="boot-scene-documentation.html">Boot Scene</a> - Game initialization</li>
+            </ul>
+
+            <h3>Entity Management</h3>
+            <ul>
+                <li><a href="player-documentation.html">Player System</a> - Player entity management</li>
+                <li><a href="enemy-manager-documentation.html">Enemy Manager</a> - Enemy AI and behavior</li>
+            </ul>
+
+            <h3>Level Design</h3>
+            <ul>
+                <li><a href="level-loader-documentation.html">Level Loader</a> - Dynamic level loading</li>
+                <li><a href="ldtk-tile-manager-documentation.html">LDtk Tile Manager</a> - Tile-based level management</li>
+            </ul>
+        </div>
+
+        <div class="note">
+            <h3>Advanced Topics</h3>
+            <ul>
+                <li><a href="dependency-injection-documentation.html">Dependency Injection</a> - Component architecture</li>
+                <li><a href="service-container-documentation.html">Service Container</a> - Service management</li>
+                <li><a href="manager-factory-documentation.html">Manager Factory</a> - Component instantiation</li>
+            </ul>
+        </div>
+
+        <div class="note">
+            <h3>Note</h3>
+            <p>
+                The Windsurf environment is continuously evolving. Check for updates and new features regularly to ensure
+                you're making the most of the available tools and capabilities.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
