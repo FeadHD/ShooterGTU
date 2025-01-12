@@ -1202,107 +1202,7 @@ export class GameScene1 extends BaseScene {
         this.scene.resume();
     }
 
-    pauseGame() {
-        if (this.isGamePaused) return;
-        
-        // Store game state before pausing
-        this.pausedState = {
-            playerState: {
-                x: this.player?.x,
-                y: this.player?.y,
-                velocity: {
-                    x: this.player?.body?.velocity?.x,
-                    y: this.player?.body?.velocity?.y
-                }
-            },
-            enemyStates: this.enemies?.getChildren().map(enemy => ({
-                id: enemy.id,
-                x: enemy.x,
-                y: enemy.y,
-                velocity: {
-                    x: enemy.body?.velocity?.x,
-                    y: enemy.body?.velocity?.y
-                }
-            })),
-            bulletStates: this.bullets?.getChildren().map(bullet => ({
-                x: bullet.x,
-                y: bullet.y,
-                velocity: {
-                    x: bullet.body?.velocity?.x,
-                    y: bullet.body?.velocity?.y
-                }
-            })),
-            gameTime: this.gameTime,
-            score: this.score
-        };
-        
-        this.isGamePaused = true;
-        
-        // Launch pause menu before pausing the scene
-        this.scene.launch('PauseMenu');
-        
-        // Pause physics world
-        if (this.physics && this.physics.world) {
-            try {
-                // Pause physics world
-                this.physics.world.pause();
-                
-                // Disable all physics bodies
-                this.physics.world.bodies.entries.forEach(body => {
-                    if (body && !body.destroyed) {
-                        body.enable = false;
-                    }
-                });
-            } catch (error) {
-                console.warn('Could not pause physics:', error);
-            }
-        }
-        
-        // Disable player controller and input
-        if (this.player) {
-            if (this.player.controller) {
-                this.player.controller.enabled = false;
-            }
-            if (this.player.body && !this.player.body.destroyed) {
-                this.player.body.enable = false;
-            }
-            
-            // Stop any ongoing player animations
-            if (this.player.anims) {
-                this.player.anims.pause();
-            }
-        }
-        
-        // Disable input system
-        if (this.input && this.input.keyboard) {
-            this.input.keyboard.enabled = false;
-        }
-        
-        // Pause enemy AI
-        if (this.enemies) {
-            this.enemies.getChildren().forEach(enemy => {
-                if (enemy.stopFollowing && typeof enemy.stopFollowing === 'function') {
-                    enemy.stopFollowing();
-                }
-                if (enemy.body && !enemy.body.destroyed) {
-                    enemy.body.enable = false;
-                }
-            });
-        }
-        
-        // Pause any animations
-        this.anims.pauseAll();
-        
-        // Pause all tweens
-        if (this.tweens) {
-            this.tweens.pauseAll();
-        }
-        
-        // Pause the scene (do this last to ensure everything is properly stored)
-        this.scene.pause();
-    }
-
-    gameOver() {
+    handleGameOver() {
         this.gameUI.stopTimer(); // Stop the timer
         this.scene.start('GameOver');
     }
@@ -1334,7 +1234,7 @@ export class GameScene1 extends BaseScene {
                 });
             }
         } else {
-            this.gameOver();
+            this.handleGameOver();
         }
     }
 

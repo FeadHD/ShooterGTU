@@ -39,6 +39,7 @@ import { ParallaxBackground } from '../../prefabs/ParallaxBackground';
 import { Player } from '../../prefabs/Player';
 import { GameConfig, getGroundTop } from '../../config/GameConfig';
 import { Store } from '../../modules/state/Store';
+import { GameEvents } from '../../modules/managers/EventManager';
 import { ActionTypes, GameStatus, PlayerState } from '../../modules/state/types';
 import { ErrorSystem } from '../../systems/ErrorSystem';
 

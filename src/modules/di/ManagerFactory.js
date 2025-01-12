@@ -39,7 +39,14 @@ export class ManagerFactory {
         const boundaries = new SceneBoundaryManager(scene);
         const debug = new DebugSystem(scene);
         const collision = new CollisionManager(scene);
-        const events = new EventManager(scene);
+        
+        // Get or create event manager
+        let events = scene.game.globalEventManager;
+        if (!events) {
+            console.warn('Global EventManager not found, creating new instance');
+            events = new EventManager(scene);
+            scene.game.globalEventManager = events;
+        }
         
         // Register all managers
         container.register('gameState', gameState);

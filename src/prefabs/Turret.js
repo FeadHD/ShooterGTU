@@ -208,11 +208,18 @@ export class Turret extends Phaser.GameObjects.Sprite {
     }
 
     destroy() {
-        // Clean up event listeners
-        this.scene.events.off('alarmTriggered', this.onAlarmTriggered, this);
-        this.scene.events.off('alarmReset', this.onAlarmReset, this);
+        // Clean up event listeners if scene still exists
+        if (this.scene && this.scene.events) {
+            this.scene.events.off('alarmTriggered', this.onAlarmTriggered, this);
+            this.scene.events.off('alarmReset', this.onAlarmReset, this);
+        }
         
-        this.gun.destroy();
+        // Clean up gun sprite if it exists
+        if (this.gun && !this.gun.destroyed) {
+            this.gun.destroy();
+        }
+
+        // Call parent destroy
         super.destroy();
     }
 }
