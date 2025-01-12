@@ -75,17 +75,7 @@ export class DevHub extends Scene {
 
         this.createDropdown('Select Level...', [
             { key: 'GameScene1', title: 'Game Scene 1' },
-            { key: 'GameScene2', title: 'Game Scene 2' },
-            { key: 'GameScene3', title: 'Game Scene 3' },
-            { key: 'GameScene4', title: 'Game Scene 4' },
-            { key: 'GameScene5', title: 'Game Scene 5' },
-            { key: 'GtuTestLevel0', title: 'GTU Test Level 0' },
-            { key: 'GtuTestLevel1', title: 'GTU Test Level 1' },
-            { key: 'GtuTestLevel2', title: 'GTU Test Level 2' },
-            { key: 'CombinedGtuLevel', title: 'Combined GTU Level' },
-            { key: 'Matrix640x360', title: 'Matrix Level' },
-            { key: 'BlueTest', title: 'Blue Test Level' },
-            { key: 'LegacyGameScene1', title: 'Legacy Game Scene 1' }
+            { key: 'CombinedGtuLevel', title: 'Combined GTU Level' }
         ]);
     }
 
@@ -490,12 +480,12 @@ export class DevHub extends Scene {
                         stream.chars.forEach(char => {
                             if (char && char.active) {  // Check if character still exists and is active
                                 char.y += stream.speed;
-                                
+                                 
                                 // Randomly change characters
                                 if (Phaser.Math.Between(0, 20) === 0) {
                                     char.setText(this.getRandomMatrixChar());
                                 }
-                                
+                                 
                                 // Reset if off screen
                                 if (char.y > this.cameras.main.height) {
                                     char.y = -20;
