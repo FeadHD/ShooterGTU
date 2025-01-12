@@ -58,6 +58,14 @@ export class TestingGroundScene extends BaseScene {
             frameWidth: 32,
             frameHeight: 32
         });
+        this.load.spritesheet('zapper_attack', 'assets/zapper/zapper_attack.png', {
+            frameWidth: 32,
+            frameHeight: 32
+        });
+        this.load.spritesheet('zapper_shock', 'assets/zapper/zapper_shock.png', {
+            frameWidth: 64, // Wider for the shock effect
+            frameHeight: 32
+        });
 
         // Debug loading
         this.load.on('filecomplete-spritesheet-zapper_wake', (key, type, data) => {
@@ -75,6 +83,21 @@ export class TestingGroundScene extends BaseScene {
                 yoyo: false
             });
             console.log('Zapper wake animation created');
+        });
+
+        // Create attack animation after loading
+        this.load.on('filecomplete-spritesheet-zapper_attack', (key, type, data) => {
+            console.log('Zapper attack spritesheet loaded:', data);
+            this.anims.create({
+                key: 'zapper_attack',
+                frames: this.anims.generateFrameNumbers('zapper_attack', { 
+                    start: 0, 
+                    end: 5
+                }),
+                frameRate: 12,
+                repeat: 0
+            });
+            console.log('Zapper attack animation created');
         });
 
         // Create walk animation after loading
@@ -120,6 +143,21 @@ export class TestingGroundScene extends BaseScene {
                 repeat: 0
             });
             console.log('Zapper hit animation created');
+        });
+
+        // Create shock animation after loading
+        this.load.on('filecomplete-spritesheet-zapper_shock', (key, type, data) => {
+            console.log('Zapper shock spritesheet loaded:', data);
+            this.anims.create({
+                key: 'zapper_shock',
+                frames: this.anims.generateFrameNumbers('zapper_shock', { 
+                    start: 0, 
+                    end: 5
+                }),
+                frameRate: 12, // Match attack animation speed
+                repeat: 0
+            });
+            console.log('Zapper shock animation created');
         });
 
         // Load character spritesheets with correct casing
@@ -272,8 +310,13 @@ export class TestingGroundScene extends BaseScene {
         // Example: Create a Zapper enemy
         const zapper = new Zapper(this, 400, playerY);
         this.physics.add.collider(zapper, groundLayer);
-        this.physics.add.collider(this.player, zapper, () => {
-            this.player.takeDamage();
+        this.physics.add.collider(this.player, zapper);
+
+        // Add collision between shock and player
+        this.physics.add.overlap(this.player, zapper.shockSprite, () => {
+            if (zapper.shockSprite.visible && !this.player.isInvulnerable) {
+                this.player.takeDamage(zapper.damage);
+            }
         });
 
         // Add collision between bullets and zapper

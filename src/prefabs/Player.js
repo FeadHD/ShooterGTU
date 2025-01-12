@@ -191,14 +191,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         }
     }
 
-    takeDamage() {
+    takeDamage(amount = GameConfig.PLAYER.DAMAGE) {
         if (this.isDying) return;
         
         // Check invulnerability
         if (this.scene.time.now < this.invulnerableUntil) return;
 
         // Take damage
-        this.lastDamageTaken = GameConfig.PLAYER.DAMAGE;
+        this.lastDamageTaken = amount;
         this.playerHP = Math.max(0, this.playerHP - this.lastDamageTaken);
         this.scene.registry.set('playerHP', this.playerHP);
         
