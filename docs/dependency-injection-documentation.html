@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dependency Injection System Documentation</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        h1, h2, h3 {
+            color: #2c3e50;
+            margin-top: 30px;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .code-example {
+            background-color: #1e1e1e;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        .code-example code {
+            color: #d4d4d4;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .comment { color: #6a9955; }
+        .keyword { color: #569cd6; }
+        .string { color: #ce9178; }
+        .function { color: #dcdcaa; }
+        .number { color: #b5cea8; }
+
+        .initializer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .initializer-card {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            border: 1px solid #e9ecef;
+        }
+
+        .graph-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Dependency Injection System Documentation</h1>
+        
+        <section>
+            <h2>Overview</h2>
+            <p>
+                The Dependency Injection (DI) system is a core architectural pattern in our game engine that manages component dependencies
+                and promotes loose coupling between different parts of the game. It uses a centralized container to register and resolve
+                services, making the codebase more maintainable, testable, and scalable.
+            </p>
+        </section>
+
+        <section>
+            <h2>System Architecture</h2>
+            <div class="graph-container">
+                <pre class="mermaid">
+graph TD
+    A[DI Container] --> B[Game Core]
+    
+    subgraph "Registration Phase"
+        R1[Register Services] --> A
+        R2[Register Components] --> A
+        R3[Register Systems] --> A
+    end
+
+    subgraph "Resolution Phase"
+        B --> C[Player Component]
+        B --> D[Enemy Component]
+        B --> E[UI Component]
+    end
+
+    subgraph "Injected Services"
+        F[Input System]
+        G[Audio System]
+        H[Physics System]
+        I[Save System]
+    end
+
+    C --> F
+    C --> G
+    D --> H
+    E --> I
+
+    style A fill:#f9f,stroke:#333,stroke-width:4px
+    style B fill:#bbf,stroke:#333,stroke-width:2px
+    style F fill:#dfd,stroke:#333,stroke-width:2px
+    style G fill:#dfd,stroke:#333,stroke-width:2px
+    style H fill:#dfd,stroke:#333,stroke-width:2px
+    style I fill:#dfd,stroke:#333,stroke-width:2px
+                </pre>
+            </div>
+        </section>
+
+        <section>
+            <h2>Key Components</h2>
+            <div class="initializer-grid">
+                <div class="initializer-card">
+                    <h3>Service Container</h3>
+                    <p>The central registry that holds all services and manages their lifecycle.</p>
+                    <div class="code-example">
+                        <pre><code><span class="keyword">class</span> <span class="function">ServiceContainer</span> {
+    <span class="function">register</span>(key, service) { ... }
+    <span class="function">get</span>(key) { ... }
+}</code></pre>
+                    </div>
+                </div>
+                <div class="initializer-card">
+                    <h3>Base Manager</h3>
+                    <p>Base class that provides access to the DI container for all managers.</p>
+                    <div class="code-example">
+                        <pre><code><span class="keyword">class</span> <span class="function">BaseManager</span> {
+    <span class="function">getManager</span>(key) { ... }
+    <span class="function">getScene</span>() { ... }
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Usage Patterns</h2>
+            <div class="initializer-grid">
+                <div class="initializer-card">
+                    <h3>Service Registration</h3>
+                    <div class="code-example">
+                        <pre><code><span class="comment">// Register a service</span>
+<span class="keyword">class</span> <span class="function">AudioManager</span> <span class="keyword">extends</span> BaseManager {
+    <span class="function">constructor</span>() {
+        <span class="keyword">super</span>();
+        this.container.<span class="function">register</span>(<span class="string">'audio'</span>, this);
+    }
+}</code></pre>
+                    </div>
+                </div>
+                <div class="initializer-card">
+                    <h3>Service Resolution</h3>
+                    <div class="code-example">
+                        <pre><code><span class="comment">// Get a service</span>
+<span class="keyword">class</span> <span class="function">PlayerManager</span> <span class="keyword">extends</span> BaseManager {
+    <span class="function">playSound</span>() {
+        <span class="keyword">const</span> audio = this.<span class="function">getManager</span>(<span class="string">'audio'</span>);
+        audio.<span class="function">play</span>(<span class="string">'jump'</span>);
+    }
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Benefits</h2>
+            <div class="initializer-grid">
+                <div class="initializer-card">
+                    <h3>Loose Coupling</h3>
+                    <p>Components don't need to know about each other's implementations, only their interfaces.</p>
+                </div>
+                <div class="initializer-card">
+                    <h3>Testability</h3>
+                    <p>Services can be easily mocked or replaced for testing purposes.</p>
+                </div>
+                <div class="initializer-card">
+                    <h3>Maintainability</h3>
+                    <p>Centralized service management makes the codebase easier to maintain and modify.</p>
+                </div>
+                <div class="initializer-card">
+                    <h3>Scalability</h3>
+                    <p>New services can be added without modifying existing code.</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Best Practices</h2>
+            <div class="initializer-grid">
+                <div class="initializer-card">
+                    <h3>Service Keys</h3>
+                    <p>Use consistent naming conventions for service keys (e.g., 'audio', 'events', 'physics').</p>
+                </div>
+                <div class="initializer-card">
+                    <h3>Error Handling</h3>
+                    <p>Always handle potential service resolution errors gracefully.</p>
+                </div>
+                <div class="initializer-card">
+                    <h3>Initialization Order</h3>
+                    <p>Register core services before dependent services to avoid resolution errors.</p>
+                </div>
+                <div class="initializer-card">
+                    <h3>Service Lifetime</h3>
+                    <p>Consider service lifecycle when registering (singleton vs instance).</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+</body>
+</html>
