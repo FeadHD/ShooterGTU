@@ -3,7 +3,7 @@ import { CollisionManager } from '../../modules/managers/CollisionManager';
 import { TextStyleManager } from '../../modules/managers/TextStyleManager';
 import { GameUI } from '../elements/GameUI';
 import { TransitionScreen } from '../elements/TransitionScreen';
-import { Enemy } from '../../prefabs/Enemy';
+import Enemy from '../../prefabs/Enemy';
 import MeleeWarrior from '../../prefabs/MeleeWarrior';
 import { AlarmTrigger } from '../../prefabs/AlarmTrigger';
 import { MusicManager } from '../../modules/managers/audio/MusicManager';
