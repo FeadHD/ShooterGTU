@@ -60,22 +60,19 @@ export class DevHub extends Scene {
 
     createQuickLaunchSection() {
         // Section title
-        const quickLaunchTitle = this.add.text(
+        const sectionTitle = this.add.text(
             this.cameras.main.centerX,
             this.buttonY,
-            'Quick Launch:',
-            {
-                fontSize: '24px',
-                fill: '#00ff00',
-                fontFamily: 'Courier'
-            }
-        ).setOrigin(0.5).setDepth(2);
-        this.mainContainer.add(quickLaunchTitle);
-        this.buttonY += 40;
+            'Quick Launch',
+            { fontSize: '24px', fill: '#00ff00', fontFamily: 'Courier' }
+        ).setOrigin(0.5);
+        this.mainContainer.add(sectionTitle);
+        this.buttonY += 50;
 
         this.createDropdown('Select Level...', [
             { key: 'GameScene1', title: 'Game Scene 1' },
-            { key: 'CombinedGtuLevel', title: 'Combined GTU Level' }
+            { key: 'CombinedGtuLevel', title: 'Combined GTU Level' },
+            { key: 'TestingGroundScene', title: 'Testing Ground' }
         ]);
     }
 
