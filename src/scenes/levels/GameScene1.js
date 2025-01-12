@@ -27,7 +27,20 @@ import { Ramp } from '../../prefabs/Ramp.js';
 
 export class GameScene1 extends BaseScene {
     constructor() {
-        super({ key: 'GameScene1' });
+        super({ 
+            key: 'GameScene1',
+            physics: {
+                default: 'arcade',
+                arcade: {
+                    gravity: { y: 300 },
+                    debug: false
+                },
+                matter: {
+                    gravity: { y: 0.5 },
+                    debug: false
+                }
+            }
+        });
         this.tileColliderAdded = false;
         this.messageShown = false;
         this.totalEnemies = 7; // Increased to include drone and melee warriors

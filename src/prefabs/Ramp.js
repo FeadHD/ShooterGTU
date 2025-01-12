@@ -64,18 +64,23 @@ export class Ramp extends Phaser.GameObjects.Sprite {
     //-------------------------------------------------------------------------
     
     /**
-     * Sets up Matter.js physics for triangular collision
+     * Sets up Matter.js physics for the ramp
      * @private
      */
     #setupMatterPhysics() {
-        // Create triangular vertices for Matter.js
+        if (!this.scene.matter || !this.scene.matter.add) {
+            console.warn('Matter physics not available. Ramp will be created without physics.');
+            return;
+        }
+
+        // Create triangular physics body
         const vertices = [
             { x: this.width, y: this.height },  // Bottom-right
             { x: this.width, y: 0 },           // Top-right
             { x: 0, y: this.height }           // Bottom-left
         ];
 
-        // Create Matter.js body with triangular shape
+        // Create Matter.js body
         this.matterBody = this.scene.matter.add.fromVertices(
             this.x + this.width / 2,
             this.y + this.height / 2,
@@ -87,9 +92,8 @@ export class Ramp extends Phaser.GameObjects.Sprite {
             }
         );
 
-        // Set collision group and category
-        this.matterBody.collisionFilter.group = 1;
-        this.matterBody.collisionFilter.category = 2;
+        // Store reference to this game object
+        this.matterBody.gameObject = this;
     }
 
     //-------------------------------------------------------------------------
