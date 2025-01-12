@@ -1,11 +1,13 @@
 import { TextStyleManager } from '../../modules/managers/TextStyleManager';
-import { GameUI } from './GameUI';
+import { UIManager } from './UIManager';
+import { ManagerFactory } from '../../modules/di/ManagerFactory';
 
 export class TransitionScreen {
     constructor(scene) {
         this.scene = scene;
         this.elements = [];
         this.isTransitioning = false;
+        this.managers = scene.managers; // Store managers reference
         
         this.styles = {
             score: {
@@ -103,9 +105,12 @@ export class TransitionScreen {
         overlay.setOrigin(0);
         this.elements.push(overlay);
 
-        // Make sure GameUI exists
+        // Make sure UIManager exists
         if (!this.scene.gameUI) {
-            this.scene.gameUI = new GameUI(this.scene);
+            if (!this.scene.managers) {
+                this.scene.managers = ManagerFactory.createManagers(this.scene);
+            }
+            this.scene.gameUI = this.scene.managers.ui;
         }
 
         // Fade in black screen

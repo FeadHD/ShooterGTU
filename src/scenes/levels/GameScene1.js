@@ -3,7 +3,7 @@ import { GameConfig } from '../../config/GameConfig';
 import CameraManager from '../../modules/managers/CameraManager';
 import { CollisionManager } from '../../modules/managers/CollisionManager';
 import { TextStyleManager } from '../../modules/managers/TextStyleManager';
-import { GameUI } from '../elements/GameUI';
+import { UIManager } from '../elements/UIManager';
 import { TransitionScreen } from '../elements/TransitionScreen';
 import { Enemy } from '../../prefabs/Enemy';
 import MeleeWarrior from '../../prefabs/MeleeWarrior';
@@ -15,15 +15,17 @@ import Drone from '../../prefabs/Drone';
 import Trampoline from '../../prefabs/Trampoline';
 import { Trap } from '../../prefabs/Trap';
 import { TrapManager } from '../../modules/managers/TrapManager';
+import { EnemyManager } from '../../modules/managers/EnemyManager';
+import { EffectsManager } from '../../modules/managers/EffectsManager';
+import { BulletPool } from '../../modules/managers/pools/BulletPool';
+import { Player } from '../../prefabs/Player';
+import { AntivirusWall } from '../../prefabs/AntivirusWall';
+import { Ramp } from '../../prefabs/Ramp.js';
+import { ManagerFactory } from '../../modules/di/ManagerFactory';
 import { DestructibleBlock } from '../../prefabs/DestructibleBlock';
 import { FallingDestructibleBlock } from '../../prefabs/FallingDestructibleBlock';
 import { DisappearingPlatform } from '../../prefabs/DisappearingPlatform';
 import { Turret } from '../../prefabs/Turret';
-import { EnemyManager } from '../../modules/managers/EnemyManager';
-import { EffectsManager } from '../../modules/managers/EffectsManager';
-import { BulletPool } from '../../modules/managers/pools/BulletPool';
-import { AntivirusWall } from '../../prefabs/AntivirusWall';
-import { Ramp } from '../../prefabs/Ramp.js';
 
 export class GameScene1 extends BaseScene {
     constructor() {
@@ -93,12 +95,11 @@ export class GameScene1 extends BaseScene {
             // Set initial game state
             this.gameStarted = false;
             
-            // Set initial registry values
-            this.registry.set('score', 0);
-            this.registry.set('lives', 3);
-            this.registry.set('playerHP', 100);
-            this.registry.set('stamina', 100); // Reset stamina to full
-            this.registry.set('bitcoins', 0);
+            // Create managers first
+            this.managers = ManagerFactory.createManagers(this);
+            
+            // Initialize UI right away
+            this.gameUI = this.managers.ui;
             
             // Initialize camera manager
             this.cameraManager = new CameraManager(this);
@@ -114,22 +115,26 @@ export class GameScene1 extends BaseScene {
                 }
             });
             
-            // Start timer and show UI
-            this.gameUI.startTimer();
-            this.gameUI.animateUIElements();
-            
+            // Set initial registry values
+            this.registry.set('score', 0);
+            this.registry.set('lives', 3);
+            this.registry.set('playerHP', 100);
+            this.registry.set('stamina', 100);
+            this.registry.set('bitcoins', 0);
+
             // Initialize update event for UI
             this.events.on('update', () => {
-                // Update UI elements
-                const score = this.registry.get('score') || 0;
-                const lives = this.registry.get('lives') || 3;
-                const hp = this.registry.get('playerHP') || 100;
-                const bitcoins = this.registry.get('bitcoins') || 0;
-                
-                this.gameUI.updateScore(score);
-                this.gameUI.updateLives(lives);
-                this.gameUI.updateHP(hp);
-                this.gameUI.updateBitcoins(bitcoins);
+                if (this.gameUI) {
+                    const score = this.registry.get('score') || 0;
+                    const lives = this.registry.get('lives') || 3;
+                    const hp = this.registry.get('playerHP') || 100;
+                    const bitcoins = this.registry.get('bitcoins') || 0;
+                    
+                    this.gameUI.updateScore(score);
+                    this.gameUI.updateLives(lives);
+                    this.gameUI.updateHP(hp);
+                    this.gameUI.updateBitcoins(bitcoins);
+                }
             });
             
             // Initialize debug system if not already initialized
@@ -190,22 +195,16 @@ export class GameScene1 extends BaseScene {
                 createRay: (config) => {
                     return {
                         cast: (target) => {
-                            const start = config.origin;
-                            const end = { x: target.x, y: target.y };
-                            const obstacles = target.obstacles;
-
-                            // Check if line intersects with any obstacle
-                            for (const obstacle of obstacles) {
-                                if (this.lineIntersectsRect(
-                                    start.x, start.y,
-                                    end.x, end.y,
-                                    obstacle.x, obstacle.y,
-                                    obstacle.width, obstacle.height
-                                )) {
-                                    return { hasHit: true };
-                                }
-                            }
-                            return { hasHit: false };
+                            if (!target || !target.getBounds) return false;
+                            
+                            const ray = this.createRay({
+                                origin: { x: this.player.x, y: this.player.y },
+                                target: { x: target.x, y: target.y }
+                            });
+                            
+                            if (!ray || !ray.start || !ray.end) return false;
+                            
+                            return this.lineIntersectsRect(ray, target.getBounds());
                         }
                     };
                 }
@@ -533,7 +532,7 @@ export class GameScene1 extends BaseScene {
 
     setupRestOfScene() {
         // Initialize managers and UI
-        this.gameUI = new GameUI(this);
+        this.gameUI = this.managers.ui;
         this.trapManager = new TrapManager(this);
         this.enemyManager = new EnemyManager(this);
         this.effectsManager = new EffectsManager(this);
@@ -908,6 +907,52 @@ export class GameScene1 extends BaseScene {
         this.trampoline = new Trampoline(this, 735, 448);
     }
 
+    findSpawnPointsForSlimes() {
+        // Return default spawn points if map is not loaded
+        if (!this.map || !this.map.getLayer('Ground')) {
+            return [
+                { x: 200, y: 300 },
+                { x: 400, y: 300 },
+                { x: 600, y: 300 }
+            ];
+        }
+
+        const spawnPoints = [];
+        const groundLayer = this.map.getLayer('Ground').tilemapLayer;
+        
+        // Get the dimensions of the tilemap
+        const mapWidth = this.map.width;
+        const mapHeight = this.map.height;
+        
+        // Check each tile position
+        for (let x = 0; x < mapWidth; x++) {
+            for (let y = 0; y < mapHeight; y++) {
+                const tile = groundLayer.getTileAt(x, y);
+                if (tile) {
+                    // Check if there's ground below this position
+                    const tileBelow = groundLayer.getTileAt(x, y + 1);
+                    if (tileBelow) {
+                        // Add this position as a potential spawn point
+                        spawnPoints.push({
+                            x: x * this.map.tileWidth,
+                            y: y * this.map.tileHeight
+                        });
+                    }
+                }
+            }
+        }
+        return spawnPoints.length > 0 ? spawnPoints : [
+            { x: 200, y: 300 },
+            { x: 400, y: 300 },
+            { x: 600, y: 300 }
+        ];
+    }
+
+    findSpawnPointsForBitcoins() {
+        // Reuse the same logic for bitcoin spawn points
+        return this.findSpawnPointsForSlimes();
+    }
+
     startGame() {
         // Stop intro sequence if it's playing
         if (this.cameraManager.isIntroPlaying) {
@@ -1104,271 +1149,46 @@ export class GameScene1 extends BaseScene {
         }
     }
 
-    resumeGame() {
-        if (!this.isGamePaused) return;
-        
-        this.isGamePaused = false;
-        
-        // Restore game state
-        if (this.pausedState) {
-            // Restore player state
-            if (this.player && this.pausedState.playerState) {
-                this.player.x = this.pausedState.playerState.x;
-                this.player.y = this.pausedState.playerState.y;
-                if (this.player.body && this.pausedState.playerState.velocity) {
-                    this.player.body.velocity.x = this.pausedState.playerState.velocity.x;
-                    this.player.body.velocity.y = this.pausedState.playerState.velocity.y;
-                }
-            }
-
-            // Restore enemy states
-            if (this.enemies && this.pausedState.enemyStates) {
-                this.pausedState.enemyStates.forEach(enemyState => {
-                    const enemy = this.enemies.getChildren().find(e => e.id === enemyState.id);
-                    if (enemy) {
-                        enemy.x = enemyState.x;
-                        enemy.y = enemyState.y;
-                        if (enemy.body && enemyState.velocity) {
-                            enemy.body.velocity.x = enemyState.velocity.x;
-                            enemy.body.velocity.y = enemyState.velocity.y;
-                        }
-                        // Re-enable enemy AI if it exists
-                        if (enemy.startFollowing && typeof enemy.startFollowing === 'function') {
-                            enemy.startFollowing();
-                        }
-                    }
-                });
-            }
-
-            // Restore bullet states
-            if (this.bullets && this.pausedState.bulletStates) {
-                const bullets = this.bullets.getChildren();
-                this.pausedState.bulletStates.forEach((bulletState, index) => {
-                    if (bullets[index]) {
-                        bullets[index].x = bulletState.x;
-                        bullets[index].y = bulletState.y;
-                        if (bullets[index].body && bulletState.velocity) {
-                            bullets[index].body.velocity.x = bulletState.velocity.x;
-                            bullets[index].body.velocity.y = bulletState.velocity.y;
-                        }
-                    }
-                });
-            }
-
-            // Restore game time and score
-            this.gameTime = this.pausedState.gameTime;
-            this.score = this.pausedState.score;
-
-            // Clear the stored state
-            this.pausedState = null;
-        }
-        
-        // Resume physics world
-        if (this.physics && this.physics.world) {
-            try {
-                // Resume physics world
-                this.physics.world.resume();
-                
-                // Make sure physics debug is in the right state
-                if (this.physics.world.debugGraphic) {
-                    this.physics.world.debugGraphic.clear();
-                }
-                
-                // Resume all physics bodies and reset their states
-                this.physics.world.bodies.entries.forEach(body => {
-                    if (body && !body.destroyed) {
-                        body.enable = true;
-                        body.moves = true;
-                        if (body.velocity) {
-                            body.velocity.x = body.velocity.x || 0;
-                            body.velocity.y = body.velocity.y || 0;
-                        }
-                    }
-                });
-
-                // Reset physics world step
-                this.physics.world.step(0);
-            } catch (error) {
-                console.warn('Could not resume physics:', error);
-            }
-        }
-        
-        // Re-enable player controller and input
-        if (this.player) {
-            if (this.player.controller) {
-                this.player.controller.enabled = true;
-            }
-            if (this.player.body && !this.player.body.destroyed) {
-                this.player.body.enable = true;
-                this.player.body.moves = true;
-            }
-        }
-        
-        // Re-enable input system
-        if (this.input && this.input.keyboard) {
-            this.input.keyboard.enabled = true;
-        }
-        
-        // Resume any animations
-        this.anims.resumeAll();
-        
-        // Resume all tweens
-        if (this.tweens) {
-            this.tweens.resumeAll();
-        }
-        
-        // Resume the scene (do this last to ensure everything is ready)
-        this.scene.resume();
-    }
-
-    handleGameOver() {
-        this.gameUI.stopTimer(); // Stop the timer
-        this.scene.start('GameOver');
-    }
-
-    returnToMainMenu() {
-        this.gameUI.stopTimer(); // Stop the timer
-        this.scene.start('MainMenu');
-    }
-
-    quitGame() {
-        this.gameUI.stopTimer(); // Stop the timer
-        window.close();
-    }
-
-    handlePlayerDeath() {
-        if (this.player.lives > 0) {
-            this.player.lives--;
-            this.gameUI.updateLives(this.player.lives);
-            this.player.setVisible(false);
-            this.player.setActive(false);
-            this.player.body.enable = false;
-            
-            // Reset antivirus wall first
-            if (this.antivirusWall) {
-                this.antivirusWall.reset();
-                // Listen for wall reset completion
-                this.events.once('wallResetComplete', () => {
-                    this.handleRespawn();
-                });
-            }
-        } else {
-            this.handleGameOver();
-        }
-    }
-
-    handleRespawn() {
-        // Reset player position and state
-        this.player.setPosition(this.spawnPoint.x, this.spawnPoint.y);
-        this.player.setVisible(true);
-        this.player.setActive(true);
-        this.player.body.enable = true;
-        this.player.setVelocity(0, 0);
-        this.player.alpha = 0.5;
-
-        // Make player invulnerable for a short time
-        this.time.delayedCall(2000, () => {
-            this.player.alpha = 1;
-        });
-    }
-
-    findSpawnPointsForSlimes() {
-        const spawnPoints = [];
-        const mapWidth = this.mapLayer.width;
-        const mapHeight = this.mapLayer.height;
-
-        // Scan the map for solid tiles (type 370)
-        for (let x = 0; x < mapWidth; x++) {
-            for (let y = 0; y < mapHeight - 1; y++) {
-                const tile = this.mapLayer.getTileAt(x, y);
-                const tileAbove = this.mapLayer.getTileAt(x, y - 1);
-                
-                // Check if current tile is solid and tile above is empty
-                if ((tile && (tile.index === 370 || tile.collides)) && 
-                    (!tileAbove || (!tileAbove.collides && tileAbove.index !== 370))) {
-                    // Position slime exactly on top of the tile
-                    spawnPoints.push({ 
-                        x: x * 32 + 16, // Center of tile
-                        y: y * 32 - 8   // Just above the tile
-                    });
-                }
-            }
-        }
-        return spawnPoints;
-    }
-
-    findSpawnPointsForBitcoins() {
-        const spawnPoints = [];
-        const tileHeight = 32;
-        const levelWidth = this.scale.width;
-        const maxJumpHeight = 5 * tileHeight; // Maximum 5 tiles above platform
-        
-        // Sample points across the level width
-        for (let x = levelWidth * 0.1; x < levelWidth * 0.9; x += 100) {
-            // Find platforms at this x coordinate
-            const platformsAtX = this.platforms.getChildren().filter(platform => {
-                const bounds = platform.getBounds();
-                return x >= bounds.left && x <= bounds.right;
-            });
-
-            if (platformsAtX.length > 0) {
-                // Sort platforms by Y position (top to bottom)
-                platformsAtX.sort((a, b) => a.y - b.y);
-
-                // For each platform, try to place a bitcoin above it
-                for (const platform of platformsAtX) {
-                    const platformTop = platform.getBounds().top;
-                    let validY = null;
-
-                    // Try positions above the platform, within jump height
-                    for (let y = platformTop - tileHeight; y >= platformTop - maxJumpHeight; y -= tileHeight) {
-                        // Check if this position collides with any platform
-                        const hasCollision = this.platforms.getChildren().some(p => {
-                            const bounds = p.getBounds();
-                            return bounds.contains(x, y);
-                        });
-
-                        if (!hasCollision) {
-                            validY = y;
-                            break;
-                        }
-                    }
-
-                    if (validY !== null) {
-                        spawnPoints.push({ x, y: validY });
-                        break; // Only one spawn point per x coordinate
-                    }
-                }
-            }
-        }
-        
-        // Shuffle the spawn points
-        return Phaser.Utils.Array.Shuffle(spawnPoints);
-    }
-
-    lineIntersectsRect(x1, y1, x2, y2, rx, ry, rw, rh) {
-        // Check if line intersects with any of the rectangle's edges
-        return this.lineIntersectsLine(x1, y1, x2, y2, rx, ry, rx + rw, ry) ||          // Top edge
-               this.lineIntersectsLine(x1, y1, x2, y2, rx + rw, ry, rx + rw, ry + rh) || // Right edge
-               this.lineIntersectsLine(x1, y1, x2, y2, rx, ry + rh, rx + rw, ry + rh) || // Bottom edge
-               this.lineIntersectsLine(x1, y1, x2, y2, rx, ry, rx, ry + rh);             // Left edge
-    }
-
-    lineIntersectsLine(x1, y1, x2, y2, x3, y3, x4, y4) {
-        const denominator = ((x2 - x1) * (y4 - y3)) - ((y2 - y1) * (x4 - x3));
-        if (denominator === 0) return false;
-
-        const ua = (((x4 - x3) * (y1 - y3)) - ((y4 - y3) * (x1 - x3))) / denominator;
-        const ub = (((x2 - x1) * (y1 - y3)) - ((y2 - y1) * (x1 - x3))) / denominator;
-
-        return (ua >= 0 && ua <= 1) && (ub >= 0 && ub <= 1);
-    }
-
     handleAntivirusCollision() {
         // Instant death on antivirus collision
         if (!this.player.isDying) {
             this.player.die();
         }
+    }
+
+    lineIntersectsRect(line, rect) {
+        if (!line || !line.start || !line.end || !rect) return false;
+        
+        // Line start and end points
+        const x1 = line.start.x;
+        const y1 = line.start.y;
+        const x2 = line.end.x;
+        const y2 = line.end.y;
+
+        // Rectangle bounds
+        const left = rect.x;
+        const right = rect.x + rect.width;
+        const top = rect.y;
+        const bottom = rect.y + rect.height;
+
+        // Check if line intersects with any of the rectangle's edges
+        return this.lineIntersectsLine(x1, y1, x2, y2, left, top, right, top) ||      // Top edge
+               this.lineIntersectsLine(x1, y1, x2, y2, right, top, right, bottom) ||  // Right edge
+               this.lineIntersectsLine(x1, y1, x2, y2, left, bottom, right, bottom) || // Bottom edge
+               this.lineIntersectsLine(x1, y1, x2, y2, left, top, left, bottom);      // Left edge
+    }
+
+    lineIntersectsLine(x1, y1, x2, y2, x3, y3, x4, y4) {
+        // Calculate denominators
+        const den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+        if (den === 0) return false;  // Lines are parallel
+
+        // Calculate intersection point
+        const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / den;
+        const u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / den;
+
+        // Check if intersection point lies within both line segments
+        return t >= 0 && t <= 1 && u >= 0 && u <= 1;
     }
 
     cleanup() {

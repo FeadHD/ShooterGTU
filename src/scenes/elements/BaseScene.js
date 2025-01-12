@@ -20,7 +20,7 @@
  * - /modules/state/types.js            : Game state type definitions
  * 
  * UI Elements:
- * - /scenes/elements/GameUI.js         : Game interface components
+ * - /scenes/elements/UIManager.js         : Game interface components
  * 
  * Game Objects:
  * - /prefabs/Bullet.js                 : Projectile management
@@ -33,7 +33,6 @@
 
 import { Scene } from 'phaser';
 import { ManagerFactory } from '../../modules/di/ManagerFactory';
-import { GameUI } from './GameUI';
 import { Bullet } from '../../prefabs/Bullet';
 import { ParallaxBackground } from '../../prefabs/ParallaxBackground';
 import { Player } from '../../prefabs/Player';
@@ -105,22 +104,24 @@ export class BaseScene extends Scene {
      * This includes setting up the canvas, physics, input, and audio.
      */
     create() {
+        // Create managers first
+        this.managers = ManagerFactory.createManagers(this);
+        
         // Setup core systems
-        const managers = ManagerFactory.createManagers(this);
-        this.gameState = managers.gameState;
-        this.persistence = managers.persistence;
-        this.soundManager = managers.sound;
-        this.musicManager = managers.music;
-        this.entityManager = managers.entityManager;
-        this.enemies = managers.enemies;
-        this.hazards = managers.hazards;
-        this.animations = managers.animations;
-        this.effects = managers.effects;
-        this.boundaries = managers.boundaries;
-        this.debug = managers.debug;
-        this.collisionManager = managers.collision;
+        this.gameState = this.managers.gameState;
+        this.persistence = this.managers.persistence;
+        this.soundManager = this.managers.sound;
+        this.musicManager = this.managers.music;
+        this.entityManager = this.managers.entityManager;
+        this.enemies = this.managers.enemies;
+        this.hazards = this.managers.hazards;
+        this.animations = this.managers.animations;
+        this.effects = this.managers.effects;
+        this.boundaries = this.managers.boundaries;
+        this.debug = this.managers.debug;
+        this.collisionManager = this.managers.collision;
         this.errorSystem = new ErrorSystem(this);
-        this.eventManager = managers.events;
+        this.eventManager = this.managers.events;
 
         // Initialize core systems
         this.animations.initialize();
@@ -203,7 +204,7 @@ export class BaseScene extends Scene {
     /** Create and configure the heads-up display (HUD) for score, health, etc. */
     #createUI() {
         // Create UI
-        this.gameUI = new GameUI(this);
+        this.gameUI = this.managers.ui;
         this.gameUI.container.setScrollFactor(0);
         this.gameUI.updateCameraIgnoreList();
     }

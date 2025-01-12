@@ -1,5 +1,5 @@
 module.exports = {
-    GameUI: jest.fn().mockImplementation(() => ({
+    UIManager: jest.fn().mockImplementation(() => ({
         startTimer: jest.fn(),
         animateUIElements: jest.fn(),
         updateScore: jest.fn(),

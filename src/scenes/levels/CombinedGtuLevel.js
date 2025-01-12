@@ -1,7 +1,7 @@
 import { BaseScene } from '../elements/BaseScene';
 import { CollisionManager } from '../../modules/managers/CollisionManager';
 import { TextStyleManager } from '../../modules/managers/TextStyleManager';
-import { GameUI } from '../elements/GameUI';
+import { UIManager } from '../elements/UIManager';
 import { TransitionScreen } from '../elements/TransitionScreen';
 import Enemy from '../../prefabs/Enemy';
 import MeleeWarrior from '../../prefabs/MeleeWarrior';
@@ -26,6 +26,7 @@ import { LDTKTileManager } from '../../modules/managers/LDTKTileManager';
 import { BulletPool } from '../../modules/managers/pools/BulletPool';
 import { Player } from '../../prefabs/Player';
 import { eventBus } from '../../modules/events/EventBus';
+import { ManagerFactory } from '../../modules/di/ManagerFactory';
 
 export class CombinedGtuLevel extends BaseScene {
     constructor() {
@@ -154,6 +155,9 @@ export class CombinedGtuLevel extends BaseScene {
         super.create();
         this.skipPlayerCreation = false;
 
+        // Create managers first
+        this.managers = ManagerFactory.createManagers(this);
+
         // Create physics groups
         this.platforms = this.physics.add.staticGroup();
         this.enemies = this.physics.add.group();
@@ -173,7 +177,7 @@ export class CombinedGtuLevel extends BaseScene {
         });
 
         // Initialize managers
-        this.effectsManager = new EffectsManager(this);
+        this.effectsManager = this.managers.effects;
         this.tileManager = new LDTKTileManager(this);
 
         // Create the base tilemap with dynamic dimensions
@@ -217,9 +221,9 @@ export class CombinedGtuLevel extends BaseScene {
         this.levelCamera.init(this.player);
 
         // Initialize managers after player and tiles are loaded
-        this.enemyManager = new EnemyManager(this);
-        this.trapManager = new TrapManager(this);
-        this.bulletPool = new BulletPool(this);
+        this.enemyManager = this.managers.enemies;
+        this.trapManager = this.managers.traps;
+        this.bulletPool = this.managers.bullets;
 
         // Set up camera bounds and following
         const { width, height } = this.scale;
@@ -563,7 +567,7 @@ export class CombinedGtuLevel extends BaseScene {
 
     setupUI() {
         // Initialize game UI
-        this.gameUI = new GameUI(this);
+        this.gameUI = this.managers.ui;
         if (this.gameUI.container) {
             this.gameUI.container.setScrollFactor(0);
         }

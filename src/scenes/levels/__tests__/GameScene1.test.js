@@ -3,7 +3,7 @@ jest.mock('../../elements/BaseScene', () => require('../__mocks__/baseScene.mock
 jest.mock('../../../modules/di/ManagerFactory', () => require('../__mocks__/managers.mock'));
 jest.mock('../../../prefabs/Player', () => require('../__mocks__/player.mock'));
 jest.mock('../../../prefabs/Trampoline', () => require('../__mocks__/trampoline.mock'));
-jest.mock('../../elements/GameUI', () => require('../__mocks__/gameUI.mock'));
+jest.mock('../../elements/UIManager', () => require('../__mocks__/gameUI.mock'));
 jest.mock('../../elements/TransitionScreen', () => require('../__mocks__/transitionScreen.mock'));
 
 const { GameScene1 } = require('../GameScene1');

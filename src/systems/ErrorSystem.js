@@ -176,7 +176,7 @@ export class ErrorSystem {
                 if (this.scene.gameUI) {
                     // Recreate UI if it exists but is in a bad state
                     this.scene.gameUI.destroy();
-                    this.scene.gameUI = new GameUI(this.scene);
+                    this.scene.gameUI = this.scene.managers.ui;
                     this.scene.gameUI.container.setScrollFactor(0);
                     this.scene.gameUI.updateCameraIgnoreList();
                 }

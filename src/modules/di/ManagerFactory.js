@@ -13,6 +13,7 @@ import { CollisionManager } from '../managers/CollisionManager';
 import { EventManager } from '../managers/EventManager';
 import { container } from './ServiceContainer';
 import { eventBus } from '../events/EventBus';
+import { UIManager } from '../../scenes/elements/UIManager';
 
 export class ManagerFactory {
     static createManagers(scene) {
@@ -39,6 +40,7 @@ export class ManagerFactory {
         const boundaries = new SceneBoundaryManager(scene);
         const debug = new DebugSystem(scene);
         const collision = new CollisionManager(scene);
+        const ui = new UIManager(scene);
         
         // Get or create event manager
         let events = scene.game.globalEventManager;
@@ -61,6 +63,7 @@ export class ManagerFactory {
         container.register('boundaries', boundaries);
         container.register('debug', debug);
         container.register('collision', collision);
+        container.register('ui', ui);
         container.register('events', events);
 
         // Initialize event system
@@ -79,7 +82,8 @@ export class ManagerFactory {
             boundaries,
             debug,
             collision,
-            events
+            events,
+            ui
         };
     }
 }

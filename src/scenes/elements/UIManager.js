@@ -3,7 +3,7 @@ import { TextStyleManager } from '../../modules/managers/TextStyleManager';
 import { eventBus } from '../../modules/events/EventBus';
 import { GameConfig } from '../../config/GameConfig';
 
-export class GameUI {
+export class UIManager {
     constructor(scene) {
         this.scene = scene;
         
