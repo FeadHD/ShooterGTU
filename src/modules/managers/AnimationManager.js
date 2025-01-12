@@ -55,8 +55,8 @@ export class AnimationManager {
     }
 
     createCharacterAnimations() {
-        console.log('Creating character animations');
-        
+        console.log('Creating character animations...');
+
         // Idle animation
         if (!this.scene.anims.exists('character_Idle')) {
             this.scene.anims.create({
@@ -67,22 +67,12 @@ export class AnimationManager {
             });
         }
 
-        // Walking animation
-        if (!this.scene.anims.exists('character_Walking')) {
-            this.scene.anims.create({
-                key: 'character_Walking',
-                frames: this.scene.anims.generateFrameNumbers('character_walking', { start: 0, end: 5 }),
-                frameRate: 10,
-                repeat: -1
-            });
-        }
-
-        // Running animation
+        // Run animation
         if (!this.scene.anims.exists('character_Run')) {
             this.scene.anims.create({
                 key: 'character_Run',
                 frames: this.scene.anims.generateFrameNumbers('character_run', { start: 0, end: 5 }),
-                frameRate: 12,
+                frameRate: 10,
                 repeat: -1
             });
         }
@@ -91,46 +81,34 @@ export class AnimationManager {
         if (!this.scene.anims.exists('character_Jump')) {
             this.scene.anims.create({
                 key: 'character_Jump',
-                frames: this.scene.anims.generateFrameNumbers('character_jump', { start: 0, end: 3 }),
-                frameRate: 8,
+                frames: this.scene.anims.generateFrameNumbers('character_jump', { start: 0, end: 2 }),
+                frameRate: 10,
                 repeat: 0
             });
         }
 
-        // Death animation
-        if (!this.scene.anims.exists('character_Death')) {
+        // Fall animation
+        if (!this.scene.anims.exists('character_Fall')) {
             this.scene.anims.create({
-                key: 'character_Death',
-                frames: this.scene.anims.generateFrameNumbers('character_death', { start: 0, end: 5 }),
-                frameRate: 8,
+                key: 'character_Fall',
+                frames: this.scene.anims.generateFrameNumbers('character_fall', { start: 0, end: 2 }),
+                frameRate: 10,
                 repeat: 0
             });
         }
 
         // Rollover animation
         if (!this.scene.anims.exists('character_Rollover')) {
-            console.log('Creating rollover animation');
-            try {
-                const rolloverConfig = {
-                    key: 'character_Rollover',
-                    frames: this.scene.anims.generateFrameNumbers('character_rollover', { 
-                        start: 0, 
-                        end: 7  // Adjust based on actual number of frames
-                    }),
-                    frameRate: 14,  // Slightly faster to complete in rollDuration
-                    repeat: 0,
-                    hideOnComplete: false
-                };
-                console.log('Rollover config:', rolloverConfig);
-                this.scene.anims.create(rolloverConfig);
-                console.log('Rollover animation created successfully');
-                
-                // Debug: list all animations
-                console.log('Available animations:', Object.keys(this.scene.anims.anims.entries));
-            } catch (error) {
-                console.error('Error creating rollover animation:', error);
-            }
+            this.scene.anims.create({
+                key: 'character_Rollover',
+                frames: this.scene.anims.generateFrameNumbers('character_rollover', { start: 0, end: 6 }),
+                frameRate: 15,
+                repeat: 0
+            });
         }
+
+        console.log('Character animations created');
+        console.log('Available animations:', Object.keys(this.scene.anims.anims.entries));
     }
 
     createEnemyAnimations() {

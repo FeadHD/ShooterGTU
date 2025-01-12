@@ -80,14 +80,101 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
             
         this.body.setSize(12, 27); // Set width to 12px, keep height at 27px
         
+        // Create animations if they don't exist
+        this.createAnimations();
+
         // Start idle animation if it exists
-        if (scene.anims.exists('character_idle')) {
-            this.play('character_idle');
+        if (scene.anims.exists('character_Idle')) {
+            this.playAnimation('character_Idle');
         }
 
         // Set up controls
         this.controller = new PlayerController(scene);
         this.controller.setupShootingControls(this);
+    }
+
+    createAnimations() {
+        const anims = [
+            {
+                key: 'character_Idle',
+                spritesheet: 'character_idle',
+                frameRate: 8,
+                start: 0,
+                end: 3,
+                repeat: -1
+            },
+            {
+                key: 'character_Run',
+                spritesheet: 'character_run',
+                frameRate: 10,
+                start: 0,
+                end: 5,
+                repeat: -1
+            },
+            {
+                key: 'character_Jump',
+                spritesheet: 'character_jump',
+                frameRate: 10,
+                start: 0,
+                end: 2,
+                repeat: 0
+            },
+            {
+                key: 'character_Fall',
+                spritesheet: 'character_fall',
+                frameRate: 10,
+                start: 0,
+                end: 2,
+                repeat: 0
+            },
+            {
+                key: 'character_Rollover',
+                spritesheet: 'character_rollover',
+                frameRate: 15,
+                start: 0,
+                end: 6,
+                repeat: 0
+            }
+        ];
+
+        console.log('Creating player animations...');
+        anims.forEach(anim => {
+            if (!this.scene.anims.exists(anim.key)) {
+                try {
+                    this.scene.anims.create({
+                        key: anim.key,
+                        frames: this.scene.anims.generateFrameNumbers(anim.spritesheet, {
+                            start: anim.start,
+                            end: anim.end
+                        }),
+                        frameRate: anim.frameRate,
+                        repeat: anim.repeat
+                    });
+                    console.log(`Created animation: ${anim.key}`);
+                } catch (error) {
+                    console.error(`Failed to create animation ${anim.key}:`, error);
+                }
+            }
+        });
+
+        console.log('Available animations:', Object.keys(this.scene.anims.anims.entries));
+    }
+
+    playAnimation(key, ignoreIfPlaying = true) {
+        try {
+            if (this.scene.anims.exists(key)) {
+                const anim = this.scene.anims.get(key);
+                if (anim && anim.frames.length > 0) {
+                    super.play(key, ignoreIfPlaying);
+                } else {
+                    console.warn(`Animation ${key} exists but has no frames`);
+                }
+            } else {
+                console.warn(`Animation ${key} does not exist`);
+            }
+        } catch (error) {
+            console.error(`Error playing animation ${key}:`, error);
+        }
     }
 
     shoot(direction = 'right') {
@@ -176,7 +263,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         
         // Play death animation
         if (this.scene.anims.exists('character_Death')) {
-            this.play('character_Death', true);
+            this.playAnimation('character_Death', true);
             this.once('animationcomplete', () => {
                 this.setAlpha(0);
                 // Reset after animation completes
@@ -268,7 +355,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
                 this.isRolling = false;
                 this.lastStaminaUseTime = currentTime;
                 // Stop roll animation
-                this.play('character_Idle');
+                this.playAnimation('character_Idle');
                 return;
             }
             
@@ -289,7 +376,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
             } else {
                 this.isRolling = false;
                 // Stop roll animation when out of stamina
-                this.play('character_Idle');
+                this.playAnimation('character_Idle');
             }
         }
         
@@ -310,7 +397,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
             
             // Start roll animation
             try {
-                this.play('character_Rollover');
+                this.playAnimation('character_Rollover');
             } catch (error) {
                 console.error('Error playing rollover animation:', error);
                 this.isRolling = false;
@@ -409,7 +496,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
             
             // Play jump animation only if not rolling
             if (!this.isRolling) {
-                this.play('character_Jump', true);
+                this.playAnimation('character_Jump', true);
             }
         }
         
@@ -419,9 +506,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
             // Only reset animation if not rolling
             if (!this.isRolling) {
                 if (this.body.velocity.x !== 0) {
-                    this.play('character_Walking', true);
+                    this.playAnimation('character_Walking', true);
                 } else {
-                    this.play('character_Idle', true);
+                    this.playAnimation('character_Idle', true);
                 }
             }
         }
@@ -466,7 +553,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
                 this.isRolling = false;
                 this.lastStaminaUseTime = currentTime;
                 // Stop roll animation on wall collision
-                this.play('character_Idle');
+                this.playAnimation('character_Idle');
             }
 
             // Handle roll and jump
@@ -507,12 +594,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
                 // Handle animations
                 if (this.body.onFloor()) {
                     if (this.body.velocity.x !== 0) {
-                        this.play('character_Walking', true);
+                        this.playAnimation('character_Walking', true);
                     } else {
-                        this.play('character_Idle', true);
+                        this.playAnimation('character_Idle', true);
                     }
                 } else {
-                    this.play('character_Jump', true);
+                    this.playAnimation('character_Jump', true);
                 }
             }
 

@@ -9,6 +9,7 @@ import { AnimationManager } from '../../modules/managers/AnimationManager';
 import { container } from '../../modules/di/ServiceContainer';
 import { eventBus } from '../../modules/events/EventBus';
 import { ManagerFactory } from '../../modules/di/ManagerFactory';
+import { Zapper } from '../../prefabs/enemies/Zapper'; // Fix import path
 
 export class TestingGroundScene extends BaseScene {
     constructor() {
@@ -36,6 +37,13 @@ export class TestingGroundScene extends BaseScene {
     preload() {
         super.preload();
         
+        // Load tileset
+        this.load.image('tileset', 'assets/tilesets/tileset.png');
+
+        // Load Zapper sprite as a single image
+        this.load.image('zapper_idle', 'assets/zapper/zapper_idle.png');
+        console.log('Loading zapper_idle image...');
+
         // Load character spritesheets with correct casing
         this.load.spritesheet('character_idle', 'assets/character/character_Idle.png', {
             frameWidth: 32,
@@ -70,6 +78,7 @@ export class TestingGroundScene extends BaseScene {
         // Add load event handlers for debugging
         this.load.on('complete', () => {
             console.log('All assets loaded successfully');
+            console.log('Zapper idle texture exists:', this.textures.exists('zapper_idle'));
             // Debug: list all loaded textures
             console.log('Available textures:', Object.keys(this.textures.list));
         });
@@ -89,7 +98,56 @@ export class TestingGroundScene extends BaseScene {
         
         // Setup core systems and create animations
         this.animations = this.managers.animations;
-        this.animations.initialize();  
+        console.log('Creating animations...');
+        this.animations.initialize();
+        console.log('Animations initialized');
+        console.log('Available animations after initialization:', Object.keys(this.anims.anims.entries));
+
+        // Create animations manually if needed
+        if (!this.anims.exists('character_Idle')) {
+            console.log('Creating character animations manually...');
+            // Idle animation
+            this.anims.create({
+                key: 'character_Idle',
+                frames: this.anims.generateFrameNumbers('character_idle', { start: 0, end: 3 }),
+                frameRate: 8,
+                repeat: -1
+            });
+
+            // Run animation
+            this.anims.create({
+                key: 'character_Run',
+                frames: this.anims.generateFrameNumbers('character_run', { start: 0, end: 5 }),
+                frameRate: 10,
+                repeat: -1
+            });
+
+            // Jump animation
+            this.anims.create({
+                key: 'character_Jump',
+                frames: this.anims.generateFrameNumbers('character_jump', { start: 0, end: 2 }),
+                frameRate: 10,
+                repeat: 0
+            });
+
+            // Fall animation
+            this.anims.create({
+                key: 'character_Fall',
+                frames: this.anims.generateFrameNumbers('character_fall', { start: 0, end: 2 }),
+                frameRate: 10,
+                repeat: 0
+            });
+
+            // Rollover animation
+            this.anims.create({
+                key: 'character_Rollover',
+                frames: this.anims.generateFrameNumbers('character_rollover', { start: 0, end: 6 }),
+                frameRate: 15,
+                repeat: 0
+            });
+            console.log('Character animations created manually');
+            console.log('Available animations after manual creation:', Object.keys(this.anims.anims.entries));
+        }
 
         // Create bullets group
         this.bullets = this.add.group({
@@ -132,7 +190,18 @@ export class TestingGroundScene extends BaseScene {
         const playerY = this.SCENE_HEIGHT - (groundHeight * tileSize) - 50;
         this.player = new Player(this, playerX, playerY);
         this.player.isRolling = false; // Add rolling state tracking
-        
+
+        // Example: Create a Zapper enemy
+        const zapper = new Zapper(this, 400, playerY);
+        this.physics.add.collider(zapper, groundLayer);
+        this.physics.add.collider(this.player, zapper, () => {
+            this.player.takeDamage();
+        });
+        this.physics.add.collider(this.bullets, zapper, (bullet, enemy) => {
+            bullet.destroy();
+            enemy.takeDamage(GameConfig.PLAYER.BULLET_DAMAGE);
+        });
+
         // Set up player movement keys
         this.cursors = this.input.keyboard.createCursorKeys();
         this.keys = {
@@ -174,30 +243,30 @@ export class TestingGroundScene extends BaseScene {
                 this.player.setVelocityX(-speed);
                 this.player.setFlipX(true);
                 if (this.player.body.touching.down && !this.player.isRolling) {
-                    this.player.play('character_Run', true);
+                    this.player.playAnimation('character_Run', true);
                 }
             } else if (this.keys.right.isDown || this.cursors.right.isDown) {
                 this.player.setVelocityX(speed);
                 this.player.setFlipX(false);
                 if (this.player.body.touching.down && !this.player.isRolling) {
-                    this.player.play('character_Run', true);
+                    this.player.playAnimation('character_Run', true);
                 }
             } else {
                 this.player.setVelocityX(0);
                 if (this.player.body.touching.down && !this.player.isRolling) {
-                    this.player.play('character_Idle', true);
+                    this.player.playAnimation('character_Idle', true);
                 }
             }
 
             // Jumping
             if ((this.keys.up.isDown || this.cursors.up.isDown || this.keys.space.isDown) && this.player.body.touching.down && !this.player.isRolling) {
                 this.player.setVelocityY(-330);
-                this.player.play('character_Jump', true);
+                this.player.playAnimation('character_Jump', true);
             }
 
             // Check if falling
             if (this.player.body.velocity.y > 50 && !this.player.body.touching.down && !this.player.isRolling) {
-                this.player.play('character_Fall', true);
+                this.player.playAnimation('character_Fall', true);
             }
 
             // Rolling (Shift key)
@@ -205,7 +274,7 @@ export class TestingGroundScene extends BaseScene {
                 const rollSpeed = this.player.flipX ? -450 : 450;
                 this.player.setVelocityX(rollSpeed);
                 this.player.isRolling = true;
-                this.player.play('character_Rollover', true).once('animationcomplete', () => {
+                this.player.playAnimation('character_Rollover', true).once('animationcomplete', () => {
                     this.player.isRolling = false;
                 });
             }

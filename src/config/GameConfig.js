@@ -46,6 +46,20 @@ export const GameConfig = {
             GROUND_OFFSET: 92,
             HEALTH: 500,
             DAMAGE: 50
+        },
+        WARRIOR: {
+            GROUND_OFFSET: 92,
+            HEALTH: 500,
+            DAMAGE: 50
+        },
+        ZAPPER: {
+            HEALTH: 100,
+            DAMAGE: 20,
+            SPEED: 100,
+            ATTACK_RANGE: 200,
+            AWAKEN_RANGE: 300,
+            ATTACK_COOLDOWN: 2000,
+            POINTS: 150
         }
     },
 
