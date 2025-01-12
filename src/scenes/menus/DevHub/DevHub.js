@@ -107,6 +107,7 @@ export class DevHub extends Scene {
         // Documentation files from the docs directory
         const documentationFiles = [
             { path: 'animation-manager-documentation.html', title: 'Animation Manager' },
+            { path: 'arcade-physics-documentation.html', title: 'Arcade Physics' },
             { path: 'base-manager-documentation.html', title: 'Base Manager' },
             { path: 'base-scene-manager-documentation.html', title: 'Base Scene Manager' },
             { path: 'boot-scene-documentation.html', title: 'Boot Scene' },
