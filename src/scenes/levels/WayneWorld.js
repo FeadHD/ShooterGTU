@@ -62,12 +62,30 @@ export class WayneWorld extends BaseScene {
         this.load.json('combined-level', 'assets/levels/Json/WayneWorld.ldtk');
         
         // Load character sprites and animations
-        this.load.image('character_idle', 'assets/character/character_Idle.png');
-        this.load.image('character_jump', 'assets/character/character_Jump.png');
-        this.load.image('character_crouch', 'assets/character/character_Crouch.png');
-        this.load.image('character_death', 'assets/character/character_Death.png');
-        this.load.image('character_rollover', 'assets/character/character_Rollover.png');
-        this.load.image('character_walking', 'assets/character/character_Walking.png');
+        this.load.spritesheet('character_idle', 'assets/character/character_Idle.png', {
+            frameWidth: 32,
+            frameHeight: 48
+        });
+        this.load.spritesheet('character_jump', 'assets/character/character_Jump.png', {
+            frameWidth: 32,
+            frameHeight: 48
+        });
+        this.load.spritesheet('character_crouch', 'assets/character/character_Crouch.png', {
+            frameWidth: 32,
+            frameHeight: 48
+        });
+        this.load.spritesheet('character_death', 'assets/character/character_Death.png', {
+            frameWidth: 32,
+            frameHeight: 48
+        });
+        this.load.spritesheet('character_rollover', 'assets/character/character_Rollover.png', {
+            frameWidth: 32,
+            frameHeight: 48
+        });
+        this.load.spritesheet('character_walking', 'assets/character/character_Walking.png', {
+            frameWidth: 32,
+            frameHeight: 48
+        });
         
         // Load enemy sprites
         this.load.image('enemy', 'assets/enemy.png');

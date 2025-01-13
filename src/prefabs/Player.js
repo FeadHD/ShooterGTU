@@ -132,11 +132,19 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
                 repeat: 0
             },
             {
+                key: 'character_Walking',
+                spritesheet: 'character_walking',
+                frameRate: 10,
+                start: 0,
+                end: 8,  // 288px wide / 32px per frame = 9 frames (0-8)
+                repeat: -1
+            },
+            {
                 key: 'character_Rollover',
-                spritesheet: 'character_rollover',
+                spritesheet: 'character_Rollover',  // Match the exact case of the loaded asset
                 frameRate: 15,
                 start: 0,
-                end: 6,
+                end: 3,  // Only 4 frames available (0,1,2,3)
                 repeat: 0
             }
         ];
