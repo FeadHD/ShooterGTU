@@ -314,22 +314,27 @@ export class ErrorSystem {
      */
     checkAudioSystem() {
         try {
-            // First check if we have sound and music manager
-            if (!this.scene.sound || !this.scene.musicManager) {
+            // Skip check if scene is transitioning or not fully initialized
+            if (!this.scene || !this.scene.scene || this.scene.scene.isTransitioning) {
                 return;
             }
 
-            // Check if background music exists and is playing
-            const bgMusic = this.scene.sound.get('bgMusic');
-            
-            // Only check if we have background music and sound isn't muted
-            if (bgMusic && !this.scene.game.sound.mute) {
-                if (!bgMusic.isPlaying) {
+            // Only check if we have sound manager and it's not explicitly muted
+            if (!this.scene.sound || this.scene.sound.mute) {
+                return;
+            }
+
+            // If music manager exists, verify it's in a valid state
+            if (this.scene.musicManager && this.scene.musicManager.currentMusic) {
+                const music = this.scene.musicManager.currentMusic;
+                // Only report error if music should be playing but isn't
+                if (music.shouldBePlaying && !music.isPlaying && !music.isPaused) {
                     console.warn('Background music stopped unexpectedly');
                     this.handleError(new Error('Audio system failure'), 'sound');
                 }
             }
         } catch (error) {
+            // Log but don't throw to prevent cascading errors
             console.warn('Error checking audio system:', error);
         }
     }

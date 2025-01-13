@@ -128,12 +128,14 @@ export class WayneWorld extends BaseScene {
         this.load.audio('turretLaser', 'assets/sounds/laser.wav');
         this.load.audio('laser', 'assets/sounds/laser.wav');
         this.load.audio('hit', 'assets/sounds/hit.wav');
-        this.load.audio('victoryMusic', 'assets/sounds/congratulations.wav');
-        this.load.audio('bgMusic', 'assets/audio/bgMusic.wav');
         this.load.audio('alarm', 'assets/sounds/alarm.wav');
+        this.load.audio('bgMusic', 'assets/sounds/thezucc.wav');  // Use thezucc.wav as background music
     }
 
     create() {
+        // Initialize audio system first
+        this.initializeAudio();
+        
         // Load LDTK data first to get dimensions
         const ldtkData = this.cache.json.get('combined-level');
         if (!ldtkData || !ldtkData.levels || ldtkData.levels.length === 0) {
@@ -280,6 +282,9 @@ export class WayneWorld extends BaseScene {
 
         // Setup UI and other elements
         this.setupUI();
+        
+        // Start background music after everything is set up
+        this.startBackgroundMusic();
         
         // Add debug graphics for boundaries
         this.boundaryGraphics = this.add.graphics();
@@ -752,7 +757,17 @@ export class WayneWorld extends BaseScene {
     }
 
     cleanup() {
-        super.cleanup();
+        // Stop and cleanup music
+        if (this.musicManager) {
+            this.musicManager.stop();
+        }
+        
+        // Clean up other resources
+        if (this.player) {
+            this.player.destroy();
+        }
+        this.enemies.clear(true, true);
+        this.bullets.clear(true, true);
         
         // Clean up managers
         if (this.enemyManager) this.enemyManager.cleanup();
@@ -760,11 +775,56 @@ export class WayneWorld extends BaseScene {
         if (this.trapManager) this.trapManager.cleanup();
         if (this.bulletPool) this.bulletPool.destroy();
         
-        // Clean up physics groups
-        if (this.enemies) this.enemies.clear(true, true);
-        
         // Clear loaded sections
         this.loadedSections.clear();
         this.activeEntities.clear();
+    }
+
+    initializeAudio() {
+        if (!this.game.sound.locked) {
+            // Audio system is ready, initialize immediately
+            this.setupAudioSystem();
+        } else {
+            // Wait for audio system to unlock
+            this.game.sound.once('unlocked', () => {
+                this.setupAudioSystem();
+            });
+        }
+    }
+
+    setupAudioSystem() {
+        try {
+            this.game.sound.pauseOnBlur = false;
+            this.musicManager = new MusicManager(this);
+            console.log('Audio system initialized successfully');
+        } catch (error) {
+            console.warn('Error initializing audio system:', error);
+        }
+    }
+
+    startBackgroundMusic() {
+        // Delay music start to ensure scene is ready
+        this.time.delayedCall(1000, () => {
+            try {
+                if (!this.musicManager) {
+                    console.warn('Music manager not initialized');
+                    return;
+                }
+
+                const bgMusic = this.sound.add('bgMusic', {
+                    loop: true,
+                    volume: 0.5
+                });
+
+                // Add custom property to track desired state
+                bgMusic.shouldBePlaying = true;
+
+                this.musicManager.setCurrentMusic(bgMusic);
+                bgMusic.play();
+                console.log('Background music started successfully');
+            } catch (error) {
+                console.warn('Error starting background music:', error);
+            }
+        });
     }
 }
