@@ -349,9 +349,10 @@ export class CombinedGtuLevel extends BaseScene {
                                 const worldX = Math.floor((x * 32 + levelStartX) / 32);
                                 const worldY = y;
 
-                                // Place tiles in both layers
-                                this.groundLayer.putTileAt(642, worldX, worldY, true);
-                                const platformTile = this.platformLayer.putTileAt(642, worldX, worldY, true);
+                                // Use the actual tile ID from the LDTK data
+                                const tileId = value - 1; // LDTK uses 1-based indices, Phaser uses 0-based
+                                this.groundLayer.putTileAt(tileId, worldX, worldY, true);
+                                const platformTile = this.platformLayer.putTileAt(tileId, worldX, worldY, true);
                                 if (platformTile) {
                                     platformTile.setCollision(true);
                                 }
@@ -374,8 +375,10 @@ export class CombinedGtuLevel extends BaseScene {
                             const gridX = Math.floor(tileX / 32);
                             const gridY = Math.floor(tileY / 32);
                             
-                            this.groundLayer.putTileAt(642, gridX, gridY, true);
-                            const platformTile = this.platformLayer.putTileAt(642, gridX, gridY, true);
+                            // Use the actual tile ID from the autoLayer data
+                            const tileId = tile.t;
+                            this.groundLayer.putTileAt(tileId, gridX, gridY, true);
+                            const platformTile = this.platformLayer.putTileAt(tileId, gridX, gridY, true);
                             if (platformTile) {
                                 platformTile.setCollision(true);
                             }
