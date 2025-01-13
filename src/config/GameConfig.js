@@ -14,6 +14,7 @@ export const GameConfig = {
     // Player settings
     PLAYER: {
         INITIAL_HP: 100,
+        INITIAL_LIVES: 3,
         DAMAGE: 25,
         BULLET_DAMAGE: 25,
         INVULNERABLE_DURATION: 2000,

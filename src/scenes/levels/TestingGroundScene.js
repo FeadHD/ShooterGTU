@@ -37,6 +37,12 @@ export class TestingGroundScene extends BaseScene {
     preload() {
         super.preload();
         
+        // Load font
+        this.load.font('Gameplay', 'assets/fonts/retronoid/Gameplay.ttf');
+
+        // Load heart icon
+        // this.load.image('heart', 'assets/ui/heart.png');
+
         // Load tileset
         this.load.image('tileset', 'assets/tilesets/tileset.png');
 
@@ -205,6 +211,18 @@ export class TestingGroundScene extends BaseScene {
     }
 
     create() {
+        super.create();
+        
+        // Initialize lives in registry if not set
+        if (this.registry.get('playerLives') === undefined) {
+            this.registry.set('playerLives', GameConfig.PLAYER.INITIAL_LIVES);
+        }
+
+        // Listen for lives changes
+        this.registry.events.on('changedata-playerLives', (_, value) => {
+            this.updateLives(value);
+        });
+
         // Register core dependencies
         container.register('scene', this);
         container.register('eventBus', eventBus);
@@ -359,6 +377,229 @@ export class TestingGroundScene extends BaseScene {
         this.cameras.main.setBounds(0, 0, this.SCENE_WIDTH, this.SCENE_HEIGHT);
         this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
         this.cameras.main.setBackgroundColor('#87CEEB');
+
+        // Create retro health bar
+        this.createRetroHealthBar();
+    }
+
+    createRetroHealthBar() {
+        const padding = 10;
+        const barWidth = 250;
+        const barHeight = 8;
+        const x = padding;
+        const y = padding;
+        this.textWidth = 35;
+        const totalWidth = this.textWidth + barWidth + 4;
+
+        // Create the background container
+        this.healthContainer = this.add.container(x, y);
+        this.healthContainer.setScrollFactor(0);
+
+        // Add numeric display with black stroke
+        this.healthText = this.add.text(4, -2, '100', {
+            fontFamily: 'Gameplay',
+            fontSize: '12px',
+            fill: '#00ffff',
+            stroke: '#000000',
+            strokeThickness: 2,
+            padding: { x: 0, y: 0 },
+            resolution: 8,
+            antialias: false,
+            letterSpacing: 8  // Increased letter spacing for numbers
+        }).setPipeline('TextureTintPipeline');
+        this.healthText.setOrigin(0, 0);
+        this.healthText.setScrollFactor(0);
+        this.healthContainer.add(this.healthText);
+
+        // Create segments (10 segments, each representing 10 health)
+        this.healthSegments = [];
+        this.segmentWidth = 22;
+        this.segmentSpacing = 3; // Back to original spacing
+        const segmentColor = 0x00ffff;
+        this.cornerRadius = 2;
+
+        for (let i = 0; i < 10; i++) {
+            const graphics = this.add.graphics();
+            
+            // Add black outline first
+            graphics.lineStyle(1, 0x000000, 1);
+            graphics.fillStyle(segmentColor, 1);
+            
+            // Draw filled rectangle with outline
+            graphics.fillRoundedRect(
+                this.textWidth + 2 + (i * (this.segmentWidth + this.segmentSpacing)),
+                2,
+                this.segmentWidth,
+                barHeight,
+                this.cornerRadius
+            );
+            graphics.strokeRoundedRect(
+                this.textWidth + 2 + (i * (this.segmentWidth + this.segmentSpacing)),
+                2,
+                this.segmentWidth,
+                barHeight,
+                this.cornerRadius
+            );
+            
+            this.healthSegments.push(graphics);
+            this.healthContainer.add(graphics);
+        }
+
+        // Add heart symbol
+        const heartX = this.textWidth + 2 + (10 * (this.segmentWidth + this.segmentSpacing)) + 4; // Reduced from +10 to +4
+        this.heartText = this.add.text(heartX, -4, '❤', {
+            fontFamily: 'Gameplay',
+            fontSize: '24px',
+            fill: '#ff0000',
+            stroke: '#000000',
+            strokeThickness: 2,
+            resolution: 8,
+            antialias: false
+        });
+        this.healthContainer.add(this.heartText);
+
+        // Add x symbol
+        this.livesSymbol = this.add.text(heartX + 25, 8, 'x', {
+            fontFamily: 'Gameplay',
+            fontSize: '8px',
+            fill: '#ff0000',
+            stroke: '#000000',
+            strokeThickness: 1,
+            resolution: 8,
+            antialias: false
+        });
+        this.healthContainer.add(this.livesSymbol);
+
+        // Add lives counter
+        this.livesText = this.add.text(heartX + 32, 8, '3', {
+            fontFamily: 'Gameplay',
+            fontSize: '8px',
+            fill: '#ff0000',
+            stroke: '#000000',
+            strokeThickness: 1,
+            letterSpacing: 8,
+            resolution: 8,
+            antialias: false
+        });
+        this.healthContainer.add(this.livesText);
+
+        // Set up lives update listener
+        this.registry.events.on('changedata-playerLives', (_, value) => {
+            this.updateLives(value);
+        });
+
+        // Create stamina bar
+        const staminaY = barHeight + 6;
+        this.staminaContainer = this.add.container(x, y + staminaY);
+        this.staminaContainer.setScrollFactor(0);
+
+        // Create stamina segments with smaller dimensions
+        this.staminaSegments = [];
+        const staminaColor = 0x8A2BE2; // Darker purple color
+        const staminaHeight = 4;
+        this.staminaWidth = this.segmentWidth / 1.5;
+        this.staminaSpacing = 2;
+
+        for (let i = 0; i < 10; i++) {
+            const graphics = this.add.graphics();
+            
+            graphics.lineStyle(1, 0x000000, 1);
+            graphics.fillStyle(staminaColor, 1);
+            
+            graphics.fillRoundedRect(
+                this.textWidth + 2 + (i * (this.staminaWidth + this.staminaSpacing)),
+                2,
+                this.staminaWidth,
+                staminaHeight,
+                1
+            );
+            graphics.strokeRoundedRect(
+                this.textWidth + 2 + (i * (this.staminaWidth + this.staminaSpacing)),
+                2,
+                this.staminaWidth,
+                staminaHeight,
+                1
+            );
+            
+            this.staminaSegments.push(graphics);
+            this.staminaContainer.add(graphics);
+        }
+
+        // Set up health update listener
+        this.registry.events.on('changedata-playerHP', (_, value) => {
+            this.updateRetroHealthBar(value);
+        });
+
+        // Set up stamina update listener
+        this.registry.events.on('changedata-stamina', (_, value) => {
+            this.updateStaminaBar(value);
+        });
+    }
+
+    updateRetroHealthBar(health) {
+        const maxHealth = 100;
+        const healthPercentage = Math.max(0, Math.min(100, health)) / maxHealth;
+        const numActiveSegments = Math.ceil(healthPercentage * 10);
+
+        // Update segments
+        this.healthSegments.forEach((graphics, index) => {
+            graphics.clear();
+            
+            graphics.lineStyle(1, 0x000000, 1);
+            graphics.fillStyle(index < numActiveSegments ? 0x00ffff : 0x006666, 1); // Cyan for active, dark cyan for inactive
+            
+            graphics.fillRoundedRect(
+                this.textWidth + 2 + (index * (this.segmentWidth + this.segmentSpacing)),
+                2,
+                this.segmentWidth,
+                8,
+                this.cornerRadius
+            );
+            graphics.strokeRoundedRect(
+                this.textWidth + 2 + (index * (this.segmentWidth + this.segmentSpacing)),
+                2,
+                this.segmentWidth,
+                8,
+                this.cornerRadius
+            );
+        });
+
+        this.healthText.setText(Math.max(0, Math.round(health)).toString());
+    }
+
+    updateLives(lives) {
+        if (this.livesText) {
+            this.livesText.setText(lives.toString());
+        }
+    }
+
+    updateStaminaBar(stamina) {
+        const maxStamina = 100;
+        const staminaPercentage = Math.max(0, Math.min(100, stamina)) / maxStamina;
+        const numActiveSegments = Math.ceil(staminaPercentage * 10);
+
+        // Update segments
+        this.staminaSegments.forEach((graphics, index) => {
+            graphics.clear();
+            
+            graphics.lineStyle(1, 0x000000, 1);
+            graphics.fillStyle(index < numActiveSegments ? 0x8A2BE2 : 0x4B0082, 1); // Darker purple for active, even darker for inactive
+            
+            graphics.fillRoundedRect(
+                this.textWidth + 2 + (index * (this.staminaWidth + this.staminaSpacing)),
+                2,
+                this.staminaWidth,
+                4,
+                1
+            );
+            graphics.strokeRoundedRect(
+                this.textWidth + 2 + (index * (this.staminaWidth + this.staminaSpacing)),
+                2,
+                this.staminaWidth,
+                4,
+                1
+            );
+        });
     }
 
     update(time, delta) {

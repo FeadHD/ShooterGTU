@@ -67,6 +67,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.lastJumpPressedTime = 0; // Track when jump was last pressed
         this.hasBufferedJump = false; // Track if we have a buffered jump
 
+        // Lives system
+        this.lives = scene.registry.get('playerLives') || GameConfig.PLAYER.INITIAL_LIVES;
+        scene.registry.set('playerLives', this.lives);
+
         // Add sprite to scene and enable physics
         scene.add.existing(this);
         scene.physics.add.existing(this);
@@ -241,43 +245,25 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         if (this.isDying) return;  // Prevent multiple death calls
         
         this.isDying = true;
-        this.setVelocity(0, 0);
+        
+        // Decrement lives
+        this.lives--;
+        this.scene.registry.set('playerLives', this.lives);
+        
+        // If no lives left, trigger game over
+        if (this.lives <= 0) {
+            // TODO: Implement game over
+            console.log('Game Over');
+            return;
+        }
+        
+        // Disable controls and physics
+        this.controller.enabled = false;
         this.body.moves = false;
         
-        // Disable controls
-        this.controller.enabled = false;
-        
-        // Update lives in registry and UI only if we're in a game scene
-        if (this.scene.gameUI) {
-            const currentLives = this.scene.registry.get('lives');
-            if (currentLives > 0) {
-                this.scene.registry.set('lives', currentLives - 1);
-                this.scene.gameUI.updateLives(currentLives - 1);
-            }
-        }
-
-        // Reset antivirus wall if it exists
-        if (this.scene.antivirusWall) {
-            this.scene.antivirusWall.reset();
-        }
-        
-        // Play death animation
-        if (this.scene.anims.exists('character_Death')) {
-            this.playAnimation('character_Death', true);
-            this.once('animationcomplete', () => {
-                this.setAlpha(0);
-                // Reset after animation completes
-                this.scene.time.delayedCall(500, () => {
-                    this.respawn();
-                });
-            });
-        } else {
-            // If no death animation, just wait and respawn
-            this.setAlpha(0);
-            this.scene.time.delayedCall(500, () => {
-                this.respawn();
-            });
-        }
+        // Play death animation or effects
+        this.setAlpha(0);
+        this.respawn();
     }
 
     fallDeath() {

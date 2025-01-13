@@ -5,6 +5,8 @@ import { PlayerController } from '../../modules/controls/PlayerController';
 import { AnimationManager } from '../../modules/managers/AnimationManager';
 import { Bullet } from '../../prefabs/Bullet'; 
 import { TutorialManager } from '../../modules/managers/TutorialManager';
+import { PlayerHUD } from '../../prefabs/ui/PlayerHUD';
+import { GameConfig } from '../../config/GameConfig';
 
 export class IntroScene extends Scene {
     constructor() {
@@ -239,6 +241,16 @@ export class IntroScene extends Scene {
                     this.tutorialManager.onPlayerShoot();
                 }
             });
+
+            // Initialize lives in registry if not set
+            if (this.registry.get('playerLives') === undefined) {
+                this.registry.set('playerLives', GameConfig.PLAYER.INITIAL_LIVES);
+            }
+
+            // Create player HUD in bottom left corner
+            const padding = 20; // Padding from the edges
+            const hudY = this.cameras.main.height - padding - 20; // Moved up by changing 40 to 20
+            this.playerHUD = new PlayerHUD(this, padding, hudY, true); // Set fixedToCamera to true
         }
 
         // Log the final scene setup
