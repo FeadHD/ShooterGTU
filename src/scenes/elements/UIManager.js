@@ -457,10 +457,14 @@ export class UIManager {
     handleRegistryChange(parent, key, value) {
         switch (key) {
             case 'score':
-                this.scoreText.setText('Score: ' + value);
+                if (this.scoreText) {
+                    this.scoreText.setText('Score: ' + value);
+                }
                 break;
             case 'lives':
-                this.livesText.setText('Lives: ' + value);
+                if (this.livesText) {
+                    this.livesText.setText('Lives: ' + value);
+                }
                 break;
             case 'playerHP':
                 this.updateHealthBar(value);
@@ -469,7 +473,9 @@ export class UIManager {
                 this.updateStaminaBar(value);
                 break;
             case 'bitcoins':
-                this.bitcoinText.setText('Bitcoins: ' + value);
+                if (this.bitcoinText) {
+                    this.bitcoinText.setText('Bitcoins: ' + value);
+                }
                 break;
         }
     }

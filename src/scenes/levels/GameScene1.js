@@ -1040,10 +1040,13 @@ export class GameScene1 extends BaseScene {
             this.antivirusWall.update(time, delta);
             
             // Check if player is too far behind the antivirus wall
-            if (this.player.x < this.antivirusWall.getX() - 20) {
+            if (this.player && this.player.x < this.antivirusWall.getX() - 20) {
                 this.handleAntivirusCollision();
             }
         }
+
+        // Skip rest of update if player doesn't exist
+        if (!this.player) return;
 
         // Update bullet pool to check for out-of-bounds bullets
         this.bulletPool.update();
@@ -1150,9 +1153,13 @@ export class GameScene1 extends BaseScene {
     }
 
     handleAntivirusCollision() {
-        // Instant death on antivirus collision
-        if (!this.player.isDying) {
+        if (this.player && !this.player.isDying) {
             this.player.die();
+            
+            // Reset antivirus wall when player dies
+            if (this.antivirusWall) {
+                this.antivirusWall.reset();
+            }
         }
     }
 
