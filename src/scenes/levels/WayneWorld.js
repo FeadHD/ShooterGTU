@@ -28,9 +28,9 @@ import { Player } from '../../prefabs/Player';
 import { eventBus } from '../../modules/events/EventBus';
 import { ManagerFactory } from '../../modules/di/ManagerFactory';
 
-export class CombinedGtuLevel extends BaseScene {
+export class WayneWorld extends BaseScene {
     constructor() {
-        super({ key: 'CombinedGtuLevel' });
+        super({ key: 'WayneWorld' });
         this.tileColliderAdded = false;
         this.messageShown = false;
         this.currentLevel = 0; // Track which level section we're in
@@ -59,7 +59,7 @@ export class CombinedGtuLevel extends BaseScene {
         this.load.image('GtuTileset', 'assets/levels/image/GtuTileset.png');
         
         // Load level data
-        this.load.json('combined-level', 'assets/levels/Json/TestGTU.ldtk');
+        this.load.json('combined-level', 'assets/levels/Json/WayneWorld.ldtk');
         
         // Load character sprites and animations
         this.load.spritesheet('character_idle', 'assets/character/character_Idle.png', {
@@ -128,12 +128,14 @@ export class CombinedGtuLevel extends BaseScene {
         this.load.audio('turretLaser', 'assets/sounds/laser.wav');
         this.load.audio('laser', 'assets/sounds/laser.wav');
         this.load.audio('hit', 'assets/sounds/hit.wav');
-        this.load.audio('victoryMusic', 'assets/sounds/congratulations.wav');
-        this.load.audio('bgMusic', 'assets/audio/bgMusic.wav');
         this.load.audio('alarm', 'assets/sounds/alarm.wav');
+        this.load.audio('bgMusic', 'assets/sounds/thezucc.wav');  // Use thezucc.wav as background music
     }
 
     create() {
+        // Initialize audio system first
+        this.initializeAudio();
+        
         // Load LDTK data first to get dimensions
         const ldtkData = this.cache.json.get('combined-level');
         if (!ldtkData || !ldtkData.levels || ldtkData.levels.length === 0) {
@@ -232,8 +234,30 @@ export class CombinedGtuLevel extends BaseScene {
         // Set up collision detection
         this.setupCollisions();
 
-        // NOW create the player after tiles are loaded
-        this.createPlayer(100, 384); // Y position set to be on top of tiles
+        // Find player start position from LDTK data
+        let playerStartX = 100;
+        let playerStartY = 100;
+    
+        if (firstLevel && firstLevel.layerInstances) {
+            const entitiesLayer = firstLevel.layerInstances.find(
+                layer => layer.__identifier === 'Entities'
+            );
+            
+            if (entitiesLayer) {
+                const playerStart = entitiesLayer.entityInstances.find(
+                    entity => entity.__identifier === 'PlayerStart'
+                );
+                
+                if (playerStart) {
+                    playerStartX = playerStart.__worldX;
+                    playerStartY = playerStart.__worldY;
+                    console.log('Found player start position:', { playerStartX, playerStartY });
+                }
+            }
+        }
+
+        // Create player at the LDTK-defined start position
+        this.createPlayer(playerStartX, playerStartY);
 
         // Initialize camera with player
         this.levelCamera.init(this.player);
@@ -258,6 +282,9 @@ export class CombinedGtuLevel extends BaseScene {
 
         // Setup UI and other elements
         this.setupUI();
+        
+        // Start background music after everything is set up
+        this.startBackgroundMusic();
         
         // Add debug graphics for boundaries
         this.boundaryGraphics = this.add.graphics();
@@ -581,6 +608,9 @@ export class CombinedGtuLevel extends BaseScene {
                 return new Enemy(this, entityData.__worldX, entityData.__worldY);
             case 'Bitcoin':
                 return new Bitcoin(this, entityData.__worldX, entityData.__worldY);
+            case 'PlayerStart':
+                // We handle this separately in create()
+                return null;
             // Add other entity types as needed
         }
         return null;
@@ -727,7 +757,17 @@ export class CombinedGtuLevel extends BaseScene {
     }
 
     cleanup() {
-        super.cleanup();
+        // Stop and cleanup music
+        if (this.musicManager) {
+            this.musicManager.stop();
+        }
+        
+        // Clean up other resources
+        if (this.player) {
+            this.player.destroy();
+        }
+        this.enemies.clear(true, true);
+        this.bullets.clear(true, true);
         
         // Clean up managers
         if (this.enemyManager) this.enemyManager.cleanup();
@@ -735,11 +775,56 @@ export class CombinedGtuLevel extends BaseScene {
         if (this.trapManager) this.trapManager.cleanup();
         if (this.bulletPool) this.bulletPool.destroy();
         
-        // Clean up physics groups
-        if (this.enemies) this.enemies.clear(true, true);
-        
         // Clear loaded sections
         this.loadedSections.clear();
         this.activeEntities.clear();
+    }
+
+    initializeAudio() {
+        if (!this.game.sound.locked) {
+            // Audio system is ready, initialize immediately
+            this.setupAudioSystem();
+        } else {
+            // Wait for audio system to unlock
+            this.game.sound.once('unlocked', () => {
+                this.setupAudioSystem();
+            });
+        }
+    }
+
+    setupAudioSystem() {
+        try {
+            this.game.sound.pauseOnBlur = false;
+            this.musicManager = new MusicManager(this);
+            console.log('Audio system initialized successfully');
+        } catch (error) {
+            console.warn('Error initializing audio system:', error);
+        }
+    }
+
+    startBackgroundMusic() {
+        // Delay music start to ensure scene is ready
+        this.time.delayedCall(1000, () => {
+            try {
+                if (!this.musicManager) {
+                    console.warn('Music manager not initialized');
+                    return;
+                }
+
+                const bgMusic = this.sound.add('bgMusic', {
+                    loop: true,
+                    volume: 0.5
+                });
+
+                // Add custom property to track desired state
+                bgMusic.shouldBePlaying = true;
+
+                this.musicManager.setCurrentMusic(bgMusic);
+                bgMusic.play();
+                console.log('Background music started successfully');
+            } catch (error) {
+                console.warn('Error starting background music:', error);
+            }
+        });
     }
 }

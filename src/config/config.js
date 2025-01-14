@@ -17,6 +17,7 @@ import { Credits } from '../scenes/menus/Credits';
 import { CombinedGtuLevel } from '../scenes/levels/CombinedGtuLevel';
 import { SoundTester } from '../scenes/menus/DevHub/SoundTester';
 import { TestingGroundScene } from '../scenes/levels/TestingGroundScene';
+import { WayneWorld } from '../scenes/levels/WayneWorld';
 
 export const config = {
     type: Phaser.AUTO,
@@ -66,6 +67,7 @@ export const config = {
         Credits,
         CombinedGtuLevel,
         SoundTester,
-        TestingGroundScene
+        TestingGroundScene,
+        WayneWorld
     ]
 };
