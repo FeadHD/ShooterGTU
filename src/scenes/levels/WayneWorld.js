@@ -140,6 +140,12 @@ export class WayneWorld extends BaseScene {
         });
         this.load.on('filecomplete-spritesheet-zapper_idle', () => {
             console.log('zapper_idle loaded successfully');
+            this.anims.create({
+                key: 'zapper_idle',
+                frames: this.anims.generateFrameNumbers('zapper_idle', { start: 0, end: 3 }),
+                frameRate: 8,
+                repeat: -1
+            });
         });
 
         this.load.spritesheet('zapper_wake', 'assets/zapper/zapper_wake.png', { 
@@ -148,6 +154,12 @@ export class WayneWorld extends BaseScene {
         });
         this.load.on('filecomplete-spritesheet-zapper_wake', () => {
             console.log('zapper_wake loaded successfully');
+            this.anims.create({
+                key: 'zapper_wake',
+                frames: this.anims.generateFrameNumbers('zapper_wake', { start: 0, end: 5 }),
+                frameRate: 10,
+                repeat: 0
+            });
         });
 
         this.load.spritesheet('zapper_walk', 'assets/zapper/zapper_walk.png', { 
@@ -156,6 +168,12 @@ export class WayneWorld extends BaseScene {
         });
         this.load.on('filecomplete-spritesheet-zapper_walk', () => {
             console.log('zapper_walk loaded successfully');
+            this.anims.create({
+                key: 'zapper_walk',
+                frames: this.anims.generateFrameNumbers('zapper_walk', { start: 0, end: 7 }),
+                frameRate: 12,
+                repeat: -1
+            });
         });
 
         this.load.spritesheet('zapper_shock', 'assets/zapper/zapper_shock.png', { 
@@ -164,6 +182,64 @@ export class WayneWorld extends BaseScene {
         });
         this.load.on('filecomplete-spritesheet-zapper_shock', () => {
             console.log('zapper_shock loaded successfully');
+            this.anims.create({
+                key: 'zapper_shock',
+                frames: this.anims.generateFrameNumbers('zapper_shock', { start: 0, end: 5 }),
+                frameRate: 15,
+                repeat: 0
+            });
+        });
+
+        // Add missing Zapper animations
+        this.load.spritesheet('zapper_attack', 'assets/zapper/zapper_attack.png', {
+            frameWidth: 32,
+            frameHeight: 32
+        });
+        this.load.on('filecomplete-spritesheet-zapper_attack', () => {
+            console.log('zapper_attack loaded successfully');
+            this.anims.create({
+                key: 'zapper_attack',
+                frames: this.anims.generateFrameNumbers('zapper_attack', { 
+                    start: 0, 
+                    end: 5
+                }),
+                frameRate: 12,
+                repeat: 0
+            });
+        });
+
+        this.load.spritesheet('zapper_hit', 'assets/zapper/zapper_hit.png', {
+            frameWidth: 32,
+            frameHeight: 32
+        });
+        this.load.on('filecomplete-spritesheet-zapper_hit', () => {
+            console.log('zapper_hit loaded successfully');
+            this.anims.create({
+                key: 'zapper_hit',
+                frames: this.anims.generateFrameNumbers('zapper_hit', { 
+                    start: 0, 
+                    end: 3
+                }),
+                frameRate: 15,
+                repeat: 0
+            });
+        });
+
+        this.load.spritesheet('zapper_death', 'assets/zapper/zapper_death.png', {
+            frameWidth: 32,
+            frameHeight: 32
+        });
+        this.load.on('filecomplete-spritesheet-zapper_death', () => {
+            console.log('zapper_death loaded successfully');
+            this.anims.create({
+                key: 'zapper_death',
+                frames: this.anims.generateFrameNumbers('zapper_death', { 
+                    start: 0, 
+                    end: 5
+                }),
+                frameRate: 10,
+                repeat: 0
+            });
         });
 
         // Add error handler for missing files
@@ -181,39 +257,6 @@ export class WayneWorld extends BaseScene {
 
         // Initialize audio system first
         this.initializeAudio();
-        
-        // Create animations for zapper
-        console.log('Creating Zapper animations...');
-        
-        this.anims.create({
-            key: 'zapper_idle',
-            frames: this.anims.generateFrameNumbers('zapper_idle', { start: 0, end: 3 }),
-            frameRate: 8,
-            repeat: -1
-        });
-
-        this.anims.create({
-            key: 'zapper_wake',
-            frames: this.anims.generateFrameNumbers('zapper_wake', { start: 0, end: 5 }),
-            frameRate: 10,
-            repeat: 0
-        });
-
-        this.anims.create({
-            key: 'zapper_walk',
-            frames: this.anims.generateFrameNumbers('zapper_walk', { start: 0, end: 3 }),
-            frameRate: 8,
-            repeat: -1
-        });
-
-        this.anims.create({
-            key: 'zapper_shock',
-            frames: this.anims.generateFrameNumbers('zapper_shock', { start: 0, end: 3 }),
-            frameRate: 12,
-            repeat: 0
-        });
-
-        console.log('Zapper animations created:', this.anims.exists('zapper_idle'));
         
         // Load LDTK data first to get dimensions
         const ldtkData = this.cache.json.get('combined-level');
@@ -256,6 +299,39 @@ export class WayneWorld extends BaseScene {
 
         // Create managers first
         this.managers = ManagerFactory.createManagers(this);
+
+        // Create Zapper animations before initializing entities
+        console.log('Creating Zapper animations...');
+        
+        this.anims.create({
+            key: 'zapper_idle',
+            frames: this.anims.generateFrameNumbers('zapper_idle', { start: 0, end: 3 }),
+            frameRate: 8,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'zapper_wake',
+            frames: this.anims.generateFrameNumbers('zapper_wake', { start: 0, end: 5 }),
+            frameRate: 10,
+            repeat: 0
+        });
+
+        this.anims.create({
+            key: 'zapper_walk',
+            frames: this.anims.generateFrameNumbers('zapper_walk', { start: 0, end: 7 }),
+            frameRate: 12,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'zapper_shock',
+            frames: this.anims.generateFrameNumbers('zapper_shock', { start: 0, end: 5 }),
+            frameRate: 15,
+            repeat: 0
+        });
+
+        console.log('Zapper animations created:', this.anims.exists('zapper_idle'));
 
         // Get managers from container
         this.ldtkEntityManager = this.managers.ldtkEntityManager;

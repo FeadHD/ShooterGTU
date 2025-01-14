@@ -182,15 +182,19 @@ export class ErrorSystem {
                 }
                 break;
             case 'graphics':
-                // Try to recover graphics by resetting the renderer
+                // Try to recover graphics by refreshing textures
                 if (this.scene.game.renderer) {
-                    this.scene.game.renderer.reset();
                     // Refresh all visible game objects
                     this.scene.children.list.forEach(child => {
                         if (child.texture) {
                             child.texture.refresh();
                         }
                     });
+                    // Reset the camera to ensure proper rendering
+                    if (this.scene.cameras && this.scene.cameras.main) {
+                        this.scene.cameras.main.dirty = true;
+                        this.scene.cameras.main.preRender();
+                    }
                 }
                 break;
         }

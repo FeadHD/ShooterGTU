@@ -53,9 +53,9 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
         // Make it immovable
         this.body.setImmovable(true);
 
-        // Set hitbox size to match sprite dimensions exactly
-        this.body.setSize(16, 24); // Smaller hitbox for more precise hits
-        this.body.setOffset(8, 8); // Center horizontally and align to bottom
+        // Set hitbox size to be more forgiving for bullet hits
+        this.body.setSize(24, 32); // Larger hitbox for easier hits
+        this.body.setOffset(4, 0); // Align to top-left with small margin
 
         // Create shock sprite with physics
         this.shockSprite = scene.add.sprite(x, y, 'zapper_shock');
@@ -88,38 +88,40 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
         this.previousAnim = null;
         this.currentAnimKey = null;
 
-        // Try to play idle animation, but don't fail if it's not ready
-        this.scene.game.events.once('ready', () => {
-            this.playAnimationIfValid('zapper_idle');
-        });
+        // Wait for scene to be ready before playing animations
+        if (scene.events) {
+            scene.events.once('create', () => {
+                this.playAnimationIfValid('zapper_idle');
+            });
+        }
     }
 
     // Helper method to safely play animations
     playAnimationIfValid(key, ignoreIfPlaying = true) {
         if (!this.scene || !this.scene.anims) {
             console.warn('Scene or animations not available');
-            return false;
+            return this;
         }
 
         // Check if animation exists and has frames
         const anim = this.scene.anims.get(key);
         if (!anim || !anim.frames || anim.frames.length === 0) {
             console.warn(`Animation ${key} not found or has no frames`);
-            return false;
+            return this;
         }
 
         // Don't replay if already playing this animation
         if (ignoreIfPlaying && this.anims.currentAnim && this.anims.currentAnim.key === key) {
-            return true;
+            return this;
         }
 
         try {
             this.play(key);
             this.currentAnimKey = key;
-            return true;
+            return this;
         } catch (err) {
             console.warn(`Failed to play animation ${key}:`, err);
-            return false;
+            return this;
         }
     }
 
@@ -398,7 +400,7 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
         // Play death animation if it exists
         if (this.scene && this.scene.anims.exists('zapper_death')) {
             console.log('Playing death animation');
-            this.playAnimationIfValid('zapper_death').once('animationcomplete', () => {
+            this.play('zapper_death').once('animationcomplete', () => {
                 console.log('Death animation complete, destroying Zapper');
                 if (this.healthBar) {
                     this.healthBar.visible = false;

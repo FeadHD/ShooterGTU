@@ -24,42 +24,41 @@ export class EnemyManager {
 
         // Get enemy instance
         const enemy = enemyData.instance;
+        if (!enemy) return;
 
-        // If it's a warrior, call takeDamage directly
-        if (enemy && enemySprite.getData('type') === 'warrior') {
+        // Call takeDamage if the enemy has that method
+        if (typeof enemy.takeDamage === 'function') {
             enemy.takeDamage(1);
-            enemyData.currentHealth = enemy.currentHealth;
-            enemySprite.setData('health', enemy.currentHealth);
+            enemyData.currentHealth = enemy.health || enemy.currentHealth;
             if (enemy.updateHealthBar) {
                 enemy.updateHealthBar();
             }
             return;
         }
 
-        // For other enemies, update health normally
+        // Fallback for enemies without takeDamage method
         enemyData.currentHealth--;
-        enemyData.instance.currentHealth = enemyData.currentHealth;
-        // Also update health for Slime class compatibility
-        if (typeof enemyData.instance.health !== 'undefined') {
-            enemyData.instance.health = enemyData.currentHealth;
+        enemy.currentHealth = enemyData.currentHealth;
+        if (typeof enemy.health !== 'undefined') {
+            enemy.health = enemyData.currentHealth;
         }
         console.log('Enemy hit, health:', enemyData.currentHealth);
 
         // Update health bar if enemy has one
-        if (enemyData.instance.updateHealthBar) {
-            enemyData.instance.updateHealthBar();
+        if (enemy.updateHealthBar) {
+            enemy.updateHealthBar();
         }
 
         if (enemyData.currentHealth <= 0) {
-            if (enemyData.instance.die) {
-                enemyData.instance.die();
+            if (enemy.die) {
+                enemy.die();
             }
             this.enemies.delete(enemySprite);
             this.remainingEnemies--;
             console.log('Enemy defeated, remaining:', this.remainingEnemies);
             
             // Award points
-            const points = enemyData.instance.isBoss ? 50 : 10;
+            const points = enemy.isBoss ? 50 : 10;
             this.scene.gameState.increment('score', points);
             
             this.checkLevelComplete();
