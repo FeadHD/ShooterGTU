@@ -47,7 +47,9 @@ export class WayneWorld extends BaseScene {
         this.loadedSections = new Set();
         this.sectionWidth = 640; // Fixed section width of 20 tiles
         this.lastLoadedSection = -1; // Track the last loaded section
-        this.activeEntities = new Set();
+        this.activeEntities = new Map(); // Store active entities by section
+        this.entityBuffer = 2; // Number of sections to keep loaded for entities
+        this.sectionEntities = new Map(); // Store entity data by section
         this.currentLevelData = null;
         this.gameStarted = false;
         this.loadedTilesCount = 0; // Add counter for loaded tiles
@@ -611,6 +613,96 @@ export class WayneWorld extends BaseScene {
                 this.loadLevelSection(sectionStart);
             }
         }
+
+        // Handle entity loading/unloading
+        this.updateSectionEntities(playerSection);
+    }
+
+    updateSectionEntities(playerSection) {
+        // Calculate range for entities
+        const minEntitySection = Math.max(0, playerSection - this.entityBuffer);
+        const maxEntitySection = Math.min(
+            Math.ceil(this.singleLevelWidth / this.sectionWidth),
+            playerSection + this.entityBuffer
+        );
+
+        // Load new entities
+        for (let i = minEntitySection; i <= maxEntitySection; i++) {
+            if (!this.activeEntities.has(i)) {
+                this.loadSectionEntities(i);
+            }
+        }
+
+        // Remove far entities
+        for (const [sectionIndex, entities] of this.activeEntities) {
+            if (sectionIndex < minEntitySection || sectionIndex > maxEntitySection) {
+                this.removeSectionEntities(sectionIndex);
+            }
+        }
+    }
+
+    loadSectionEntities(sectionIndex) {
+        if (this.activeEntities.has(sectionIndex)) {
+            return; // Already loaded
+        }
+
+        const sectionStartX = sectionIndex * this.sectionWidth;
+        const sectionEndX = sectionStartX + this.sectionWidth;
+        
+        // Get entities for this section from LDTK
+        const levelIndex = Math.floor(sectionStartX / this.singleLevelWidth);
+        const currentLevel = this.currentLevelData.levels[levelIndex];
+        if (!currentLevel) return;
+
+        const levelStartX = levelIndex * this.singleLevelWidth;
+        const sectionEntities = [];
+
+        // Create entities through the manager
+        if (this.ldtkEntityManager) {
+            console.log(`Creating entities for section ${sectionIndex} (level ${levelIndex})`);
+            
+            // Filter entities that belong to this section
+            const entityLayer = currentLevel.layerInstances.find(layer => 
+                layer.__identifier === 'Entities'
+            );
+
+            if (entityLayer) {
+                const sectionEntitiesData = entityLayer.entityInstances.filter(entity => {
+                    const worldX = entity.__worldX + levelStartX;
+                    return worldX >= sectionStartX && worldX < sectionEndX;
+                });
+
+                // Create each entity in this section
+                sectionEntitiesData.forEach(entityData => {
+                    const entity = this.ldtkEntityManager.createEntity(
+                        entityData.__identifier,
+                        entityData.__worldX + levelStartX,
+                        entityData.__worldY,
+                        entityData.fieldInstances
+                    );
+                    if (entity) {
+                        sectionEntities.push(entity);
+                    }
+                });
+            }
+        }
+
+        this.activeEntities.set(sectionIndex, sectionEntities);
+    }
+
+    removeSectionEntities(sectionIndex) {
+        const entities = this.activeEntities.get(sectionIndex);
+        if (!entities) return;
+
+        console.log(`Removing entities from section ${sectionIndex}`);
+        
+        entities.forEach(entity => {
+            if (entity.destroy) {
+                entity.destroy();
+            }
+        });
+
+        this.activeEntities.delete(sectionIndex);
     }
 
     setupCollisions() {
@@ -670,12 +762,9 @@ export class WayneWorld extends BaseScene {
         const sectionEndX = sectionStartX + this.sectionWidth;
         
         // Remove entities in this section
-        this.activeEntities.forEach(entity => {
-            if (entity.x >= sectionStartX && entity.x < sectionEndX) {
-                if (entity.destroy) {
-                    entity.destroy();
-                }
-                this.activeEntities.delete(entity);
+        this.activeEntities.forEach((entities, index) => {
+            if (index === sectionIndex) {
+                this.removeSectionEntities(index);
             }
         });
         
@@ -880,17 +969,14 @@ export class WayneWorld extends BaseScene {
     }
 
     cleanup() {
-        // Clean up entities
         if (this.ldtkEntityManager) {
             this.ldtkEntityManager.cleanup();
         }
         
-        // Clean up active entities
-        this.activeEntities.forEach(entity => {
-            if (entity.destroy) {
-                entity.destroy();
-            }
-        });
+        // Clean up all active entities
+        for (const [sectionIndex, entities] of this.activeEntities) {
+            this.removeSectionEntities(sectionIndex);
+        }
         this.activeEntities.clear();
         
         // Clean up physics groups
