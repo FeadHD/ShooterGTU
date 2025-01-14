@@ -27,6 +27,7 @@ import { BulletPool } from '../../modules/managers/pools/BulletPool';
 import { Player } from '../../prefabs/Player';
 import { eventBus } from '../../modules/events/EventBus';
 import { ManagerFactory } from '../../modules/di/ManagerFactory';
+import { LDTKEntityManager } from '../../modules/managers/LDTKEntityManager';
 
 export class WayneWorld extends BaseScene {
     constructor() {
@@ -130,11 +131,89 @@ export class WayneWorld extends BaseScene {
         this.load.audio('hit', 'assets/sounds/hit.wav');
         this.load.audio('alarm', 'assets/sounds/alarm.wav');
         this.load.audio('bgMusic', 'assets/sounds/thezucc.wav');  // Use thezucc.wav as background music
+        
+        // Load zapper assets
+        console.log('Loading zapper assets...');
+        this.load.spritesheet('zapper_idle', 'assets/zapper/zapper_idle.png', { 
+            frameWidth: 32, 
+            frameHeight: 32 
+        });
+        this.load.on('filecomplete-spritesheet-zapper_idle', () => {
+            console.log('zapper_idle loaded successfully');
+        });
+
+        this.load.spritesheet('zapper_wake', 'assets/zapper/zapper_wake.png', { 
+            frameWidth: 32, 
+            frameHeight: 32 
+        });
+        this.load.on('filecomplete-spritesheet-zapper_wake', () => {
+            console.log('zapper_wake loaded successfully');
+        });
+
+        this.load.spritesheet('zapper_walk', 'assets/zapper/zapper_walk.png', { 
+            frameWidth: 32, 
+            frameHeight: 32 
+        });
+        this.load.on('filecomplete-spritesheet-zapper_walk', () => {
+            console.log('zapper_walk loaded successfully');
+        });
+
+        this.load.spritesheet('zapper_shock', 'assets/zapper/zapper_shock.png', { 
+            frameWidth: 64, 
+            frameHeight: 32 
+        });
+        this.load.on('filecomplete-spritesheet-zapper_shock', () => {
+            console.log('zapper_shock loaded successfully');
+        });
+
+        // Add error handler for missing files
+        this.load.on('loaderror', (fileObj) => {
+            console.error('Error loading file:', fileObj.key, fileObj.src);
+        });
+        
+        // Load zapper assets
+        this.load.image('zapper', 'assets/hazards/zapper.png');
+        this.load.image('spark', 'assets/effects/spark.png');
     }
 
     create() {
+        super.create();
+
         // Initialize audio system first
         this.initializeAudio();
+        
+        // Create animations for zapper
+        console.log('Creating Zapper animations...');
+        
+        this.anims.create({
+            key: 'zapper_idle',
+            frames: this.anims.generateFrameNumbers('zapper_idle', { start: 0, end: 3 }),
+            frameRate: 8,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'zapper_wake',
+            frames: this.anims.generateFrameNumbers('zapper_wake', { start: 0, end: 5 }),
+            frameRate: 10,
+            repeat: 0
+        });
+
+        this.anims.create({
+            key: 'zapper_walk',
+            frames: this.anims.generateFrameNumbers('zapper_walk', { start: 0, end: 3 }),
+            frameRate: 8,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'zapper_shock',
+            frames: this.anims.generateFrameNumbers('zapper_shock', { start: 0, end: 3 }),
+            frameRate: 12,
+            repeat: 0
+        });
+
+        console.log('Zapper animations created:', this.anims.exists('zapper_idle'));
         
         // Load LDTK data first to get dimensions
         const ldtkData = this.cache.json.get('combined-level');
@@ -178,6 +257,23 @@ export class WayneWorld extends BaseScene {
         // Create managers first
         this.managers = ManagerFactory.createManagers(this);
 
+        // Get managers from container
+        this.ldtkEntityManager = this.managers.ldtkEntityManager;
+        this.enemyManager = this.managers.enemies;
+        this.trapManager = this.managers.traps;
+        this.bulletPool = this.managers.bullets;
+        this.effectsManager = this.managers.effects;
+
+        if (!this.ldtkEntityManager) {
+            console.error('LDTKEntityManager not initialized');
+            return;
+        }
+
+        // Enable debug mode if needed
+        if (this.showDebug) {
+            this.ldtkEntityManager.setDebug(true);
+        }
+
         // Create physics groups
         this.platforms = this.physics.add.staticGroup();
         this.enemies = this.physics.add.group();
@@ -196,8 +292,10 @@ export class WayneWorld extends BaseScene {
             repeat: -1
         });
 
+        // Store level data for later use
+        this.currentLevelData = ldtkData;
+
         // Initialize managers
-        this.effectsManager = this.managers.effects;
         this.tileManager = new LDTKTileManager(this);
 
         // Create the base tilemap with dynamic dimensions
@@ -221,9 +319,6 @@ export class WayneWorld extends BaseScene {
 
         // Set world bounds
         this.physics.world.setBounds(0, 0, levelWidth, worldHeight);
-
-        // Store level data for later use
-        this.currentLevelData = ldtkData;
         
         // Create initial level section
         this.loadLevelSection(0);
@@ -249,8 +344,8 @@ export class WayneWorld extends BaseScene {
                 );
                 
                 if (playerStart) {
-                    playerStartX = playerStart.__worldX;
-                    playerStartY = playerStart.__worldY;
+                    playerStartX = playerStart.px[0];
+                    playerStartY = playerStart.px[1];
                     console.log('Found player start position:', { playerStartX, playerStartY });
                 }
             }
@@ -261,11 +356,6 @@ export class WayneWorld extends BaseScene {
 
         // Initialize camera with player
         this.levelCamera.init(this.player);
-
-        // Initialize managers after player and tiles are loaded
-        this.enemyManager = this.managers.enemies;
-        this.trapManager = this.managers.traps;
-        this.bulletPool = this.managers.bullets;
 
         // Set up camera bounds and following
         const { width, height } = this.scale;
@@ -290,11 +380,17 @@ export class WayneWorld extends BaseScene {
         this.boundaryGraphics = this.add.graphics();
         this.boundaryGraphics.setDepth(1000);
         this.showDebug = false;
+        
+        // Debug controls
         this.debugKey = this.input.keyboard.addKey('E');
         this.debugKey.on('down', () => {
             this.showDebug = !this.showDebug;
             if (!this.showDebug) {
                 this.boundaryGraphics.clear();
+            }
+            // Toggle LDTKEntityManager debug mode
+            if (this.ldtkEntityManager) {
+                this.ldtkEntityManager.setDebug(this.showDebug);
             }
         });
     }
@@ -319,28 +415,15 @@ export class WayneWorld extends BaseScene {
         // Reset tile counter for this section
         let sectionTilesCount = 0;
 
-        // Calculate the level index and local coordinates
-        const levelIndex = Math.floor(startX / this.singleLevelWidth);
-        const level = this.currentLevelData.levels[levelIndex];
-        
-        if (!level) {
-            console.error(`No level data found for section ${sectionIndex}`);
-            return;
-        }
-
-        // Calculate section bounds
-        const sectionStartX = startX;
-        const sectionEndX = startX + this.sectionWidth;
-        
         // Calculate which levels this section spans
-        const startLevelIndex = Math.floor(sectionStartX / this.singleLevelWidth);
-        const endLevelIndex = Math.floor((sectionEndX - 1) / this.singleLevelWidth);
+        const startLevelIndex = Math.floor(startX / this.singleLevelWidth);
+        const endLevelIndex = Math.floor((startX + this.sectionWidth - 1) / this.singleLevelWidth);
         
         console.log(`Section ${sectionIndex} spans levels:`, {
             startLevel: startLevelIndex,
             endLevel: endLevelIndex,
-            sectionStartX,
-            sectionEndX
+            startX,
+            sectionWidth: this.sectionWidth
         });
 
         // Process each level that this section spans
@@ -349,20 +432,12 @@ export class WayneWorld extends BaseScene {
             if (!currentLevel) continue;
 
             const levelStartX = currentLevelIndex * this.singleLevelWidth;
-            const levelEndX = levelStartX + currentLevel.pxWid;
             
-            // Find intersection between section and level
-            const intersectStartX = Math.max(sectionStartX, levelStartX);
-            const intersectEndX = Math.min(sectionEndX, levelEndX);
-            
-            if (intersectStartX >= intersectEndX) continue;
-
-            console.log(`Processing level ${currentLevelIndex} for section ${sectionIndex}:`, {
-                levelStartX,
-                levelEndX,
-                intersectStartX,
-                intersectEndX
-            });
+            // Process entities for this level section
+            if (this.ldtkEntityManager) {
+                console.log(`Creating entities for level ${currentLevelIndex} at offset ${levelStartX}`);
+                this.ldtkEntityManager.createEntities(currentLevel, levelStartX, 0);
+            }
 
             // Find the Solid layer
             const solidLayer = currentLevel.layerInstances.find(layer => 
@@ -371,8 +446,8 @@ export class WayneWorld extends BaseScene {
 
             if (solidLayer) {
                 // Convert world coordinates to level-local tile coordinates
-                const startTile = Math.floor((intersectStartX - levelStartX) / 32);
-                const endTile = Math.ceil((intersectEndX - levelStartX) / 32);
+                const startTile = Math.floor((startX - levelStartX) / 32);
+                const endTile = Math.ceil((startX + this.sectionWidth - 1) / 32);
                 const width = solidLayer.__cWid;
                 const height = solidLayer.__cHei;
 
@@ -416,7 +491,7 @@ export class WayneWorld extends BaseScene {
                         const tileX = tile.px[0] + levelStartX;
                         const tileY = tile.px[1];
                         
-                        if (tileX >= intersectStartX && tileX < intersectEndX) {
+                        if (tileX >= startX && tileX < startX + this.sectionWidth) {
                             const gridX = Math.floor(tileX / 32);
                             const gridY = Math.floor(tileY / 32);
                             
@@ -435,9 +510,6 @@ export class WayneWorld extends BaseScene {
 
         // Set collision for the platform layer
         this.platformLayer.setCollisionByExclusion([-1]);
-        
-        // Spawn entities for this section
-        this.spawnEntitiesInSection(sectionStartX, sectionEndX);
         
         console.log(`Section ${sectionIndex} loaded successfully`);
     }
@@ -503,36 +575,40 @@ export class WayneWorld extends BaseScene {
     }
 
     unloadSection(sectionIndex) {
-        if (!this.loadedSections.has(sectionIndex)) return;
-
+        if (!this.loadedSections.has(sectionIndex)) {
+            return;
+        }
+        
         console.log(`Unloading section ${sectionIndex}`);
-
+        
         // Calculate section bounds
         const sectionStartX = sectionIndex * this.sectionWidth;
         const sectionEndX = sectionStartX + this.sectionWidth;
-
+        
+        // Remove entities in this section
+        this.activeEntities.forEach(entity => {
+            if (entity.x >= sectionStartX && entity.x < sectionEndX) {
+                if (entity.destroy) {
+                    entity.destroy();
+                }
+                this.activeEntities.delete(entity);
+            }
+        });
+        
         // Clear tiles in this section
-        const tileWidth = 32;
-        const startTileX = Math.floor(sectionStartX / tileWidth);
-        const endTileX = Math.ceil(sectionEndX / tileWidth);
-
-        // Remove tiles from both layers
         if (this.groundLayer) {
-            for (let x = startTileX; x < endTileX; x++) {
-                for (let y = 0; y < this.groundLayer.height; y++) {
-                    this.groundLayer.removeTileAt(x, y);
-                    this.platformLayer.removeTileAt(x, y);
+            for (let x = Math.floor(sectionStartX / 32); x < Math.ceil(sectionEndX / 32); x++) {
+                for (let y = 0; y < this.groundLayer.layer.height; y++) {
+                    this.groundLayer.putTileAt(-1, x, y);
+                    if (this.platformLayer) {
+                        this.platformLayer.putTileAt(-1, x, y);
+                    }
                 }
             }
         }
-
-        // Remove section from loaded sections
-        this.loadedSections.delete(sectionIndex);
         
-        // Update last loaded section if necessary
-        if (sectionIndex === this.lastLoadedSection) {
-            this.lastLoadedSection = Math.max(...Array.from(this.loadedSections));
-        }
+        // Mark section as unloaded
+        this.loadedSections.delete(sectionIndex);
     }
 
     drawDebugGraphics() {
@@ -577,43 +653,6 @@ export class WayneWorld extends BaseScene {
 
         // Set graphics depth to be above everything
         this.boundaryGraphics.setDepth(1000);
-    }
-
-    spawnEntitiesInSection(startX, endX) {
-        if (!this.currentLevelData || !this.currentLevelData.layerInstances) return;
-        
-        // Find entities layer
-        const entitiesLayer = this.currentLevelData.layerInstances.find(
-            layer => layer.__identifier === 'Entities'
-        );
-        
-        if (!entitiesLayer) return;
-        
-        // Spawn entities within this section
-        entitiesLayer.entityInstances.forEach(entity => {
-            const entityX = entity.__worldX;
-            if (entityX >= startX && entityX < endX) {
-                const spawnedEntity = this.spawnEntity(entity);
-                if (spawnedEntity) {
-                    this.activeEntities.add(spawnedEntity);
-                }
-            }
-        });
-    }
-
-    spawnEntity(entityData) {
-        // Implementation of entity spawning based on type
-        switch(entityData.__identifier) {
-            case 'Enemy':
-                return new Enemy(this, entityData.__worldX, entityData.__worldY);
-            case 'Bitcoin':
-                return new Bitcoin(this, entityData.__worldX, entityData.__worldY);
-            case 'PlayerStart':
-                // We handle this separately in create()
-                return null;
-            // Add other entity types as needed
-        }
-        return null;
     }
 
     setupUI() {
@@ -757,27 +796,46 @@ export class WayneWorld extends BaseScene {
     }
 
     cleanup() {
-        // Stop and cleanup music
-        if (this.musicManager) {
-            this.musicManager.stop();
+        // Clean up entities
+        if (this.ldtkEntityManager) {
+            this.ldtkEntityManager.cleanup();
         }
         
-        // Clean up other resources
+        // Clean up active entities
+        this.activeEntities.forEach(entity => {
+            if (entity.destroy) {
+                entity.destroy();
+            }
+        });
+        this.activeEntities.clear();
+        
+        // Clean up physics groups
+        if (this.enemies) {
+            this.enemies.clear(true, true);
+        }
+        if (this.bullets) {
+            this.bullets.clear(true, true);
+        }
+        
+        // Clean up layers
+        if (this.groundLayer) {
+            this.groundLayer.destroy();
+        }
+        if (this.platformLayer) {
+            this.platformLayer.destroy();
+        }
+        
+        // Clean up player
         if (this.player) {
             this.player.destroy();
+            this.player = null;
         }
-        this.enemies.clear(true, true);
-        this.bullets.clear(true, true);
         
-        // Clean up managers
-        if (this.enemyManager) this.enemyManager.cleanup();
-        if (this.effectsManager) this.effectsManager.cleanup();
-        if (this.trapManager) this.trapManager.cleanup();
-        if (this.bulletPool) this.bulletPool.destroy();
-        
-        // Clear loaded sections
+        // Reset state
         this.loadedSections.clear();
-        this.activeEntities.clear();
+        this.lastLoadedSection = -1;
+        this.currentLevelData = null;
+        this.gameStarted = false;
     }
 
     initializeAudio() {

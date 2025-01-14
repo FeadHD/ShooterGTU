@@ -5,6 +5,7 @@ import { MusicManager } from '../managers/audio/MusicManager';
 import { EntityManager } from '../managers/entities/EntityManager';
 import { EnemyManager } from '../managers/entities/EnemyManager';
 import { HazardManager } from '../managers/entities/HazardManager';
+import { LDTKEntityManager } from '../managers/LDTKEntityManager';
 import { AnimationManager } from '../managers/AnimationManager';
 import { EffectsManager } from '../managers/EffectsManager';
 import { SceneBoundaryManager } from '../managers/BoundaryManager';
@@ -14,6 +15,18 @@ import { EventManager } from '../managers/EventManager';
 import { container } from './ServiceContainer';
 import { eventBus } from '../events/EventBus';
 import { UIManager } from '../../scenes/elements/UIManager';
+import Enemy from '../../prefabs/Enemy';
+import { Bitcoin } from '../../prefabs/Bitcoin';
+import { Slime } from '../../prefabs/Slime';
+import { Drone } from '../../prefabs/Drone';
+import Trampoline from '../../prefabs/Trampoline';
+import { Trap } from '../../prefabs/Trap';
+import { DestructibleBlock } from '../../prefabs/DestructibleBlock';
+import { FallingDestructibleBlock } from '../../prefabs/FallingDestructibleBlock';
+import { DisappearingPlatform } from '../../prefabs/DisappearingPlatform';
+import { Turret } from '../../prefabs/Turret';
+import MeleeWarrior from '../../prefabs/MeleeWarrior';
+import { Zapper } from '../../prefabs/enemies/Zapper';
 
 export class ManagerFactory {
     static createManagers(scene) {
@@ -31,6 +44,25 @@ export class ManagerFactory {
         
         // Create and register entity managers
         const entityManager = new EntityManager(scene);
+        const ldtkEntityManager = new LDTKEntityManager(scene);
+        
+        // Register entity factories with LDTKEntityManager
+        ldtkEntityManager.registerEntityFactories({
+            Enemy: (scene, x, y, fields) => new Enemy(scene, x, y),
+            Bitcoin: (scene, x, y, fields) => new Bitcoin(scene, x, y),
+            Slime: (scene, x, y, fields) => new Slime(scene, x, y),
+            Drone: (scene, x, y, fields) => new Drone(scene, x, y),
+            Trampoline: (scene, x, y, fields) => new Trampoline(scene, x, y),
+            Trap: (scene, x, y, fields) => new Trap(scene, x, y),
+            DestructibleBlock: (scene, x, y, fields) => new DestructibleBlock(scene, x, y),
+            FallingDestructibleBlock: (scene, x, y, fields) => new FallingDestructibleBlock(scene, x, y),
+            DisappearingPlatform: (scene, x, y, fields) => new DisappearingPlatform(scene, x, y),
+            Turret: (scene, x, y, fields) => new Turret(scene, x, y),
+            MeleeWarrior: (scene, x, y, fields) => new MeleeWarrior(scene, x, y),
+            Zapper: (scene, x, y, fields) => new Zapper(scene, x, y),
+            PlayerStart: (scene, x, y, fields) => ({ x, y, type: 'PlayerStart' }) // Just store position
+        });
+        
         const enemies = new EnemyManager(scene);
         const hazards = new HazardManager(scene);
         
@@ -56,6 +88,7 @@ export class ManagerFactory {
         container.register('sound', sound);
         container.register('music', music);
         container.register('entityManager', entityManager);
+        container.register('ldtkEntityManager', ldtkEntityManager);
         container.register('enemies', enemies);
         container.register('hazards', hazards);
         container.register('animations', animations);
@@ -75,6 +108,7 @@ export class ManagerFactory {
             sound,
             music,
             entityManager,
+            ldtkEntityManager,
             enemies,
             hazards,
             animations,

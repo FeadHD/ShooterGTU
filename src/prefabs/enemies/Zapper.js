@@ -77,15 +77,40 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
 
         // Store previous animation key
         this.previousAnim = null;
+        this.currentAnimKey = null;
 
-        // Create wake animation if it doesn't exist
-        if (!scene.anims.exists('zapper_wake')) {
-            scene.anims.create({
-                key: 'zapper_wake',
-                frames: scene.anims.generateFrameNumbers('zapper_wake', { start: 0, end: 5 }),
-                frameRate: 10,
-                repeat: 0
-            });
+        // Try to play idle animation, but don't fail if it's not ready
+        this.scene.game.events.once('ready', () => {
+            this.playAnimationIfValid('zapper_idle');
+        });
+    }
+
+    // Helper method to safely play animations
+    playAnimationIfValid(key, ignoreIfPlaying = true) {
+        if (!this.scene || !this.scene.anims) {
+            console.warn('Scene or animations not available');
+            return false;
+        }
+
+        // Check if animation exists and has frames
+        const anim = this.scene.anims.get(key);
+        if (!anim || !anim.frames || anim.frames.length === 0) {
+            console.warn(`Animation ${key} not found or has no frames`);
+            return false;
+        }
+
+        // Don't replay if already playing this animation
+        if (ignoreIfPlaying && this.anims.currentAnim && this.anims.currentAnim.key === key) {
+            return true;
+        }
+
+        try {
+            this.play(key);
+            this.currentAnimKey = key;
+            return true;
+        } catch (err) {
+            console.warn(`Failed to play animation ${key}:`, err);
+            return false;
         }
     }
 
@@ -205,30 +230,69 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
     }
 
     wakeUp() {
+        if (this.isWakingUp || this.isAwake) return;
+
         console.log('Zapper waking up!');
         this.isWakingUp = true;
         
         // Show health bar during wake up
         this.healthBar.visible = true;
         
-        // Play wake animation
+        // Check if animations are available
+        if (!this.scene || !this.scene.anims) {
+            console.warn('Scene or animations not available');
+            this.isWakingUp = false;
+            this.isAwake = true;
+            return;
+        }
+        
+        // Play wake animation if it exists
         if (this.scene.anims.exists('zapper_wake')) {
             console.log('Playing zapper wake animation');
-            this.setTexture('zapper_wake');
-            this.anims.play('zapper_wake').once('animationcomplete', () => {
-                console.log('Wake animation complete');
+            try {
+                this.playAnimationIfValid('zapper_wake');
+                
+                this.once('animationcomplete', () => {
+                    console.log('Wake animation complete');
+                    this.isWakingUp = false;
+                    this.isAwake = true;
+                    
+                    // Start walking immediately after waking
+                    if (this.scene && this.scene.anims && this.scene.anims.exists('zapper_walk')) {
+                        try {
+                            this.playAnimationIfValid('zapper_walk', false);
+                        } catch (err) {
+                            console.warn('Failed to play walk animation:', err);
+                        }
+                    }
+                });
+            } catch (err) {
+                console.warn('Failed to play wake animation:', err);
                 this.isWakingUp = false;
                 this.isAwake = true;
-                // Start walking immediately after waking
-                if (this.scene.anims.exists('zapper_walk')) {
-                    this.setTexture('zapper_walk');
-                    this.anims.play('zapper_walk', true);
+                
+                // Fallback to walk animation
+                if (this.scene && this.scene.anims && this.scene.anims.exists('zapper_walk')) {
+                    try {
+                        this.playAnimationIfValid('zapper_walk', false);
+                    } catch (err) {
+                        console.warn('Failed to play walk animation:', err);
+                    }
                 }
-            });
+            }
         } else {
             console.warn('Wake animation not found');
             this.isWakingUp = false;
             this.isAwake = true;
+            
+            // Fallback to walk animation
+            if (this.scene && this.scene.anims && this.scene.anims.exists('zapper_walk')) {
+                try {
+                    this.playAnimationIfValid('zapper_walk', false);
+                } catch (err) {
+                    console.warn('Failed to play walk animation:', err);
+                }
+            }
         }
     }
 
@@ -247,8 +311,8 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
         this.setFlipX(!this.facingRight);
 
         // Play walk animation if not attacking
-        if (this.scene && this.scene.anims.exists('zapper_walk') && !this.isAttacking) {
-            this.anims.play('zapper_walk', true);
+        if (!this.isAttacking) {
+            this.playAnimationIfValid('zapper_walk');
         }
     }
 
@@ -265,30 +329,39 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
         // Play attack and shock animations together
         if (this.scene && this.scene.anims.exists('zapper_attack')) {
             console.log('Playing attack and shock animations');
-            this.setTexture('zapper_attack');
-            
-            // Position and show shock sprite
-            if (this.scene.anims.exists('zapper_shock')) {
-                this.shockSprite.setVisible(true);
-                this.shockSprite.body.enable = true;
-                this.shockSprite.setPosition(this.x + (this.facingRight ? 32 : -32), this.y);
-                this.shockSprite.setFlipX(!this.facingRight);
-                this.shockSprite.play('zapper_shock').once('animationcomplete', () => {
-                    this.shockSprite.setVisible(false);
-                    this.shockSprite.body.enable = false;
-                });
-            }
+            try {
+                this.playAnimationIfValid('zapper_attack');
+                
+                // Position and show shock sprite
+                if (this.scene.anims.exists('zapper_shock')) {
+                    this.shockSprite.setVisible(true);
+                    this.shockSprite.body.enable = true;
+                    this.shockSprite.setPosition(this.x + (this.facingRight ? 32 : -32), this.y);
+                    this.shockSprite.setFlipX(!this.facingRight);
+                    this.shockSprite.play('zapper_shock').once('animationcomplete', () => {
+                        this.shockSprite.setVisible(false);
+                        this.shockSprite.body.enable = false;
+                    });
+                }
 
-            // Play attack animation
-            this.anims.play('zapper_attack').once('animationcomplete', () => {
-                console.log('Attack animation complete');
+                // Play attack animation
+                this.anims.play('zapper_attack').once('animationcomplete', () => {
+                    console.log('Attack animation complete');
+                    this.isAttacking = false;
+                    // Return to walk animation if we were walking
+                    if (this.scene && this.scene.anims.exists('zapper_walk')) {
+                        this.playAnimationIfValid('zapper_walk', false);
+                    }
+                });
+            } catch (err) {
+                console.warn('Failed to play attack animation:', err);
                 this.isAttacking = false;
+                
                 // Return to walk animation if we were walking
                 if (this.scene && this.scene.anims.exists('zapper_walk')) {
-                    this.setTexture('zapper_walk');
-                    this.anims.play('zapper_walk', true);
+                    this.playAnimationIfValid('zapper_walk', false);
                 }
-            });
+            }
         } else {
             // If no animation, just set a timer
             this.scene.time.delayedCall(500, () => {
@@ -316,8 +389,7 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
         // Play death animation if it exists
         if (this.scene && this.scene.anims.exists('zapper_death')) {
             console.log('Playing death animation');
-            this.setTexture('zapper_death');
-            this.anims.play('zapper_death').once('animationcomplete', () => {
+            this.playAnimationIfValid('zapper_death').once('animationcomplete', () => {
                 console.log('Death animation complete, destroying Zapper');
                 if (this.healthBar) {
                     this.healthBar.visible = false;
