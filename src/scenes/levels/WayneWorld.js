@@ -541,7 +541,9 @@ export class WayneWorld extends BaseScene {
         // Add collisions between bullets and enemies
         this.physics.add.overlap(this.bullets, this.enemies, (bullet, enemy) => {
             bullet.destroy();
-            enemy.damage(10);
+            if (typeof enemy.takeDamage === 'function') {
+                enemy.takeDamage(10);
+            }
         });
 
         // Add collisions between bullets and platforms

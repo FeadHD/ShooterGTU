@@ -9,6 +9,27 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
 
         console.log('Creating Zapper with texture:', textureKey);
 
+        // Combat properties - define these first!
+        this.maxHealth = 50;
+        this.health = this.maxHealth;
+        this.damage = 50; // Shock damage
+        this.speed = 100;
+        this.attackRange = 60;
+        this.attackCooldown = 2000;
+        this.lastAttackTime = 0;
+        this.awakenRange = 100;
+        this.isHit = false;
+        this.hitCooldown = 200;
+        this.lastHitTime = 0;
+
+        // State
+        this.isAwake = false;
+        this.isWakingUp = false;
+        this.isAttacking = false;
+        this.isDying = false;
+        this.isDead = false;
+        this.facingRight = true;
+
         // Basic setup
         scene.add.existing(this);
         scene.physics.add.existing(this);
@@ -36,19 +57,6 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
         this.body.setSize(16, 24); // Smaller hitbox for more precise hits
         this.body.setOffset(8, 8); // Center horizontally and align to bottom
 
-        // Combat properties
-        this.maxHealth = 50;
-        this.health = this.maxHealth;
-        this.damage = 50; // Shock damage
-        this.speed = 100;
-        this.attackRange = 60;
-        this.attackCooldown = 2000;
-        this.lastAttackTime = 0;
-        this.awakenRange = 100;
-        this.isHit = false;
-        this.hitCooldown = 200;
-        this.lastHitTime = 0;
-
         // Create shock sprite with physics
         this.shockSprite = scene.add.sprite(x, y, 'zapper_shock');
         this.shockSprite.setScale(1.5);
@@ -75,14 +83,6 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
         this.healthBar.setDepth(5);
         this.updateHealthBar();
         this.healthBar.visible = false;
-
-        // State
-        this.isAwake = false;
-        this.isWakingUp = false;
-        this.isAttacking = false;
-        this.isDying = false;
-        this.isDead = false;
-        this.facingRight = true;
 
         // Store previous animation key
         this.previousAnim = null;
