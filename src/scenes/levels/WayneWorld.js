@@ -415,8 +415,8 @@ export class WayneWorld extends BaseScene {
         let playerStartX = 100;
         let playerStartY = 100;
     
-        if (firstLevel && firstLevel.layerInstances) {
-            const entitiesLayer = firstLevel.layerInstances.find(
+        if (this.currentLevelData && this.currentLevelData.levels[0].layerInstances) {
+            const entitiesLayer = this.currentLevelData.levels[0].layerInstances.find(
                 layer => layer.__identifier === 'Entities'
             );
             
@@ -428,12 +428,18 @@ export class WayneWorld extends BaseScene {
                 if (playerStart) {
                     playerStartX = playerStart.px[0];
                     playerStartY = playerStart.px[1];
-                    console.log('Found player start position:', { playerStartX, playerStartY });
+                    console.log('Found LDTK player start position:', { playerStartX, playerStartY });
+                } else {
+                    console.log('No LDTK PlayerStart found, using default position');
                 }
             }
         }
 
-        // Create player at the LDTK-defined start position
+        // Always store the spawn point, whether from LDTK or default
+        this.playerSpawnPoint = { x: playerStartX, y: playerStartY };
+        console.log('Setting player spawn point:', this.playerSpawnPoint);
+
+        // Create player at the spawn position
         this.createPlayer(playerStartX, playerStartY);
 
         // Initialize camera with player
@@ -904,6 +910,9 @@ export class WayneWorld extends BaseScene {
         this.player = new Player(this, x, y);
         this.add.existing(this.player);
         this.physics.add.existing(this.player);
+        
+        // Store initial spawn point
+        this.playerSpawnPoint = { x, y };
         
         // Set up player physics properties
         this.player.setCollideWorldBounds(true);

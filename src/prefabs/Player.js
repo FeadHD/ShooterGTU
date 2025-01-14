@@ -311,13 +311,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         // Make player temporarily invulnerable
         this.makeInvulnerable();
         
-        // Reset position to spawn point if it exists, otherwise use default
-        if (this.scene.playerSpawnPoint) {
-            this.setPosition(this.scene.playerSpawnPoint.x, this.scene.playerSpawnPoint.y);
-        } else {
-            this.setPosition(100, this.scene.scale.height - 100);
-        }
-        
+        // Use scene's spawn point
+        const spawnPoint = this.scene.playerSpawnPoint;
+        this.setPosition(spawnPoint.x, spawnPoint.y);
         this.setVelocity(0, 0);
     }
 
