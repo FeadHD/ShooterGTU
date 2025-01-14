@@ -471,10 +471,11 @@ export class WayneWorld extends BaseScene {
 
                                 // Use the actual tile ID from the LDTK data
                                 const tileId = value - 1; // LDTK uses 1-based indices, Phaser uses 0-based
-                                this.groundLayer.putTileAt(tileId, worldX, worldY, true);
-                                const platformTile = this.platformLayer.putTileAt(tileId, worldX, worldY, true);
-                                if (platformTile) {
-                                    platformTile.setCollision(true);
+                                
+                                // Place solid tiles in ground layer
+                                const groundTile = this.groundLayer.putTileAt(tileId, worldX, worldY, true);
+                                if (groundTile) {
+                                    groundTile.setCollision(true);
                                 }
 
                                 if (sectionIndex === 3) {
@@ -497,7 +498,8 @@ export class WayneWorld extends BaseScene {
                             
                             // Use the actual tile ID from the autoLayer data
                             const tileId = tile.t;
-                            this.groundLayer.putTileAt(tileId, gridX, gridY, true);
+                            
+                            // Place platform tiles in platform layer
                             const platformTile = this.platformLayer.putTileAt(tileId, gridX, gridY, true);
                             if (platformTile) {
                                 platformTile.setCollision(true);
