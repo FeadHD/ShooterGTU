@@ -12,6 +12,15 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
         // Basic setup
         scene.add.existing(this);
         scene.physics.add.existing(this);
+        
+        // Add to enemies group
+        if (scene.enemies) {
+            scene.enemies.add(this);
+            // Add to enemy manager
+            if (scene.enemyManager) {
+                scene.enemyManager.addEnemy(this, this, this.maxHealth);
+            }
+        }
 
         // Physics properties
         this.setScale(1.5)

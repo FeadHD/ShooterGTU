@@ -32,6 +32,11 @@ export class CollisionManager {
                 this.scene.physics.add.collider(this.scene.drones, this.scene.mapLayer);
                 this.scene.physics.add.collider(this.scene.drones, this.scene.platforms);
             }
+            // Add Zapper collisions with ground and platforms
+            if (this.scene.enemies) {
+                this.scene.physics.add.collider(this.scene.enemies, this.scene.groundLayer);
+                this.scene.physics.add.collider(this.scene.enemies, this.scene.platformLayer);
+            }
         }
     }
 
@@ -121,6 +126,14 @@ export class CollisionManager {
     setupPlayerCollisions() {
         if (!this.scene.player) return;
 
+        // Player collision with map layers
+        if (this.scene.groundLayer) {
+            this.scene.physics.add.collider(this.scene.player, this.scene.groundLayer);
+        }
+        if (this.scene.platformLayer) {
+            this.scene.physics.add.collider(this.scene.player, this.scene.platformLayer);
+        }
+
         // Add collision between player and map layer
         if (this.scene.mapLayer) {
             this.scene.physics.add.collider(this.scene.player, this.scene.mapLayer);
@@ -143,6 +156,25 @@ export class CollisionManager {
         };
 
         // Player collision with enemies
+        if (this.scene.enemies) {
+            this.scene.physics.add.overlap(
+                this.scene.player,
+                this.scene.enemies,
+                (player, enemy) => {
+                    if (!player.isInvulnerable) {
+                        // Handle Zapper shock damage
+                        if (enemy.isAttacking) {
+                            player.takeDamage(enemy.damage);
+                        } else {
+                            player.takeDamage(10); // Default collision damage
+                        }
+                    }
+                },
+                null,
+                this
+            );
+        }
+
         if (this.scene.slimes) {
             this.scene.physics.add.overlap(
                 this.scene.player,

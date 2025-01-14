@@ -276,7 +276,11 @@ export class WayneWorld extends BaseScene {
 
         // Create physics groups
         this.platforms = this.physics.add.staticGroup();
-        this.enemies = this.physics.add.group();
+        this.enemies = this.physics.add.group({
+            bounceX: 0.2,
+            bounceY: 0.2,
+            collideWorldBounds: true
+        });
         this.bullets = this.physics.add.group({
             classType: Bullet,
             maxSize: 20,
