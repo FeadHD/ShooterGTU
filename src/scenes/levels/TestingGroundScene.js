@@ -37,19 +37,12 @@ export class TestingGroundScene extends BaseScene {
     preload() {
         super.preload();
         
+        // Get AssetManager from ManagerFactory
+        this.managers = ManagerFactory.createManagers(this);
+        this.managers.assets.loadAssets();
+
         // Load font
         this.load.font('Gameplay', 'assets/fonts/retronoid/Gameplay.ttf');
-
-        // Load PlayerHUD assets
-        this.load.spritesheet('health', 'assets/PlayerHUD/health.png', {
-            frameWidth: 103,
-            frameHeight: 32
-        });
-        this.load.image('lifebar', 'assets/PlayerHUD/lifebar.png');
-        this.load.spritesheet('stamina', 'assets/PlayerHUD/stamina.png', {
-            frameWidth: 103,
-            frameHeight: 32
-        });
 
         // Load tileset
         this.load.image('tileset', 'assets/tilesets/tileset.png');

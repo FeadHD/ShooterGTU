@@ -62,11 +62,13 @@ export class PlayerHUD {
         this.lifebar = scene.add.image(5, 5, 'lifebar');
         this.lifebar.setOrigin(0, 0);
         this.lifebar.setScale(2);
+        this.lifebar.isUIElement = true;
 
         // Add health bar sprite
         this.healthSprite = scene.add.sprite(5, 5, 'health');
         this.healthSprite.setOrigin(0, 0);
         this.healthSprite.setScale(2);
+        this.healthSprite.isUIElement = true;
 
         // Create health frames if they don't exist
         if (!scene.anims.exists('health_100')) {
@@ -85,6 +87,7 @@ export class PlayerHUD {
         this.staminaSprite = scene.add.sprite(5, 5, 'stamina');
         this.staminaSprite.setOrigin(0, 0);
         this.staminaSprite.setScale(2);
+        this.staminaSprite.isUIElement = true;
 
         // Create stamina frames if they don't exist
         if (!scene.anims.exists('stamina_100')) {

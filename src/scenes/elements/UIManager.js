@@ -27,16 +27,28 @@ export class UIManager {
         // Make UI elements fixed on screen
         this.container.setScrollFactor(0);
 
-        // Initialize PlayerHUD
-        const PLAYER_HUD_X = 25;
-        const PLAYER_HUD_Y = 20;
-        this.playerHUD = new PlayerHUD(scene, PLAYER_HUD_X, PLAYER_HUD_Y, true);
-        
-        console.log('UIManager: Setting up initial UI elements');
-        this.setupUI();
-        this.createStartMessage();
-        this.createDebugInfo();
-        this.updateCameraIgnoreList();
+        // Store registry updates that happen before PlayerHUD is ready
+        this.pendingUpdates = new Map();
+
+        // Wait for assets to be loaded before initializing PlayerHUD
+        this.scene.load.once('complete', () => {
+            console.log('UIManager: Assets loaded, initializing PlayerHUD');
+            const PLAYER_HUD_X = 25;
+            const PLAYER_HUD_Y = 20;
+            this.playerHUD = new PlayerHUD(scene, PLAYER_HUD_X, PLAYER_HUD_Y, true);
+            
+            console.log('UIManager: Setting up initial UI elements');
+            this.setupUI();
+            this.createStartMessage();
+            this.createDebugInfo();
+            this.updateCameraIgnoreList();
+
+            // Apply any pending updates
+            this.pendingUpdates.forEach((value, key) => {
+                this.handleRegistryChange(null, key, value);
+            });
+            this.pendingUpdates.clear();
+        });
         
         console.log('UIManager: Setting up event listeners');
         // Set up registry event listeners
@@ -89,7 +101,7 @@ export class UIManager {
 
             // Make UI camera ignore everything except UI container
             this.scene.children.list.forEach(child => {
-                if (child && child !== this.container) {
+                if (child && child !== this.container && !child.isUIElement) {
                     this.uiCamera.ignore(child);
                 }
             });
@@ -184,21 +196,24 @@ export class UIManager {
         if (!this.scene || !this.scene.registry) return;
 
         // Update FPS counter every 100ms
-        if (time - this.lastFpsUpdate > 100) {
+        if (this.fpsText && time - this.lastFpsUpdate > 100) {
             this.fpsText.setText('FPS: ' + (1000 / delta).toFixed(1));
             this.lastFpsUpdate = time;
         }
 
-        // Update stamina and health through PlayerHUD
-        const currentStamina = this.scene.registry.get('stamina');
-        const currentHealth = this.scene.registry.get('playerHP');
-        
-        if (currentStamina !== undefined) {
-            this.playerHUD.updateStamina(currentStamina);
-        }
-        
-        if (currentHealth !== undefined) {
-            this.playerHUD.updateHealth(currentHealth);
+        // Only update PlayerHUD if it's initialized
+        if (this.playerHUD) {
+            // Update stamina and health through PlayerHUD
+            const currentStamina = this.scene.registry.get('stamina');
+            const currentHealth = this.scene.registry.get('playerHP');
+            
+            if (currentStamina !== undefined) {
+                this.playerHUD.updateStamina(currentStamina);
+            }
+            
+            if (currentHealth !== undefined) {
+                this.playerHUD.updateHealth(currentHealth);
+            }
         }
     }
 
@@ -348,6 +363,12 @@ export class UIManager {
     }
 
     handleRegistryChange(parent, key, value) {
+        // If PlayerHUD isn't ready yet, store the update for later
+        if (!this.playerHUD) {
+            this.pendingUpdates.set(key, value);
+            return;
+        }
+
         switch (key) {
             case 'score':
                 if (this.scoreText) {
@@ -363,7 +384,9 @@ export class UIManager {
                 this.updateHP(value);
                 break;
             case 'stamina':
-                this.playerHUD.updateStamina(value);
+                if (this.playerHUD) {
+                    this.playerHUD.updateStamina(value);
+                }
                 break;
             case 'bitcoins':
                 if (this.bitcoinText) {
@@ -538,6 +561,8 @@ export class UIManager {
             fill: '#ffffff',
             padding: { x: 5, y: 5 }
         });
+        
+        // Style the text
         this.debugInfo.setScrollFactor(0);
         this.container.add(this.debugInfo);
 

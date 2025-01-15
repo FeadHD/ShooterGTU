@@ -117,7 +117,6 @@ export class AssetManager {
      * Load UI assets
      */
     loadUI() {
-        this.scene.load.image('bg', 'assets/bg.png');
         
         // Load PlayerHUD assets
         this.scene.load.spritesheet('health', 'assets/PlayerHUD/health.png', {
