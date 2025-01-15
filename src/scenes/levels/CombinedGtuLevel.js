@@ -21,7 +21,7 @@ import { EnemyManager } from '../../modules/managers/EnemyManager';
 import { EffectsManager } from '../../modules/managers/EffectsManager';
 import { Bullet } from '../../prefabs/Bullet';
 import { GameConfig } from '../../config/GameConfig';
-import { CombinedLevelCamera } from '../../modules/managers/CombinedLevelCamera';
+import CameraManager from '../../modules/managers/CameraManager';
 import { LDTKTileManager } from '../../modules/managers/LDTKTileManager';
 import { BulletPool } from '../../modules/managers/pools/BulletPool';
 import { Player } from '../../prefabs/Player';
@@ -227,7 +227,7 @@ export class CombinedGtuLevel extends BaseScene {
         this.loadLevelSection(0);
         
         // Initialize camera with proper dimensions
-        this.levelCamera = new CombinedLevelCamera(this, levelWidth, worldHeight);
+        this.levelCamera = new CameraManager(this, levelWidth, worldHeight);
         
         // Set up collision detection
         this.setupCollisions();
