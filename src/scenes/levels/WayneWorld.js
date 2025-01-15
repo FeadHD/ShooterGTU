@@ -470,6 +470,44 @@ export class WayneWorld extends BaseScene {
         });
     }
 
+    /****************************
+     * SCENE LIFECYCLE METHODS
+     ****************************/
+    
+    update(time, delta) {
+        super.update(time, delta);
+
+        // Update bullet pool if it exists
+        if (this.bulletPool) {
+            this.bulletPool.update();
+        }
+
+        if (this.player && this.cameras.main) {
+            const playerSection = Math.floor(this.player.x / this.sectionWidth);
+            
+            // Always load sections around player position
+            this.loadAdjacentSections(this.player.x);
+            
+            // Clean up sections that are too far away
+            this.loadedSections.forEach(sectionIndex => {
+                if (Math.abs(sectionIndex - playerSection) > 2) {
+                    this.unloadSection(sectionIndex);
+                }
+            });
+        }
+
+        // Update debug graphics if enabled
+        if (this.showDebug) {
+            this.drawDebugGraphics();
+        } else if (this.boundaryGraphics) {
+            this.boundaryGraphics.clear();
+        }
+    }
+
+    /****************************
+     * LEVEL LOADING & MANAGEMENT
+     ****************************/
+    
     loadLevelSection(startX) {
         const sectionIndex = Math.floor(startX / this.sectionWidth);
         if (this.loadedSections.has(sectionIndex)) {
@@ -611,6 +649,44 @@ export class WayneWorld extends BaseScene {
         this.updateSectionEntities(playerSection);
     }
 
+    unloadSection(sectionIndex) {
+        if (!this.loadedSections.has(sectionIndex)) {
+            return;
+        }
+        
+        console.log(`Unloading section ${sectionIndex}`);
+        
+        // Calculate section bounds
+        const sectionStartX = sectionIndex * this.sectionWidth;
+        const sectionEndX = sectionStartX + this.sectionWidth;
+        
+        // Remove entities in this section
+        this.activeEntities.forEach((entities, index) => {
+            if (index === sectionIndex) {
+                this.removeSectionEntities(index);
+            }
+        });
+        
+        // Clear tiles in this section
+        if (this.groundLayer) {
+            for (let x = Math.floor(sectionStartX / 32); x < Math.ceil(sectionEndX / 32); x++) {
+                for (let y = 0; y < this.groundLayer.layer.height; y++) {
+                    this.groundLayer.putTileAt(-1, x, y);
+                    if (this.platformLayer) {
+                        this.platformLayer.putTileAt(-1, x, y);
+                    }
+                }
+            }
+        }
+        
+        // Mark section as unloaded
+        this.loadedSections.delete(sectionIndex);
+    }
+
+    /****************************
+     * ENTITY MANAGEMENT
+     ****************************/
+    
     updateSectionEntities(playerSection) {
         // Calculate range for entities
         const minEntitySection = Math.max(0, playerSection - this.entityBuffer);
@@ -698,195 +774,10 @@ export class WayneWorld extends BaseScene {
         this.activeEntities.delete(sectionIndex);
     }
 
-    setupCollisions() {
-        // Add collisions between bullets and enemies
-        this.physics.add.overlap(this.bullets, this.enemies, (bullet, enemy) => {
-            bullet.destroy();
-            if (typeof enemy.takeDamage === 'function') {
-                enemy.takeDamage(10);
-            }
-        });
-
-        // Add collisions between bullets and platforms
-        this.physics.add.collider(this.bullets, this.platforms, (bullet) => {
-            bullet.destroy();
-        });
-    }
-
-    update(time, delta) {
-        super.update(time, delta);
-
-        // Update bullet pool if it exists
-        if (this.bulletPool) {
-            this.bulletPool.update();
-        }
-
-        if (this.player && this.cameras.main) {
-            const playerSection = Math.floor(this.player.x / this.sectionWidth);
-            
-            // Always load sections around player position
-            this.loadAdjacentSections(this.player.x);
-            
-            // Clean up sections that are too far away
-            this.loadedSections.forEach(sectionIndex => {
-                if (Math.abs(sectionIndex - playerSection) > 2) {
-                    this.unloadSection(sectionIndex);
-                }
-            });
-        }
-
-        // Update debug graphics if enabled
-        if (this.showDebug) {
-            this.drawDebugGraphics();
-        } else if (this.boundaryGraphics) {
-            this.boundaryGraphics.clear();
-        }
-    }
-
-    unloadSection(sectionIndex) {
-        if (!this.loadedSections.has(sectionIndex)) {
-            return;
-        }
-        
-        console.log(`Unloading section ${sectionIndex}`);
-        
-        // Calculate section bounds
-        const sectionStartX = sectionIndex * this.sectionWidth;
-        const sectionEndX = sectionStartX + this.sectionWidth;
-        
-        // Remove entities in this section
-        this.activeEntities.forEach((entities, index) => {
-            if (index === sectionIndex) {
-                this.removeSectionEntities(index);
-            }
-        });
-        
-        // Clear tiles in this section
-        if (this.groundLayer) {
-            for (let x = Math.floor(sectionStartX / 32); x < Math.ceil(sectionEndX / 32); x++) {
-                for (let y = 0; y < this.groundLayer.layer.height; y++) {
-                    this.groundLayer.putTileAt(-1, x, y);
-                    if (this.platformLayer) {
-                        this.platformLayer.putTileAt(-1, x, y);
-                    }
-                }
-            }
-        }
-        
-        // Mark section as unloaded
-        this.loadedSections.delete(sectionIndex);
-    }
-
-    drawDebugGraphics() {
-        if (!this.boundaryGraphics) {
-            this.boundaryGraphics = this.add.graphics();
-        }
-
-        this.boundaryGraphics.clear();
-
-        // Draw world boundaries in red
-        this.boundaryGraphics.lineStyle(4, 0xff0000, 1);
-        const totalWidth = this.singleLevelWidth * this.totalLevels;
-        this.boundaryGraphics.strokeRect(0, 0, totalWidth, this.scale.height);
-
-        // Draw section boundaries in blue
-        this.boundaryGraphics.lineStyle(2, 0x0000ff, 1);
-        for (let i = 0; i <= this.lastLoadedSection + 1; i++) {
-            const sectionX = i * this.sectionWidth;
-            this.boundaryGraphics.strokeRect(sectionX, 0, this.sectionWidth, this.scale.height);
-        }
-
-        // Draw camera boundaries in green
-        this.boundaryGraphics.lineStyle(2, 0x00ff00, 1);
-        const camera = this.cameras.main;
-        this.boundaryGraphics.strokeRect(
-            camera.scrollX,
-            camera.scrollY,
-            camera.width,
-            camera.height
-        );
-
-        // Draw player position in yellow
-        if (this.player) {
-            this.boundaryGraphics.lineStyle(4, 0xffff00, 1);
-            this.boundaryGraphics.strokeRect(
-                this.player.x - 16,
-                this.player.y - 16,
-                32,
-                32
-            );
-        }
-
-        // Set graphics depth to be above everything
-        this.boundaryGraphics.setDepth(1000);
-    }
-
-    setupUI() {
-        // Initialize game UI
-        this.gameUI = this.managers.ui;
-        if (this.gameUI.container) {
-            this.gameUI.container.setScrollFactor(0);
-        }
-
-        // Set up initial player HP
-        const INITIAL_HP = 100;
-        this.registry.set('playerHP', INITIAL_HP);
-        this.registry.set('maxPlayerHP', INITIAL_HP);
-
-        // Create level indicator text
-        this.levelIndicatorText = this.add.text(16, 16, `Level ${this.currentLevel}`, {
-            fontFamily: 'Arial',
-            fontSize: '24px',
-            color: '#ffffff',
-            stroke: '#000000',
-            strokeThickness: 4
-        }).setScrollFactor(0).setDepth(1000);
-
-        // Show start message if gameUI exists
-        if (this.gameUI) {
-            this.gameUI.showStartMessage();
-        }
-
-        // Add space key listener for starting the game
-        const spaceKey = this.input.keyboard.addKey('SPACE');
-        spaceKey.once('down', () => {
-            if (!this.gameStarted) {
-                this.startGame();
-            }
-        });
-
-        // Add ESC key for pause menu
-        this.pauseKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
-        this.pauseKey.on('down', () => {
-            if (!this.gameStarted) return;
-            this.togglePause();
-        });
-    }
-
-    startGame() {
-        if (this.player) {
-            this.player.controller.enabled = true;
-            this.gameStarted = true;
-            if (this.gameUI) {
-                this.gameUI.hideStartMessage();
-            }
-        }
-    }
-
-    togglePause() {
-        if (this.scene.isPaused('CombinedGtuLevel')) {
-            this.scene.resume('CombinedGtuLevel');
-            if (this.gameUI) {
-                this.gameUI.hidePauseMenu();
-            }
-        } else {
-            this.scene.pause('CombinedGtuLevel');
-            if (this.gameUI) {
-                this.gameUI.showPauseMenu();
-            }
-        }
-    }
-
+    /****************************
+     * PLAYER MANAGEMENT
+     ****************************/
+    
     createPlayer(x, y) {
         if (this.player) {
             console.log('Player already exists, skipping creation');
@@ -964,46 +855,147 @@ export class WayneWorld extends BaseScene {
         this.scene.restart();
     }
 
-    cleanup() {
-        if (this.ldtkEntityManager) {
-            this.ldtkEntityManager.cleanup();
+    /****************************
+     * GAME STATE & UI
+     ****************************/
+    
+    setupUI() {
+        // Initialize game UI
+        this.gameUI = this.managers.ui;
+        if (this.gameUI.container) {
+            this.gameUI.container.setScrollFactor(0);
         }
-        
-        // Clean up all active entities
-        for (const [sectionIndex, entities] of this.activeEntities) {
-            this.removeSectionEntities(sectionIndex);
+
+        // Set up initial player HP
+        const INITIAL_HP = 100;
+        this.registry.set('playerHP', INITIAL_HP);
+        this.registry.set('maxPlayerHP', INITIAL_HP);
+
+        // Create level indicator text
+        this.levelIndicatorText = this.add.text(16, 16, `Level ${this.currentLevel}`, {
+            fontFamily: 'Arial',
+            fontSize: '24px',
+            color: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 4
+        }).setScrollFactor(0).setDepth(1000);
+
+        // Show start message if gameUI exists
+        if (this.gameUI) {
+            this.gameUI.showStartMessage();
         }
-        this.activeEntities.clear();
-        
-        // Clean up physics groups
-        if (this.enemies) {
-            this.enemies.clear(true, true);
-        }
-        if (this.bullets) {
-            this.bullets.clear(true, true);
-        }
-        
-        // Clean up layers
-        if (this.groundLayer) {
-            this.groundLayer.destroy();
-        }
-        if (this.platformLayer) {
-            this.platformLayer.destroy();
-        }
-        
-        // Clean up player
-        if (this.player) {
-            this.player.destroy();
-            this.player = null;
-        }
-        
-        // Reset state
-        this.loadedSections.clear();
-        this.lastLoadedSection = -1;
-        this.currentLevelData = null;
-        this.gameStarted = false;
+
+        // Add space key listener for starting the game
+        const spaceKey = this.input.keyboard.addKey('SPACE');
+        spaceKey.once('down', () => {
+            if (!this.gameStarted) {
+                this.startGame();
+            }
+        });
+
+        // Add ESC key for pause menu
+        this.pauseKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
+        this.pauseKey.on('down', () => {
+            if (!this.gameStarted) return;
+            this.togglePause();
+        });
     }
 
+    startGame() {
+        if (this.player) {
+            this.player.controller.enabled = true;
+            this.gameStarted = true;
+            if (this.gameUI) {
+                this.gameUI.hideStartMessage();
+            }
+        }
+    }
+
+    togglePause() {
+        if (this.scene.isPaused('CombinedGtuLevel')) {
+            this.scene.resume('CombinedGtuLevel');
+            if (this.gameUI) {
+                this.gameUI.hidePauseMenu();
+            }
+        } else {
+            this.scene.pause('CombinedGtuLevel');
+            if (this.gameUI) {
+                this.gameUI.showPauseMenu();
+            }
+        }
+    }
+
+    /****************************
+     * COLLISION & PHYSICS
+     ****************************/
+    
+    setupCollisions() {
+        // Add collisions between bullets and enemies
+        this.physics.add.overlap(this.bullets, this.enemies, (bullet, enemy) => {
+            bullet.destroy();
+            if (typeof enemy.takeDamage === 'function') {
+                enemy.takeDamage(10);
+            }
+        });
+
+        // Add collisions between bullets and platforms
+        this.physics.add.collider(this.bullets, this.platforms, (bullet) => {
+            bullet.destroy();
+        });
+    }
+
+    /****************************
+     * DEBUG & VISUALIZATION
+     ****************************/
+    
+    drawDebugGraphics() {
+        if (!this.boundaryGraphics) {
+            this.boundaryGraphics = this.add.graphics();
+        }
+
+        this.boundaryGraphics.clear();
+
+        // Draw world boundaries in red
+        this.boundaryGraphics.lineStyle(4, 0xff0000, 1);
+        const totalWidth = this.singleLevelWidth * this.totalLevels;
+        this.boundaryGraphics.strokeRect(0, 0, totalWidth, this.scale.height);
+
+        // Draw section boundaries in blue
+        this.boundaryGraphics.lineStyle(2, 0x0000ff, 1);
+        for (let i = 0; i <= this.lastLoadedSection + 1; i++) {
+            const sectionX = i * this.sectionWidth;
+            this.boundaryGraphics.strokeRect(sectionX, 0, this.sectionWidth, this.scale.height);
+        }
+
+        // Draw camera boundaries in green
+        this.boundaryGraphics.lineStyle(2, 0x00ff00, 1);
+        const camera = this.cameras.main;
+        this.boundaryGraphics.strokeRect(
+            camera.scrollX,
+            camera.scrollY,
+            camera.width,
+            camera.height
+        );
+
+        // Draw player position in yellow
+        if (this.player) {
+            this.boundaryGraphics.lineStyle(4, 0xffff00, 1);
+            this.boundaryGraphics.strokeRect(
+                this.player.x - 16,
+                this.player.y - 16,
+                32,
+                32
+            );
+        }
+
+        // Set graphics depth to be above everything
+        this.boundaryGraphics.setDepth(1000);
+    }
+
+    /****************************
+     * AUDIO SYSTEM
+     ****************************/
+    
     initializeAudio() {
         if (!this.game.sound.locked) {
             // Audio system is ready, initialize immediately
@@ -1050,5 +1042,49 @@ export class WayneWorld extends BaseScene {
                 console.warn('Error starting background music:', error);
             }
         });
+    }
+
+    /****************************
+     * CLEANUP & RESET
+     ****************************/
+    
+    cleanup() {
+        if (this.ldtkEntityManager) {
+            this.ldtkEntityManager.cleanup();
+        }
+        
+        // Clean up all active entities
+        for (const [sectionIndex, entities] of this.activeEntities) {
+            this.removeSectionEntities(sectionIndex);
+        }
+        this.activeEntities.clear();
+        
+        // Clean up physics groups
+        if (this.enemies) {
+            this.enemies.clear(true, true);
+        }
+        if (this.bullets) {
+            this.bullets.clear(true, true);
+        }
+        
+        // Clean up layers
+        if (this.groundLayer) {
+            this.groundLayer.destroy();
+        }
+        if (this.platformLayer) {
+            this.platformLayer.destroy();
+        }
+        
+        // Clean up player
+        if (this.player) {
+            this.player.destroy();
+            this.player = null;
+        }
+        
+        // Reset state
+        this.loadedSections.clear();
+        this.lastLoadedSection = -1;
+        this.currentLevelData = null;
+        this.gameStarted = false;
     }
 }
