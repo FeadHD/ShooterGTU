@@ -12,6 +12,7 @@ import { SceneBoundaryManager } from '../managers/BoundaryManager';
 import { DebugSystem } from '../../_Debug/DebugSystem';
 import { CollisionManager } from '../managers/CollisionManager';
 import { EventManager } from '../managers/EventManager';
+import { AssetManager } from '../managers/AssetManager';
 import { container } from './ServiceContainer';
 import { eventBus } from '../events/EventBus';
 import { UIManager } from '../../scenes/elements/UIManager';
@@ -33,6 +34,10 @@ export class ManagerFactory {
         // Register core dependencies
         container.register('scene', scene);
         container.register('eventBus', eventBus);
+        
+        // Create and register asset manager
+        const assets = new AssetManager(scene);
+        container.register('assets', assets);
         
         // Create and register state managers
         const gameState = new GameStateManager(scene);
@@ -99,10 +104,12 @@ export class ManagerFactory {
         container.register('ui', ui);
         container.register('events', events);
 
-        // Initialize event system
+        // Initialize managers that need it
         events.initialize();
+        assets.initialize();
         
         return {
+            assets,
             gameState,
             persistence,
             sound,
