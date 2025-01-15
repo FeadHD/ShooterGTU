@@ -204,59 +204,44 @@ export class CollisionManager {
         }
     }
 
-    setupTileCollisions() {
-        // Get all tilemap layers
-        const tilemapLayers = this.scene.children.list.filter(child => 
-            child.type === 'TilemapLayer'
-        );
+    setupTileCollisions(map, layer) {
+        if (!layer) return;
 
-        // Define solid tile IDs
-        const solidTileIds = [641, 642, 643, 644];
+        // Set collision for specific tile IDs
+        const COLLIDING_TILES = [257, 260, 261, 641]; 
+        layer.setCollision(COLLIDING_TILES);
+        
+        // Add collision between player and layer
+        if (this.scene.player) {
+            this.scene.physics.add.collider(this.scene.player, layer);
+        }
+        
+        // Set world bounds based on map size if map is provided
+        if (map) {
+            this.scene.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
+        }
 
-        console.log('Setting up tile collisions for layers:', 
-            tilemapLayers.map(layer => layer.name)
-        );
-
-        tilemapLayers.forEach(layer => {
-            // Add collision between layer and game objects
-            if (this.scene.player) {
-                this.scene.physics.add.collider(this.scene.player, layer);
+        // Setup other tile-based collisions
+        if (this.scene.mapLayer) {
+            // Add collisions for enemies
+            if (this.scene.slimes) {
+                this.scene.physics.add.collider(this.scene.slimes, layer);
+            }
+            if (this.scene.drones) {
+                this.scene.physics.add.collider(this.scene.drones, layer);
             }
             if (this.scene.enemies) {
                 this.scene.physics.add.collider(this.scene.enemies, layer);
             }
-            if (this.scene.bullets) {
-                this.scene.physics.add.collider(
-                    this.scene.bullets, 
-                    layer,
-                    (bullet) => {
-                        if (this.scene.effectsManager) {
-                            this.scene.effectsManager.createHitEffect(bullet.x, bullet.y);
-                        }
-                        bullet.destroy();
-                    }
-                );
-            }
-        });
 
-        // Add collisions with platform rectangles
-        if (this.scene.platforms) {
-            if (this.scene.player) {
-                this.scene.physics.add.collider(this.scene.player, this.scene.platforms);
-            }
-            if (this.scene.enemies) {
-                this.scene.physics.add.collider(this.scene.enemies, this.scene.platforms);
-            }
+            // Add collisions for bullets
             if (this.scene.bullets) {
                 this.scene.physics.add.collider(
                     this.scene.bullets,
-                    this.scene.platforms,
-                    (bullet) => {
-                        if (this.scene.effectsManager) {
-                            this.scene.effectsManager.createHitEffect(bullet.x, bullet.y);
-                        }
-                        bullet.destroy();
-                    }
+                    layer,
+                    this.handleBulletCollision,
+                    null,
+                    this
                 );
             }
         }

@@ -488,16 +488,10 @@ export class BaseScene extends Scene {
      * Set up collision detection for specific tile types in the level.
      */
     setupTileCollisions(map, layer) {
-        // Set collision for specific tile IDs
-        layer.setCollision(TILE_CONSTANTS.COLLIDING_TILES);
-        
-        // Add collision between player and layer
-        if (this.player) {
-            this.physics.add.collider(this.player, layer);
+        // Delegate tile collision setup to CollisionManager
+        if (this.collisionManager) {
+            this.collisionManager.setupTileCollisions(map, layer);
         }
-        
-        // Set world bounds based on map size
-        this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
     }
 
     /**
