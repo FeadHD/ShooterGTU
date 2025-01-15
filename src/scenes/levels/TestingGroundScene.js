@@ -10,6 +10,7 @@ import { container } from '../../modules/di/ServiceContainer';
 import { eventBus } from '../../modules/events/EventBus';
 import { ManagerFactory } from '../../modules/di/ManagerFactory';
 import { Zapper } from '../../prefabs/enemies/Zapper'; // Fix import path
+import { PlayerHUD } from '../../prefabs/ui/PlayerHUD'; // Import PlayerHUD
 
 export class TestingGroundScene extends BaseScene {
     constructor() {
@@ -46,6 +47,9 @@ export class TestingGroundScene extends BaseScene {
 
         // Load tileset
         this.load.image('tileset', 'assets/tilesets/tileset.png');
+
+        // Preload PlayerHUD assets
+        PlayerHUD.preloadAssets(this);
 
         // Load Zapper sprites
         this.load.image('zapper_idle', 'assets/zapper/zapper_idle.png');
@@ -319,8 +323,17 @@ export class TestingGroundScene extends BaseScene {
             height: groundHeight
         });
 
-        // Add tileset
-        const tileset = map.addTilesetImage('tileset');
+        // Add tileset - make sure tileset is loaded
+        if (!this.textures.exists('tileset')) {
+            console.error('Tileset texture not loaded');
+            return;
+        }
+
+        const tileset = map.addTilesetImage('tileset', 'tileset');
+        if (!tileset) {
+            console.error('Failed to create tileset');
+            return;
+        }
 
         // Create the ground layer
         const groundLayer = map.createBlankLayer('ground', tileset, 0, this.SCENE_HEIGHT - (groundHeight * tileSize));

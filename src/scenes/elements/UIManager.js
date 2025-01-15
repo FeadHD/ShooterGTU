@@ -18,6 +18,9 @@ export class UIManager {
         this.container.setDepth(100);
         this.lastFpsUpdate = 0;
         
+        // Initialize pending updates map
+        this.pendingUpdates = new Map();
+        
         // Create UI camera that stays fixed
         console.log('UIManager: Setting up UI camera');
         const { width, height } = scene.scale;
@@ -27,11 +30,16 @@ export class UIManager {
         // Make UI elements fixed on screen
         this.container.setScrollFactor(0);
 
-        // Initialize PlayerHUD
-        const PLAYER_HUD_X = 25;
-        const PLAYER_HUD_Y = 20;
-        this.playerHUD = new PlayerHUD(scene, PLAYER_HUD_X, PLAYER_HUD_Y, true);
-        
+        // Initialize PlayerHUD only when assets are loaded
+        if (this.scene.textures.exists('lifebar')) {
+            this.initializePlayerHUD();
+        } else {
+            console.log('UIManager: Waiting for assets to load before creating PlayerHUD');
+            this.scene.load.once('complete', () => {
+                this.initializePlayerHUD();
+            });
+        }
+
         console.log('UIManager: Setting up initial UI elements');
         this.setupUI();
         this.createStartMessage();
@@ -59,6 +67,13 @@ export class UIManager {
         // Debug flag
         this.debugMode = true;
         console.log('UIManager: Initialization complete');
+    }
+
+    initializePlayerHUD() {
+        const PLAYER_HUD_X = 25;
+        const PLAYER_HUD_Y = 20;
+        this.playerHUD = new PlayerHUD(this.scene, PLAYER_HUD_X, PLAYER_HUD_Y, true);
+        console.log('UIManager: PlayerHUD initialized');
     }
 
     // ============================
@@ -353,10 +368,15 @@ export class UIManager {
     handleRegistryChange(parent, key, value) {
         // If PlayerHUD isn't ready yet, store the update for later
         if (!this.playerHUD) {
+            if (!this.pendingUpdates) {
+                this.pendingUpdates = new Map();
+            }
+            console.log('UIManager: Storing pending update for', key, value);
             this.pendingUpdates.set(key, value);
             return;
         }
 
+        console.log('UIManager: Handling registry change', key, value);
         switch (key) {
             case 'score':
                 if (this.scoreText) {
