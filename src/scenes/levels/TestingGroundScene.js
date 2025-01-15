@@ -10,7 +10,6 @@ import { container } from '../../modules/di/ServiceContainer';
 import { eventBus } from '../../modules/events/EventBus';
 import { ManagerFactory } from '../../modules/di/ManagerFactory';
 import { Zapper } from '../../prefabs/enemies/Zapper'; // Fix import path
-import { PlayerHUD } from '../../prefabs/ui/PlayerHUD'; // Import PlayerHUD
 
 export class TestingGroundScene extends BaseScene {
     constructor() {
@@ -41,8 +40,16 @@ export class TestingGroundScene extends BaseScene {
         // Load font
         this.load.font('Gameplay', 'assets/fonts/retronoid/Gameplay.ttf');
 
-        // Load HUD assets
-        PlayerHUD.preloadAssets(this);
+        // Load PlayerHUD assets
+        this.load.spritesheet('health', 'assets/PlayerHUD/health.png', {
+            frameWidth: 103,
+            frameHeight: 32
+        });
+        this.load.image('lifebar', 'assets/PlayerHUD/lifebar.png');
+        this.load.spritesheet('stamina', 'assets/PlayerHUD/stamina.png', {
+            frameWidth: 103,
+            frameHeight: 32
+        });
 
         // Load tileset
         this.load.image('tileset', 'assets/tilesets/tileset.png');
@@ -233,6 +240,26 @@ export class TestingGroundScene extends BaseScene {
         console.log('Animations initialized');
         console.log('Available animations after initialization:', Object.keys(this.anims.anims.entries));
 
+        // Create health bar animations
+        for (let i = 0; i <= 10; i++) {
+            this.anims.create({
+                key: `health_${i}`,
+                frames: [{ key: 'health', frame: i }],
+                frameRate: 0,
+                repeat: 0
+            });
+        }
+
+        // Create stamina bar animations
+        for (let i = 0; i <= 10; i++) {
+            this.anims.create({
+                key: `stamina_${i}`,
+                frames: [{ key: 'stamina', frame: i }],
+                frameRate: 0,
+                repeat: 0
+            });
+        }
+
         // Create animations manually if needed
         if (!this.anims.exists('character_Idle')) {
             console.log('Creating character animations manually...');
@@ -372,53 +399,6 @@ export class TestingGroundScene extends BaseScene {
         this.cameras.main.setBounds(0, 0, this.SCENE_WIDTH, this.SCENE_HEIGHT);
         this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
         this.cameras.main.setBackgroundColor('#87CEEB');
-
-        // Create player HUD in top left corner
-        const padding = 20;
-        this.playerHUD = new PlayerHUD(this, padding, padding, true);
-
-        // Set up health and stamina update listeners
-        this.registry.events.on('changedata-playerHP', (_, value) => {
-            this.playerHUD.updateHealth(value);
-
-            // Handle player death
-            if (value === 0 && !this.playerHUD.isDying) {
-                // Create death animation going to frame 10
-                const frames = [];
-                const currentFrame = parseInt(this.playerHUD.healthSprite.frame.name);
-                
-                for (let i = currentFrame; i <= 10; i++) {
-                    frames.push({ key: 'health', frame: i });
-                }
-
-                const animKey = `health_death_${Date.now()}`;
-                this.playerHUD.isAnimating = true;
-                
-                this.anims.create({
-                    key: animKey,
-                    frames: frames,
-                    frameRate: 4, // Slow death animation
-                    repeat: 0
-                });
-
-                this.playerHUD.healthSprite.play(animKey);
-                this.playerHUD.healthSprite.once('animationcomplete', () => {
-                    this.anims.remove(animKey);
-                    this.playerHUD.healthSprite.setFrame(10);
-                    this.playerHUD.isAnimating = false;
-                });
-            }
-            
-            // Handle respawn
-            if (value === 100) {
-                // Player respawned with full health
-                this.events.emit('player-respawn');
-            }
-        });
-
-        this.registry.events.on('changedata-stamina', (_, value) => {
-            this.playerHUD.updateStamina(value);
-        });
     }
 
     update(time, delta) {

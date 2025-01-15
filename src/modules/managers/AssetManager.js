@@ -1,3 +1,5 @@
+import { PlayerHUD } from '../../prefabs/ui/PlayerHUD';
+
 export class AssetManager {
     constructor(scene) {
         this.scene = scene;
@@ -116,6 +118,17 @@ export class AssetManager {
      */
     loadUI() {
         this.scene.load.image('bg', 'assets/bg.png');
+        
+        // Load PlayerHUD assets
+        this.scene.load.spritesheet('health', 'assets/PlayerHUD/health.png', {
+            frameWidth: 103,
+            frameHeight: 32
+        });
+        this.scene.load.image('lifebar', 'assets/PlayerHUD/lifebar.png');
+        this.scene.load.spritesheet('stamina', 'assets/PlayerHUD/stamina.png', {
+            frameWidth: 103,
+            frameHeight: 32
+        });
     }
 
     /**
@@ -181,5 +194,26 @@ export class AssetManager {
         this.scene.load.on('loaderror', (fileObj) => {
             console.error('Error loading file:', fileObj.key, fileObj.src);
         });
+    }
+
+    /**
+     * Create a PlayerHUD instance
+     * @param {number} x - X position of the HUD
+     * @param {number} y - Y position of the HUD
+     * @param {boolean} fixedToCamera - Whether the HUD should be fixed to the camera
+     * @returns {PlayerHUD} The created PlayerHUD instance
+     */
+    createPlayerHUD(x = 10, y = 10, fixedToCamera = true) {
+        // Ensure UI assets are loaded
+        if (!this.scene.textures.exists('health') || 
+            !this.scene.textures.exists('health_2') || 
+            !this.scene.textures.exists('lifebar') || 
+            !this.scene.textures.exists('stamina')) {
+            console.error('PlayerHUD assets not loaded. Make sure loadUI() was called first.');
+            return null;
+        }
+
+        // Create and return the PlayerHUD instance
+        return new PlayerHUD(this.scene, x, y, fixedToCamera);
     }
 }
