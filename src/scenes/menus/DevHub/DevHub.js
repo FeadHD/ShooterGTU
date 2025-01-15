@@ -118,7 +118,8 @@ export class DevHub extends Scene {
             { path: 'preloader-documentation.html', title: 'Preloader' },
             { path: 'scene-initializer-documentation.html', title: 'Scene Initializer' },
             { path: 'service-container-documentation.html', title: 'Service Container' },
-            { path: 'state-manager-documentation.html', title: 'State Manager' }
+            { path: 'state-manager-documentation.html', title: 'State Manager' },
+            { path: 'ui-manager-documentation.html', title: 'UI Manager' }
         ];
 
         // Create dropdown items with proper formatting

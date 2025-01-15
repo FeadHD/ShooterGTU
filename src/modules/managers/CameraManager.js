@@ -36,7 +36,21 @@ class CameraManager {
     }
 
     init(player) {
+        if (!player) {
+            console.warn('CameraManager: No player provided for initialization');
+            return;
+        }
+
         this.player = player;
+        
+        // Ensure camera exists
+        if (!this.camera) {
+            console.warn('CameraManager: Camera not found');
+            return;
+        }
+
+        // Initialize camera bounds
+        this.camera.setBounds(0, 0, this.levelWidth, this.levelHeight);
         
         // Set up camera to follow player with lerp
         this.camera.startFollow(player, true, this.followLerpX, this.followLerpY);
@@ -48,9 +62,6 @@ class CameraManager {
         
         // Set follow offset
         this.camera.setFollowOffset(-this.followOffsetX, this.followOffsetY);
-        
-        // Set camera bounds
-        this.updateCameraBounds();
 
         // Make sure UI camera ignores game objects
         if (this.scene.gameUI) {
@@ -64,6 +75,9 @@ class CameraManager {
         const now = performance.now();
         if (now - this.lastUpdateTime < this.updateInterval) return;
         this.lastUpdateTime = now;
+
+        // Safety check for camera
+        if (!this.camera || !this.camera.bounds) return;
 
         // Get current level
         const currentLevel = this.scene.currentLevel || 0;
@@ -98,17 +112,25 @@ class CameraManager {
     }
 
     checkProgressiveLoading() {
+        // Early return if player or loadLevelSection doesn't exist
         if (!this.player || !this.scene.loadLevelSection) return;
 
-        const playerSection = Math.floor(this.player.x / this.sectionWidth);
+        // Get player section
+        const playerX = this.player.x;
+        if (typeof playerX === 'undefined') return;
+
+        // Calculate which section the player is in
+        const playerSection = Math.floor(playerX / this.sectionWidth);
         
-        // Load sections ahead of and behind the player
-        for (let i = -this.loadBuffer; i <= this.loadBuffer; i++) {
-            const sectionToLoad = playerSection + i;
-            if (sectionToLoad >= 0) {
-                const sectionStartX = sectionToLoad * this.sectionWidth;
-                this.scene.loadLevelSection(sectionStartX);
-            }
+        // Load sections around player
+        if (this.scene.loadLevelSection) {
+            const sectionsToLoad = [-1, 0, 1]; // Load previous, current, and next sections
+            sectionsToLoad.forEach(offset => {
+                const sectionToLoad = playerSection + offset;
+                if (sectionToLoad >= 0) {
+                    this.scene.loadLevelSection(sectionToLoad * this.sectionWidth);
+                }
+            });
         }
     }
 

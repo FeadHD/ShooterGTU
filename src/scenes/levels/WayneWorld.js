@@ -201,10 +201,7 @@ export class WayneWorld extends BaseScene {
         
         // Create initial level section
         this.loadLevelSection(0);
-        
-        // Initialize camera with proper dimensions
-        this.levelCamera = new CameraManager(this, levelWidth, worldHeight);
-        
+
         // Set up collision detection
         this.setupCollisions();
 
@@ -239,23 +236,33 @@ export class WayneWorld extends BaseScene {
         // Create player at the spawn position
         this.createPlayer(playerStartX, playerStartY);
 
-        // Initialize camera with player
-        this.levelCamera.init(this.player);
-
-        // Set up camera bounds and following
-        const { width, height } = this.scale;
-        this.cameras.main.setBounds(0, 0, levelWidth, worldHeight);
-        this.cameras.main.startFollow(this.player, true, 1, 1);
-        this.cameras.main.setDeadzone(0);
-        this.cameras.main.setFollowOffset(0, -height/4);
-
-        // Add colliders
+        // Add colliders first
         this.physics.add.collider(this.player, this.groundLayer);
         this.physics.add.collider(this.player, this.platformLayer);
         this.physics.add.collider(this.enemies, this.groundLayer);
         this.physics.add.collider(this.enemies, this.platformLayer);
 
+        // Initialize camera with proper dimensions and player AFTER player is fully set up
+        this.cameraManager = new CameraManager(this, levelWidth, worldHeight);
+        if (this.player) {
+            this.cameraManager.player = this.player;
+            this.cameraManager.init(this.player);
+            console.log('Camera initialized with player at position:', { x: this.player.x, y: this.player.y });
+        } else {
+            console.warn('Player not created successfully - camera initialization skipped');
+        }
+
+        // Set up initial registry values for UI
+        console.log('Setting up initial registry values');
+        this.registry.set('score', 0);
+        this.registry.set('lives', 3);
+        this.registry.set('playerHP', GameConfig.PLAYER.INITIAL_HP);
+        this.registry.set('maxPlayerHP', GameConfig.PLAYER.INITIAL_HP);
+        this.registry.set('stamina', 100);
+        this.registry.set('bitcoins', 0);
+
         // Setup UI and other elements
+        console.log('Setting up UI elements');
         this.setupUI();
         
         // Start background music after everything is set up
@@ -290,6 +297,11 @@ export class WayneWorld extends BaseScene {
         // Update bullet pool if it exists
         if (this.bulletPool) {
             this.bulletPool.update();
+        }
+
+        // Update camera manager only if player exists
+        if (this.cameraManager && this.player) {
+            this.cameraManager.update();
         }
 
         if (this.player && this.cameras.main) {
@@ -670,30 +682,21 @@ export class WayneWorld extends BaseScene {
      ****************************/
     
     setupUI() {
-        // Initialize game UI
-        this.gameUI = this.managers.ui;
-        console.log('GameUI initialization:', {
-            gameUI: this.gameUI,
-            container: this.gameUI?.container,
-            managers: this.managers
-        });
+        console.log('WayneWorld: Starting UI setup...');
 
-        if (this.gameUI?.container) {
-            this.gameUI.container.setScrollFactor(0).setDepth(1000);
-            console.log('UI Container depth set to 1000');
+        // Create UI Manager
+        if (!this.gameUI) {
+            console.log('WayneWorld: Creating new UIManager instance');
+            this.gameUI = new UIManager(this);
         } else {
-            console.warn('UI Container not found in gameUI');
+            console.log('WayneWorld: UIManager already exists');
         }
 
-        // Set up initial player HP
-        const INITIAL_HP = 100;
-        this.registry.set('playerHP', INITIAL_HP);
-        this.registry.set('maxPlayerHP', INITIAL_HP);
-
-        // Create level indicator text with higher depth
-        this.levelIndicatorText = this.add.text(16, 16, `Level ${this.currentLevel}`, {
+        // Add level indicator text
+        console.log('WayneWorld: Creating level indicator text');
+        this.levelIndicatorText = this.add.text(this.scale.width / 2, 50, '', {
             fontFamily: 'Arial',
-            fontSize: '24px',
+            fontSize: '32px',
             color: '#ffffff',
             stroke: '#000000',
             strokeThickness: 4
@@ -701,26 +704,32 @@ export class WayneWorld extends BaseScene {
 
         // Show start message if gameUI exists
         if (this.gameUI) {
-            console.log('Showing start message');
+            console.log('WayneWorld: Showing start message through gameUI');
             this.gameUI.showStartMessage();
         } else {
-            console.warn('GameUI not available for start message');
+            console.warn('WayneWorld: GameUI not available for start message');
         }
 
         // Add space key listener for starting the game
+        console.log('WayneWorld: Setting up space key for game start');
         const spaceKey = this.input.keyboard.addKey('SPACE');
         spaceKey.once('down', () => {
             if (!this.gameStarted) {
+                console.log('WayneWorld: Space key pressed - starting game');
                 this.startGame();
             }
         });
 
         // Add ESC key for pause menu
+        console.log('WayneWorld: Setting up ESC key for pause menu');
         this.pauseKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
         this.pauseKey.on('down', () => {
             if (!this.gameStarted) return;
+            console.log('WayneWorld: ESC key pressed - toggling pause');
             this.togglePause();
         });
+
+        console.log('WayneWorld: UI setup complete');
     }
 
     startGame() {
