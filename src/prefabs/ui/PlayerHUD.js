@@ -283,6 +283,16 @@ export class PlayerHUD {
         });
     }
 
+    contains(gameObject) {
+        // Check if the object is part of this HUD
+        if (!this.container) return false;
+        return this.container.list.includes(gameObject) || 
+               gameObject === this.container ||
+               gameObject === this.lifebar ||
+               gameObject === this.healthSprite ||
+               gameObject === this.staminaSprite;
+    }
+
     destroy() {
         if (this.container) {
             this.container.destroy();

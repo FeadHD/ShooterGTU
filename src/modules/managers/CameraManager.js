@@ -21,11 +21,11 @@ class CameraManager {
         this.introTweens = [];
 
         // Camera settings from CombinedLevelCamera
-        this.followOffsetX = width / 4; // Position player 1/4 from left of screen
+        this.followOffsetX = width / 8; // Small offset to the right (1/8 of screen width)
         this.followOffsetY = 0;
         this.followLerpX = 0.1;
         this.followLerpY = 0.1;
-        this.deadZoneWidth = width / 3; // Mario-style deadzone
+        this.deadZoneWidth = width / 4; // Keep smaller deadzone for smooth movement
         this.deadZoneHeight = height / 4;
 
         // Progressive loading properties
@@ -49,18 +49,18 @@ class CameraManager {
             return;
         }
 
-        // Initialize camera bounds
-        this.camera.setBounds(0, 0, this.levelWidth, this.levelHeight);
+        // Initialize camera bounds with minimal left padding
+        this.camera.setBounds(0, 0, this.levelWidth + 32, this.levelHeight);
         
         // Set up camera to follow player with lerp
         this.camera.startFollow(player, true, this.followLerpX, this.followLerpY);
         this.camera.setZoom(this.defaultZoom);
         this.camera.setRoundPixels(true);  // Enable pixel-perfect rendering
         
-        // Set up deadzone for Mario-style camera
+        // Set up deadzone for smoother camera movement
         this.camera.setDeadzone(this.deadZoneWidth, this.deadZoneHeight);
         
-        // Set follow offset
+        // Offset camera slightly to the right
         this.camera.setFollowOffset(-this.followOffsetX, this.followOffsetY);
 
         // Make sure UI camera ignores game objects

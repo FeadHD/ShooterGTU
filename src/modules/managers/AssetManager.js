@@ -117,17 +117,8 @@ export class AssetManager {
      * Load UI assets
      */
     loadUI() {
-        
-        // Load PlayerHUD assets
-        this.scene.load.spritesheet('health', 'assets/PlayerHUD/health.png', {
-            frameWidth: 103,
-            frameHeight: 32
-        });
-        this.scene.load.image('lifebar', 'assets/PlayerHUD/lifebar.png');
-        this.scene.load.spritesheet('stamina', 'assets/PlayerHUD/stamina.png', {
-            frameWidth: 103,
-            frameHeight: 32
-        });
+        // Load all PlayerHUD assets using its static method
+        PlayerHUD.preloadAssets(this.scene);
     }
 
     /**

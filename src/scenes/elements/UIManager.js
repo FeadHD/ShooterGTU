@@ -97,14 +97,20 @@ export class UIManager {
         }
 
         try {
-            // Make main camera ignore UI container
+            // Make main camera ignore UI container and PlayerHUD
             if (this.scene.cameras && this.scene.cameras.main) {
                 this.scene.cameras.main.ignore(this.container);
+                if (this.playerHUD) {
+                    this.scene.cameras.main.ignore(this.playerHUD);
+                }
             }
 
-            // Make UI camera ignore everything except UI container
+            // Make UI camera ignore everything except UI container and PlayerHUD
             this.scene.children.list.forEach(child => {
-                if (child && child !== this.container) {
+                if (child && 
+                    child !== this.container && 
+                    child !== this.playerHUD && 
+                    (!this.playerHUD || !this.playerHUD.contains(child))) {
                     this.uiCamera.ignore(child);
                 }
             });
@@ -126,7 +132,10 @@ export class UIManager {
                     if (obj.getChildren) {
                         // If it's a group/container, ignore all children
                         obj.getChildren().forEach(child => {
-                            if (child) this.uiCamera.ignore(child);
+                            // Don't ignore if it's part of PlayerHUD
+                            if (child && (!this.playerHUD || !this.playerHUD.contains(child))) {
+                                this.uiCamera.ignore(child);
+                            }
                         });
                     } else {
                         // If it's a single object
