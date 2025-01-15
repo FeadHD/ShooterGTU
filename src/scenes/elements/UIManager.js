@@ -167,12 +167,12 @@ export class UIManager {
 
             // Create timer text (first)
             console.log('UIManager: Creating timer text');
-            this.timerText = this.scene.add.text(LEFT_MARGIN, TOP_MARGIN, 'Time: 00:00', this.textStyleManager.styles.score);
+            this.timerText = this.scene.add.text(LEFT_MARGIN, TOP_MARGIN, 'Time: 00:00', this.textStyleManager.styles.timer);
             this.container.add(this.timerText);
 
             // Create bitcoins text (second)
             console.log('UIManager: Creating bitcoins text');
-            this.bitcoinText = this.scene.add.text(LEFT_MARGIN, TOP_MARGIN + VERTICAL_SPACING, 'Bitcoins: 0', this.textStyleManager.styles.score);
+            this.bitcoinText = this.scene.add.text(LEFT_MARGIN, TOP_MARGIN + VERTICAL_SPACING, 'Bitcoins: 0', this.textStyleManager.styles.bitcoin);
             this.container.add(this.bitcoinText);
 
             // Create score text (third)
@@ -182,7 +182,7 @@ export class UIManager {
 
             // Create lives text (fourth)
             console.log('UIManager: Creating lives text');
-            this.livesText = this.scene.add.text(LEFT_MARGIN, TOP_MARGIN + VERTICAL_SPACING * 3, 'Lives: 3', this.textStyleManager.styles.score);
+            this.livesText = this.scene.add.text(LEFT_MARGIN, TOP_MARGIN + VERTICAL_SPACING * 3, 'Lives: 3', this.textStyleManager.styles.lives);
             this.container.add(this.livesText);
 
             // Make sure all UI elements are visible
