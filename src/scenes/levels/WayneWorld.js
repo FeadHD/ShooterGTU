@@ -672,8 +672,17 @@ export class WayneWorld extends BaseScene {
     setupUI() {
         // Initialize game UI
         this.gameUI = this.managers.ui;
-        if (this.gameUI.container) {
-            this.gameUI.container.setScrollFactor(0);
+        console.log('GameUI initialization:', {
+            gameUI: this.gameUI,
+            container: this.gameUI?.container,
+            managers: this.managers
+        });
+
+        if (this.gameUI?.container) {
+            this.gameUI.container.setScrollFactor(0).setDepth(1000);
+            console.log('UI Container depth set to 1000');
+        } else {
+            console.warn('UI Container not found in gameUI');
         }
 
         // Set up initial player HP
@@ -681,18 +690,21 @@ export class WayneWorld extends BaseScene {
         this.registry.set('playerHP', INITIAL_HP);
         this.registry.set('maxPlayerHP', INITIAL_HP);
 
-        // Create level indicator text
+        // Create level indicator text with higher depth
         this.levelIndicatorText = this.add.text(16, 16, `Level ${this.currentLevel}`, {
             fontFamily: 'Arial',
             fontSize: '24px',
             color: '#ffffff',
             stroke: '#000000',
             strokeThickness: 4
-        }).setScrollFactor(0).setDepth(1000);
+        }).setScrollFactor(0).setDepth(1001);
 
         // Show start message if gameUI exists
         if (this.gameUI) {
+            console.log('Showing start message');
             this.gameUI.showStartMessage();
+        } else {
+            console.warn('GameUI not available for start message');
         }
 
         // Add space key listener for starting the game

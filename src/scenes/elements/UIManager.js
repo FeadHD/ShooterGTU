@@ -29,24 +29,19 @@ export class UIManager {
         this.barPadding = 5;
         this.maxHealth = GameConfig.PLAYER.INITIAL_HP;
         
-        // Set up UI elements
+        // ============================
+        // SECTION: INITIAL UI SETUP
+        // ============================
         this.setupUI();
-
-        // Create start message (hidden by default)
         this.createStartMessage();
-
-        // Create debug info screen
         this.createDebugInfo();
-
-        // Initial camera setup
         this.updateCameraIgnoreList();
-
-        // Create start message (hidden by default)
         this.createStartMessage();
-
-        // Initial camera setup
         this.updateCameraIgnoreList();
 
+        // ============================
+        // SECTION: REGISTRY & EVENTS
+        // ============================
         // Set up registry event listeners
         this.scene.registry.events.on('changedata', this.handleRegistryChange, this);
         
@@ -67,6 +62,9 @@ export class UIManager {
         this.debugMode = true;
     }
 
+    // ============================
+    // SECTION: OBJECT MANAGEMENT
+    // ============================
     handleNewObject = (gameObject) => {
         if (!this.uiCamera || !gameObject || gameObject === this.container) return;
         
@@ -128,6 +126,9 @@ export class UIManager {
         }
     }
 
+    // ============================
+    // SECTION: UI CREATION
+    // ============================
     setupUI() {
         const { width, height } = this.scene.scale;
         console.log('Setting up UI...');
@@ -243,6 +244,9 @@ export class UIManager {
         });
     }
 
+    // ============================
+    // SECTION: UPDATE LOOP
+    // ============================
     update(time, delta) {
         if (!this.scene || !this.scene.registry) return;
 
@@ -284,6 +288,9 @@ export class UIManager {
         }
     }
 
+    // ============================
+    // SECTION: STAMINA & HEALTH
+    // ============================
     updateStaminaBar(currentStamina) {
         if (!this.staminaBarFill) return;
 
@@ -351,6 +358,9 @@ export class UIManager {
         });
     }
 
+    // ============================
+    // SECTION: UI UPDATERS
+    // ============================
     updateScore(score) {
         if (this.scoreText) {
             this.scoreText.setText('Score: ' + score);
@@ -387,6 +397,9 @@ export class UIManager {
         }
     }
 
+    // ============================
+    // SECTION: START MESSAGE
+    // ============================
     createStartMessage() {
         const { width, height } = this.scene.scale;
         
@@ -443,6 +456,9 @@ export class UIManager {
         }
     }
 
+    // ============================
+    // SECTION: REGISTRY / DATA
+    // ============================
     setupRegistryListeners() {
         // Listen for registry changes
         this.scene.registry.events.on('changedata', this.handleRegistryChange, this);
@@ -509,6 +525,9 @@ export class UIManager {
         }
     }
 
+    // ============================
+    // SECTION: UI ANIMATIONS
+    // ============================
     animateUIElements() {
         const elements = [
             { text: this.scoreText, finalPos: { x: 25, y: 20 } },
@@ -576,6 +595,9 @@ export class UIManager {
         });
     }
 
+    // ============================
+    // SECTION: TIMER CONTROLS
+    // ============================
     startTimer() {
         this.isTimerRunning = true;
         this.elapsedSeconds = 0;
@@ -631,6 +653,9 @@ export class UIManager {
         this.updateTimer();
     }
 
+    // ============================
+    // SECTION: CLEANUP & VISIBILITY
+    // ============================
     destroy() {
         // Clean up other resources
         if (this.container) {
@@ -659,6 +684,9 @@ export class UIManager {
         this.setupUI();
     }
 
+    // ============================
+    // SECTION: DEBUG INFO
+    // ============================
     createDebugInfo() {
         const { width } = this.scene.scale;
         
