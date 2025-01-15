@@ -27,29 +27,17 @@ export class UIManager {
         // Make UI elements fixed on screen
         this.container.setScrollFactor(0);
 
-        // Store registry updates that happen before PlayerHUD is ready
-        this.pendingUpdates = new Map();
-
-        // Wait for assets to be loaded before initializing PlayerHUD
-        this.scene.load.once('complete', () => {
-            console.log('UIManager: Assets loaded, initializing PlayerHUD');
-            const PLAYER_HUD_X = 25;
-            const PLAYER_HUD_Y = 20;
-            this.playerHUD = new PlayerHUD(scene, PLAYER_HUD_X, PLAYER_HUD_Y, true);
-            
-            console.log('UIManager: Setting up initial UI elements');
-            this.setupUI();
-            this.createStartMessage();
-            this.createDebugInfo();
-            this.updateCameraIgnoreList();
-
-            // Apply any pending updates
-            this.pendingUpdates.forEach((value, key) => {
-                this.handleRegistryChange(null, key, value);
-            });
-            this.pendingUpdates.clear();
-        });
+        // Initialize PlayerHUD
+        const PLAYER_HUD_X = 25;
+        const PLAYER_HUD_Y = 20;
+        this.playerHUD = new PlayerHUD(scene, PLAYER_HUD_X, PLAYER_HUD_Y, true);
         
+        console.log('UIManager: Setting up initial UI elements');
+        this.setupUI();
+        this.createStartMessage();
+        this.createDebugInfo();
+        this.updateCameraIgnoreList();
+
         console.log('UIManager: Setting up event listeners');
         // Set up registry event listeners
         this.scene.registry.events.on('changedata', this.handleRegistryChange, this);
@@ -101,7 +89,7 @@ export class UIManager {
 
             // Make UI camera ignore everything except UI container
             this.scene.children.list.forEach(child => {
-                if (child && child !== this.container && !child.isUIElement) {
+                if (child && child !== this.container) {
                     this.uiCamera.ignore(child);
                 }
             });
