@@ -2,6 +2,7 @@ import { Scene } from 'phaser';
 import { TextStyleManager } from '../../modules/managers/TextStyleManager';
 import { eventBus } from '../../modules/events/EventBus';
 import { GameConfig } from '../../config/GameConfig';
+import { PlayerHUD } from '../../prefabs/ui/PlayerHUD';
 
 export class UIManager {
     constructor(scene) {
@@ -26,11 +27,10 @@ export class UIManager {
         // Make UI elements fixed on screen
         this.container.setScrollFactor(0);
 
-        // Bar properties
-        this.barWidth = 200;
-        this.barHeight = 10;
-        this.barPadding = 5;
-        this.maxHealth = GameConfig.PLAYER.INITIAL_HP;
+        // Initialize PlayerHUD
+        const PLAYER_HUD_X = 25;
+        const PLAYER_HUD_Y = 20;
+        this.playerHUD = new PlayerHUD(scene, PLAYER_HUD_X, PLAYER_HUD_Y, true);
         
         console.log('UIManager: Setting up initial UI elements');
         this.setupUI();
@@ -135,10 +135,9 @@ export class UIManager {
         try {
             // Constants for UI positioning
             const LEFT_MARGIN = 25;
-            const TOP_MARGIN = 20;
+            const TOP_MARGIN = 100;  // Increased to be below PlayerHUD
             const VERTICAL_SPACING = 30;
             const TEXT_WIDTH = 150;
-            const TOP_BAR_MARGIN = 10;  // Margin from top of screen
 
             // Clear existing UI elements
             console.log('UIManager: Clearing existing UI elements');
@@ -146,74 +145,25 @@ export class UIManager {
                 this.container.removeAll(true);
             }
 
-            // Create score text
-            console.log('UIManager: Creating score text');
-            this.scoreText = this.scene.add.text(LEFT_MARGIN, TOP_MARGIN, 'Score: 0', this.textStyleManager.styles.score);
-            this.container.add(this.scoreText);
-
-            // Create lives text
-            console.log('UIManager: Creating lives text');
-            this.livesText = this.scene.add.text(LEFT_MARGIN, TOP_MARGIN + VERTICAL_SPACING, 'Lives: 3', this.textStyleManager.styles.score);
-            this.container.add(this.livesText);
-
-            // Create HP text
-            console.log('UIManager: Creating HP text');
-            this.hpText = this.scene.add.text(LEFT_MARGIN, TOP_MARGIN + VERTICAL_SPACING * 2, 'HP: 100', this.textStyleManager.styles.score);
-            this.container.add(this.hpText);
-
-            // Create timer text
+            // Create timer text (first)
             console.log('UIManager: Creating timer text');
-            this.timerText = this.scene.add.text(LEFT_MARGIN, TOP_MARGIN + VERTICAL_SPACING * 3, 'Time: 00:00', this.textStyleManager.styles.score);
+            this.timerText = this.scene.add.text(LEFT_MARGIN, TOP_MARGIN, 'Time: 00:00', this.textStyleManager.styles.score);
             this.container.add(this.timerText);
 
-            // Create bitcoins text
+            // Create bitcoins text (second)
             console.log('UIManager: Creating bitcoins text');
-            this.bitcoinText = this.scene.add.text(LEFT_MARGIN, TOP_MARGIN + VERTICAL_SPACING * 4, 'Bitcoins: 0', this.textStyleManager.styles.score);
+            this.bitcoinText = this.scene.add.text(LEFT_MARGIN, TOP_MARGIN + VERTICAL_SPACING, 'Bitcoins: 0', this.textStyleManager.styles.score);
             this.container.add(this.bitcoinText);
 
-            // Create stamina bar
-            console.log('UIManager: Creating stamina bar');
-            this.staminaBarBackground = this.scene.add.rectangle(
-                width / 2,
-                TOP_BAR_MARGIN,
-                this.barWidth,
-                this.barHeight,
-                0x000000
-            );
-            this.staminaBarBackground.setAlpha(0.9);
-            this.container.add(this.staminaBarBackground);
+            // Create score text (third)
+            console.log('UIManager: Creating score text');
+            this.scoreText = this.scene.add.text(LEFT_MARGIN, TOP_MARGIN + VERTICAL_SPACING * 2, 'Score: 0', this.textStyleManager.styles.score);
+            this.container.add(this.scoreText);
 
-            this.staminaBarFill = this.scene.add.rectangle(
-                width / 2 - this.barWidth / 2,
-                TOP_BAR_MARGIN,
-                this.barWidth,
-                this.barHeight,
-                0xFF00FF
-            );
-            this.staminaBarFill.setOrigin(0, 0.5);
-            this.container.add(this.staminaBarFill);
-
-            // Create health bar
-            console.log('UIManager: Creating health bar');
-            this.healthBarBackground = this.scene.add.rectangle(
-                width / 2,
-                TOP_BAR_MARGIN + this.barHeight + this.barPadding,
-                this.barWidth,
-                this.barHeight,
-                0x000000
-            );
-            this.healthBarBackground.setAlpha(0.9);
-            this.container.add(this.healthBarBackground);
-
-            this.healthBarFill = this.scene.add.rectangle(
-                width / 2 - this.barWidth / 2,
-                TOP_BAR_MARGIN + this.barHeight + this.barPadding,
-                this.barWidth,
-                this.barHeight,
-                0xFF0000
-            );
-            this.healthBarFill.setOrigin(0, 0.5);
-            this.container.add(this.healthBarFill);
+            // Create lives text (fourth)
+            console.log('UIManager: Creating lives text');
+            this.livesText = this.scene.add.text(LEFT_MARGIN, TOP_MARGIN + VERTICAL_SPACING * 3, 'Lives: 3', this.textStyleManager.styles.score);
+            this.container.add(this.livesText);
 
             // Make sure all UI elements are visible
             console.log('UIManager: Setting visibility and scroll factors');
@@ -239,72 +189,16 @@ export class UIManager {
             this.lastFpsUpdate = time;
         }
 
-        // Update stamina bar first
+        // Update stamina and health through PlayerHUD
         const currentStamina = this.scene.registry.get('stamina');
-        if (currentStamina !== undefined && this.staminaBarFill) {
-            this.updateStaminaBar(currentStamina);
-        }
-
-        // Update health bar
         const currentHealth = this.scene.registry.get('playerHP');
-        if (currentHealth !== undefined && this.healthBarFill) {
-            // Calculate exact percentage of health remaining (1-100)
-            const healthPercentage = Math.max(0, Math.min(100, currentHealth));
-            const healthRatio = healthPercentage / 100;
-            
-            // Update width only, position is handled by updateStaminaBar
-            this.healthBarFill.width = this.barWidth * healthRatio;
-            
-            // Change color based on health percentage
-            if (healthPercentage <= 25) {
-                this.healthBarFill.setFillStyle(0xFF0000); // Red when <= 25%
-            } else if (healthPercentage <= 50) {
-                this.healthBarFill.setFillStyle(0xFF8000); // Orange when <= 50%
-            } else {
-                this.healthBarFill.setFillStyle(0x00FF00); // Green when > 50%
-            }
-
-            // Update HP text to show exact number
-            if (this.hpText) {
-                this.hpText.setText(`HP: ${Math.floor(healthPercentage)}`);
-            }
+        
+        if (currentStamina !== undefined) {
+            this.playerHUD.updateStamina(currentStamina);
         }
-    }
-
-    // ============================
-    // SECTION: STAMINA & HEALTH
-    // ============================
-    updateStaminaBar(currentStamina) {
-        if (!this.staminaBarFill) return;
-
-        const maxStamina = 100;
-        const staminaRatio = Math.max(0, Math.min(1, currentStamina / maxStamina));
         
-        // Update width smoothly
-        const targetWidth = this.barWidth * staminaRatio;
-        const currentWidth = this.staminaBarFill.width;
-        const lerpFactor = 0.2;
-        
-        this.staminaBarFill.width = currentWidth + (targetWidth - currentWidth) * lerpFactor;
-        
-        // Update position
-        const startX = this.scene.scale.width / 2 - this.barWidth / 2;
-        this.staminaBarFill.x = startX;
-        this.staminaBarBackground.x = this.scene.scale.width / 2;
-        
-        // Change color based on stamina level
-        if (staminaRatio <= 0.3) {
-            this.staminaBarFill.setFillStyle(0xFF0000); // Red when low
-        } else if (staminaRatio <= 0.6) {
-            this.staminaBarFill.setFillStyle(0xFFFF00); // Yellow when medium
-        } else {
-            this.staminaBarFill.setFillStyle(0xFF00FF); // Magenta when high
-        }
-
-        // Update health bar position to match stamina bar
-        if (this.healthBarFill && this.healthBarBackground) {
-            this.healthBarFill.x = startX;
-            this.healthBarBackground.x = this.scene.scale.width / 2;
+        if (currentHealth !== undefined) {
+            this.playerHUD.updateHealth(currentHealth);
         }
     }
 
@@ -312,9 +206,7 @@ export class UIManager {
         const duration = 500;
         const ease = 'Power1';
         
-        [this.scoreText, this.livesText, this.hpText, this.timerText, this.bitcoinText,
-         this.staminaBarBackground, this.staminaBarFill,
-         this.healthBarBackground, this.healthBarFill].forEach(element => {
+        [this.timerText, this.bitcoinText, this.scoreText, this.livesText].forEach(element => {
             if (element) {
                 this.scene.tweens.add({
                     targets: element,
@@ -357,7 +249,9 @@ export class UIManager {
     }
 
     updateHP(hp) {
-        this.updateHealthBar(hp);
+        if (this.playerHUD) {
+            this.playerHUD.updateHealth(hp);
+        }
     }
 
     updateTimer() {
@@ -466,10 +360,10 @@ export class UIManager {
                 }
                 break;
             case 'playerHP':
-                this.updateHealthBar(value);
+                this.updateHP(value);
                 break;
             case 'stamina':
-                this.updateStaminaBar(value);
+                this.playerHUD.updateStamina(value);
                 break;
             case 'bitcoins':
                 if (this.bitcoinText) {
@@ -479,45 +373,15 @@ export class UIManager {
         }
     }
 
-    updateHealthBar(currentHealth) {
-        if (!this.healthBarFill) return;
-
-        // Calculate exact percentage of health remaining (1-100)
-        const healthPercentage = Math.max(0, Math.min(100, currentHealth));
-        const healthRatio = healthPercentage / 100;
-        
-        // Update width to exactly match health percentage
-        this.healthBarFill.width = this.barWidth * healthRatio;
-        
-        // Update position to stay centered
-        this.healthBarFill.x = this.scene.scale.width / 2 - this.barWidth / 2;
-        this.healthBarBackground.x = this.scene.scale.width / 2;
-        
-        // Change color based on health percentage
-        if (healthPercentage <= 25) {
-            this.healthBarFill.setFillStyle(0xFF0000); // Red when <= 25%
-        } else if (healthPercentage <= 50) {
-            this.healthBarFill.setFillStyle(0xFF8000); // Orange when <= 50%
-        } else {
-            this.healthBarFill.setFillStyle(0x00FF00); // Green when > 50%
-        }
-
-        // Update HP text to show exact number
-        if (this.hpText) {
-            this.hpText.setText(`HP: ${Math.floor(healthPercentage)}`);
-        }
-    }
-
     // ============================
     // SECTION: UI ANIMATIONS
     // ============================
     animateUIElements() {
         const elements = [
-            { text: this.scoreText, finalPos: { x: 25, y: 20 } },
-            { text: this.livesText, finalPos: { x: 25, y: 50 } },
-            { text: this.hpText, finalPos: { x: 25, y: 80 } },
-            { text: this.timerText, finalPos: { x: 25, y: 110 } },
-            { text: this.bitcoinText, finalPos: { x: 25, y: 140 } }
+            { text: this.timerText, finalPos: { x: 25, y: 100 } },
+            { text: this.bitcoinText, finalPos: { x: 25, y: 130 } },
+            { text: this.scoreText, finalPos: { x: 25, y: 160 } },
+            { text: this.livesText, finalPos: { x: 25, y: 190 } }
         ];
 
         let delay = 0;
@@ -549,26 +413,6 @@ export class UIManager {
                 delay += delayIncrement;
             }
         });
-
-        // Fade in stamina bar
-        if (this.staminaBarBackground && this.staminaBarFill) {
-            this.scene.tweens.add({
-                targets: [this.staminaBarBackground, this.staminaBarFill],
-                alpha: 0.8,
-                duration: 500,
-                ease: 'Power2'
-            });
-        }
-
-        // Fade in health bar
-        if (this.healthBarBackground && this.healthBarFill) {
-            this.scene.tweens.add({
-                targets: [this.healthBarBackground, this.healthBarFill],
-                alpha: 0.8,
-                duration: 500,
-                ease: 'Power2'
-            });
-        }
 
         // Show FPS counter after transition
         this.scene.time.delayedCall(delay + 1500, () => {
@@ -640,6 +484,9 @@ export class UIManager {
     // SECTION: CLEANUP & VISIBILITY
     // ============================
     destroy() {
+        if (this.playerHUD) {
+            this.playerHUD.reset();
+        }
         // Clean up other resources
         if (this.container) {
             this.container.destroy();
