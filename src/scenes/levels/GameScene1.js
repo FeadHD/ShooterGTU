@@ -294,7 +294,7 @@ export class GameScene1 extends BaseScene {
             // Set up collisions between enemies and player
             this.physics.add.overlap(this.enemies, this.player, (enemySprite, player) => {
                 if (enemySprite.enemy && !this.isDying) {
-                    this.hitEnemy(player, enemySprite);
+                    this.managers.collisions.handlePlayerEnemyOverlap(player, enemySprite);
                 }
             }, null, this);
 
@@ -721,7 +721,7 @@ export class GameScene1 extends BaseScene {
         // Set up player-enemy collision for damage
         this.physics.add.overlap(this.player, this.slimes, (player, enemySprite) => {
             if (enemySprite.enemy && !this.isDying) {
-                this.hitEnemy(player, enemySprite);
+                this.managers.collisions.handlePlayerEnemyOverlap(player, enemySprite);
             }
         }, null, this);
 

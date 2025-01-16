@@ -84,7 +84,7 @@ export class Game extends Scene {
         this.physics.add.overlap(
             this.bullets,
             this.enemies,
-            this.hitEnemy,
+            (bullet, enemy) => this.managers.collisions.handleBulletEnemyOverlap(bullet, enemy),
             null,
             this
         );
@@ -93,7 +93,7 @@ export class Game extends Scene {
         this.physics.add.overlap(
             this.player,
             this.enemies,
-            this.hitPlayer,
+            (player, enemy) => this.managers.collisions.handlePlayerEnemyOverlap(player, enemy),
             null,
             this
         );
