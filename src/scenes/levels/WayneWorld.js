@@ -99,13 +99,14 @@ export class WayneWorld extends BaseScene {
         // Create managers first
         this.managers = ManagerFactory.createManagers(this);
 
-        // Create Zapper animations before initializing entities
-        console.log('Creating Zapper animations...');
+        // Create animations before initializing entities
+        console.log('Creating  animations...');
         const animationManager = ManagerFactory.getAnimationManager();
         animationManager.createZapperAnimations(this);
+        animationManager.createBulletAnimations(this);
 
 
-        console.log('Zapper animations created:', this.anims.exists('zapper_idle'));
+        console.log('animations created:', this.anims.exists('zapper_idle'));
 
         // Get managers from container
         this.ldtkEntityManager = this.managers.ldtkEntityManager;
@@ -136,14 +137,6 @@ export class WayneWorld extends BaseScene {
             maxSize: 20,
             runChildUpdate: true,
             allowGravity: false
-        });
-
-        // Create bullet animation
-        this.anims.create({
-            key: 'bullet-travel',
-            frames: this.anims.generateFrameNumbers('bullet', { start: 0, end: 7 }),
-            frameRate: 16,
-            repeat: -1
         });
 
         // Store level data for later use

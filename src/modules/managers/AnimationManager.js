@@ -204,6 +204,15 @@ export class AnimationManager {
         });
     }
 
+    createBulletAnimations(scene) {
+        scene.anims.create({
+            key: 'bullet-travel',
+            frames: scene.anims.generateFrameNumbers('bullet', { start: 0, end: 7 }),
+            frameRate: 16,
+            repeat: -1
+        });
+    }
+
     createAllAnimations() {
         console.log('Creating all game animations...');
         this.createBulletAnimation();
