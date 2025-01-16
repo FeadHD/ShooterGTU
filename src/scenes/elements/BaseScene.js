@@ -151,7 +151,6 @@ export class BaseScene extends Scene {
         // Setup gameplay elements
         this.#storeSpawnInfo(width, height);
         this.#initializeGameSystems();
-        this.#createBulletGroup();
         this.#createPlayerIfNeeded(width);
         
         // Setup state and events
@@ -226,17 +225,12 @@ export class BaseScene extends Scene {
     #initializeGameSystems() {
         this.gameState.initializeGameState();
         this.animations.createAllAnimations();
-    }
 
-    /** Create a physics group for bullets with specific properties for projectile behavior */
-    #createBulletGroup() {
-        this.bullets = this.physics.add.group({
-            classType: Bullet,
-            maxSize: -1,
-            runChildUpdate: true,
-            allowGravity: false,
-            immovable: true
-        });
+        // Add bullet group creation if the bullet manager exists 
+        if (this.managers.bullets && typeof this.managers.bullets.createBulletGroup === 'function') {
+            this.managers.bullets.createBulletGroup();    
+
+        }
     }
 
     /** Create the player character if not explicitly skipped by the scene */
