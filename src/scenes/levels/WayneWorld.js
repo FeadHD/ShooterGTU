@@ -1,21 +1,13 @@
 import { BaseScene } from '../elements/BaseScene';
 import { UIManager } from '../elements/UIManager';
-import { TransitionScreen } from '../elements/TransitionScreen';
-import Enemy from '../../prefabs/Enemy';
 import { MusicManager } from '../../modules/managers/audio/MusicManager';
-import { Bitcoin } from '../../prefabs/Bitcoin';
-import { TrapManager } from '../../modules/managers/TrapManager';
-import { EnemyManager } from '../../modules/managers/EnemyManager';
 import { Bullet } from '../../prefabs/Bullet';
 import { GameConfig } from '../../config/GameConfig';
 import CameraManager from '../../modules/managers/CameraManager';
 import { LDTKTileManager } from '../../modules/managers/LDTKTileManager';
-import { BulletPool } from '../../modules/managers/pools/BulletPool';
 import { Player } from '../../prefabs/Player';
-import { eventBus } from '../../modules/events/EventBus';
 import { ManagerFactory } from '../../modules/di/ManagerFactory';
-import { LDTKEntityManager } from '../../modules/managers/LDTKEntityManager';
-import { AssetManager } from '../../modules/managers/AssetManager';
+
 
 export class WayneWorld extends BaseScene {
     constructor() {

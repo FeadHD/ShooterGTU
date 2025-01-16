@@ -28,6 +28,8 @@ import { DisappearingPlatform } from '../../prefabs/DisappearingPlatform';
 import { Turret } from '../../prefabs/Turret';
 import MeleeWarrior from '../../prefabs/MeleeWarrior';
 import { Zapper } from '../../prefabs/enemies/Zapper';
+import { BulletManager } from '../../modules/managers/BulletManager';
+import { BulletPool } from '../../modules/managers/pools/BulletPool';
 
 export class ManagerFactory {
     static createManagers(scene) {
@@ -67,9 +69,6 @@ export class ManagerFactory {
             Zapper: (scene, x, y, fields) => new Zapper(scene, x, y),
             PlayerStart: (scene, x, y, fields) => ({ x, y, type: 'PlayerStart' }) // Just store position
         });
-        
-
-
 
         const enemies = new EnemyManager(scene);
         const hazards = new HazardManager(scene);
@@ -143,5 +142,19 @@ export class ManagerFactory {
             this.eventManager = new EventManager();
         }
         return this.eventManager;
+    }
+
+    static getBulletManager() {
+        if (!this.bulletManager) {
+            this.bulletManager = new BulletManager();
+        }
+        return this.bulletManager;
+    }
+
+    static getBulletPool() {
+        if (!this.bulletPool) {
+            this.bulletPool = new BulletPool();
+        }
+        return this.bulletPool;
     }
 }
