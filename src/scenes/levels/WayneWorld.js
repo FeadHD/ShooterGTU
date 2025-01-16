@@ -1,7 +1,6 @@
 import { BaseScene } from '../elements/BaseScene';
 import { UIManager } from '../elements/UIManager';
 import { MusicManager } from '../../modules/managers/audio/MusicManager';
-import { Bullet } from '../../prefabs/Bullet';
 import { GameConfig } from '../../config/GameConfig';
 import CameraManager from '../../modules/managers/CameraManager';
 import { LDTKTileManager } from '../../modules/managers/LDTKTileManager';
