@@ -695,29 +695,8 @@ export class CombinedGtuLevel extends BaseScene {
     }
 
     handlePlayerEnemyCollision(player, enemy) {
-        if (player.invulnerableUntil <= this.time.now) {
-            // Get current HP
-            const currentHP = this.registry.get('playerHP');
-            const damage = 10; // Standard damage amount
-            
-            // Apply damage
-            const newHP = Math.max(0, currentHP - damage);
-            this.registry.set('playerHP', newHP);
-            
-            // Create hit effect at player's position
-            if (this.effectsManager) {
-                this.effectsManager.createHitEffect(player.x, player.y, 0xff0000);
-                this.effectsManager.playSound('hit');
-            }
-            
-            // Make player temporarily invulnerable
-            player.invulnerableUntil = this.time.now + 1000;
-            
-            // Check for game over
-            if (newHP <= 0) {
-                this.handlePlayerDeath();
-            }
-        }
+        // Use the CollisionManager's method instead
+        this.managers.collisions.handlePlayerEnemyOverlap(player, enemy);
     }
 
     handlePlayerDeath() {

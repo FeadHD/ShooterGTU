@@ -139,7 +139,6 @@ export class BaseScene extends Scene {
         // Setup physics and world
         this.#setupWorldPhysics(width, height);
         this.#createPlatforms();
-        this.#setupCollisions();
         
         // Setup audio
         this.#setupMusic();
@@ -171,11 +170,6 @@ export class BaseScene extends Scene {
     /** Create static platforms that the player can collide with and stand on */
     #createPlatforms() {
         this.platforms = this.physics.add.staticGroup();
-    }
-
-    /** Set up all necessary collision detection between game entities */
-    #setupCollisions() {
-        this.collisionManager.setupCollisions();
     }
 
     // =====================
@@ -225,12 +219,21 @@ export class BaseScene extends Scene {
     #initializeGameSystems() {
         this.gameState.initializeGameState();
         this.animations.createAllAnimations();
-
-        // Add bullet group creation if the bullet manager exists 
-        if (this.managers.bullets && typeof this.managers.bullets.createBulletGroup === 'function') {
-            this.managers.bullets.createBulletGroup();    
-
+        this.#createBulletGroup();  // Create bullet group before setting up collisions
+        if (this.managers.collisions) {
+            this.managers.collisions.setupCollisions();
         }
+    }
+
+    /** Create a physics group for bullets with specific properties for projectile behavior */
+    #createBulletGroup() {
+        this.bullets = this.physics.add.group({
+            classType: Bullet,
+            maxSize: -1,
+            runChildUpdate: true,
+            allowGravity: false,
+            immovable: true
+        });
     }
 
     /** Create the player character if not explicitly skipped by the scene */
@@ -311,66 +314,7 @@ export class BaseScene extends Scene {
      * Safely clean up bullet objects when they hit something or go off screen.
      */
     destroyBullet(bullet) {
-        bullet.setActive(false);
-        bullet.setVisible(false);
-        bullet.body.enable = false;
-    }
-
-    /**
-     * Handle collision between player bullets and enemies, including damage calculation.
-     */
-    hitEnemyWithBullet(bullet, enemySprite) {
-        this.enemies.handleBulletHit(bullet, enemySprite);
-    }
-
-    /**
-     * Process player damage when colliding with enemies, including invulnerability period.
-     */
-    hitEnemy(player, enemy) {
-        // Don't process damage if player is already dying or dead
-        if (player.isDying || this.gameState.get('playerHP') <= 0) {
-            if (!this.isDying) {
-                this.eventManager.emit(GameEvents.PLAYER_DEATH, {
-                    position: { x: player.x, y: player.y },
-                    cause: 'enemy_collision'
-                });
-            }
-            return;
-        }
-        
-        // Get current HP before damage
-        const currentHP = this.gameState.get('playerHP');
-        
-        // Get enemy damage amount
-        const damage = enemy.enemy ? enemy.enemy.damageAmount : PLAYER_CONSTANTS.DEFAULT_ENEMY_DAMAGE;
-        
-        // Calculate new HP but don't let it go below 0
-        const newHP = Math.max(0, currentHP - damage);
-        this.gameState.set('playerHP', newHP);
-        this.gameUI.updateHP(newHP);
-
-        // Emit health change event
-        this.eventManager.emit(GameEvents.HEALTH_CHANGE, {
-            oldHealth: currentHP,
-            newHealth: newHP,
-            damage: damage,
-            source: enemy
-        });
-
-        // Set invulnerability period
-        this.invulnerableUntil = this.time.now + PLAYER_CONSTANTS.INVULNERABILITY_DURATION;
-        
-        // Visual feedback
-        this.effects.createFlashEffect(player);
-        
-        // Check for player death
-        if (newHP <= 0 && !this.isDying) {
-            this.eventManager.emit(GameEvents.PLAYER_DEATH, {
-                position: { x: player.x, y: player.y },
-                cause: 'enemy_damage',
-                enemy: enemy
-            });
-        }
+        this.managers.bullets.destroyBullet(bullet);
     }
 
     /**

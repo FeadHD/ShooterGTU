@@ -24,6 +24,16 @@ class BulletManager {
         });
    }
 
+       /**
+     * Destroy the given bullet.
+     */
+       destroyBullet(bullet) {
+        bullet.setActive(false);
+        bullet.setVisible(false);
+        bullet.body.enable = false;
+
+       }
+
    // Existing methods (createBullet, handleCollisions, etc.)
     createBullet(x, y, velocityX) {
         const bullet = this.bullets.get(x, y);

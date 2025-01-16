@@ -1,8 +1,16 @@
 export class CollisionManager {
     constructor(scene) {
+        // Store the scene reference for accessing game objects (e.g. enemies, bullets, player, etc.)
         this.scene = scene;
     }
 
+    /**
+     * ============================
+     * MASTER COLLISION SETUP
+     * ============================
+     * Main entry point to set up collisions in this scene.
+     * Calls sub-methods for tile, enemy, bullet, and player collisions.
+     */
     setupCollisions() {
         this.setupTileCollisions();
         this.setupEnemyCollisions();
@@ -10,8 +18,14 @@ export class CollisionManager {
         this.setupPlayerCollisions();
     }
 
+    /**
+     * ============================
+     * ENEMY COLLISIONS
+     * ============================
+     * Sets up collisions involving enemy objects (like slimes, drones, etc.).
+     */
     setupEnemyCollisions() {
-        // Set up collisions between enemies
+        // If we have a group of slimes, we make them collide with themselves
         if (this.scene.slimes) {
             this.scene.physics.add.collider(
                 this.scene.slimes,
@@ -22,7 +36,7 @@ export class CollisionManager {
             );
         }
 
-        // Add collision between enemies and platforms/map
+        // If we have layers (like mapLayer/platforms), let enemies collide with them
         if (this.scene.mapLayer) {
             if (this.scene.slimes) {
                 this.scene.physics.add.collider(this.scene.slimes, this.scene.mapLayer);
@@ -32,7 +46,8 @@ export class CollisionManager {
                 this.scene.physics.add.collider(this.scene.drones, this.scene.mapLayer);
                 this.scene.physics.add.collider(this.scene.drones, this.scene.platforms);
             }
-            // Add Zapper collisions with ground and platforms
+
+            // Additional collisions for a generic 'enemies' group
             if (this.scene.enemies) {
                 this.scene.physics.add.collider(this.scene.enemies, this.scene.groundLayer);
                 this.scene.physics.add.collider(this.scene.enemies, this.scene.platformLayer);
@@ -40,37 +55,28 @@ export class CollisionManager {
         }
     }
 
+    /**
+     * ============================
+     * BULLET COLLISIONS
+     * ============================
+     * Sets up overlap/collision checks involving bullets vs. enemies, platforms, etc.
+     */
     setupBulletCollisions() {
-        if (!this.scene.bullets) return;
+        // Make sure we have bullets before setting up any collisions
+        // We check either scene.bullets or a bullet manager's group
+        if (!this.scene.bullets && !this.scene.managers.bullets?.getGroup()) return;
 
-        // Bullet collisions with map
-        if (this.scene.mapLayer) {
-            this.scene.physics.add.collider(
-                this.scene.bullets,
-                this.scene.mapLayer,
-                this.handleBulletCollision,
-                null,
-                this
-            );
-        }
+        // Get the bullet group either directly or from the bullet manager
+        const bulletGroup = this.scene.bullets || this.scene.managers.bullets.getGroup();
+        if (!bulletGroup) return;
 
-        // Bullet collisions with platforms
-        if (this.scene.platforms) {
-            this.scene.physics.add.collider(
-                this.scene.bullets,
-                this.scene.platforms,
-                this.handleBulletCollision,
-                null,
-                this
-            );
-        }
-
-        // Set up bullet collisions with all enemy groups
+        // 1) Bullet vs Enemies overlap
         if (this.scene.enemies) {
             this.scene.physics.add.overlap(
-                this.scene.bullets,
+                bulletGroup,
                 this.scene.enemies,
                 (bullet, enemySprite) => {
+                    // Example: if we have an enemyManager that handles bullet hits
                     if (this.scene.enemyManager) {
                         this.scene.enemyManager.handleBulletHit(bullet, enemySprite);
                     }
@@ -80,9 +86,21 @@ export class CollisionManager {
             );
         }
 
+        // 2) Bullet collisions with platforms
+        if (this.scene.platforms) {
+            this.scene.physics.add.collider(
+                bulletGroup,
+                this.scene.platforms,
+                this.handleBulletCollision,
+                null,
+                this
+            );
+        }
+
+        // Overlaps with slimes
         if (this.scene.slimes) {
             this.scene.physics.add.overlap(
-                this.scene.bullets,
+                bulletGroup,
                 this.scene.slimes,
                 (bullet, enemySprite) => {
                     if (this.scene.enemyManager) {
@@ -94,9 +112,10 @@ export class CollisionManager {
             );
         }
 
+        // Overlaps with drones
         if (this.scene.drones) {
             this.scene.physics.add.overlap(
-                this.scene.bullets,
+                bulletGroup,
                 this.scene.drones,
                 (bullet, enemySprite) => {
                     if (this.scene.enemyManager) {
@@ -108,9 +127,10 @@ export class CollisionManager {
             );
         }
 
+        // Overlaps with meleeWarriors
         if (this.scene.meleeWarriors) {
             this.scene.physics.add.overlap(
-                this.scene.bullets,
+                bulletGroup,
                 this.scene.meleeWarriors,
                 (bullet, enemySprite) => {
                     if (this.scene.enemyManager) {
@@ -123,50 +143,56 @@ export class CollisionManager {
         }
     }
 
+    /**
+     * Example method extracted from BaseScene for bullet vs. enemy overlap logic.
+     * If you prefer not to use arrow functions above, you can call this method instead.
+     */
+    hitEnemyWithBullet(bullet, enemySprite) {
+        if (this.scene.enemies) {
+            this.scene.enemies.handleBulletHit(bullet, enemySprite);
+        }
+    }
+
+    /**
+     * ============================
+     * PLAYER COLLISIONS
+     * ============================
+     * Sets up overlap/collision checks for player vs. enemies, layers, ramps, etc.
+     */
     setupPlayerCollisions() {
+        // Make sure our player actually exists
         if (!this.scene.player) return;
 
-        // Player collision with map layers
+        // Basic collisions with ground and platform layers
         if (this.scene.groundLayer) {
             this.scene.physics.add.collider(this.scene.player, this.scene.groundLayer);
         }
         if (this.scene.platformLayer) {
             this.scene.physics.add.collider(this.scene.player, this.scene.platformLayer);
         }
-
-        // Add collision between player and map layer
         if (this.scene.mapLayer) {
             this.scene.physics.add.collider(this.scene.player, this.scene.mapLayer);
         }
-
-        // Add collision between player and platforms
         if (this.scene.platforms) {
             this.scene.physics.add.collider(this.scene.player, this.scene.platforms);
         }
-
-        // Add collision between player and ramp
         if (this.scene.ramp) {
             this.scene.physics.add.collider(this.scene.player, this.scene.ramp);
         }
 
-        // Helper function to check if damage can be applied
-        const canApplyDamage = () => {
-            return !this.scene.isDying && 
-                   (!this.scene.invulnerableUntil || this.scene.time.now >= this.scene.invulnerableUntil);
-        };
-
-        // Player collision with enemies
+        // Overlap checks for damage calculations, etc.
+        // Player vs. generic enemies group
         if (this.scene.enemies) {
             this.scene.physics.add.overlap(
                 this.scene.player,
                 this.scene.enemies,
                 (player, enemy) => {
+                    // Example: If the enemy is attacking, do more damage
                     if (!player.isInvulnerable) {
-                        // Handle Zapper shock damage
                         if (enemy.isAttacking) {
                             player.takeDamage(enemy.damage);
                         } else {
-                            player.takeDamage(10); // Default collision damage
+                            player.takeDamage(10);
                         }
                     }
                 },
@@ -175,55 +201,116 @@ export class CollisionManager {
             );
         }
 
+        // Player vs. slimes
         if (this.scene.slimes) {
             this.scene.physics.add.overlap(
                 this.scene.player,
                 this.scene.slimes,
-                (player, enemySprite) => {
-                    if (enemySprite.enemy && canApplyDamage()) {
-                        this.scene.hitEnemy(player, enemySprite);
-                    }
-                },
+                this.handlePlayerEnemyOverlap, // We'll define this method below
                 null,
-                this.scene
+                this
             );
         }
 
+        // Player vs. drones
         if (this.scene.drones) {
             this.scene.physics.add.overlap(
                 this.scene.player,
                 this.scene.drones,
-                (player, droneSprite) => {
-                    if (droneSprite.enemy && canApplyDamage()) {
-                        this.scene.hitEnemy(player, droneSprite);
-                    }
-                },
+                this.handlePlayerEnemyOverlap,
                 null,
-                this.scene
+                this
             );
+        }
+
+        // (Feel free to add more for other enemy groups, e.g., meleeWarriors, etc.)
+    }
+
+    /**
+     * ============================
+     * handlePlayerEnemyOverlap
+     * ============================
+     * This method replaces "hitEnemy()" from BaseScene.
+     * It's called when the player overlaps with an enemy (like slimes, drones).
+     * We reference scene data (gameState, gameUI) via "this.scene".
+     */
+    handlePlayerEnemyOverlap(player, enemy) {
+        // 1) Don't process damage if player is already dying or HP <= 0
+        if (player.isDying || this.scene.gameState.get('playerHP') <= 0) {
+            if (!this.scene.isDying) {
+                // Trigger a player death event if not already marked dying
+                this.scene.eventManager.emit(GameEvents.PLAYER_DEATH, {
+                    position: { x: player.x, y: player.y },
+                    cause: 'enemy_collision'
+                });
+            }
+            return;
+        }
+
+        // 2) Retrieve current HP
+        const currentHP = this.scene.gameState.get('playerHP');
+
+        // 3) Calculate damage (default = 25 if no enemy.damageAmount)
+        const damage = enemy.enemy ? enemy.enemy.damageAmount : 25;
+
+        // 4) Compute new HP, clamping at 0
+        const newHP = Math.max(0, currentHP - damage);
+
+        // 5) Update the HP in gameState
+        this.scene.gameState.set('playerHP', newHP);
+
+        // 6) Update the UI's HP display
+        this.scene.gameUI.updateHP(newHP);
+
+        // 7) Emit a "health change" event, if you track these
+        this.scene.eventManager.emit(GameEvents.HEALTH_CHANGE, {
+            oldHealth: currentHP,
+            newHealth: newHP,
+            damage,
+            source: enemy
+        });
+
+        // 8) Add temporary invulnerability or "iFrames"
+        this.scene.invulnerableUntil = this.scene.time.now + 2000; // e.g. 2 seconds
+
+        // 9) Visual feedback, e.g., a flash effect around the player
+        this.scene.effects.createFlashEffect(player);
+
+        // 10) Check if newHP <= 0 and not already dying => emit DEATH event
+        if (newHP <= 0 && !this.scene.isDying) {
+            this.scene.eventManager.emit(GameEvents.PLAYER_DEATH, {
+                position: { x: player.x, y: player.y },
+                cause: 'enemy_damage',
+                enemy
+            });
         }
     }
 
+    /**
+     * ============================
+     * TILE COLLISIONS
+     * ============================
+     * Sets up collisions with tile layers, e.g., map or platforms.
+     */
     setupTileCollisions(map, layer) {
         if (!layer) return;
 
-        // Set collision for specific tile IDs
-        const COLLIDING_TILES = [257, 260, 261, 641]; 
+        // Example: define colliding tile IDs
+        const COLLIDING_TILES = [257, 260, 261, 641];
         layer.setCollision(COLLIDING_TILES);
-        
-        // Add collision between player and layer
+
+        // Player vs. the specified layer
         if (this.scene.player) {
             this.scene.physics.add.collider(this.scene.player, layer);
         }
-        
-        // Set world bounds based on map size if map is provided
+
+        // Optionally set world bounds from map dimension
         if (map) {
             this.scene.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
         }
 
-        // Setup other tile-based collisions
+        // Additional tile collisions with enemies or bullets
         if (this.scene.mapLayer) {
-            // Add collisions for enemies
             if (this.scene.slimes) {
                 this.scene.physics.add.collider(this.scene.slimes, layer);
             }
@@ -233,8 +320,6 @@ export class CollisionManager {
             if (this.scene.enemies) {
                 this.scene.physics.add.collider(this.scene.enemies, layer);
             }
-
-            // Add collisions for bullets
             if (this.scene.bullets) {
                 this.scene.physics.add.collider(
                     this.scene.bullets,
@@ -247,6 +332,10 @@ export class CollisionManager {
         }
     }
 
+    /**
+     * Called when a bullet collides with a tile layer (e.g., a wall or platform).
+     * We create a hit effect (if possible) and destroy the bullet.
+     */
     handleBulletCollision(bullet) {
         if (this.scene.effectsManager) {
             this.scene.effectsManager.createHitEffect(bullet.x, bullet.y);
@@ -254,11 +343,16 @@ export class CollisionManager {
         bullet.destroy();
     }
 
+    /**
+     * Called when two enemies collide with each other (e.g., slimes).
+     * Reverses direction or bounces them off one another.
+     */
     handleEnemyCollision(enemy1, enemy2) {
-        // If enemies are moving towards each other, reverse their directions
-        if ((enemy1.body.velocity.x > 0 && enemy2.body.velocity.x < 0) ||
-            (enemy1.body.velocity.x < 0 && enemy2.body.velocity.x > 0)) {
-            
+        // If enemies are moving towards each other, reverse direction
+        if (
+            (enemy1.body.velocity.x > 0 && enemy2.body.velocity.x < 0) ||
+            (enemy1.body.velocity.x < 0 && enemy2.body.velocity.x > 0)
+        ) {
             if (enemy1.enemy) {
                 enemy1.enemy.reverseDirection();
                 enemy1.setVelocityY(-150);
@@ -268,8 +362,8 @@ export class CollisionManager {
                 enemy2.setVelocityY(-150);
             }
         }
-        
-        // Ensure enemies bounce off each other
+
+        // Ensure enemies bounce off each other with a push force
         const pushForce = 100;
         if (enemy1.x < enemy2.x) {
             enemy1.setVelocityX(-pushForce);

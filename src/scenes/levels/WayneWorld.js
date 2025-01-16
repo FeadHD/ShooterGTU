@@ -7,6 +7,7 @@ import { Player } from '../../prefabs/Player';
 import { ManagerFactory } from '../../modules/di/ManagerFactory';
 
 
+
 export class WayneWorld extends BaseScene {
     constructor() {
         super({ key: 'WayneWorld' });
@@ -224,7 +225,7 @@ export class WayneWorld extends BaseScene {
         this.registry.set('bitcoins', 0);
 
         // Setup UI and other elements
-        console.log('Setting up UI elements');
+        console.log("WayneWorld: Starting UI setup...");
         this.setupUI();
 
         // Add debug graphics for boundaries
@@ -620,29 +621,8 @@ export class WayneWorld extends BaseScene {
     }
 
     handlePlayerEnemyCollision(player, enemy) {
-        if (player.invulnerableUntil <= this.time.now) {
-            // Get current HP
-            const currentHP = this.registry.get('playerHP');
-            const damage = 10; // Standard damage amount
-            
-            // Apply damage
-            const newHP = Math.max(0, currentHP - damage);
-            this.registry.set('playerHP', newHP);
-            
-            // Create hit effect at player's position
-            if (this.effectsManager) {
-                this.effectsManager.createHitEffect(player.x, player.y, 0xff0000);
-                this.effectsManager.playSound('hit');
-            }
-            
-            // Make player temporarily invulnerable
-            player.invulnerableUntil = this.time.now + 1000;
-            
-            // Check for game over
-            if (newHP <= 0) {
-                this.handlePlayerDeath();
-            }
-        }
+        // Use the CollisionManager's method instead
+        this.managers.collisions.handlePlayerEnemyOverlap(player, enemy);
     }
 
     handlePlayerDeath() {
@@ -656,7 +636,7 @@ export class WayneWorld extends BaseScene {
      ****************************/
     
     setupUI() {
-        console.log('WayneWorld: Starting UI setup...');
+        console.log("WayneWorld: Starting UI setup...");
 
         // Create UI Manager
         if (!this.gameUI) {
