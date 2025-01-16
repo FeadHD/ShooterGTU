@@ -36,6 +36,15 @@ export class MusicManager {
         }
     }
 
+    playBackgroundMusic(trackKey) {
+        if (this.currentMusic && this.currentMusic.isPlaying) {
+            return; // Avoid duplicate music
+        }
+    
+        this.currentMusic = this.scene.sound.add(trackKey, { loop: true });
+        this.currentMusic.play();
+    }
+
     setVolume(volume) {
         this.musicVolume = volume;
         if (this.currentMusic) {

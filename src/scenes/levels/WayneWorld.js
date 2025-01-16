@@ -1,6 +1,5 @@
 import { BaseScene } from '../elements/BaseScene';
 import { UIManager } from '../elements/UIManager';
-import { MusicManager } from '../../modules/managers/audio/MusicManager';
 import { GameConfig } from '../../config/GameConfig';
 import CameraManager from '../../modules/managers/CameraManager';
 import { LDTKTileManager } from '../../modules/managers/LDTKTileManager';
@@ -32,6 +31,8 @@ export class WayneWorld extends BaseScene {
         this.currentLevelData = null;
         this.gameStarted = false;
         this.loadedTilesCount = 0; // Add counter for loaded tiles
+        this.audioInitialized = false;
+        this.currentMusic = null; // Track the current music
     }
 
     preload() {
@@ -46,7 +47,11 @@ export class WayneWorld extends BaseScene {
         super.create();
 
         // Initialize audio system first
-        this.initializeAudio();
+        if (!this.audioInitialized) {
+            this.startBackgroundMusic();
+            this.audioInitialized = true;
+        }
+
         
         // Load LDTK data first to get dimensions
         const ldtkData = this.cache.json.get('combined-level');
@@ -81,6 +86,8 @@ export class WayneWorld extends BaseScene {
             worldHeight: worldHeight,
             totalLevels: this.totalLevels
         });
+
+
 
         // Initialize base scene without creating player yet
         this.skipPlayerCreation = true;
@@ -219,10 +226,7 @@ export class WayneWorld extends BaseScene {
         // Setup UI and other elements
         console.log('Setting up UI elements');
         this.setupUI();
-        
-        // Start background music after everything is set up
-        this.startBackgroundMusic();
-        
+
         // Add debug graphics for boundaries
         this.boundaryGraphics = this.add.graphics();
         this.boundaryGraphics.setDepth(1000);
@@ -240,6 +244,21 @@ export class WayneWorld extends BaseScene {
                 this.ldtkEntityManager.setDebug(this.showDebug);
             }
         });
+    }
+
+    /****************************
+     * MUSIC MANAGEMENT
+     ****************************/
+    startBackgroundMusic() {
+        if (this.currentMusic && this.currentMusic.isPlaying) {
+            console.log('Background music is already playing');
+            return; // Prevent duplicate playback
+        }
+
+        // Use MusicManager to play music
+        const musicManager = ManagerFactory.getMusicManager(this);
+        this.currentMusic = musicManager.playBackgroundMusic('mainTheme');
+        console.log('Background music started');
     }
 
     /****************************
@@ -803,12 +822,15 @@ setupCollisions() {
     setupAudioSystem() {
         try {
             this.game.sound.pauseOnBlur = false;
-            this.musicManager = new MusicManager(this);
+    
+            const musicManager = ManagerFactory.getMusicManager(this);
+            musicManager.playBackgroundMusic('mainTheme');
             console.log('Audio system initialized successfully');
         } catch (error) {
             console.warn('Error initializing audio system:', error);
         }
     }
+    
 
     startBackgroundMusic() {
         // Delay music start to ensure scene is ready

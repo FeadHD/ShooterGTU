@@ -159,4 +159,13 @@ export class ManagerFactory {
         }
         return this.bulletPool;
     }
+
+    static musicManager = null;
+
+    static getMusicManager(scene) {
+        if (!this.musicManager) {
+            this.musicManager = new MusicManager(scene);
+        }
+        return this.musicManager;
+    }
 }
