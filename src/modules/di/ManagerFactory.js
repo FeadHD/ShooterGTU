@@ -143,10 +143,12 @@ export class ManagerFactory {
         }
         return this.eventManager;
     }
-
-    static getBulletManager() {
+        
+    static bulletManager = null;
+    
+    static getBulletManager(scene) {
         if (!this.bulletManager) {
-            this.bulletManager = new BulletManager();
+            this.bulletManager = new BulletManager(scene); // Pass scene here
         }
         return this.bulletManager;
     }

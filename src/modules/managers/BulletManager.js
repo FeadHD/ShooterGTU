@@ -1,17 +1,28 @@
+import { Bullet } from '../../prefabs/Bullet';
 class BulletManager {
     constructor(scene) {
-        this.scene = scene;
-        this.bullets = this.scene.physics.add.group();
+        if (!scene) {
+            throw new Error('Scene is required to initialize BulletManager.');
+        }
+        this.scene = scene; // Assign the passed scene
+        this.bullets = this.scene.physics.add.group({
+            classType: Bullet,
+            maxSize: 20,
+            runChildUpdate: true,
+            allowGravity: false
+        });
     }
 
     createBullet(x, y, velocityX) {
-        const bullet = this.bullets.create(x, y, 'bullet');
-        bullet.setVelocityX(velocityX);
+        const bullet = this.bullets.get(x, y);
+        if (bullet) {
+            bullet.setActive(true).setVisible(true).setVelocityX(velocityX);
+        }
         return bullet;
     }
 
-    handleCollisions(targetGroup, callback) {
-        this.scene.physics.add.overlap(this.bullets, targetGroup, callback);
+    getGroup() {
+        return this.bullets;
     }
 }
 
