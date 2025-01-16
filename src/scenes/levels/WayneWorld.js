@@ -1,7 +1,6 @@
 import { BaseScene } from '../elements/BaseScene';
 import { UIManager } from '../elements/UIManager';
 import { MusicManager } from '../../modules/managers/audio/MusicManager';
-import { Bullet } from '../../prefabs/Bullet';
 import { GameConfig } from '../../config/GameConfig';
 import CameraManager from '../../modules/managers/CameraManager';
 import { LDTKTileManager } from '../../modules/managers/LDTKTileManager';
@@ -124,12 +123,8 @@ export class WayneWorld extends BaseScene {
             bounceY: 0.2,
             collideWorldBounds: true
         });
-        this.bullets = this.physics.add.group({
-            classType: Bullet,
-            maxSize: 20,
-            runChildUpdate: true,
-            allowGravity: false
-        });
+        const bulletManager = ManagerFactory.getBulletManager(this);
+        this.bullets = bulletManager.getGroup(); // Optional, if you still need a reference
 
         // Store level data for later use
         this.currentLevelData = ldtkData;
@@ -720,20 +715,26 @@ export class WayneWorld extends BaseScene {
      * COLLISION & PHYSICS
      ****************************/
     
-    setupCollisions() {
-        this.physics.add.overlap(this.bullets, this.enemies, (bullet, enemy) => {
-            console.log('Bullet hit enemy:', bullet, enemy);
-            bullet.destroy();
-            if (typeof enemy.takeDamage === 'function') {
-                enemy.takeDamage(10);
-            }
-        });
-    
-        this.physics.add.collider(this.bullets, this.platforms, (bullet) => {
-            console.log('Bullet hit platform:', bullet);
-            bullet.destroy();
-        });
-    }
+setupCollisions() {
+    const bulletManager = ManagerFactory.getBulletManager(this);
+
+    // Access the bullet group
+    const bullets = bulletManager.getGroup();
+
+    // Collisions with enemies
+    this.physics.add.overlap(bullets, this.enemies, (bullet, enemy) => {
+        bullet.destroy();
+        if (typeof enemy.takeDamage === 'function') {
+            enemy.takeDamage(10);
+        }
+    });
+
+    // Collisions with platforms
+    this.physics.add.collider(bullets, this.platforms, (bullet) => {
+        bullet.destroy();
+    });
+}
+
 
     /****************************
      * DEBUG & VISUALIZATION
