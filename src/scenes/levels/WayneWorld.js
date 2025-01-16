@@ -101,34 +101,9 @@ export class WayneWorld extends BaseScene {
 
         // Create Zapper animations before initializing entities
         console.log('Creating Zapper animations...');
-        
-        this.anims.create({
-            key: 'zapper_idle',
-            frames: this.anims.generateFrameNumbers('zapper_idle', { start: 0, end: 3 }),
-            frameRate: 8,
-            repeat: -1
-        });
+        const animationManager = ManagerFactory.getAnimationManager();
+        animationManager.createZapperAnimations(this);
 
-        this.anims.create({
-            key: 'zapper_wake',
-            frames: this.anims.generateFrameNumbers('zapper_wake', { start: 0, end: 5 }),
-            frameRate: 10,
-            repeat: 0
-        });
-
-        this.anims.create({
-            key: 'zapper_walk',
-            frames: this.anims.generateFrameNumbers('zapper_walk', { start: 0, end: 7 }),
-            frameRate: 12,
-            repeat: -1
-        });
-
-        this.anims.create({
-            key: 'zapper_shock',
-            frames: this.anims.generateFrameNumbers('zapper_shock', { start: 0, end: 5 }),
-            frameRate: 15,
-            repeat: 0
-        });
 
         console.log('Zapper animations created:', this.anims.exists('zapper_idle'));
 

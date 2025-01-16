@@ -174,6 +174,36 @@ export class AnimationManager {
         });
     }
 
+    createZapperAnimations(scene) {
+        scene.anims.create({
+            key: 'zapper_idle',
+            frames: scene.anims.generateFrameNumbers('zapper_idle', { start: 0, end: 3 }),
+            frameRate: 8,
+            repeat: -1
+        });
+    
+        scene.anims.create({
+            key: 'zapper_wake',
+            frames: scene.anims.generateFrameNumbers('zapper_wake', { start: 0, end: 5 }),
+            frameRate: 10,
+            repeat: 0
+        });
+    
+        scene.anims.create({
+            key: 'zapper_walk',
+            frames: scene.anims.generateFrameNumbers('zapper_walk', { start: 0, end: 7 }),
+            frameRate: 12,
+            repeat: -1
+        });
+    
+        scene.anims.create({
+            key: 'zapper_shock',
+            frames: scene.anims.generateFrameNumbers('zapper_shock', { start: 0, end: 5 }),
+            frameRate: 15,
+            repeat: 0
+        });
+    }
+
     createAllAnimations() {
         console.log('Creating all game animations...');
         this.createBulletAnimation();

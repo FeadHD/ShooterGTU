@@ -68,6 +68,9 @@ export class ManagerFactory {
             PlayerStart: (scene, x, y, fields) => ({ x, y, type: 'PlayerStart' }) // Just store position
         });
         
+
+
+
         const enemies = new EnemyManager(scene);
         const hazards = new HazardManager(scene);
         
@@ -86,7 +89,7 @@ export class ManagerFactory {
             events = new EventManager(scene);
             scene.game.globalEventManager = events;
         }
-        
+
         // Register all managers
         container.register('gameState', gameState);
         container.register('persistence', persistence);
@@ -126,5 +129,19 @@ export class ManagerFactory {
             events,
             ui
         };
+    }
+
+    static getAnimationManager() {
+        if (!this.animationManager) {
+            this.animationManager = new AnimationManager();
+        }
+        return this.animationManager;
+    }
+
+    static getEventManager() {
+        if (!this.eventManager) {
+            this.eventManager = new EventManager();
+        }
+        return this.eventManager;
     }
 }
