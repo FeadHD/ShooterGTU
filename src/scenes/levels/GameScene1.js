@@ -150,14 +150,14 @@ export class GameScene1 extends BaseScene {
             // Get audio manager instance
             this.audioManager = this.managers.audio;
 
-            // Load and play background music
-            const bgMusic = this.sound.add('bgMusic', {
-                loop: true,
-                volume: this.registry.get('musicVolume') ?? 1
-            });
-            this.audioManager.setCurrentMusic(bgMusic);
-            this.audioManager.playMusic();
-
+            // Initialize audio manager and play background music
+            if (this.audioManager) {
+                this.audioManager.playMusic('bgMusic', {
+                    loop: true,
+                    volume: this.registry.get('musicVolume') ?? 1
+                });
+            }
+            
             // Add registry listener for volume changes
             this.registry.events.on('changedata-musicVolume', (parent, value) => {
                 if (this.audioManager) {

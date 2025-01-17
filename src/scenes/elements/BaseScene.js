@@ -206,11 +206,13 @@ export class BaseScene extends Scene {
      * Initialize and configure the background music system with volume persistence, looping, and smooth transitions between tracks.
      */
     #setupMusic() {
-        const bgMusic = this.sound.add('bgMusic', { loop: true });
-        const musicVolume = this.registry.get('musicVolume') || 1;
-        bgMusic.setVolume(musicVolume);
-        this.audioManager.setCurrentMusic(bgMusic);
-        this.audioManager.playMusic();
+        if (this.audioManager) {
+            const musicVolume = this.registry.get('musicVolume') || 1;
+            this.audioManager.playMusic('bgMusic', { 
+                loop: true,
+                volume: musicVolume 
+            });
+        }
     }
 
     // =====================

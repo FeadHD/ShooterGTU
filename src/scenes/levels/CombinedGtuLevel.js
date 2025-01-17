@@ -134,6 +134,21 @@ export class CombinedGtuLevel extends BaseScene {
     }
 
     create() {
+        super.create();
+
+        // Get managers
+        this.managers = ManagerFactory.createManagers(this);
+        this.audioManager = this.managers.audio;
+
+        // Start background music if enabled
+        const musicEnabled = this.registry.get('musicEnabled');
+        if (musicEnabled !== false && this.audioManager) {
+            this.audioManager.playMusic('bgMusic', {
+                loop: true,
+                volume: this.registry.get('musicVolume') ?? 1
+            });
+        }
+
         // Load LDTK data first to get dimensions
         const ldtkData = this.cache.json.get('combined-level');
         if (!ldtkData || !ldtkData.levels || ldtkData.levels.length === 0) {
@@ -172,20 +187,6 @@ export class CombinedGtuLevel extends BaseScene {
         this.skipPlayerCreation = true;
         super.create();
         this.skipPlayerCreation = false;
-
-        // Create managers first
-        this.managers = ManagerFactory.createManagers(this);
-
-        // Get audio manager instance
-        this.audioManager = this.managers.audio;
-
-        // Load and play background music
-        const bgMusic = this.sound.add('bgMusic', {
-            loop: true,
-            volume: this.registry.get('musicVolume') ?? 1
-        });
-        this.audioManager.setCurrentMusic(bgMusic);
-        this.audioManager.playMusic();
 
         // Create physics groups
         this.platforms = this.physics.add.staticGroup();

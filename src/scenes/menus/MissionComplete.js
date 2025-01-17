@@ -1,4 +1,5 @@
 import { Scene } from 'phaser';
+import { ManagerFactory } from '../../modules/di/ManagerFactory';
 
 export class MissionComplete extends Scene {
     constructor() {
@@ -76,19 +77,19 @@ export class MissionComplete extends Scene {
         // Stop any existing music
         this.sound.stopAll();
 
-        // Stop any existing background music first
-        const existingMusic = this.sound.get('bgMusic');
-        if (existingMusic) {
-            existingMusic.stop();
-        }
+        // Get managers
+        this.managers = ManagerFactory.createManagers(this);
+        this.audioManager = this.managers.audio;
 
         // Get music state
         const musicEnabled = this.registry.get('musicEnabled');
 
-        // Create and play victory music only if music is enabled
-        this.victoryMusic = this.sound.add('victoryMusic', { volume: 0.3, loop: true });
-        if (musicEnabled !== false) {
-            this.victoryMusic.play();
+        // Play victory music only if music is enabled
+        if (musicEnabled !== false && this.audioManager) {
+            this.audioManager.playMusic('victoryMusic', { 
+                volume: 0.3, 
+                loop: true 
+            });
         }
         console.log('Playing victory music in mission complete scene'); // Debug log
 
@@ -114,12 +115,12 @@ export class MissionComplete extends Scene {
             .on('pointerover', () => musicButton.setStyle({ fill: '#ff0' }))
             .on('pointerout', () => musicButton.setStyle({ fill: '#fff' }))
             .on('pointerdown', () => {
-                if (this.victoryMusic.isPlaying) {
-                    this.victoryMusic.pause();
+                if (this.audioManager && this.audioManager.isPlaying('victoryMusic')) {
+                    this.audioManager.pauseMusic('victoryMusic');
                     this.registry.set('musicEnabled', false);
                     musicButton.setText('⚙️ Music: OFF');
                 } else {
-                    this.victoryMusic.resume();
+                    this.audioManager.resumeMusic('victoryMusic');
                     this.registry.set('musicEnabled', true);
                     musicButton.setText('⚙️ Music: ON');
                 }
@@ -220,10 +221,10 @@ export class MissionComplete extends Scene {
         this.input.keyboard.on('keydown-SPACE', () => {
             // Stop and cleanup all music
             this.sound.stopAll();
-            const victoryMusic = this.sound.get('victoryMusic');
-            const bgMusic = this.sound.get('bgMusic');
-            if (victoryMusic) victoryMusic.destroy();
-            if (bgMusic) bgMusic.destroy();
+            if (this.audioManager) {
+                this.audioManager.stopMusic('victoryMusic');
+                this.audioManager.destroy();
+            }
             
             // Reset the score to 0
             this.registry.set('score', 0);

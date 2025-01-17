@@ -771,6 +771,9 @@ export class WayneWorld extends BaseScene {
     initializeAudioSystem() {
         try {
             this.game.sound.pauseOnBlur = false;
+            if (this.audioManager) {
+                this.audioManager.playBackgroundMusic('bgMusic');
+            }
             console.log('Audio system initialized successfully');
         } catch (error) {
             console.warn('Error initializing audio system:', error);

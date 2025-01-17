@@ -1,11 +1,42 @@
+/**
+ * Main Menu Scene
+ * 
+ * Dependencies:
+ * - Phaser.Scene: Base scene class from Phaser framework
+ * - TextStyleManager: Handles text styling and creation
+ * - ManagerFactory: Creates and manages game systems (audio, UI, etc.)
+ * 
+ * State Management:
+ * - Uses Phaser's registry system for global state (musicEnabled, musicVolume, etc.)
+ * - Manages wallet connection state for blockchain integration
+ * 
+ * Audio System:
+ * - Background music: 'bgMusic' asset
+ * - Sound effects: 'confirmSound' for button clicks
+ * - Volume control through AudioManager
+ * 
+ * UI Components:
+ * - Title with shadow effects
+ * - Interactive menu buttons
+ * - Wallet connection interface
+ * 
+ * Scene Flow:
+ * - Entry point -> createScene() -> [Menu Navigation] -> Game/Settings/etc.
+ */
+
 import { Scene } from 'phaser';
 import { TextStyleManager } from '../../modules/managers/TextStyleManager';
+import AudioManager from '../../modules/managers/AudioManager';
 
 export class MainMenu extends Scene {
+    /**
+     * Constructor initializes scene key and defines reusable styles
+     * Style definitions use specific font families and shadow effects for cyberpunk theme
+     */
     constructor() {
         super('MainMenu');
         
-        // Define styles for reuse
+        // Define styles for reuse across the menu system
         this.styles = {
             mainTitle: {
                 fontFamily: 'Retronoid, Arial',
@@ -28,53 +59,38 @@ export class MainMenu extends Scene {
                 color: isBase ? '#4400ff' : '#ff00ff',
                 align: 'center'
             }),
-            missionTitle: {
-                fontFamily: 'Retronoid, Arial',
-                fontSize: '48px',
+            menuButton: {
+                fontFamily: 'Retronoid',
+                fontSize: '32px',
                 color: '#00ffff',
                 align: 'center',
                 stroke: '#ffffff',
-                strokeThickness: 1,
-                shadow: {
-                    offsetX: 1,
-                    offsetY: 1,
-                    color: '#ff00ff',
-                    blur: 4,
-                    fill: true
-                }
+                strokeThickness: 1
             },
-            menuButton: {
-                fontFamily: 'Retronoid, Arial',
-                fontSize: '72px',
-                color: '#00ffff',
-                stroke: '#ffffff',
-                strokeThickness: 4,
-                shadow: {
-                    offsetX: 3,
-                    offsetY: 3,
-                    color: '#ff00ff',
-                    blur: 5,
-                    fill: true
-                }
+            missionTitle: {
+                fontFamily: 'Retronoid',
+                fontSize: '36px',
+                color: '#ff00ff',
+                align: 'center'
             },
             walletButton: {
-                fontFamily: 'Retronoid, Arial',
+                fontFamily: 'Retronoid',
                 fontSize: '24px',
                 color: '#00ffff',
-                stroke: '#ffffff',
-                strokeThickness: 1,
-                padding: { x: 10, y: 5 },
-                shadow: {
-                    offsetX: 1,
-                    offsetY: 1,
-                    color: '#ff00ff',
-                    blur: 3,
-                    fill: true
-                }
+                align: 'right'
             }
         };
     }
 
+    /**
+     * Scene creation and initialization
+     * Handles:
+     * 1. Manager initialization
+     * 2. Audio setup
+     * 3. Game state reset
+     * 4. Input system configuration
+     * 5. UI creation
+     */
     async create() {
         // Create the scene first before checking wallet
         await this.createScene();
@@ -82,98 +98,71 @@ export class MainMenu extends Scene {
     }
 
     async createScene() {
-        // Reset all game state
+        // Initialize manager systems through dependency injection
+        this.audioManager = new AudioManager(this);
+
+        // Reset all game state to initial values
         this.registry.set('lives', 3);
         this.registry.set('playerHP', 100);
         this.registry.set('score', 0);
         this.registry.set('bitcoins', 0);
         
-        // Enable input system
+        // Configure input system
         this.input.keyboard.enabled = true;
         this.input.mouse.enabled = true;
-        
-        // Remove any existing input listeners
         this.input.keyboard.removeAllKeys();
         this.input.removeAllListeners();
 
-        // Debug background color to see canvas size
+        // Set up visual environment
         this.cameras.main.setBackgroundColor('#000000');
-
-        // Get the canvas dimensions
         const canvasWidth = this.cameras.main.width;
         const canvasHeight = this.cameras.main.height;
-
-        // Add and center the background image first
         const bg = this.add.image(0, 0, 'mainbg');
         bg.setOrigin(0, 0);
         bg.setDisplaySize(canvasWidth, canvasHeight);
 
-        // Handle music
-        let bgMusic = this.sound.get('bgMusic');
+        // Initialize background music with volume control
         const musicEnabled = this.registry.get('musicEnabled');
-        const musicVolume = this.registry.get('musicVolume') ?? 1; // Use nullish coalescing to allow 0
-
-        // Check if we need to create or restart the music
-        if (!bgMusic || !bgMusic.isPlaying) {
-            // If there's an existing stopped music instance, destroy it
-            if (bgMusic) {
-                bgMusic.destroy();
-            }
-            
-            // Create new music instance with current volume
-            bgMusic = this.sound.add('bgMusic', {
-                volume: musicVolume,
-                loop: true
+        if (musicEnabled !== false && this.audioManager) {
+            this.audioManager.playMusic('bgMusic', {
+                loop: true,
+                volume: this.registry.get('musicVolume') ?? 1
             });
-            
-            // Only play if music is enabled and volume is not 0
-            if (musicEnabled !== false && musicVolume > 0) {
-                bgMusic.play();
-            }
-        } else {
-            // Update volume of existing music
-            bgMusic.setVolume(musicVolume);
-            
-            // Pause/resume based on volume
-            if (musicVolume === 0 && bgMusic.isPlaying) {
-                bgMusic.pause();
-            } else if (musicVolume > 0 && !bgMusic.isPlaying && musicEnabled !== false) {
-                bgMusic.resume();
-            }
         }
 
-        // Add registry listener for volume changes
+        // Set up volume change listener
         this.registry.events.on('changedata-musicVolume', (parent, value) => {
-            const currentMusic = this.sound.get('bgMusic');
-            if (currentMusic) {
-                currentMusic.setVolume(value);
-                // Pause/resume based on volume
-                if (value === 0 && currentMusic.isPlaying) {
-                    currentMusic.pause();
-                } else if (value > 0 && !currentMusic.isPlaying && musicEnabled !== false) {
-                    currentMusic.resume();
-                }
+            if (this.audioManager) {
+                this.audioManager.setMusicVolume(value);
             }
         });
 
-        // Create title and buttons first
+        // Create UI elements
         this.createTitle(canvasWidth, canvasHeight);
         this.createGameButtons(canvasWidth, canvasHeight);
-
-        // Store canvas dimensions for wallet initialization
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
     }
 
+    /**
+     * Asset preloading
+     * Loads audio assets needed for the menu:
+     * - Background music
+     * - UI sound effects
+     */
     preload() {
-        // Load background music
         this.load.audio('bgMusic', 'assets/sounds/mainmenumusic.mp3');
-        // Load confirmation sound
         this.load.audio('confirmSound', 'assets/sounds/confirmation.mp3');
     }
 
+    /**
+     * Creates the main title with visual effects
+     * Uses multiple shadow layers for 3D effect
+     * @param {number} canvasWidth - Width of the game canvas
+     * @param {number} canvasHeight - Height of the game canvas
+     */
     createTitle(canvasWidth, canvasHeight) {
-        // Add shadow layers for 3D effect
+        // Create shadow layers for 3D depth effect
         const shadowOffset = 4;
         const numLayers = 5;
         
@@ -188,7 +177,7 @@ export class MainMenu extends Scene {
             );
         }
 
-        // Add main title text with glow effect
+        // Add main title with glow effects
         TextStyleManager.createText(
             this,
             canvasWidth/2,
@@ -197,7 +186,7 @@ export class MainMenu extends Scene {
             'mainTitle'
         );
 
-        // Add mission title
+        // Add mission subtitle
         TextStyleManager.createText(
             this,
             canvasWidth/2,
@@ -207,268 +196,225 @@ export class MainMenu extends Scene {
         );
     }
 
+    /**
+     * Creates and configures interactive menu buttons
+     * Handles:
+     * - Button creation and positioning
+     * - Click event handlers
+     * - Scene transitions
+     * - Audio feedback
+     * @param {number} canvasWidth - Width of the game canvas
+     * @param {number} canvasHeight - Height of the game canvas
+     */
     createGameButtons(canvasWidth, canvasHeight) {
+        // Configure button layout parameters
         const startY = canvasHeight * 0.4;  // Start buttons from 40% of screen height
         const buttonSpacing = 80;  // Space between buttons
+        const buttonX = canvasWidth / 2;  // Center buttons horizontally
 
-        const startButton = TextStyleManager.createText(
-            this,
-            canvasWidth/2,
-            startY,
-            'START',
-            'menuButton',
-            0.5,
-            true
-        );
-
-        const settingsButton = TextStyleManager.createText(
-            this,
-            canvasWidth/2,
-            startY + buttonSpacing,
-            'SETTINGS',
-            'menuButton',
-            0.5,
-            true
-        );
-
-        const leaderboardButton = TextStyleManager.createText(
-            this,
-            canvasWidth/2,
-            startY + buttonSpacing * 2,
-            'LEADERBOARD',
-            'menuButton',
-            0.5,
-            true
-        );
-
-        const devHubButton = TextStyleManager.createText(
-            this,
-            canvasWidth/2,
-            startY + buttonSpacing * 3,
-            'DEVELOPER HUB',
-            'menuButton',
-            0.5,
-            true
-        );
-
-        const creditsButton = TextStyleManager.createText(
-            this,
-            canvasWidth/2,
-            startY + buttonSpacing * 4,
-            'CREDITS',
-            'menuButton',
-            0.5,
-            true
-        );
-
-        // Add click handlers
-        startButton.on('pointerdown', () => {
-            const playConfirmSound = () => {
-                const sfxVolume = this.registry.get('sfxVolume') ?? 1;
-                const confirmSound = this.sound.add('confirmSound', { volume: sfxVolume });
-                confirmSound.play();
-            };
-            playConfirmSound();
-            // Reset game state
-            this.registry.set('score', 0);
-            this.registry.set('lives', 3);
-            this.registry.set('playerHP', 100);
-            this.registry.set('bitcoins', 0);
-
-            // Clean up scene before starting game
-            this.input.keyboard.removeAllKeys();
-            this.input.removeAllListeners();
+        // Create interactive menu buttons with hover effects and sound
+        const createButton = (text, y, callback) => {
+            const button = TextStyleManager.createText(
+                this,
+                buttonX,
+                y,
+                text,
+                'menuButton'
+            );
             
-            // Stop any existing scenes
-            this.scene.stop('GameScene1');
-            this.scene.stop('GameScene2');
-            this.scene.stop('GameScene3');
-            this.scene.stop('GameScene4');
-            this.scene.stop('GameScene5');
-            this.scene.stop('IntroScene');
+            // Configure button interactivity
+            button.setInteractive({ useHandCursor: true })
+                .on('pointerover', () => {
+                    button.setScale(1.1);
+                    button.setTint(0xff00ff);
+                })
+                .on('pointerout', () => {
+                    button.setScale(1);
+                    button.clearTint();
+                })
+                .on('pointerup', () => {
+                    // Play confirmation sound if enabled
+                    const sfxEnabled = this.registry.get('sfxEnabled');
+                    if (sfxEnabled !== false && this.audioManager) {
+                        this.audioManager.add('confirmSound');
+                        this.audioManager.play('confirmSound');
+                    }
+                    callback();
+                });
+        };
 
-            // Stop menu music before starting game
-            if (this.sound.get('bgMusic')) {
-                this.sound.get('bgMusic').stop();
+        // Define menu options and their actions
+        const menuItems = [
+            {
+                text: 'START GAME',
+                callback: () => {
+                    // Transition to game scene with fade effect
+                    this.cameras.main.fadeOut(1000);
+                    this.cameras.main.once('camerafadeoutcomplete', () => {
+                        this.scene.start('CombinedGtuLevel');
+                    });
+                }
+            },
+            {
+                text: 'SETTINGS',
+                callback: () => this.scene.start('Settings')
+            },
+            {
+                text: 'CONTROLS',
+                callback: () => this.scene.start('ControlsSettings')
+            },
+            {
+                text: 'LEADERBOARD',
+                callback: () => this.scene.start('Leaderboard')
+            },
+            {
+                text: 'CREDITS',
+                callback: () => this.scene.start('Credits')
             }
+        ];
 
-            // Start intro scene
-            this.scene.start('IntroScene');
+        // Create buttons with proper spacing
+        menuItems.forEach((item, index) => {
+            createButton(
+                item.text,
+                startY + (index * buttonSpacing),
+                item.callback
+            );
         });
-        settingsButton.on('pointerdown', () => {
-            const playConfirmSound = () => {
-                const sfxVolume = this.registry.get('sfxVolume') ?? 1;
-                const confirmSound = this.sound.add('confirmSound', { volume: sfxVolume });
-                confirmSound.play();
-            };
-            playConfirmSound();
-            this.scene.start('Settings');
-        });
-        leaderboardButton.on('pointerdown', () => {
-            const playConfirmSound = () => {
-                const sfxVolume = this.registry.get('sfxVolume') ?? 1;
-                const confirmSound = this.sound.add('confirmSound', { volume: sfxVolume });
-                confirmSound.play();
-            };
-            playConfirmSound();
-            this.scene.start('Leaderboard');
-        });
-        devHubButton.on('pointerdown', () => {
-            const playConfirmSound = () => {
-                const sfxVolume = this.registry.get('sfxVolume') ?? 1;
-                const confirmSound = this.sound.add('confirmSound', { volume: sfxVolume });
-                confirmSound.play();
-            };
-            playConfirmSound();
-            // Stop menu music before starting DevHub
-            if (this.sound.get('bgMusic')) {
-                this.sound.get('bgMusic').stop();
-            }
-            this.scene.start('DevHub');
-        });
-        creditsButton.on('pointerdown', () => {
-            const playConfirmSound = () => {
-                const sfxVolume = this.registry.get('sfxVolume') ?? 1;
-                const confirmSound = this.sound.add('confirmSound', { volume: sfxVolume });
-                confirmSound.play();
-            };
-            playConfirmSound();
-            this.scene.start('Credits');
-        });
+
+        // Add dev hub button if in development mode
+        if (process.env.NODE_ENV === 'development') {
+            createButton(
+                'DEV HUB',
+                startY + (menuItems.length * buttonSpacing),
+                () => this.scene.start('DevHub')
+            );
+        }
     }
 
+    /**
+     * Wallet Integration System
+     * Handles MetaMask connection and blockchain interactions
+     * Features:
+     * - Automatic connection detection
+     * - Address display
+     * - Error handling
+     * - UI feedback
+     */
     async initializeWallet() {
         let connectButton;
         try {
-            // Add MetaMask connect button with adjusted position
-            connectButton = TextStyleManager.createText(
-                this,
-                this.cameras.main.width - 100, 
-                40, 
-                'Connect Wallet', 
-                'walletButton',
-                1
-            );
-
-            // Function to handle wallet connection
-            const connectWallet = async () => {
-                try {
-                    if (!connectButton || connectButton.destroyed) return false;
-                    
-                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                    const account = accounts[0];
-                    
-                    // Use requestAnimationFrame to ensure the scene is ready
-                    requestAnimationFrame(() => {
-                        if (connectButton && !connectButton.destroyed) {
-                            connectButton.setText('Disconnect Wallet');
-                        }
-                    });
-                    
-                    this.registry.set('walletAddress', account);
-                    return true;
-                } catch (error) {
-                    console.error('Error connecting to MetaMask:', error);
-                    if (connectButton && !connectButton.destroyed) {
-                        connectButton.setText('Connect Wallet');
-                    }
-                    this.registry.set('walletAddress', null);
-                    return false;
-                }
-            };
-
             // Check for existing MetaMask connection
-            if (typeof window.ethereum !== 'undefined') {
-                try {
-                    // Check if already connected
-                    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-                    if (accounts.length > 0) {
-                        // Auto-connect if we have permission
-                        await connectWallet();
-                    }
+            if (window.ethereum) {
+                const accounts = await window.ethereum.request({
+                    method: 'eth_accounts'
+                });
 
-                    // Listen for account changes
-                    window.ethereum.on('accountsChanged', async (accounts) => {
-                        if (!connectButton || connectButton.destroyed) return;
-                        
-                        if (accounts.length === 0) {
-                            requestAnimationFrame(() => {
-                                if (connectButton && !connectButton.destroyed) {
-                                    connectButton.setText('Connect Wallet');
-                                }
-                            });
-                            this.registry.set('walletAddress', null);
-                        } else {
-                            await connectWallet();
-                        }
-                    });
-
-                    // Listen for chain changes
-                    window.ethereum.on('chainChanged', () => {
-                        window.location.reload();
-                    });
-                } catch (error) {
-                    console.error('Error checking MetaMask connection:', error);
-                }
-            }
-
-            // Make connect button interactive with enhanced effects
-            connectButton.setInteractive({ useHandCursor: true })
-                .on('pointerover', () => {
-                    if (!connectButton.destroyed) {
-                        connectButton.setColor('#ff00ff');
-                        connectButton.setScale(1.1);
-                    }
-                })
-                .on('pointerout', () => {
-                    if (!connectButton.destroyed) {
-                        connectButton.setColor('#00ffff');
-                        connectButton.setScale(1);
-                    }
-                })
-                .on('pointerdown', async () => {
-                    if (!connectButton.destroyed) {
-                        const currentWallet = this.registry.get('walletAddress');
-                        if (!currentWallet) {
-                            if (typeof window.ethereum !== 'undefined') {
-                                await connectWallet();
-                            } else {
-                                alert('Please install MetaMask to connect your wallet!');
-                            }
-                        } else {
-                            // Disconnect wallet
+                if (accounts.length > 0) {
+                    // Already connected - display address
+                    this.displayWalletAddress(accounts[0]);
+                } else {
+                    // Create connect button if not connected
+                    connectButton = TextStyleManager.createText(
+                        this,
+                        this.canvasWidth - 20,
+                        20,
+                        'CONNECT WALLET',
+                        'walletButton'
+                    );
+                    
+                    // Configure button interactivity
+                    connectButton
+                        .setInteractive({ useHandCursor: true })
+                        .on('pointerover', () => {
+                            connectButton.setScale(1.1);
+                            connectButton.setTint(0xff00ff);
+                        })
+                        .on('pointerout', () => {
+                            connectButton.setScale(1);
+                            connectButton.clearTint();
+                        })
+                        .on('pointerup', async () => {
                             try {
-                                await window.ethereum.request({
-                                    method: "wallet_revokePermissions",
-                                    params: [/*{
-                                        eth_accounts: {}
-                                    }*/]
+                                // Request account access
+                                const accounts = await window.ethereum.request({
+                                    method: 'eth_requestAccounts'
                                 });
-                                 
-                                this.registry.set('walletAddress', null);
-                                requestAnimationFrame(() => {
-                                    if (connectButton && !connectButton.destroyed) {
-                                        connectButton.setText('Connect Wallet');
-                                    }
-                                });
+                                
+                                if (accounts.length > 0) {
+                                    this.displayWalletAddress(accounts[0]);
+                                    connectButton.destroy();
+                                }
                             } catch (error) {
-                                console.error('Error disconnecting wallet:', error);
+                                console.error('User denied account access');
                             }
-                        }
+                        });
+                }
+
+                // Listen for account changes
+                window.ethereum.on('accountsChanged', (accounts) => {
+                    if (accounts.length > 0) {
+                        this.displayWalletAddress(accounts[0]);
+                        if (connectButton) connectButton.destroy();
+                    } else {
+                        if (this.walletText) this.walletText.destroy();
+                        this.initializeWallet();
                     }
                 });
+            }
         } catch (error) {
             console.error('Error initializing wallet:', error);
+            // Handle initialization errors gracefully
+            if (connectButton) {
+                connectButton.setText('WALLET ERROR');
+                connectButton.setTint(0xff0000);
+            }
         }
     }
 
-    shutdown() {
-        // Stop and cleanup menu music when leaving the scene
-        const bgMusic = this.sound.get('bgMusic');
-        if (bgMusic) {
-            bgMusic.stop();
-            bgMusic.destroy();
+    /**
+     * Displays the connected wallet address
+     * Truncates address for UI clarity
+     * @param {string} address - The Ethereum wallet address
+     */
+    displayWalletAddress(address) {
+        // Cleanup existing wallet text
+        if (this.walletText) {
+            this.walletText.destroy();
         }
-        super.shutdown();
+
+        // Format address for display (0x1234...5678)
+        const truncatedAddress = address.slice(0, 6) + '...' + address.slice(-4);
+        
+        // Create and position wallet text
+        this.walletText = TextStyleManager.createText(
+            this,
+            this.canvasWidth - 20,
+            20,
+            truncatedAddress,
+            'walletButton'
+        );
+    }
+
+    /**
+     * Scene cleanup handler
+     * Ensures proper resource cleanup when leaving the scene:
+     * - Stops background music
+     * - Removes event listeners
+     * - Cleans up UI elements
+     */
+    shutdown() {
+        // Stop background music
+        if (this.audioManager) {
+            this.audioManager.stopMusic();
+        }
+
+        // Remove event listeners
+        this.registry.events.off('changedata-musicVolume');
+        
+        // Cleanup wallet connection
+        if (window.ethereum) {
+            window.ethereum.removeAllListeners('accountsChanged');
+        }
     }
 }
