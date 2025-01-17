@@ -36,14 +36,7 @@ export class CameraManager {
         this.sectionWidth = 640; // Width of each section in pixels
     }
 
-    setupCamera() {
-        console.log('Setting up camera');
-        // Add your camera setup logic here
-        const camera = this.scene.cameras.main;
-        camera.startFollow(this.scene.player); // Example: follow the player
-    }
-
-    init(player) {
+    init({ player, levelBounds }) {
         if (!player) {
             console.warn('CameraManager: No player provided for initialization');
             return;
@@ -57,8 +50,20 @@ export class CameraManager {
             return;
         }
 
-        // Initialize camera bounds with minimal left padding
-        this.camera.setBounds(0, 0, this.levelWidth + 32, this.levelHeight);
+        // Initialize camera bounds with level dimensions
+        const width = levelBounds?.width || this.levelWidth;
+        const height = levelBounds?.height || this.levelHeight;
+        
+        // Set camera bounds to full level width and height
+        this.camera.setBounds(0, 0, width, height);
+        this.levelWidth = width;  // Update levelWidth to match bounds
+        this.levelHeight = height;  // Update levelHeight to match bounds
+        
+        console.log("Camera Bounds set to:", { 
+            width, 
+            height,
+            playerPos: { x: player.x, y: player.y }
+        });
         
         // Set up camera to follow player with lerp
         this.camera.startFollow(player, true, this.followLerpX, this.followLerpY);
@@ -75,6 +80,13 @@ export class CameraManager {
         if (this.scene.gameUI) {
             this.scene.gameUI.updateCameraIgnoreList();
         }
+    }
+
+    setupCamera() {
+        console.log('Setting up camera');
+        // Add your camera setup logic here
+        const camera = this.scene.cameras.main;
+        camera.startFollow(this.scene.player); // Example: follow the player
     }
 
     update() {
@@ -113,6 +125,7 @@ export class CameraManager {
                 targetBounds.width,
                 targetBounds.height
             );
+            console.log("Camera Bounds:", { x: targetBounds.x, y: targetBounds.y, width: targetBounds.width, height: targetBounds.height });
         }
 
         // Check for progressive loading if the scene supports it
@@ -146,6 +159,7 @@ export class CameraManager {
         if (!this.camera) return;
         
         this.camera.setBounds(0, 0, this.levelWidth, this.levelHeight);
+        console.log("Camera Bounds:", { x: 0, y: 0, width: this.levelWidth, height: this.levelHeight });
     }
 
     playIntroSequence(player) {

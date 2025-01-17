@@ -28,6 +28,13 @@ export class WayneWorld extends BaseScene {
         this.gameStarted = false;
         this.loadedTilesCount = 0; // Add counter for loaded tiles
         this.audioManager = null;
+        this.levelBounds = {
+            x: 0,
+            y: 0,
+            width: 0,  // Will be updated with actual level data
+            height: 0  // Will be updated with actual level data
+        };
+        this.levelHeight = 0; // Initialize levelHeight as instance property
     }
 
     preload() {
@@ -38,18 +45,22 @@ export class WayneWorld extends BaseScene {
         this.managers.assets.loadAssets();
     }
 
+
     create() {
         super.create();
 
-        // Initialize audio system using AudioManager
+        // Initialize managers
+        this.managers = ManagerFactory.createManagers(this);
+        this.ldtkManager = ManagerFactory.getLDTKTileManager(this);
+
         if (!this.audioManager) {
             this.audioManager = this.managers.audio;
             this.initializeAudioSystem();
         }
 
         // Access CameraManager through ManagerFactory
-        const cameraManager = ManagerFactory.getCameraManager(this);
-        cameraManager.setupCamera(); // Set up the camera
+        this.cameraManager = ManagerFactory.getCameraManager(this);
+        this.cameraManager.setupCamera(); // Set up the camera
 
         // Load LDTK data first to get dimensions
         const ldtkData = this.cache.json.get('combined-level');
@@ -57,6 +68,32 @@ export class WayneWorld extends BaseScene {
             console.error('Failed to load LDTK data');
             return;
         }
+
+        // Get current level dimensions from LDTK data
+        const currentLevelData = ldtkData.levels[this.currentLevel];
+        
+        // Calculate total level dimensions
+        this.singleLevelWidth = currentLevelData.pxWid;
+        this.levelHeight = currentLevelData.pxHei;  // Store as instance property
+        this.totalLevels = ldtkData.levels.length;
+        
+        // Calculate total width for all levels
+        const totalWidth = this.singleLevelWidth * this.totalLevels;
+        
+        // Set level bounds using the total width of all levels
+        this.levelBounds = {
+            x: 0,
+            y: 0,
+            width: totalWidth,  // Use total width of all levels
+            height: this.levelHeight
+        };
+        
+        console.log("Level bounds set to:", {
+            singleLevelWidth: this.singleLevelWidth,
+            totalWidth,
+            height: this.levelHeight,
+            totalLevels: this.totalLevels
+        });
 
         // Initialize debug text
         this.debugText = this.add.text(16, 16, '', {
@@ -70,12 +107,12 @@ export class WayneWorld extends BaseScene {
         // Get level dimensions from LDTK
         const firstLevel = ldtkData.levels[0];
         this.singleLevelWidth = firstLevel.pxWid || 2048;
-        const levelHeight = firstLevel.pxHei || 512;
+        // Level height already set above
         this.totalLevels = ldtkData.levels.length;
         
         // Calculate total width
         const levelWidth = this.singleLevelWidth * this.totalLevels;
-        const worldHeight = levelHeight;
+        const worldHeight = this.levelHeight;
 
         console.log('World dimensions:', {
             sectionWidth: this.sectionWidth,
@@ -203,8 +240,11 @@ export class WayneWorld extends BaseScene {
 
         // Ensure player is set before initializing the camera
         if (this.player) {
-            cameraManager.player = this.player; // Assign the player to the camera manager
-            cameraManager.init(this.player);   // Initialize the camera with the player
+            this.cameraManager.player = this.player; // Assign the player to the camera manager
+            this.cameraManager.init({ 
+                player: this.player,
+                levelBounds: this.levelBounds
+            });
             console.log('Camera initialized with player at position:', { x: this.player.x, y: this.player.y });
         } else {
             console.warn('Player not created successfully - camera initialization skipped');
