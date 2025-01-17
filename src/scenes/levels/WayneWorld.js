@@ -1,7 +1,5 @@
 import { BaseScene } from '../elements/BaseScene';
-import { UIManager } from '../elements/UIManager';
 import { GameConfig } from '../../config/GameConfig';
-import { LDTKTileManager } from '../../modules/managers/LDTKTileManager';
 import { Player } from '../../prefabs/Player';
 import { ManagerFactory } from '../../modules/di/ManagerFactory';
 
@@ -103,7 +101,6 @@ export class WayneWorld extends BaseScene {
         animationManager.createZapperAnimations(this);
         animationManager.createBulletAnimations(this);
 
-
         console.log('animations created:', this.anims.exists('zapper_idle'));
 
         // Get managers from container
@@ -137,7 +134,7 @@ export class WayneWorld extends BaseScene {
         this.currentLevelData = ldtkData;
 
         // Initialize managers
-        this.tileManager = new LDTKTileManager(this);
+        this.tileManager = ManagerFactory.getLDTKTileManager(this);
 
         // Create the base tilemap with dynamic dimensions
         this.map = this.make.tilemap({
@@ -621,12 +618,13 @@ export class WayneWorld extends BaseScene {
     setupUI() {
         console.log("WayneWorld: Starting UI setup...");
 
-        // Create UI Manager
-        if (!this.gameUI) {
-            console.log('WayneWorld: Creating new UIManager instance');
-            this.gameUI = new UIManager(this);
+        // Retrieve UIManager via ManagerFactory
+        this.gameUI = ManagerFactory.getUIManager(this);
+    
+        if (this.gameUI) {
+            console.log('WayneWorld: UIManager initialized successfully');
         } else {
-            console.log('WayneWorld: UIManager already exists');
+            console.error('WayneWorld: Failed to initialize UIManager');
         }
 
         // Add level indicator text
