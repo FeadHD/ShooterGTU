@@ -15,7 +15,7 @@ import Drone from '../../prefabs/Drone';
 import Trampoline from '../../prefabs/Trampoline';
 import { Trap } from '../../prefabs/Trap';
 import { TrapManager } from '../../modules/managers/TrapManager';
-import { EnemyManager } from '../../modules/managers/EnemyManager';
+import { EnemyManager } from '../../modules/managers/entities/EnemyManager';
 import { EffectsManager } from '../../modules/managers/EffectsManager';
 import { BulletPool } from '../../modules/managers/pools/BulletPool';
 import { Player } from '../../prefabs/Player';

@@ -79,20 +79,7 @@ const TILE_CONSTANTS = {
     COLLIDING_TILES: [257, 260, 261, 641, 642, 643, 644, 645, 705, 706, 707]  // Tile IDs that should have collision
 };
 
-/**
- * Base scene class that handles game initialization, updates, and cleanup.
- * Provides a robust foundation for all game scenes with standardized setup
- * and management of core game systems.
- * 
- * Key Features:
- * - Automatic manager initialization
- * - Physics and collision setup
- * - Input handling
- * - Audio system management
- * - State management
- * - Event system integration
- * - Error handling
- */
+/** Base scene class that handles game initialization, updates, and cleanup. Provides foundation for all game scenes with standardized setup and management of core game systems. */
 export class BaseScene extends Scene {
     constructor(config) {
         super(config);
@@ -114,17 +101,7 @@ export class BaseScene extends Scene {
         this.isDying = false;
     }
 
-    /**
-     * Preload required assets for the scene.
-     * This method ensures all necessary assets are loaded before scene creation.
-     * 
-     * Assets loaded:
-     * - Character spritesheet (if not already loaded)
-     * - Particle effects
-     * - Sound effects
-     * - Background music
-     * - UI elements
-     */
+    /** Preload required assets for the scene including character spritesheet, particle effects, sound effects, background music, and UI elements. */
     preload() {
         // Load character spritesheet if not already loaded
         if (!this.textures.exists('character')) {
@@ -138,18 +115,7 @@ export class BaseScene extends Scene {
         this.load.image('particle', 'assets/particle.png');
     }
 
-    /**
-     * Create and initialize all game objects, managers, and systems.
-     * This is the main setup method that runs after preload.
-     * 
-     * Initialization order:
-     * 1. Manager creation through ManagerFactory
-     * 2. Core system setup (physics, input, audio)
-     * 3. World and platform creation
-     * 4. Visual elements (background, UI)
-     * 5. Gameplay elements (player, enemies)
-     * 6. State and event system initialization
-     */
+    /** Create and initialize all game objects, managers, and systems in order: managers, core systems, world, platforms, visuals, gameplay elements, and state systems. */
     create() {
         // Create managers first
         this.managers = ManagerFactory.createManagers(this);
@@ -238,13 +204,7 @@ export class BaseScene extends Scene {
     // =====================
     
     /**
-     * Initialize and configure the background music system.
-     * Handles music loading, volume control, and playback.
-     * 
-     * Features:
-     * - Volume persistence through registry
-     * - Looping background music
-     * - Smooth transitions between tracks
+     * Initialize and configure the background music system with volume persistence, looping, and smooth transitions between tracks.
      */
     #setupMusic() {
         const bgMusic = this.sound.add('bgMusic', { loop: true });
@@ -259,27 +219,14 @@ export class BaseScene extends Scene {
     // =====================
     
     /**
-     * Create parallax background for depth perception.
-     * Implements multiple scrolling layers for visual effect.
-     * 
-     * Features:
-     * - Multiple depth layers
-     * - Configurable scroll speeds
-     * - Automatic texture repetition
+     * Create parallax background with multiple depth layers, configurable scroll speeds, and automatic texture repetition.
      */
     #createParallaxBackground() {
         this.parallaxBackground = new ParallaxBackground(this);
     }
 
     /**
-     * Create and configure the game's user interface.
-     * Sets up HUD elements for displaying game information.
-     * 
-     * Elements:
-     * - Health display
-     * - Score counter
-     * - Ammunition display
-     * - Status indicators
+     * Create and configure the game's UI with HUD elements for health, score, ammunition, and status indicators.
      */
     #createUI() {
         // Create UI
@@ -307,11 +254,7 @@ export class BaseScene extends Scene {
     }
 
     /**
-     * Initialize game state and create all character/enemy animations.
-     * 
-     * Features:
-     * - Animation creation for characters and enemies
-     * - State initialization for gameplay
+     * Initialize game state and create all character/enemy animations, including state initialization and collision setup.
      */
     #initializeGameSystems() {
         this.gameState.initializeGameState();
@@ -323,11 +266,7 @@ export class BaseScene extends Scene {
     }
 
     /**
-     * Create a physics group for bullets with specific properties for projectile behavior.
-     * 
-     * Features:
-     * - Bullet pooling for efficient management
-     * - Configurable bullet properties (speed, damage, etc.)
+     * Create a physics group for bullets with pooling, configurable properties, and projectile behavior.
      */
     #createBulletGroup() {
         this.bullets = this.physics.add.group({
@@ -352,7 +291,7 @@ export class BaseScene extends Scene {
     }
 
     /**
-     * Create and configure the player character with proper physics and collision.
+     * Create and configure player character with movement, collision detection, and health management.
      * 
      * Features:
      * - Player movement and input handling
@@ -377,11 +316,7 @@ export class BaseScene extends Scene {
     // =====================
     
     /**
-     * Initialize the player controller for handling input and movement.
-     * 
-     * Features:
-     * - Input handling for player movement and actions
-     * - Movement and animation management
+     * Initialize the player controller for handling input, movement, and animation management.
      */
     #initializeController() {
         try {
@@ -395,13 +330,7 @@ export class BaseScene extends Scene {
     }
 
     /**
-     * Register event handlers for scene lifecycle events.
-     * 
-     * Events:
-     * - Wake: When the scene is woken from sleep
-     * - Resume: When the scene is resumed from pause
-     * - Shutdown: When the scene is destroyed
-     * - Sleep: When the scene is put to sleep
+     * Register event handlers for scene lifecycle events (wake, resume, shutdown, sleep).
      */
     #registerSceneEvents() {
         this.events.on('wake', this.onSceneWake, this);
@@ -411,11 +340,7 @@ export class BaseScene extends Scene {
     }
 
     /**
-     * Initialize and sync scene state with global game state.
-     * 
-     * Features:
-     * - State synchronization with global game state
-     * - Scene-specific state initialization
+     * Initialize and sync scene state with global game state, including lives, score, health, and other game variables.
      */
     #initializeSceneState() {
         try {
@@ -501,6 +426,7 @@ export class BaseScene extends Scene {
      * - Restart or menu options
      */
     handleGameOver() {
+        // Handle complete game over state with game over screen, final score display, and restart options.
         this.store.dispatch({ type: ActionTypes.UPDATE_GAME_STATUS, payload: GameStatus.GAME_OVER });
         this.handleFullRestart();
     }
@@ -513,6 +439,7 @@ export class BaseScene extends Scene {
      * - Scene restart and reload
      */
     handleFullRestart() {
+        // Perform a full scene restart, resetting all game state and reloading the scene.
         this.cleanup();
         this.registry.set('lives', PLAYER_CONSTANTS.INITIAL_LIVES);
         this.registry.set('playerHP', PLAYER_CONSTANTS.INITIAL_HP);
@@ -530,6 +457,7 @@ export class BaseScene extends Scene {
      * - Flash effect and animation
      */
     handleRespawn() {
+        // Reset player position and state after death, adding temporary invulnerability and flash effect.
         if (!this.player) return;
 
         // Get spawn point from current scene if available
@@ -582,7 +510,7 @@ export class BaseScene extends Scene {
      * @param {object} layer - The layer data for collision detection
      */
     setupTileCollisions(map, layer) {
-        // Delegate tile collision setup to CollisionManager
+        // Set up collision detection for specific tile types in the level, handling collision detection and response.
         if (this.collisionManager) {
             this.collisionManager.setupTileCollisions(map, layer);
         }
@@ -639,6 +567,7 @@ export class BaseScene extends Scene {
      * - Manager cleanup and destruction
      */
     cleanup() {
+        // Clean up all game objects and managers before scene shutdown, handling destruction of resources.
         // Clean up managers first
         if (this.eventManager) {
             this.eventManager.destroy();
@@ -695,48 +624,23 @@ export class BaseScene extends Scene {
         this.spaceKey = null;
     }
 
-    /**
-     * Re-enable keyboard input when scene wakes from sleep.
-     * 
-     * Features:
-     * - Keyboard input re-enablement
-     */
+    // Re-enable keyboard input when scene wakes from sleep.
     onSceneWake() {
         this.input.keyboard.enabled = true;
     }
 
-    /**
-     * Re-enable keyboard input when scene resumes from pause.
-     * 
-     * Features:
-     * - Keyboard input re-enablement
-     */
+    // Re-enable keyboard input when scene resumes from pause.
     onSceneResume() {
         this.input.keyboard.enabled = true;
     }
 
-    /**
-     * Clean up resources and call parent shutdown when scene is destroyed.
-     * 
-     * Features:
-     * - Resource cleanup
-     * - Parent shutdown call
-     */
+    // Clean up resources and call parent shutdown when scene is destroyed.
     shutdown() {
         this.cleanup();
         super.shutdown();
     }
 
-    /**
-     * Handle updates to global game state and update local scene accordingly.
-     * 
-     * Features:
-     * - Global state update handling
-     * - Local scene state synchronization
-     * 
-     * @param {object} state - The updated global state
-     * @param {object} action - The action that triggered the state update
-     */
+    // Handle updates to global game state and update local scene accordingly, managing state synchronization.
     handleStoreUpdate(state, action) {
         try {
             switch(action.type) {
@@ -770,15 +674,7 @@ export class BaseScene extends Scene {
         }
     }
 
-    /**
-     * Process game status changes like pause, resume, and game over.
-     * 
-     * Features:
-     * - Game status change handling
-     * - Scene state synchronization
-     * 
-     * @param {number} status - The new game status
-     */
+    // Process game status changes like pause, resume, and game over, managing scene state transitions.
     handleGameStatusChange(status) {
         switch(status) {
             case GameStatus.PAUSED:
@@ -799,13 +695,7 @@ export class BaseScene extends Scene {
         }
     }
 
-    /**
-     * Update scene-specific state like time elapsed and checkpoints.
-     * 
-     * Features:
-     * - Scene state update
-     * - Time elapsed and checkpoint management
-     */
+    // Update scene-specific state including time elapsed and checkpoints, syncing with global store.
     updateSceneState() {
         if (this.sceneState.isPlaying) {
             // Update time elapsed
@@ -832,15 +722,7 @@ export class BaseScene extends Scene {
         }
     }
 
-    /**
-     * Calculate appropriate spawn height relative to ground level.
-     * 
-     * Features:
-     * - Spawn height calculation
-     * - Ground level consideration
-     * 
-     * @returns {number} The calculated spawn height
-     */
+    // Calculate appropriate spawn height relative to ground level.
     getSpawnHeight() {
         return this.groundTop - 16;
     }
