@@ -6,8 +6,6 @@ import { LDTKTileManager } from '../../modules/managers/LDTKTileManager';
 import { Player } from '../../prefabs/Player';
 import { ManagerFactory } from '../../modules/di/ManagerFactory';
 
-
-
 export class WayneWorld extends BaseScene {
     constructor() {
         super({ key: 'WayneWorld' });

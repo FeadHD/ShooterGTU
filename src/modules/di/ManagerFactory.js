@@ -168,4 +168,13 @@ export class ManagerFactory {
         }
         return this.musicManager;
     }
+
+    static cameraManager = null;
+
+    static getCameraManager(scene) {
+        if (!this.cameraManager) {
+            this.cameraManager = new CameraManager(scene);
+        }
+        return this.cameraManager;
+    }
 }
