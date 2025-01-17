@@ -1,7 +1,6 @@
 import { BaseScene } from '../elements/BaseScene';
 import { UIManager } from '../elements/UIManager';
 import { GameConfig } from '../../config/GameConfig';
-import CameraManager from '../../modules/managers/CameraManager';
 import { LDTKTileManager } from '../../modules/managers/LDTKTileManager';
 import { Player } from '../../prefabs/Player';
 import { ManagerFactory } from '../../modules/di/ManagerFactory';
@@ -51,7 +50,10 @@ export class WayneWorld extends BaseScene {
             this.audioInitialized = true;
         }
 
-        
+        // Access CameraManager through ManagerFactory
+        const cameraManager = ManagerFactory.getCameraManager(this);
+        cameraManager.setupCamera(); // Set up the camera
+
         // Load LDTK data first to get dimensions
         const ldtkData = this.cache.json.get('combined-level');
         if (!ldtkData || !ldtkData.levels || ldtkData.levels.length === 0) {
@@ -203,11 +205,10 @@ export class WayneWorld extends BaseScene {
         this.physics.add.collider(this.enemies, this.groundLayer);
         this.physics.add.collider(this.enemies, this.platformLayer);
 
-        // Initialize camera with proper dimensions and player AFTER player is fully set up
-        this.cameraManager = new CameraManager(this, levelWidth, worldHeight);
+        // Ensure player is set before initializing the camera
         if (this.player) {
-            this.cameraManager.player = this.player;
-            this.cameraManager.init(this.player);
+            cameraManager.player = this.player; // Assign the player to the camera manager
+            cameraManager.init(this.player);   // Initialize the camera with the player
             console.log('Camera initialized with player at position:', { x: this.player.x, y: this.player.y });
         } else {
             console.warn('Player not created successfully - camera initialization skipped');

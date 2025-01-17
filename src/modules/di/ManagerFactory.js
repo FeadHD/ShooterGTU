@@ -30,6 +30,7 @@ import MeleeWarrior from '../../prefabs/MeleeWarrior';
 import { Zapper } from '../../prefabs/enemies/Zapper';
 import { BulletManager } from '../../modules/managers/BulletManager';
 import { BulletPool } from '../../modules/managers/pools/BulletPool';
+import { CameraManager } from '../../modules/managers/CameraManager';
 
 export class ManagerFactory {
     static createManagers(scene) {

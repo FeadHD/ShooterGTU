@@ -1,9 +1,10 @@
-class CameraManager {
+export class CameraManager {
     constructor(scene, levelWidth = 3840, levelHeight = 1080) {
         this.scene = scene;
         this.camera = scene.cameras.main;
         this.isIntroPlaying = false;
         this.defaultZoom = 1.5;
+        this.player = null; // To be assigned later
         
         // Get game dimensions
         const { width, height } = scene.scale;
@@ -33,6 +34,13 @@ class CameraManager {
         this.updateInterval = 100; // Update every 100ms
         this.loadBuffer = 2; // Number of sections to keep loaded
         this.sectionWidth = 640; // Width of each section in pixels
+    }
+
+    setupCamera() {
+        console.log('Setting up camera');
+        // Add your camera setup logic here
+        const camera = this.scene.cameras.main;
+        camera.startFollow(this.scene.player); // Example: follow the player
     }
 
     init(player) {
