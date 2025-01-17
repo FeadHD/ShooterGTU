@@ -198,4 +198,13 @@ export class ManagerFactory {
         return this.ldtkTileManager;
     }
 
+    static uiManager = null;
+
+    static getUIManager(scene) {
+        if (!this.uiManager) {
+            this.uiManager = new UIManager(scene);
+        }
+        return this.uiManager;
+    }
+
 }

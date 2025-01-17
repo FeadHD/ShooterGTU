@@ -1,5 +1,4 @@
 import { BaseScene } from '../elements/BaseScene';
-import { UIManager } from '../elements/UIManager';
 import { GameConfig } from '../../config/GameConfig';
 import { Player } from '../../prefabs/Player';
 import { ManagerFactory } from '../../modules/di/ManagerFactory';
@@ -635,12 +634,13 @@ export class WayneWorld extends BaseScene {
     setupUI() {
         console.log("WayneWorld: Starting UI setup...");
 
-        // Create UI Manager
-        if (!this.gameUI) {
-            console.log('WayneWorld: Creating new UIManager instance');
-            this.gameUI = new UIManager(this);
+        // Retrieve UIManager via ManagerFactory
+        this.gameUI = ManagerFactory.getUIManager(this);
+    
+        if (this.gameUI) {
+            console.log('WayneWorld: UIManager initialized successfully');
         } else {
-            console.log('WayneWorld: UIManager already exists');
+            console.error('WayneWorld: Failed to initialize UIManager');
         }
 
         // Add level indicator text
