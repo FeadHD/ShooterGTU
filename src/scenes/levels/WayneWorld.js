@@ -1,7 +1,6 @@
 import { BaseScene } from '../elements/BaseScene';
 import { UIManager } from '../elements/UIManager';
 import { GameConfig } from '../../config/GameConfig';
-import { LDTKTileManager } from '../../modules/managers/LDTKTileManager';
 import { Player } from '../../prefabs/Player';
 import { ManagerFactory } from '../../modules/di/ManagerFactory';
 
@@ -104,7 +103,6 @@ export class WayneWorld extends BaseScene {
         animationManager.createZapperAnimations(this);
         animationManager.createBulletAnimations(this);
 
-
         console.log('animations created:', this.anims.exists('zapper_idle'));
 
         // Get managers from container
@@ -138,7 +136,7 @@ export class WayneWorld extends BaseScene {
         this.currentLevelData = ldtkData;
 
         // Initialize managers
-        this.tileManager = new LDTKTileManager(this);
+        this.tileManager = ManagerFactory.getLDTKTileManager(this);
 
         // Create the base tilemap with dynamic dimensions
         this.map = this.make.tilemap({

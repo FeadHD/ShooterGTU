@@ -6,6 +6,7 @@ import { EntityManager } from '../managers/entities/EntityManager';
 import { EnemyManager } from '../managers/entities/EnemyManager';
 import { HazardManager } from '../managers/entities/HazardManager';
 import { LDTKEntityManager } from '../managers/LDTKEntityManager';
+import { LDTKTileManager } from '../managers/LDTKTileManager';
 import { AnimationManager } from '../managers/AnimationManager';
 import { EffectsManager } from '../managers/EffectsManager';
 import { SceneBoundaryManager } from '../managers/BoundaryManager';
@@ -178,4 +179,23 @@ export class ManagerFactory {
         }
         return this.cameraManager;
     }
+
+    static ldtkEntityManager = null;
+
+    static getLDTKEntityManager(scene) {
+        if (!this.ldtkEntityManager) {
+            this.ldtkEntityManager = new LDTKEntityManager(scene);
+        }
+        return this.ldtkEntityManager;
+    }
+
+    static ldtkTileManager = null;
+
+    static getLDTKTileManager(scene) {
+        if (!this.ldtkTileManager) {
+            this.ldtkTileManager = new LDTKTileManager(scene);
+        }
+        return this.ldtkTileManager;
+    }
+
 }
