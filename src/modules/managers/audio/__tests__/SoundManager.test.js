@@ -1,9 +1,9 @@
 jest.mock('phaser');
 
-const { SoundManager } = require('../SoundManager');
+const { AudioManager } = require('../../AudioManager').default;
 
-describe('SoundManager', () => {
-    let soundManager;
+describe('AudioManager', () => {
+    let audioManager;
     let mockScene;
     let mockSound;
 
@@ -13,7 +13,10 @@ describe('SoundManager', () => {
             play: jest.fn(),
             stop: jest.fn(),
             setVolume: jest.fn(),
-            isPlaying: false
+            isPlaying: false,
+            isPaused: false,
+            pause: jest.fn(),
+            resume: jest.fn()
         };
 
         // Create mock scene
@@ -29,26 +32,26 @@ describe('SoundManager', () => {
             }
         };
 
-        // Create SoundManager instance
-        soundManager = new SoundManager(mockScene);
+        // Create AudioManager instance
+        audioManager = new AudioManager(mockScene);
     });
 
     describe('volume management', () => {
         it('should initialize with default volume from registry', () => {
             expect(mockScene.registry.get).toHaveBeenCalledWith('soundVolume');
-            expect(soundManager.getVolume()).toBe(1);
+            expect(audioManager.getVolume()).toBe(1);
         });
 
         it('should update all sound volumes when volume is changed', () => {
             // Add some sounds
-            soundManager.add('sound1');
-            soundManager.add('sound2');
+            audioManager.add('sound1');
+            audioManager.add('sound2');
 
             // Change volume
-            soundManager.setVolume(0.5);
+            audioManager.setVolume(0.5);
 
             // Verify all sounds had their volume updated
-            const sounds = Array.from(soundManager.sounds.values());
+            const sounds = Array.from(audioManager.sounds.values());
             sounds.forEach(sound => {
                 expect(sound.setVolume).toHaveBeenCalledWith(0.5);
             });
@@ -56,8 +59,8 @@ describe('SoundManager', () => {
 
         it('should update volumes when registry volume changes', () => {
             // Add some sounds
-            soundManager.add('sound1');
-            soundManager.add('sound2');
+            audioManager.add('sound1');
+            audioManager.add('sound2');
 
             // Get the volume change callback
             const [eventName, callback] = mockScene.registry.events.on.mock.calls[0];
@@ -67,7 +70,7 @@ describe('SoundManager', () => {
             callback(null, 0.7);
 
             // Verify all sounds had their volume updated
-            const sounds = Array.from(soundManager.sounds.values());
+            const sounds = Array.from(audioManager.sounds.values());
             sounds.forEach(sound => {
                 expect(sound.setVolume).toHaveBeenCalledWith(0.7);
             });
@@ -76,24 +79,24 @@ describe('SoundManager', () => {
 
     describe('sound management', () => {
         it('should add sounds to the collection', () => {
-            soundManager.add('test');
+            audioManager.add('test');
             expect(mockScene.sound.add).toHaveBeenCalledWith('test', undefined);
-            expect(soundManager.sounds.has('test')).toBe(true);
+            expect(audioManager.sounds.has('test')).toBe(true);
         });
 
         it('should play existing sounds', () => {
             // Add a sound
-            soundManager.add('test');
-            const sound = soundManager.sounds.get('test');
+            audioManager.add('test');
+            const sound = audioManager.sounds.get('test');
 
             // Play it
-            soundManager.play('test');
+            audioManager.play('test');
             expect(sound.play).toHaveBeenCalled();
         });
 
         it('should create and play new sounds automatically', () => {
             // Play without adding first
-            soundManager.play('test');
+            audioManager.play('test');
 
             // Should create new sound
             expect(mockScene.sound.add).toHaveBeenCalledWith('test', {
@@ -101,29 +104,29 @@ describe('SoundManager', () => {
             });
 
             // Should play the sound
-            const sound = soundManager.sounds.get('test');
+            const sound = audioManager.sounds.get('test');
             expect(sound.play).toHaveBeenCalled();
         });
 
         it('should stop specific sounds', () => {
             // Add and get a sound
-            soundManager.add('test');
-            const sound = soundManager.sounds.get('test');
+            audioManager.add('test');
+            const sound = audioManager.sounds.get('test');
 
             // Stop it
-            soundManager.stop('test');
+            audioManager.stop('test');
             expect(sound.stop).toHaveBeenCalled();
         });
 
         it('should stop all sounds', () => {
             // Add multiple sounds
-            soundManager.add('test1');
-            soundManager.add('test2');
-            const sound1 = soundManager.sounds.get('test1');
-            const sound2 = soundManager.sounds.get('test2');
+            audioManager.add('test1');
+            audioManager.add('test2');
+            const sound1 = audioManager.sounds.get('test1');
+            const sound2 = audioManager.sounds.get('test2');
 
             // Stop all
-            soundManager.stopAll();
+            audioManager.stopAll();
 
             // Verify all sounds were stopped
             expect(sound1.stop).toHaveBeenCalled();
@@ -132,13 +135,45 @@ describe('SoundManager', () => {
 
         it('should not play already playing sounds', () => {
             // Add a sound that's already playing
-            soundManager.add('test');
-            const sound = soundManager.sounds.get('test');
+            audioManager.add('test');
+            const sound = audioManager.sounds.get('test');
             sound.isPlaying = true;
 
             // Try to play it
-            soundManager.play('test');
+            audioManager.play('test');
             expect(sound.play).not.toHaveBeenCalled();
+        });
+
+        test('should add and play a sound', () => {
+            audioManager.add('test');
+            audioManager.play('test');
+            expect(mockScene.sound.add).toHaveBeenCalled();
+            expect(mockSound.play).toHaveBeenCalled();
+        });
+
+        test('should stop a sound', () => {
+            audioManager.add('test');
+            audioManager.stop('test');
+            expect(mockSound.stop).toHaveBeenCalled();
+        });
+
+        test('should update volume', () => {
+            audioManager.add('test');
+            audioManager.setVolume(0.5);
+            expect(mockSound.setVolume).toHaveBeenCalledWith(0.5);
+        });
+
+        test('should mute all sounds', () => {
+            audioManager.add('test');
+            audioManager.mute();
+            expect(audioManager.isMuted).toBe(true);
+        });
+
+        test('should unmute all sounds', () => {
+            audioManager.add('test');
+            audioManager.mute();
+            audioManager.unmute();
+            expect(audioManager.isMuted).toBe(false);
         });
     });
 });

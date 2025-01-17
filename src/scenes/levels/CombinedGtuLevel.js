@@ -6,7 +6,7 @@ import { TransitionScreen } from '../elements/TransitionScreen';
 import Enemy from '../../prefabs/Enemy';
 import MeleeWarrior from '../../prefabs/MeleeWarrior';
 import { AlarmTrigger } from '../../prefabs/AlarmTrigger';
-import { MusicManager } from '../../modules/managers/audio/MusicManager';
+import { AudioManager } from '../../modules/managers/AudioManager';
 import { Bitcoin } from '../../prefabs/Bitcoin';
 import { Slime } from '../../prefabs/Slime';
 import Drone from '../../prefabs/Drone';
@@ -175,6 +175,17 @@ export class CombinedGtuLevel extends BaseScene {
 
         // Create managers first
         this.managers = ManagerFactory.createManagers(this);
+
+        // Get audio manager instance
+        this.audioManager = this.managers.audio;
+
+        // Load and play background music
+        const bgMusic = this.sound.add('bgMusic', {
+            loop: true,
+            volume: this.registry.get('musicVolume') ?? 1
+        });
+        this.audioManager.setCurrentMusic(bgMusic);
+        this.audioManager.playMusic();
 
         // Create physics groups
         this.platforms = this.physics.add.staticGroup();

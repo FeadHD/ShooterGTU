@@ -121,10 +121,9 @@ export class BaseScene extends Scene {
         this.managers = ManagerFactory.createManagers(this);
         
         // Setup core systems
-        this.gameState = this.managers.gameState;
-        this.persistence = this.managers.persistence;
-        this.soundManager = this.managers.sound;
-        this.musicManager = this.managers.music;
+        this.gameStateManager = this.managers.gameState;
+        this.persistenceManager = this.managers.persistence;
+        this.audioManager = this.managers.audio;
         this.entityManager = this.managers.entityManager;
         this.enemies = this.managers.enemies;
         this.hazards = this.managers.hazards;
@@ -210,8 +209,8 @@ export class BaseScene extends Scene {
         const bgMusic = this.sound.add('bgMusic', { loop: true });
         const musicVolume = this.registry.get('musicVolume') || 1;
         bgMusic.setVolume(musicVolume);
-        this.musicManager.setCurrentMusic(bgMusic);
-        this.musicManager.play();
+        this.audioManager.setCurrentMusic(bgMusic);
+        this.audioManager.playMusic();
     }
 
     // =====================
@@ -257,7 +256,7 @@ export class BaseScene extends Scene {
      * Initialize game state and create all character/enemy animations, including state initialization and collision setup.
      */
     #initializeGameSystems() {
-        this.gameState.initializeGameState();
+        this.gameStateManager.initializeGameState();
         this.animations.createAllAnimations();
         this.#createBulletGroup();  // Create bullet group before setting up collisions
         if (this.managers.collisions) {
@@ -354,7 +353,7 @@ export class BaseScene extends Scene {
             this.registry.set('bitcoins', globalState.player.bitcoins);
             
             // Set up scene-specific state
-            this.gameState.initializeGameState();
+            this.gameStateManager.initializeGameState();
             
             // Listen for store changes
             this.store.subscribe((state, action) => {
@@ -402,7 +401,7 @@ export class BaseScene extends Scene {
             this.time.delayedCall(2000, () => {
                 if (lives <= 0) {
                     this.eventManager.emit(GameEvents.GAME_OVER, {
-                        finalScore: this.gameState.get('score'),
+                        finalScore: this.gameStateManager.get('score'),
                         totalTime: this.time.now - this.sceneState.startTime
                     });
                     this.handleGameOver();
@@ -475,7 +474,7 @@ export class BaseScene extends Scene {
         this.player.setAlpha(1);
         
         // Reset player HP
-        this.gameState.set('playerHP', PLAYER_CONSTANTS.INITIAL_HP);
+        this.gameStateManager.set('playerHP', PLAYER_CONSTANTS.INITIAL_HP);
         this.gameUI.updateHP(PLAYER_CONSTANTS.INITIAL_HP);
         
         // Add temporary invulnerability
@@ -607,10 +606,9 @@ export class BaseScene extends Scene {
         }
 
         // Clean up managers
-        if (this.gameState) this.gameState = null;
-        if (this.persistence) this.persistence = null;
-        if (this.soundManager) this.soundManager = null;
-        if (this.musicManager) this.musicManager = null;
+        if (this.gameStateManager) this.gameStateManager = null;
+        if (this.persistenceManager) this.persistenceManager = null;
+        if (this.audioManager) this.audioManager = null;
         if (this.entityManager) this.entityManager = null;
         if (this.enemies) this.enemies = null;
         if (this.hazards) this.hazards = null;
@@ -645,20 +643,20 @@ export class BaseScene extends Scene {
         try {
             switch(action.type) {
                 case ActionTypes.UPDATE_SCORE:
-                    this.gameState.set('score', state.game.score);
+                    this.gameStateManager.set('score', state.game.score);
                     this.sceneState.levelData.currentScore = state.game.score;
                     break;
                 case ActionTypes.UPDATE_HEALTH:
-                    this.gameState.set('playerHP', state.player.health);
+                    this.gameStateManager.set('playerHP', state.player.health);
                     if (state.player.health <= 0) {
                         this.store.dispatch({ type: ActionTypes.UPDATE_GAME_STATUS, payload: GameStatus.GAME_OVER });
                     }
                     break;
                 case ActionTypes.UPDATE_LIVES:
-                    this.gameState.set('lives', state.game.lives);
+                    this.gameStateManager.set('lives', state.game.lives);
                     break;
                 case ActionTypes.UPDATE_BITCOINS:
-                    this.gameState.set('bitcoins', state.game.bitcoins);
+                    this.gameStateManager.set('bitcoins', state.game.bitcoins);
                     break;
                 case ActionTypes.UPDATE_GAME_STATUS:
                     this.handleGameStatusChange(state.game.status);

@@ -29,8 +29,7 @@ export class WayneWorld extends BaseScene {
         this.currentLevelData = null;
         this.gameStarted = false;
         this.loadedTilesCount = 0; // Add counter for loaded tiles
-        this.audioInitialized = false;
-        this.currentMusic = null; // Track the current music
+        this.audioManager = null;
     }
 
     preload() {
@@ -44,10 +43,10 @@ export class WayneWorld extends BaseScene {
     create() {
         super.create();
 
-        // Initialize audio system first
-        if (!this.audioInitialized) {
-            this.startBackgroundMusic();
-            this.audioInitialized = true;
+        // Initialize audio system using AudioManager
+        if (!this.audioManager) {
+            this.audioManager = this.managers.audio;
+            this.initializeAudioSystem();
         }
 
         // Access CameraManager through ManagerFactory
@@ -244,21 +243,6 @@ export class WayneWorld extends BaseScene {
                 this.ldtkEntityManager.setDebug(this.showDebug);
             }
         });
-    }
-
-    /****************************
-     * MUSIC MANAGEMENT
-     ****************************/
-    startBackgroundMusic() {
-        if (this.currentMusic && this.currentMusic.isPlaying) {
-            console.log('Background music is already playing');
-            return; // Prevent duplicate playback
-        }
-
-        // Use MusicManager to play music
-        const musicManager = ManagerFactory.getMusicManager(this);
-        this.currentMusic = musicManager.playBackgroundMusic('mainTheme');
-        console.log('Background music started');
     }
 
     /****************************
@@ -713,25 +697,25 @@ export class WayneWorld extends BaseScene {
      * COLLISION & PHYSICS
      ****************************/
     
-setupCollisions() {
-    const bulletManager = ManagerFactory.getBulletManager(this);
+    setupCollisions() {
+        const bulletManager = ManagerFactory.getBulletManager(this);
 
-    // Access the bullet group
-    const bullets = bulletManager.getGroup();
+        // Access the bullet group
+        const bullets = bulletManager.getGroup();
 
-    // Collisions with enemies
-    this.physics.add.overlap(bullets, this.enemies, (bullet, enemy) => {
-        bullet.destroy();
-        if (typeof enemy.takeDamage === 'function') {
-            enemy.takeDamage(10);
-        }
-    });
+        // Collisions with enemies
+        this.physics.add.overlap(bullets, this.enemies, (bullet, enemy) => {
+            bullet.destroy();
+            if (typeof enemy.takeDamage === 'function') {
+                enemy.takeDamage(10);
+            }
+        });
 
-    // Collisions with platforms
-    this.physics.add.collider(bullets, this.platforms, (bullet) => {
-        bullet.destroy();
-    });
-}
+        // Collisions with platforms
+        this.physics.add.collider(bullets, this.platforms, (bullet) => {
+            bullet.destroy();
+        });
+    }
 
 
     /****************************
@@ -786,56 +770,15 @@ setupCollisions() {
      * AUDIO SYSTEM
      ****************************/
     
-    initializeAudio() {
-        if (!this.game.sound.locked) {
-            // Audio system is ready, initialize immediately
-            this.setupAudioSystem();
-        } else {
-            // Wait for audio system to unlock
-            this.game.sound.once('unlocked', () => {
-                this.setupAudioSystem();
-            });
-        }
-    }
-
-    setupAudioSystem() {
+    initializeAudioSystem() {
         try {
             this.game.sound.pauseOnBlur = false;
-    
-            const musicManager = ManagerFactory.getMusicManager(this);
-            musicManager.playBackgroundMusic('mainTheme');
             console.log('Audio system initialized successfully');
         } catch (error) {
             console.warn('Error initializing audio system:', error);
         }
     }
     
-
-    startBackgroundMusic() {
-        // Delay music start to ensure scene is ready
-        this.time.delayedCall(1000, () => {
-            try {
-                if (!this.musicManager) {
-                    console.warn('Music manager not initialized');
-                    return;
-                }
-
-                const bgMusic = this.sound.add('bgMusic', {
-                    loop: true,
-                    volume: 0.5
-                });
-
-                // Add custom property to track desired state
-                bgMusic.shouldBePlaying = true;
-
-                this.musicManager.setCurrentMusic(bgMusic);
-                bgMusic.play();
-                console.log('Background music started successfully');
-            } catch (error) {
-                console.warn('Error starting background music:', error);
-            }
-        });
-    }
 
     /****************************
      * CLEANUP & RESET

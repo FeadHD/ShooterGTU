@@ -8,7 +8,7 @@ import { TransitionScreen } from '../elements/TransitionScreen';
 import { Enemy } from '../../prefabs/Enemy';
 import MeleeWarrior from '../../prefabs/MeleeWarrior';
 import { AlarmTrigger } from '../../prefabs/AlarmTrigger';
-import { MusicManager } from '../../modules/managers/MusicManager';
+import AudioManager from '../../modules/managers/AudioManager';
 import { Bitcoin } from '../../prefabs/Bitcoin';
 import { Slime } from '../../prefabs/Slime';
 import Drone from '../../prefabs/Drone';
@@ -147,46 +147,21 @@ export class GameScene1 extends BaseScene {
                 };
             }
 
-            // Initialize background music if not already playing
-            const musicVolume = this.registry.get('musicVolume') ?? 1; // Use nullish coalescing to allow 0
-            if (!this.bgMusic || !this.bgMusic.isPlaying) {
-                // If there's an existing stopped music instance, destroy it
-                if (this.bgMusic) {
-                    this.bgMusic.destroy();
-                }
-                
-                // Create new music instance with current volume
-                this.bgMusic = this.sound.add('bgMusic', {
-                    loop: true,
-                    volume: musicVolume
-                });
+            // Get audio manager instance
+            this.audioManager = this.managers.audio;
 
-                // Only play if volume is not 0
-                if (musicVolume > 0) {
-                    this.bgMusic.play();
-                }
-            } else {
-                // Update volume of existing music
-                this.bgMusic.setVolume(musicVolume);
-                
-                // Pause/resume based on volume
-                if (musicVolume === 0 && this.bgMusic.isPlaying) {
-                    this.bgMusic.pause();
-                } else if (musicVolume > 0 && !this.bgMusic.isPlaying) {
-                    this.bgMusic.resume();
-                }
-            }
+            // Load and play background music
+            const bgMusic = this.sound.add('bgMusic', {
+                loop: true,
+                volume: this.registry.get('musicVolume') ?? 1
+            });
+            this.audioManager.setCurrentMusic(bgMusic);
+            this.audioManager.playMusic();
 
             // Add registry listener for volume changes
             this.registry.events.on('changedata-musicVolume', (parent, value) => {
-                if (this.bgMusic) {
-                    this.bgMusic.setVolume(value);
-                    // Pause/resume based on volume
-                    if (value === 0 && this.bgMusic.isPlaying) {
-                        this.bgMusic.pause();
-                    } else if (value > 0 && !this.bgMusic.isPlaying) {
-                        this.bgMusic.resume();
-                    }
+                if (this.audioManager) {
+                    this.audioManager.setMusicVolume(value);
                 }
             });
 
@@ -519,10 +494,6 @@ export class GameScene1 extends BaseScene {
 
             // Create debug graphics
             this.debugGraphics = this.add.graphics();
-
-            // Store background music reference
-            // Removed this.bgMusic = this.sound.add('bgMusic', { loop: true });
-            // Removed this.bgMusic.play();
 
             // Remove the duplicate antivirus wall creation and collision setup
             // this.antivirusWall = new AntivirusWall(this, 0); // This line should be removed

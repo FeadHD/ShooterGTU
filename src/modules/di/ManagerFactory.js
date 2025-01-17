@@ -1,7 +1,6 @@
 import { GameStateManager } from '../managers/state/GameStateManager';
 import { PersistenceManager } from '../managers/state/PersistenceManager';
-import { SoundManager } from '../managers/audio/SoundManager';
-import { MusicManager } from '../managers/audio/MusicManager';
+import AudioManager from '../managers/AudioManager';
 import { EntityManager } from '../managers/entities/EntityManager';
 import { EnemyManager } from '../managers/entities/EnemyManager';
 import { HazardManager } from '../managers/entities/HazardManager';
@@ -46,9 +45,8 @@ export class ManagerFactory {
         const gameState = new GameStateManager(scene);
         const persistence = new PersistenceManager(gameState);
         
-        // Create and register audio managers
-        const sound = new SoundManager(scene);
-        const music = new MusicManager(scene);
+        // Create and register audio manager
+        const audio = new AudioManager(scene);
         
         // Create and register entity managers
         const entityManager = new EntityManager(scene);
@@ -93,8 +91,7 @@ export class ManagerFactory {
         // Register all managers
         container.register('gameState', gameState);
         container.register('persistence', persistence);
-        container.register('sound', sound);
-        container.register('music', music);
+        container.register('audio', audio);
         container.register('entityManager', entityManager);
         container.register('ldtkEntityManager', ldtkEntityManager);
         container.register('enemies', enemies);
@@ -115,8 +112,7 @@ export class ManagerFactory {
             assets,
             gameState,
             persistence,
-            sound,
-            music,
+            audio,
             entityManager,
             ldtkEntityManager,
             enemies,
@@ -159,15 +155,6 @@ export class ManagerFactory {
             this.bulletPool = new BulletPool();
         }
         return this.bulletPool;
-    }
-
-    static musicManager = null;
-
-    static getMusicManager(scene) {
-        if (!this.musicManager) {
-            this.musicManager = new MusicManager(scene);
-        }
-        return this.musicManager;
     }
 
     static cameraManager = null;

@@ -1,5 +1,5 @@
 import 'phaser';
-import { MusicManager } from '../../modules/managers/MusicManager';
+import AudioManager from '../../modules/managers/AudioManager';
 
 export default class SoundSettings extends Phaser.Scene {
     constructor() {
@@ -33,18 +33,27 @@ export default class SoundSettings extends Phaser.Scene {
     }
 
     create() {
-        const { width: canvasWidth, height: canvasHeight } = this.cameras.main;
+        const { width, height } = this.cameras.main;
+        const centerX = width / 2;
+        const centerY = height / 2;
+
+        // Get audio manager instance
+        this.audioManager = this.managers.audio;
+
+        // Load current volume settings
+        const musicVolume = this.registry.get('musicVolume') ?? 1;
+        const sfxVolume = this.registry.get('soundVolume') ?? 1;
 
         // Store the fromPause and parentScene values passed from Settings
         this.fromPause = this.scene.settings.data?.fromPause;
         this.parentScene = this.scene.settings.data?.parentScene;
 
         // Add background
-        const bg = this.add.image(canvasWidth / 2, canvasHeight / 2, 'settingsBackground');
-        bg.setDisplaySize(canvasWidth, canvasHeight);
+        const bg = this.add.image(centerX, centerY, 'settingsBackground');
+        bg.setDisplaySize(width, height);
 
         // Add title
-        this.add.text(canvasWidth / 2, canvasHeight * 0.2, 'SOUND SETTINGS', {
+        this.add.text(centerX, centerY * 0.2, 'SOUND SETTINGS', {
             fontFamily: 'Gameplay',
             fontSize: '64px',
             fill: '#ffffff',
@@ -54,7 +63,7 @@ export default class SoundSettings extends Phaser.Scene {
         }).setOrigin(0.5);
 
         // Music Section
-        this.add.text(canvasWidth * 0.3, canvasHeight * 0.4, 'MUSIC', {
+        this.add.text(centerX * 0.3, centerY * 0.4, 'MUSIC', {
             fontFamily: 'Gameplay',
             fontSize: '48px',
             fill: '#ffffff',
@@ -64,8 +73,7 @@ export default class SoundSettings extends Phaser.Scene {
         }).setOrigin(0, 0.5);
 
         // Create music volume controls
-        const musicVolume = this.registry.get('musicVolume') ?? 1;
-        this.createVolumeSlider(canvasWidth * 0.6, canvasHeight * 0.4, musicVolume, (value) => {
+        this.createVolumeSlider(centerX * 0.6, centerY * 0.4, musicVolume, (value) => {
             // Ensure value is finite and handle 0 properly
             value = Math.abs(value) < 0.01 ? 0 : value;
             if (Number.isFinite(value)) {
@@ -105,7 +113,7 @@ export default class SoundSettings extends Phaser.Scene {
         });
 
         // Sound Effects Section
-        this.add.text(canvasWidth * 0.3, canvasHeight * 0.55, 'SOUND EFFECTS', {
+        this.add.text(centerX * 0.3, centerY * 0.55, 'SOUND EFFECTS', {
             fontFamily: 'Gameplay',
             fontSize: '48px',
             fill: '#ffffff',
@@ -115,18 +123,17 @@ export default class SoundSettings extends Phaser.Scene {
         }).setOrigin(0, 0.5);
 
         // Create SFX volume slider
-        const sfxVolume = this.registry.get('sfxVolume') ?? 1;
-        this.createVolumeSlider(canvasWidth * 0.6, canvasHeight * 0.55, sfxVolume, (value) => {
+        this.createVolumeSlider(centerX * 0.6, centerY * 0.55, sfxVolume, (value) => {
             // Ensure 0 is exactly 0 and value is finite
             value = Math.abs(value) < 0.01 ? 0 : value;
             if (Number.isFinite(value)) {
-                this.registry.set('sfxVolume', value);
+                this.registry.set('soundVolume', value);
             }
         });
 
         // Helper function to play confirmation sound
         const playConfirmSound = () => {
-            const sfxVolume = this.registry.get('sfxVolume') ?? 1;  // Use nullish coalescing
+            const sfxVolume = this.registry.get('soundVolume') ?? 1;  // Use nullish coalescing
             // Do not create or play any sound if volume is 0
             if (sfxVolume !== 0 && Number.isFinite(sfxVolume)) {
                 const confirmSound = this.sound.add('confirmSound');
@@ -139,7 +146,7 @@ export default class SoundSettings extends Phaser.Scene {
         };
 
         // Add Back button
-        const backButton = this.add.text(canvasWidth / 2, canvasHeight * 0.8, 'Back', {
+        const backButton = this.add.text(centerX, centerY * 0.8, 'Back', {
             fontFamily: 'Gameplay',
             fontSize: '48px',
             fill: '#ffffff',
