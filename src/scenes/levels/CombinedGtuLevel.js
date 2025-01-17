@@ -17,7 +17,7 @@ import { DestructibleBlock } from '../../prefabs/DestructibleBlock';
 import { FallingDestructibleBlock } from '../../prefabs/FallingDestructibleBlock';
 import { DisappearingPlatform } from '../../prefabs/DisappearingPlatform';
 import { Turret } from '../../prefabs/Turret';
-import { EnemyManager } from '../../modules/managers/EnemyManager';
+import { EnemyManager } from '../../modules/managers/entities/EnemyManager';
 import { EffectsManager } from '../../modules/managers/EffectsManager';
 import { Bullet } from '../../prefabs/Bullet';
 import { GameConfig } from '../../config/GameConfig';
