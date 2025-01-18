@@ -579,19 +579,19 @@ export class WayneWorld extends BaseScene {
         console.log(`Player section: ${playerSection}`);
         console.log(`Active range: ${minEntitySection} to ${maxEntitySection}`);
     
-        // Load new entities
-        for (let i = minEntitySection; i <= maxEntitySection; i++) {
-            if (!this.activeEntities.has(i)) {
-                console.log(`Loading entities for section ${i}`);
-                this.loadSectionEntities(i);
-            }
-        }
-    
-        // Unload far entities
+        // First unload far entities
         for (const [sectionIndex, entities] of this.activeEntities) {
             if (sectionIndex < minEntitySection || sectionIndex > maxEntitySection) {
                 console.log(`Unloading entities for section ${sectionIndex}`);
                 this.removeSectionEntities(sectionIndex);
+            }
+        }
+
+        // Then load new entities for sections in range
+        for (let i = minEntitySection; i <= maxEntitySection; i++) {
+            if (!this.activeEntities.has(i) && this.loadedSections.has(i)) {
+                console.log(`Loading entities for section ${i}`);
+                this.loadSectionEntities(i);
             }
         }
     }
@@ -604,62 +604,63 @@ export class WayneWorld extends BaseScene {
         const sectionStartX = sectionIndex * this.sectionWidth;
         const sectionEndX = sectionStartX + this.sectionWidth;
     
-        // Ensure tiles are loaded
-        const tilesInRangeLoaded = this.areTilesInRangeLoaded(sectionStartX, sectionEndX);
-        if (!tilesInRangeLoaded) {
-            console.log(`Tiles not ready for section ${sectionIndex}. Delaying entity load.`);
-            this.time.delayedCall(100, () => this.loadSectionEntities(sectionIndex));
+        // Ensure tiles are loaded first
+        if (!this.loadedSections.has(sectionIndex)) {
+            console.log(`Section ${sectionIndex} not loaded yet, skipping entity load`);
             return;
         }
     
-        // Proceed with entity loading
-        const levelIndex = Math.floor(sectionStartX / this.singleLevelWidth);
-        const currentLevel = this.currentLevelData.levels[levelIndex];
-        if (!currentLevel) return;
-    
-        const levelStartX = levelIndex * this.singleLevelWidth;
+        // Calculate which level this section is in
+        const startLevelIndex = Math.floor(sectionStartX / this.singleLevelWidth);
+        const endLevelIndex = Math.floor((sectionEndX - 1) / this.singleLevelWidth);
+        
+        console.log(`Loading entities for section ${sectionIndex} (levels ${startLevelIndex}-${endLevelIndex})`);
+        
         const sectionEntities = [];
-    
-        const entityLayer = currentLevel.layerInstances.find(layer =>
-            layer.__identifier === 'Entities'
-        );
-    
-        if (entityLayer) {
-            const sectionEntitiesData = entityLayer.entityInstances.filter(entity => {
-                const worldX = entity.px[0] + levelStartX;
-                return worldX >= sectionStartX && worldX < sectionEndX;
-            });
-    
-            sectionEntitiesData.forEach(entityData => {
-                const entity = this.ldtkEntityManager.createEntity(
-                    entityData.__identifier,
-                    entityData.px[0] + levelStartX,
-                    entityData.px[1],
-                    entityData.fieldInstances
-                );
-                if (entity) {
-                    sectionEntities.push(entity);
-                }
-            });
-        }
-    
-        this.activeEntities.set(sectionIndex, sectionEntities);
-    }
-
-    areTilesInRangeLoaded(startX, endX) {
-        const tileRangeStartX = Math.floor(startX / 32) - 3; // Approx. 100px = 3 tiles
-        const tileRangeEndX = Math.ceil(endX / 32) + 3;
-    
-        for (let x = tileRangeStartX; x <= tileRangeEndX; x++) {
-            for (let y = 0; y < this.groundLayer.layer.height; y++) {
-                const tile = this.groundLayer.getTileAt(x, y);
-                if (tile && tile.index === -1) {
-                    return false; // Tile is not loaded
-                }
+        
+        // Load entities from each level that overlaps this section
+        for (let levelIndex = startLevelIndex; levelIndex <= endLevelIndex; levelIndex++) {
+            const currentLevel = this.currentLevelData.levels[levelIndex];
+            if (!currentLevel) continue;
+            
+            const levelStartX = levelIndex * this.singleLevelWidth;
+            
+            // Get entity layer
+            const entityLayer = currentLevel.layerInstances.find(layer =>
+                layer.__identifier === 'Entities'
+            );
+            
+            if (entityLayer) {
+                // Filter entities that belong to this section
+                const sectionEntitiesData = entityLayer.entityInstances.filter(entity => {
+                    const worldX = entity.px[0] + levelStartX;
+                    return worldX >= sectionStartX && worldX < sectionEndX;
+                });
+                
+                // Create entities
+                sectionEntitiesData.forEach(entityData => {
+                    const entity = this.ldtkEntityManager.createEntityInstance(
+                        entityData,
+                        levelStartX,
+                        0
+                    );
+                    if (entity) {
+                        sectionEntities.push(entity);
+                    }
+                });
             }
         }
-    
-        return true; // All tiles in range are loaded
+        
+        if (sectionEntities.length > 0) {
+            // Store created entities
+            this.activeEntities.set(sectionIndex, sectionEntities);
+            
+            // Update stats
+            this.entityStats.totalLoaded += sectionEntities.length;
+            this.entityStats.activeBySection.set(sectionIndex, sectionEntities.length);
+            
+            console.log(`Loaded ${sectionEntities.length} entities in section ${sectionIndex}`);
+        }
     }
 
     /****************************
