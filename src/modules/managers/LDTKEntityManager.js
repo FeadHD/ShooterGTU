@@ -16,6 +16,13 @@ export class LDTKEntityManager {
         this.entityFactories = new Map(); // Store creation functions
         this.loadedEntityPositions = new Set(); // Keep track of loaded entity positions
         this.debug = false;               // Debug visualization
+        this.debugText = null;
+        
+        // Get reference to AssetManager
+        this.assetManager = scene.assetManager || {
+            getTextureKeyForEntity: () => ({ spritesheet: 'default_sprite', defaultAnim: null }),
+            getDefaultTexture: () => 'default_sprite'
+        };
     }
 
     /**
@@ -90,43 +97,104 @@ export class LDTKEntityManager {
      * @param {number} worldY - World position Y
      * @returns {Object} Created entity instance
      */
-    createEntityInstance(entityData, worldX, worldY) {
-        const factory = this.entityFactories.get(entityData.__identifier);
-        if (!factory) {
-            console.warn(`No factory registered for entity type: ${entityData.__identifier}`);
-            return null;
-        }
+    createEntityInstance(entityData, worldX = 0, worldY = 0) {
+        console.log(`Creating entity of type: ${entityData.__identifier} at (${entityData.px[0] + worldX}, ${entityData.px[1] + worldY})`);
+    
+        try {
+            // Get texture data from AssetManager
+            const textureData = this.assetManager.getTextureKeyForEntity(entityData.__identifier);
+            if (!textureData) {
+                throw new Error(`No texture data found for entity type: ${entityData.__identifier}`);
+            }
 
-        // Convert level to world coordinates
+            // Create entity sprite
+            const x = entityData.px[0] + worldX;
+            const y = entityData.px[1] + worldY;
+            
+            // Validate texture exists
+            const spritesheet = this.scene.textures.exists(textureData.spritesheet) 
+                ? textureData.spritesheet 
+                : 'default_sprite';
+                
+            const entity = this.scene.add.sprite(x, y, spritesheet);
+
+            // Add physics
+            this.scene.physics.add.existing(entity);
+            if (entity.body) {
+                entity.body.setCollideWorldBounds(true);
+                entity.body.setImmovable(true);
+            }
+
+            // Play default animation if available
+            if (textureData.defaultAnim && this.scene.anims.exists(textureData.defaultAnim)) {
+                entity.play(textureData.defaultAnim);
+            }
+
+            // Store entity metadata
+            entity.type = entityData.__identifier;
+            entity.animations = textureData.animations || [];
+            entity.properties = this.processEntityFields(entityData.fieldInstances || []);
+
+            // Add entity-specific behavior
+            this.setupEntityBehavior(entity);
+
+            console.log(`Successfully created ${entityData.__identifier} entity:`, entity);
+            return entity;
+
+        } catch (error) {
+            console.error(`Failed to create entity:`, error);
+            return this.createFallbackEntity(entityData, worldX, worldY);
+        }
+    }
+
+    createFallbackEntity(entityData, worldX, worldY) {
+        console.warn(`Creating fallback entity for ${entityData.__identifier}`);
         const x = entityData.px[0] + worldX;
         const y = entityData.px[1] + worldY;
 
-        // Extract entity properties
-        const fields = this.processEntityFields(entityData.fieldInstances);
-
-        // Instantiate entity
-        const entity = factory(this.scene, x, y, fields);
+        // Create basic sprite with default texture
+        const fallbackEntity = this.scene.add.sprite(x, y, 'default_sprite');
         
-        if (this.debug) {
-            console.log(`Created entity: ${entityData.__identifier} at (${x}, ${y})`, fields);
-            this.updateDebugText();
+        // Add basic physics
+        this.scene.physics.add.existing(fallbackEntity);
+        if (fallbackEntity.body) {
+            fallbackEntity.body.setCollideWorldBounds(true);
+            fallbackEntity.body.setImmovable(true);
         }
 
-        return entity;
+        // Store basic metadata
+        fallbackEntity.type = entityData.__identifier;
+        fallbackEntity.isFallback = true;
+
+        return fallbackEntity;
     }
 
-    /**
-     * Process entity custom fields
-     * Extracts properties defined in LDtk
-     * @param {Array} fieldInstances - LDtk field definitions
-     * @returns {Object} Processed field values
-     */
+    setupEntityBehavior(entity) {
+        switch (entity.type) {
+            case 'Zapper':
+                // Add Zapper-specific behavior
+                entity.attack = function() {
+                    if (this.animations.includes('zapper_attack')) {
+                        this.play('zapper_attack').once('animationcomplete', () => {
+                            this.play('zapper_idle');
+                        });
+                    }
+                };
+                break;
+            // Add more entity types as needed
+        }
+    }
+
     processEntityFields(fieldInstances) {
-        const fields = {};
-        fieldInstances.forEach(field => {
-            fields[field.__identifier] = field.__value;
-        });
-        return fields;
+        const properties = {};
+        if (Array.isArray(fieldInstances)) {
+            fieldInstances.forEach(field => {
+                if (field && field.__identifier) {
+                    properties[field.__identifier] = field.__value;
+                }
+            });
+        }
+        return properties;
     }
 
     /**

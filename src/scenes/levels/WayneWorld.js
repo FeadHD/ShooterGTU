@@ -547,26 +547,38 @@ export class WayneWorld extends BaseScene {
     
         console.log(`Removing ${entities.length} entities from section ${sectionIndex}`);
     
-        // Track unloaded entities in stats
-        this.entityStats.totalUnloaded += entities.length;
-        this.entityStats.activeBySection.delete(sectionIndex);
+        // Save entity data for reloading
+        const entityData = entities.map(entity => {
+            const type = entity.type || entity.ldtkData?.__identifier || 'Unknown'; // Ensure type is saved
+            console.log(`Saving entity of type "${type}" at (${entity.x}, ${entity.y})`);
+    
+            return {
+                type: type,
+                x: entity.x,
+                y: entity.y,
+                properties: entity.properties || {}, // Include additional properties
+            };
+        });
+    
+        console.log(`Saving entity data for section ${sectionIndex}:`, entityData);
+        this.sectionEntities.set(sectionIndex, entityData); // Store for reloading
     
         // Destroy each entity
-        let destroyedCount = 0;
         entities.forEach(entity => {
             if (entity && entity.destroy) {
+                console.log(`Destroying entity:`, entity);
                 entity.destroy();
-                destroyedCount++;
-            } else {
-                console.warn(`Entity could not be destroyed:`, entity);
             }
         });
     
-        console.log(`Successfully destroyed ${destroyedCount}/${entities.length} entities in section ${sectionIndex}`);
-    
         // Clear from tracking
         this.activeEntities.delete(sectionIndex);
+    
+        console.log(`Entities removed and saved for section ${sectionIndex}`);
     }
+    
+    
+    
 
     /****************************
      * ENTITY MANAGEMENT
@@ -578,6 +590,7 @@ export class WayneWorld extends BaseScene {
     
         console.log(`Player section: ${playerSection}`);
         console.log(`Active range: ${minEntitySection} to ${maxEntitySection}`);
+        console.log(`Loaded sections: ${Array.from(this.loadedSections)}`);
     
         // First unload far entities
         for (const [sectionIndex, entities] of this.activeEntities) {
@@ -586,82 +599,77 @@ export class WayneWorld extends BaseScene {
                 this.removeSectionEntities(sectionIndex);
             }
         }
-
+    
         // Then load new entities for sections in range
         for (let i = minEntitySection; i <= maxEntitySection; i++) {
+            console.log(`Trying to load section ${i}`);
             if (!this.activeEntities.has(i) && this.loadedSections.has(i)) {
                 console.log(`Loading entities for section ${i}`);
                 this.loadSectionEntities(i);
             }
         }
     }
+    
 
     loadSectionEntities(sectionIndex) {
         if (this.activeEntities.has(sectionIndex)) {
-            return; // Already loaded
-        }
-    
-        const sectionStartX = sectionIndex * this.sectionWidth;
-        const sectionEndX = sectionStartX + this.sectionWidth;
-    
-        // Ensure tiles are loaded first
-        if (!this.loadedSections.has(sectionIndex)) {
-            console.log(`Section ${sectionIndex} not loaded yet, skipping entity load`);
+            console.log(`Entities for section ${sectionIndex} are already loaded.`);
             return;
         }
     
-        // Calculate which level this section is in
-        const startLevelIndex = Math.floor(sectionStartX / this.singleLevelWidth);
-        const endLevelIndex = Math.floor((sectionEndX - 1) / this.singleLevelWidth);
-        
-        console.log(`Loading entities for section ${sectionIndex} (levels ${startLevelIndex}-${endLevelIndex})`);
-        
+        console.log(`Loading entities for section ${sectionIndex}`);
         const sectionEntities = [];
-        
-        // Load entities from each level that overlaps this section
-        for (let levelIndex = startLevelIndex; levelIndex <= endLevelIndex; levelIndex++) {
-            const currentLevel = this.currentLevelData.levels[levelIndex];
-            if (!currentLevel) continue;
-            
-            const levelStartX = levelIndex * this.singleLevelWidth;
-            
-            // Get entity layer
-            const entityLayer = currentLevel.layerInstances.find(layer =>
-                layer.__identifier === 'Entities'
-            );
-            
-            if (entityLayer) {
-                // Filter entities that belong to this section
-                const sectionEntitiesData = entityLayer.entityInstances.filter(entity => {
-                    const worldX = entity.px[0] + levelStartX;
-                    return worldX >= sectionStartX && worldX < sectionEndX;
-                });
-                
-                // Create entities
-                sectionEntitiesData.forEach(entityData => {
+    
+        // Check if there is saved entity data
+        if (this.sectionEntities.has(sectionIndex)) {
+            const savedEntities = this.sectionEntities.get(sectionIndex);
+            console.log(`Found saved entities for section ${sectionIndex}:`, savedEntities);
+    
+            savedEntities.forEach(data => {
+                try {
+                    console.log(`Recreating entity from saved data:`, data);
+    
                     const entity = this.ldtkEntityManager.createEntityInstance(
-                        entityData,
-                        levelStartX,
+                        { __identifier: data.type, px: [data.x, data.y], fieldInstances: data.properties },
+                        0,
                         0
                     );
+    
                     if (entity) {
+                        // Restore additional properties
+                        if (data.properties) {
+                            Object.assign(entity, data.properties);
+                        }
                         sectionEntities.push(entity);
+                        console.log(`Reloaded entity:`, entity);
                     }
-                });
-            }
+                } catch (error) {
+                    console.error(`Failed to reload entity:`, error, data);
+    
+                    // Fallback: Create a placeholder entity
+                    const fallbackEntity = this.scene.add.sprite(data.x, data.y, 'defaultTexture');
+                    this.scene.physics.add.existing(fallbackEntity);
+                    if (fallbackEntity.body) {
+                        fallbackEntity.body.setCollideWorldBounds(true);
+                    }
+                    sectionEntities.push(fallbackEntity);
+                    console.warn(`Fallback entity created for section ${sectionIndex}.`);
+                }
+            });
+    
+            this.sectionEntities.delete(sectionIndex); // Remove saved data after reloading
+        } else {
+            console.warn(`No saved entities found for section ${sectionIndex}`);
         }
-        
+    
         if (sectionEntities.length > 0) {
-            // Store created entities
             this.activeEntities.set(sectionIndex, sectionEntities);
-            
-            // Update stats
-            this.entityStats.totalLoaded += sectionEntities.length;
-            this.entityStats.activeBySection.set(sectionIndex, sectionEntities.length);
-            
             console.log(`Loaded ${sectionEntities.length} entities in section ${sectionIndex}`);
+        } else {
+            console.log(`No entities found to load for section ${sectionIndex}`);
         }
     }
+    
 
     /****************************
      * PLAYER MANAGEMENT
@@ -809,23 +817,35 @@ export class WayneWorld extends BaseScene {
     
     setupCollisions() {
         const bulletManager = ManagerFactory.getBulletManager(this);
-
+    
         // Access the bullet group
         const bullets = bulletManager.getGroup();
-
+    
         // Collisions with enemies
         this.physics.add.overlap(bullets, this.enemies, (bullet, enemy) => {
             bullet.destroy();
             if (typeof enemy.takeDamage === 'function') {
                 enemy.takeDamage(10);
+            } else {
+                console.warn(`Enemy does not have a takeDamage method:`, enemy);
             }
         });
-
+    
         // Collisions with platforms
-        this.physics.add.collider(bullets, this.platforms, (bullet) => {
+        this.physics.add.collider(bullets, this.platformLayer, (bullet) => {
             bullet.destroy();
         });
+    
+        // Ensure entities (enemies/zappers) are properly initialized and handled
+        this.enemies.children.each(enemy => {
+            if (!enemy.body) {
+                console.warn(`Enemy is missing a physics body:`, enemy);
+            } else {
+                this.physics.add.collider(enemy, this.platformLayer);
+            }
+        });
     }
+    
 
 
     /****************************

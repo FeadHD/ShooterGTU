@@ -30,6 +30,7 @@ export class AssetManager {
      * Called during scene preload phase
      */
     loadAssets() {
+        this.loadDefaultSprite();
         this.loadTilesets();        // Level tiles
         this.loadLevelData();       // Level layout
         this.loadCharacterSprites();// Player animations
@@ -40,6 +41,10 @@ export class AssetManager {
         this.loadAudio();          // Sound effects
         this.loadZapperAssets();   // Special enemy
         this.setupErrorHandling(); // Error tracking
+    }
+
+    loadDefaultSprite() {
+        this.scene.load.image('default_sprite', 'assets/sprites/default.png');
     }
 
     /**
@@ -166,41 +171,73 @@ export class AssetManager {
      * Special enemy with electrical attacks
      */
     loadZapperAssets() {
-        const zapperAnimations = [
-            { key: 'idle', frames: 3, frameRate: 8, repeat: -1 },      // Patrol
-            { key: 'wake', frames: 5, frameRate: 10, repeat: 0 },      // Activation
-            { key: 'walk', frames: 7, frameRate: 12, repeat: -1 },     // Chase
-            { key: 'shock', frames: 5, frameRate: 15, repeat: 0, frameWidth: 64 }, // Attack
-            { key: 'attack', frames: 5, frameRate: 12, repeat: 0 },    // Strike
-            { key: 'hit', frames: 3, frameRate: 15, repeat: 0 },       // Damage
-            { key: 'death', frames: 5, frameRate: 10, repeat: 0 }      // Defeat
-        ];
-
-        // Load and create animations
-        zapperAnimations.forEach(anim => {
-            const spriteKey = `zapper_${anim.key}`;
-            this.scene.load.spritesheet(spriteKey, `assets/zapper/zapper_${anim.key}.png`, {
-                frameWidth: anim.frameWidth || 32,
-                frameHeight: 32
-            });
-
-            // Create animation when sprite loads
-            this.scene.load.on(`filecomplete-spritesheet-${spriteKey}`, () => {
-                console.log(`${spriteKey} loaded successfully`);
-                this.scene.anims.create({
-                    key: spriteKey,
-                    frames: this.scene.anims.generateFrameNumbers(spriteKey, {
-                        start: 0,
-                        end: anim.frames
-                    }),
-                    frameRate: anim.frameRate,
-                    repeat: anim.repeat
-                });
-            });
+        // Load zapper sprite sheet for animations
+        this.scene.load.spritesheet('zapper_sheet', 'assets/hazards/zapper.png', {
+            frameWidth: 32,
+            frameHeight: 32
         });
 
-        // Base sprite for static display
-        this.scene.load.image('zapper', 'assets/hazards/zapper.png');
+        // Create animations once assets are loaded
+        this.scene.load.once('complete', () => {
+            this.createZapperAnimations();
+        });
+    }
+
+    createZapperAnimations() {
+        // Idle animation
+        this.scene.anims.create({
+            key: 'zapper_idle',
+            frames: this.scene.anims.generateFrameNumbers('zapper_sheet', { start: 0, end: 3 }),
+            frameRate: 10,
+            repeat: -1
+        });
+
+        // Attack animation if needed
+        this.scene.anims.create({
+            key: 'zapper_attack',
+            frames: this.scene.anims.generateFrameNumbers('zapper_sheet', { start: 4, end: 7 }),
+            frameRate: 15,
+            repeat: 0
+        });
+    }
+
+    getTextureKeyForEntity(entityType) {
+        // Map of entity types to their texture/animation keys
+        const textureMap = {
+            'Zapper': {
+                spritesheet: 'zapper_sheet',
+                defaultAnim: 'zapper_idle',
+                animations: ['zapper_idle', 'zapper_attack']
+            },
+            'Player': {
+                spritesheet: 'character_sheet',
+                defaultAnim: 'character_idle'
+            },
+            // Add more entity mappings as needed
+        };
+
+        const entityData = textureMap[entityType];
+        if (!entityData) {
+            console.warn(`No texture mapping found for entity type: ${entityType}`);
+            return {
+                spritesheet: 'default_sprite',
+                defaultAnim: 'default_idle'
+            };
+        }
+
+        return entityData;
+    }
+
+    validateTexture(textureKey) {
+        if (!this.scene.textures.exists(textureKey)) {
+            console.warn(`Texture ${textureKey} not found, using default`);
+            return false;
+        }
+        return true;
+    }
+
+    getDefaultTexture() {
+        return 'default_sprite';
     }
 
     /**
