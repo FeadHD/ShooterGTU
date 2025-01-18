@@ -632,21 +632,11 @@ export class WayneWorld extends BaseScene {
                     // Special handling for Zapper
                     if (data.type === 'Zapper') {
                         console.log('Creating Zapper entity...');
-                        const entity = this.scene.add.sprite(data.x, data.y, 'zapper_sheet');
-    
-                        // Add physics
-                        this.scene.physics.add.existing(entity);
-                        if (entity.body) {
-                            entity.body.setCollideWorldBounds(true);
-                            entity.body.setImmovable(true);
-                        }
-    
-                        // Play default Zapper animation
-                        if (this.scene.anims.exists('zapper_idle')) {
-                            entity.anims.play('zapper_idle');
-                        }
-    
-                        entity.type = 'Zapper';
+                        
+                        // Create Zapper with the correct spritesheet
+                        const entity = new Zapper(this, data.x, data.y);
+                        
+                        // Add to section entities
                         sectionEntities.push(entity);
                         console.log('Zapper entity created:', entity);
                         return;
@@ -693,6 +683,7 @@ export class WayneWorld extends BaseScene {
             console.log(`No entities found to load for section ${sectionIndex}`);
         }
     }
+    
     
     
 

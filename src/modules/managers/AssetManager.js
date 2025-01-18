@@ -44,7 +44,7 @@ export class AssetManager {
     }
 
     loadDefaultSprite() {
-        this.scene.load.image('default_sprite', 'assets/sprites/default.png');
+        this.scene.load.image('default_sprite', 'assets/default.png');
     }
 
     /**
@@ -172,7 +172,13 @@ export class AssetManager {
      */
     loadZapperAssets() {
         // Load zapper sprite sheet for animations
-        this.scene.load.spritesheet('zapper_sheet', 'assets/hazards/zapper.png', {
+        this.scene.load.spritesheet('zapper_sheet', 'assets/zapper/zapper_idle.png', {
+            frameWidth: 32,
+            frameHeight: 32
+        });
+
+        // Load attack animation spritesheet
+        this.scene.load.spritesheet('zapper_attack_sheet', 'assets/zapper/zapper_attack.png', {
             frameWidth: 32,
             frameHeight: 32
         });
@@ -185,20 +191,28 @@ export class AssetManager {
 
     createZapperAnimations() {
         // Idle animation
-        this.scene.anims.create({
-            key: 'zapper_idle',
-            frames: this.scene.anims.generateFrameNumbers('zapper_sheet', { start: 0, end: 3 }),
-            frameRate: 10,
-            repeat: -1
-        });
+        if (this.scene.textures.exists('zapper_sheet')) {
+            this.scene.anims.create({
+                key: 'zapper_idle',
+                frames: this.scene.anims.generateFrameNumbers('zapper_sheet', { start: 0, end: 3 }),
+                frameRate: 10,
+                repeat: -1
+            });
+        } else {
+            console.error('Zapper idle spritesheet not found!');
+        }
 
-        // Attack animation if needed
-        this.scene.anims.create({
-            key: 'zapper_attack',
-            frames: this.scene.anims.generateFrameNumbers('zapper_sheet', { start: 4, end: 7 }),
-            frameRate: 15,
-            repeat: 0
-        });
+        // Attack animation
+        if (this.scene.textures.exists('zapper_attack_sheet')) {
+            this.scene.anims.create({
+                key: 'zapper_attack',
+                frames: this.scene.anims.generateFrameNumbers('zapper_attack_sheet', { start: 0, end: 3 }),
+                frameRate: 15,
+                repeat: 0
+            });
+        } else {
+            console.error('Zapper attack spritesheet not found!');
+        }
     }
 
     getTextureKeyForEntity(entityType) {
