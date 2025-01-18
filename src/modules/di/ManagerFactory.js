@@ -34,26 +34,38 @@ import { CameraManager } from '../../modules/managers/CameraManager';
 
 export class ManagerFactory {
     static createManagers(scene) {
-        // Register core dependencies
+        // 1. Register core dependencies
         container.register('scene', scene);
         container.register('eventBus', eventBus);
-        
-        // Create and register asset manager
+
+        // 2. Create and register asset manager
         const assets = new AssetManager(scene);
         container.register('assets', assets);
-        
-        // Create and register state managers
+
+        // 3. Create and register state managers
         const gameState = new GameStateManager(scene);
         const persistence = new PersistenceManager(gameState);
-        
-        // Create and register audio manager
-        const audio = new AudioManager(scene);
-        
-        // Create and register entity managers
+
+        // ---------------------------------------------------------------------
+        // AUDIO MANAGER: Use an if-else to avoid creating it multiple times
+        // ---------------------------------------------------------------------
+        let audio;
+        if (container.services.has('audio')) {
+            // If AudioManager already exists, just retrieve it
+            audio = container.get('audio');
+            // If you need to switch its internal "scene" reference each time:
+            // audio.setScene(scene);
+        } else {
+            // No AudioManager yet? Create one, then register it
+            audio = new AudioManager(scene);
+            container.register('audio', audio);
+        }
+
+        // 4. Create entity managers
         const entityManager = new EntityManager(scene);
         const ldtkEntityManager = new LDTKEntityManager(scene);
-        
-        // Register entity factories with LDTKEntityManager
+
+        // 5. Register entity factories with LDTKEntityManager
         ldtkEntityManager.registerEntityFactories({
             Enemy: (scene, x, y, fields) => new Enemy(scene, x, y),
             Bitcoin: (scene, x, y, fields) => new Bitcoin(scene, x, y),
@@ -67,21 +79,20 @@ export class ManagerFactory {
             Turret: (scene, x, y, fields) => new Turret(scene, x, y),
             MeleeWarrior: (scene, x, y, fields) => new MeleeWarrior(scene, x, y),
             Zapper: (scene, x, y, fields) => new Zapper(scene, x, y),
-            PlayerStart: (scene, x, y, fields) => ({ x, y, type: 'PlayerStart' }) // Just store position
+            PlayerStart: (scene, x, y, fields) => ({ x, y, type: 'PlayerStart' })
         });
 
+        // 6. Other gameplay managers
         const enemies = new EnemyManager(scene);
         const hazards = new HazardManager(scene);
-        
-        // Create and register other managers
         const animations = new AnimationManager(scene);
         const effects = new EffectsManager(scene);
         const boundaries = new SceneBoundaryManager(scene);
         const debug = new DebugSystem(scene);
         const collision = new CollisionManager(scene);
         const ui = new UIManager(scene);
-        
-        // Get or create event manager
+
+        // 7. Event Manager
         let events = scene.game.globalEventManager;
         if (!events) {
             console.warn('Global EventManager not found, creating new instance');
@@ -89,10 +100,10 @@ export class ManagerFactory {
             scene.game.globalEventManager = events;
         }
 
-        // Register all managers
+        // 8. Register everything in container
         container.register('gameState', gameState);
         container.register('persistence', persistence);
-        container.register('audio', audio);
+        // (We already registered 'audio' in the if-else)
         container.register('entityManager', entityManager);
         container.register('ldtkEntityManager', ldtkEntityManager);
         container.register('enemies', enemies);
@@ -105,15 +116,16 @@ export class ManagerFactory {
         container.register('ui', ui);
         container.register('events', events);
 
-        // Initialize managers that need it
+        // 9. Initialize managers that need it
         events.initialize();
         assets.initialize();
-        
+
+        // 10. Return references
         return {
             assets,
             gameState,
             persistence,
-            audio,
+            audio, // Single shared AudioManager
             entityManager,
             ldtkEntityManager,
             enemies,
@@ -141,12 +153,11 @@ export class ManagerFactory {
         }
         return this.eventManager;
     }
-        
+
     static bulletManager = null;
-    
     static getBulletManager(scene) {
         if (!this.bulletManager) {
-            this.bulletManager = new BulletManager(scene); // Pass scene here
+            this.bulletManager = new BulletManager(scene);
         }
         return this.bulletManager;
     }
@@ -159,7 +170,6 @@ export class ManagerFactory {
     }
 
     static cameraManager = null;
-
     static getCameraManager(scene) {
         if (!this.cameraManager) {
             this.cameraManager = new CameraManager(scene);
@@ -168,7 +178,6 @@ export class ManagerFactory {
     }
 
     static ldtkEntityManager = null;
-
     static getLDTKEntityManager(scene) {
         if (!this.ldtkEntityManager) {
             this.ldtkEntityManager = new LDTKEntityManager(scene);
@@ -177,7 +186,6 @@ export class ManagerFactory {
     }
 
     static ldtkTileManager = null;
-
     static getLDTKTileManager(scene) {
         if (!this.ldtkTileManager) {
             this.ldtkTileManager = new LDTKTileManager(scene);
@@ -186,12 +194,10 @@ export class ManagerFactory {
     }
 
     static uiManager = null;
-
     static getUIManager(scene) {
         if (!this.uiManager) {
             this.uiManager = new UIManager(scene);
         }
         return this.uiManager;
     }
-
 }

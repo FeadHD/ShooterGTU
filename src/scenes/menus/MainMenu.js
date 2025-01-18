@@ -26,7 +26,7 @@
 
 import { Scene } from 'phaser';
 import { TextStyleManager } from '../../modules/managers/TextStyleManager';
-import AudioManager from '../../modules/managers/AudioManager';
+import { ManagerFactory } from '../../modules/di/ManagerFactory';
 
 export class MainMenu extends Scene {
     /**
@@ -99,8 +99,16 @@ export class MainMenu extends Scene {
 
     async createScene() {
         // Initialize manager systems through dependency injection
-        this.audioManager = new AudioManager(this);
+        const managers = ManagerFactory.createManagers(this);
+        this.audioManager = managers.audio;
+        this.uiManager = managers.ui;
 
+        // Destroy the HUD container
+        if (this.uiManager && this.uiManager.container) {
+            this.uiManager.container.destroy();
+            this.uiManager.container = null;
+    }
+        
         // Reset all game state to initial values
         this.registry.set('lives', 3);
         this.registry.set('playerHP', 100);

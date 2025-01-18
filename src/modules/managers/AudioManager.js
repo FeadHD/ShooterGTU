@@ -10,25 +10,29 @@ export default class AudioManager extends BaseManager {
 
         // For SFX (sound effects)
         this.sounds = new Map(); // storing multiple SFX keyed by string
-        this.soundVolume = scene.registry.get('soundVolume') || 1;
+        this.soundVolume = scene.registry.get('soundVolume') ?? 1;
         this.isMuted = false;
 
         // For Music (merging logic from both old MusicManagers)
         // We keep a single "currentMusic" reference if we only play 1 track at a time.
         this.currentMusic = null;
-        this.musicVolume = scene.registry.get('musicVolume') || 1;
+        this.musicVolume = scene.registry.get('musicVolume') ?? 1;
 
         // Listen for volume changes for SFX
         scene.registry.events.on('changedata-soundVolume', (_, newValue) => {
-            this.soundVolume = newValue;
-            this._updateAllSoundVolumes();
+            if (this.soundVolume !== newValue) {
+                this.soundVolume = newValue;
+                this._updateAllSoundVolumes();
+            }
         });
 
         // Listen for volume changes for music
         scene.registry.events.on('changedata-musicVolume', (_, newValue) => {
-            this.musicVolume = newValue;
-            if (this.currentMusic) {
-                this.currentMusic.setVolume(newValue);
+            if (this.musicVolume !== newValue) {
+                this.musicVolume = newValue;
+                if (this.currentMusic) {
+                    this.currentMusic.setVolume(newValue);
+                }
             }
         });
     }
@@ -77,15 +81,6 @@ export default class AudioManager extends BaseManager {
         });
     }
 
-    setVolume(value) {
-        this.soundVolume = value;
-        this._updateAllSoundVolumes();
-    }
-
-    getVolume() {
-        return this.soundVolume;
-    }
-
     mute() {
         this.isMuted = true;
 
@@ -124,6 +119,26 @@ export default class AudioManager extends BaseManager {
         });
     }
 
+    setSoundVolume(value) {
+        if (this.soundVolume === value) return;
+        this.soundVolume = value;
+        this.scene.registry.set('soundVolume', value);
+    }
+
+    getSoundVolume() {
+        return this.soundVolume;
+    }
+
+    setMusicVolume(value) {
+        if (this.musicVolume === value) return;
+        this.musicVolume = value;
+        this.scene.registry.set('musicVolume', value);
+    }
+
+    getMusicVolume() {
+        return this.musicVolume;
+    }
+
     /** ----------------------------------------------------------------
      *  MUSIC METHODS (merged from "Other MusicManager.js")
      * ----------------------------------------------------------------*/
@@ -137,25 +152,28 @@ export default class AudioManager extends BaseManager {
      *  - Then we play it immediately.
      */
     playMusic(key, config = {}) {
-        // 1) Stop current music if it exists
-        if (this.currentMusic) {
-            this.currentMusic.stop();
-            this.currentMusic = null;
+        // If we already have this music playing, just ensure volume is correct
+        if (this.currentMusic?.key === key && this.currentMusic.isPlaying) {
+            this.currentMusic.setVolume(this.musicVolume);
+            return;
         }
 
-        // 2) Create new music object
+        // Stop current music if it exists
+        this.stopMusic();
+
+        // Create new music object
         this.currentMusic = this.scene.sound.add(key, {
             loop: true, // Typically background music loops
             volume: this.musicVolume,
             ...config
         });
 
-        // 3) If globally muted, skip playing it, or handle logic
+        // If globally muted, skip playing it
         if (this.isMuted) {
-            return; // or you could store it for playing once unmuted
+            return;
         }
 
-        // 4) Play it
+        // Play it
         this.currentMusic.play();
     }
 
@@ -166,42 +184,16 @@ export default class AudioManager extends BaseManager {
     stopMusic() {
         if (this.currentMusic) {
             this.currentMusic.stop();
+            this.currentMusic.destroy();  // Properly cleanup the sound
             this.currentMusic = null;
         }
     }
 
     /**
      * playBackgroundMusic(trackKey)
-     * Another convenience from "Other MusicManager".
-     * If there's already currentMusic playing, do nothing.
-     * Otherwise, create new music with loop = true.
+     * Alias for playMusic with default loop=true
      */
     playBackgroundMusic(trackKey) {
-        // If we already have music playing, skip
-        if (this.currentMusic && this.currentMusic.isPlaying) {
-            return;
-        }
-
-        // Create new track
-        this.currentMusic = this.scene.sound.add(trackKey, {
-            loop: true,
-            volume: this.musicVolume
-        });
-        this.currentMusic.play();
-    }
-
-    /**
-     * setMusicVolume(volume)
-     * Adjust music volume only
-     */
-    setMusicVolume(volume) {
-        this.musicVolume = volume;
-        if (this.currentMusic) {
-            this.currentMusic.setVolume(volume);
-        }
-    }
-
-    getMusicVolume() {
-        return this.musicVolume;
+        this.playMusic(trackKey, { loop: true });
     }
 }

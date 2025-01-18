@@ -27,9 +27,9 @@ export default class SoundSettings extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('settingsBackground', 'assets/settings/settings.png');
-        this.load.font('Gameplay', 'assets/fonts/retronoid/Gameplay.ttf');
-        this.load.audio('confirmSound', 'assets/sounds/confirmation.mp3');
+        this.load.image('settingsBackground', 'public/assets/settings/settings.png');
+        this.load.font('Gameplay', 'public/assets/fonts/retronoid/Gameplay.ttf');
+        this.load.audio('confirmSound', 'public/assets/sounds/confirmation.mp3');
     }
 
     create() {
@@ -37,8 +37,8 @@ export default class SoundSettings extends Phaser.Scene {
         const centerX = width / 2;
         const centerY = height / 2;
 
-        // Get audio manager instance
-        this.audioManager = this.managers.audio;
+        // Initialize audio manager instance
+        this.audioManager = new AudioManager(this);
 
         // Load current volume settings
         const musicVolume = this.registry.get('musicVolume') ?? 1;
@@ -53,7 +53,7 @@ export default class SoundSettings extends Phaser.Scene {
         bg.setDisplaySize(width, height);
 
         // Add title
-        this.add.text(centerX, centerY * 0.2, 'SOUND SETTINGS', {
+        this.add.text(centerX, height * 0.15, 'SOUND SETTINGS', {
             fontFamily: 'Gameplay',
             fontSize: '64px',
             fill: '#ffffff',
@@ -62,8 +62,16 @@ export default class SoundSettings extends Phaser.Scene {
             fontWeight: 'bold'
         }).setOrigin(0.5);
 
+        // Calculate positions for better layout
+        const startY = height * 0.35;  // Start lower down
+        const spacing = height * 0.15;  // More vertical space between elements
+        
+        // Move text more to the left, and sliders more to the right
+        const textX = width * 0.15;     // Text starts at 15% of screen width (moved left)
+        const sliderX = width * 0.40;   // Slider starts at 40% of screen width
+
         // Music Section
-        this.add.text(centerX * 0.3, centerY * 0.4, 'MUSIC', {
+        const musicText = this.add.text(textX, startY, 'MUSIC', {
             fontFamily: 'Gameplay',
             fontSize: '48px',
             fill: '#ffffff',
@@ -73,47 +81,16 @@ export default class SoundSettings extends Phaser.Scene {
         }).setOrigin(0, 0.5);
 
         // Create music volume controls
-        this.createVolumeSlider(centerX * 0.6, centerY * 0.4, musicVolume, (value) => {
-            // Ensure value is finite and handle 0 properly
+        this.createVolumeSlider(sliderX, startY, musicVolume, (value) => {
             value = Math.abs(value) < 0.01 ? 0 : value;
             if (Number.isFinite(value)) {
-                this.registry.set('musicVolume', value);
-                
-                // Update all music tracks in the game
-                const allSounds = this.sound.getAll();
-                allSounds.forEach(sound => {
-                    if (sound.key && (
-                        sound.key.toLowerCase().includes('music') || 
-                        sound.key.toLowerCase().includes('bgm') ||
-                        sound.key.toLowerCase() === 'bgmusic'
-                    )) {
-                        if (value === 0) {
-                            sound.setMute(true);
-                        } else {
-                            sound.setMute(false);
-                            sound.setVolume(value);
-                        }
-                    }
-                });
-
-                // Also update any music in other active scenes
-                const gameScenes = ['GameScene1', 'GameScene2', 'GameScene3', 'GameScene4', 'GameScene5'];
-                gameScenes.forEach(sceneName => {
-                    const scene = this.scene.get(sceneName);
-                    if (scene && scene.bgMusic) {
-                        if (value === 0) {
-                            scene.bgMusic.setMute(true);
-                        } else {
-                            scene.bgMusic.setMute(false);
-                            scene.bgMusic.setVolume(value);
-                        }
-                    }
-                });
+                // Update music volume through AudioManager
+                this.audioManager.setMusicVolume(value);
             }
         });
 
         // Sound Effects Section
-        this.add.text(centerX * 0.3, centerY * 0.55, 'SOUND EFFECTS', {
+        const sfxText = this.add.text(textX, startY + spacing, 'SOUND EFFECTS', {
             fontFamily: 'Gameplay',
             fontSize: '48px',
             fill: '#ffffff',
@@ -123,11 +100,11 @@ export default class SoundSettings extends Phaser.Scene {
         }).setOrigin(0, 0.5);
 
         // Create SFX volume slider
-        this.createVolumeSlider(centerX * 0.6, centerY * 0.55, sfxVolume, (value) => {
-            // Ensure 0 is exactly 0 and value is finite
+        this.createVolumeSlider(sliderX, startY + spacing, sfxVolume, (value) => {
             value = Math.abs(value) < 0.01 ? 0 : value;
             if (Number.isFinite(value)) {
-                this.registry.set('soundVolume', value);
+                // Update sound effects volume through AudioManager
+                this.audioManager.setSoundVolume(value);
             }
         });
 
@@ -145,8 +122,8 @@ export default class SoundSettings extends Phaser.Scene {
             }
         };
 
-        // Add Back button
-        const backButton = this.add.text(centerX, centerY * 0.8, 'Back', {
+        // Add Back button at the bottom
+        const backButton = this.add.text(centerX, height * 0.8, 'BACK', {
             fontFamily: 'Gameplay',
             fontSize: '48px',
             fill: '#ffffff',
@@ -184,73 +161,83 @@ export default class SoundSettings extends Phaser.Scene {
     }
 
     createVolumeSlider(x, y, initialValue, onChange) {
-        const width = 300;
-        const height = 10;
-        const padding = 10;
+        const width = 400;  // Increased width
+        const height = 15;  // Increased height
+        const padding = 15; // Increased padding
 
-        // Create slider background
-        const sliderBg = this.add.rectangle(x, y, width, height, 0x000000);
+        // Create slider background with rounded corners
+        const sliderBg = this.add.rectangle(x, y, width, height, 0x333333);
         sliderBg.setOrigin(0, 0.5);
-        sliderBg.setStrokeStyle(2, 0xffffff);
+        sliderBg.setStrokeStyle(2, 0x666666);
 
-        // Create slider fill
-        const sliderFill = this.add.rectangle(x, y, width * initialValue, height, 0x00ff00);
+        // Create slider fill with orange color
+        const sliderFill = this.add.rectangle(x, y, width * initialValue, height, 0xFF8C00);
         sliderFill.setOrigin(0, 0.5);
 
-        // Create slider handle
-        const handle = this.add.circle(x + (width * initialValue), y, height * 1.5, 0xffffff);
-        handle.setStrokeStyle(2, 0x000000);
-
-        // Create interactive area (slightly larger than visible slider)
-        const hitArea = this.add.rectangle(x, y, width, height * 4, 0xffffff, 0);
-        hitArea.setOrigin(0, 0.5);
-        hitArea.setInteractive({ useHandCursor: true });
+        // Create slider handle with a metallic look
+        const handle = this.add.circle(x + (width * initialValue), y, height * 1.2, 0xffffff);
+        handle.setStrokeStyle(2, 0x999999);
 
         // Add percentage text
-        const percentText = this.add.text(x + width + padding * 2, y, Math.round(initialValue * 100), {
+        const percentText = this.add.text(x + width + padding * 2, y, Math.round(initialValue * 100) + '%', {
             fontFamily: 'Gameplay',
             fontSize: '32px',
-            fill: '#ffffff',
-            stroke: '#000000',
-            strokeThickness: 4
+            fill: '#ffffff'
         }).setOrigin(0, 0.5);
 
-        // Handle drag events
+        // Make handle interactive
+        handle.setInteractive({ draggable: true });
+
+        // Track if we're currently dragging
         let isDragging = false;
-        
-        hitArea.on('pointerdown', (pointer) => {
+
+        handle.on('dragstart', () => {
             isDragging = true;
-            updateSlider(pointer);
         });
 
-        this.input.on('pointermove', (pointer) => {
-            if (isDragging) {
-                updateSlider(pointer);
-            }
+        handle.on('drag', (pointer, dragX) => {
+            if (!isDragging) return;
+
+            // Clamp dragX to slider bounds
+            dragX = Phaser.Math.Clamp(dragX, x, x + width);
+            
+            // Update handle position
+            handle.x = dragX;
+            
+            // Calculate new value
+            const value = (dragX - x) / width;
+            
+            // Update fill width
+            sliderFill.width = (dragX - x);
+            
+            // Update percentage text
+            percentText.setText(Math.round(value * 100) + '%');
+            
+            // Call onChange with new value
+            onChange(value);
         });
 
-        this.input.on('pointerup', () => {
+        handle.on('dragend', () => {
             isDragging = false;
         });
 
-        const updateSlider = (pointer) => {
-            const localX = pointer.x - x;
-            let value = Phaser.Math.Clamp(localX / width, 0, 1);
+        // Make background interactive for clicking
+        sliderBg.setInteractive();
+        sliderBg.on('pointerdown', (pointer) => {
+            const value = (pointer.x - x) / width;
+            const clampedValue = Phaser.Math.Clamp(value, 0, 1);
             
-            // Update visuals
-            sliderFill.width = width * value;
-            handle.x = x + (width * value);
-            percentText.setText(Math.round(value * 100));
+            // Update handle position
+            handle.x = x + (width * clampedValue);
             
-            // Call callback with exact value (can be 0)
-            onChange(value);
-
-            // Update handle color based on value
-            if (value === 0) {
-                handle.setFillStyle(0xff0000); // Red when muted
-            } else {
-                handle.setFillStyle(0xffffff); // White when not muted
-            }
-        };
+            // Update fill width
+            sliderFill.width = width * clampedValue;
+            
+            // Update percentage text
+            percentText.setText(Math.round(clampedValue * 100) + '%');
+            
+            // Call onChange with new value
+            onChange(clampedValue);
+        });
     }
 }

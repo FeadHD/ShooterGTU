@@ -1,175 +1,154 @@
-# ShooterGTU - AI-Optimized Documentation
+# ShooterGTU - Good Time Universe
 
-## Project Context
+## Overview
 
-This is a 2D action platformer game built with Phaser 3.87.0. The project implements a component-based architecture with clear separation of concerns.
+ShooterGTU is a dynamic 2D action platformer built with Phaser 3.87.0. Set in a cyberpunk universe, players navigate through challenging levels while battling enemies and collecting rewards.
 
-## Project Vision
+## Features
 
-Our goal is to build a maintainable, modular 2D platformer. We want minimal coupling between managers, easy integration of LDtk levels, and the ability to change animations or UI references without breaking other parts of the game.
+- **Dynamic Level System**: Progressive level loading using LDtk for optimized performance
+- **Advanced Audio System**: 
+  - Background music for each scene
+  - Sound effects for actions
+  - Volume controls for both music and SFX
+- **Responsive Controls**:
+  - Smooth player movement
+  - Precise jumping mechanics
+  - Combat system with shooting mechanics
+- **Modern UI**:
+  - Clean, cyberpunk-themed menus
+  - Interactive settings panel
+  - Volume and control customization
+  - Leaderboard system
+- **Game Systems**:
+  - Health and lives management
+  - Score tracking
+  - Checkpoint system
+  - Enemy AI with various behaviors
+  - Collision detection and physics
 
-## AI Usage Guidelines
+## Controls
 
-1. **Scope**: Only focus on the relevant file or system that needs improvement.
-2. **Constraints**: Don't rename major classes or drastically alter the ECS approach.
-3. **Incremental Changes**: Provide small refactors or targeted fixes rather than rewriting entire files.
-4. **Explain Changes**: Always accompany code suggestions with a rationale (why these changes help).
+- **Movement**: Arrow Keys / WASD
+  - Left/Right: Move horizontally
+  - Up/Space: Jump
+- **Combat**:
+  - Mouse Click / Space: Shoot
+- **Menu**:
+  - ESC: Pause game
+  - Mouse: Navigate menus
 
-## Core Systems and Dependencies
+## Getting Started
 
-```json
-{
-  "engineVersion": "Phaser 3.87.0",
-  "buildTool": "Webpack 5.91.0",
-  "runtime": "Node.js",
-  "renderingEngine": "WebGL/Canvas",
-  "dependencies": {
-    "required": ["Node.js", "WebGL-enabled browser"],
-    "development": ["VS Code", "ESLint", "Prettier"]
-  }
-}
-```
+1. **Prerequisites**:
+   ```json
+   {
+     "engineVersion": "Phaser 3.87.0",
+     "buildTool": "Webpack 5.91.0",
+     "runtime": "Node.js",
+     "renderingEngine": "WebGL/Canvas",
+     "dependencies": {
+       "required": ["Node.js", "WebGL-enabled browser"],
+       "development": ["VS Code", "ESLint", "Prettier"]
+     }
+   }
+   ```
 
-## File Structure Relationships
+2. **Installation**:
+   ```bash
+   # Clone the repository
+   git clone [repository-url]
+   
+   # Install dependencies
+   npm install
+   
+   # Start development server
+   npm start
+   ```
 
+## Architecture
+
+### File Structure
 ```plaintext
 src/
-├── prefabs/           # Game object classes with inheritance relationships
-│   ├── Player.js      # Extends Phaser.GameObjects.Sprite
+├── prefabs/           # Game object classes
+│   ├── Player.js      # Player character implementation
 │   ├── Enemy.js       # Base enemy class
-│   └── entities/      # Specialized enemy types extending Enemy.js
+│   └── entities/      # Specialized enemy types
 ├── scenes/
-│   ├── levels/        # Game level scenes extending BaseScene.js
-│   ├── menus/         # UI scenes extending Phaser.Scene
-│   └── elements/      # Reusable scene components
+│   ├── levels/        # Game level scenes
+│   ├── menus/         # UI scenes
+│   └── elements/      # Reusable components
 ├── modules/
-│   ├── managers/      # System managers (singleton pattern)
-│   │   ├── CollisionManager.js    # Handles physics interactions
-│   │   ├── AnimationManager.js    # Controls sprite animations
-│   │   └── audio/                 # Audio subsystem
+│   ├── managers/      # System managers
+│   │   ├── CollisionManager.js    # Physics
+│   │   ├── AnimationManager.js    # Animations
+│   │   ├── AudioManager.js        # Sound system
+│   │   └── UIManager.js           # Interface
 │   ├── state/        # Global state management
-│   └── di/           # Dependency injection system
+│   └── di/           # Dependency injection
 └── systems/          # Core game systems
 ```
 
-## Key Class Relationships
+### Key Systems
 
-```mermaid
-graph TD
-    BaseScene --> Scene
-    GameScene --> BaseScene
-    WayneWorld --> BaseScene
-    Enemy --> Sprite
-    Player --> Sprite
-    CollisionManager --> Manager
-```
+1. **Audio System**:
+   - Background music management
+   - Sound effects handling
+   - Volume controls and persistence
+   - Scene-specific audio
 
-## System Interactions
+2. **Physics System**:
+   - Arcade physics implementation
+   - Collision detection and response
+   - Platform interactions
+   - Projectile management
 
-1. **Physics System**:
-   - Implementation: `CollisionManager.js`
-   - Dependencies: `Phaser.Physics.Arcade`
-   - Key Methods: `setupCollisions()`, `handleCollision()`
-   - Events Emitted: `collision`, `overlap`
+3. **State Management**:
+   - Redux-like pattern
+   - Global game state
+   - Scene-specific states
+   - Persistent settings
 
-2. **State Management**:
-   - Implementation: `Store.js`
-   - Pattern: Redux-like
-   - Key Methods: `dispatch()`, `subscribe()`
-   - State Schema: See `state/types.js`
+4. **Level System**:
+   - LDtk integration
+   - Progressive loading
+   - Dynamic enemy spawning
+   - Checkpoint management
 
-3. **Event System**:
-   - Implementation: `EventManager.js`
-   - Event Types: See `GameEvents` enum
-   - Usage: `this.events.emit(GameEvents.PLAYER_DAMAGE)`
+## Development Guidelines
 
-## Code Patterns
+1. **Code Style**:
+   - Follow ESLint configuration
+   - Use meaningful variable names
+   - Document complex logic
+   - Maintain modular structure
 
-1. **Scene Lifecycle**:
-```javascript
-class GameScene extends BaseScene {
-    constructor() { /* Initialize components */ }
-    preload() { /* Load assets */ }
-    create() { /* Setup scene */ }
-    update() { /* Game loop */ }
-}
-```
+2. **Architecture Principles**:
+   - Component-based design
+   - Event-driven communication
+   - Dependency injection
+   - Single responsibility
 
-2. **Manager Pattern**:
-```javascript
-class BaseManager {
-    constructor(scene) {
-        this.scene = scene;
-        this.systems = new Set();
-    }
-}
-```
+3. **Performance**:
+   - Optimize asset loading
+   - Manage memory usage
+   - Use object pooling
+   - Implement progressive loading
 
-3. **Entity Component System**:
-```javascript
-class Entity extends GameObject {
-    components = new Map();
-    addComponent(component) { /* ... */ }
-}
-```
+## Contributing
 
-## Common Code Flows
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
 
-1. **Collision Handling**:
-```plaintext
-Physics Update -> CollisionManager.check() -> 
-Entity.handleCollision() -> EventManager.emit() -> 
-UI Update
-```
+## License
 
-2. **State Updates**:
-```plaintext
-Action Dispatch -> Store.reduce() -> 
-State Update -> Scene.handleStateChange() -> 
-Entity Updates
-```
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Testing Structure
+## Acknowledgments
 
-```plaintext
-tests/
-├── unit/          # Jest unit tests
-├── integration/   # System integration tests
-└── e2e/          # Cypress end-to-end tests
-```
-
-## Development Commands
-
-```bash
-# Install dependencies
-npm install
-
-# Development server (http://localhost:8080)
-npm run dev
-
-# Production build
-npm run build
-
-# Run tests
-npm test
-```
-
-## AI Assistance Notes
-
-1. **Code Generation Context**:
-   - Use ES6+ syntax
-   - Follow Phaser 3 game object lifecycle
-   - Implement proper cleanup in destroy() methods
-
-2. **Common Refactoring Patterns**:
-   - Extract manager classes for system-wide concerns
-   - Use event system for loose coupling
-   - Implement state management for complex state
-
-3. **Debug Hooks**:
-   - Debug mode: `?debug=true` URL parameter
-   - Debug UI: Press 'E' in game
-   - Performance monitoring: See `DebugSystem.js`
-
-## Last Updated
-2025-01-15
+- Phaser.js team for the game framework
+- LDtk team for the level editor
+- Contributors and testers
