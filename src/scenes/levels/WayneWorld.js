@@ -4,6 +4,9 @@ import { Player } from '../../prefabs/Player';
 import { ManagerFactory } from '../../modules/di/ManagerFactory';
 
 export class WayneWorld extends BaseScene {
+    // Constants
+    static ENTITY_ACTIVE_BUFFER = 2; // Number of sections around the player to keep entities active
+
     constructor() {
         super({ key: 'WayneWorld' });
         this.tileColliderAdded = false;
@@ -295,38 +298,65 @@ export class WayneWorld extends BaseScene {
     
     update(time, delta) {
         super.update(time, delta);
+    
+        // Update subsystems
+        this.updateBulletPool();
+        this.updateCamera();
+    
+        // Update sections and entities based on player position
+        if (this.player && this.cameras.main) {
+            const playerSection = Math.floor(this.player.x / this.sectionWidth);
+            this.handleSectionManagement(playerSection);
+        }
+    
+        // Update debug graphics if enabled
+        this.updateDebugGraphics();
+    }
 
-        // Update bullet pool if it exists
+    // Update bullet pool
+    updateBulletPool() {
         if (this.bulletPool) {
             this.bulletPool.update();
         }
-
-        // Update camera manager only if player exists
+    }
+    
+    // Update camera
+    updateCamera() {
         if (this.cameraManager && this.player) {
             this.cameraManager.update();
         }
+    }
 
-        if (this.player && this.cameras.main) {
-            const playerSection = Math.floor(this.player.x / this.sectionWidth);
-            
-            // Always load sections around player position
-            this.loadAdjacentSections(this.player.x);
-            
-            // Clean up sections that are too far away
-            this.loadedSections.forEach(sectionIndex => {
-                if (Math.abs(sectionIndex - playerSection) > 2) {
-                    this.unloadSection(sectionIndex);
-                }
-            });
-        }
+    // Update section management    
+    handleSectionManagement(playerSection) {
+        // Load adjacent sections around the player
+        this.loadAdjacentSections(this.player.x);
+    
+        // Clean up sections that are too far away
+        this.cleanUpDistantSections(playerSection);
+    
+        // Update entities in nearby sections
+        this.updateSectionEntities(playerSection);
+    }
 
-        // Update debug graphics if enabled
+    // Clean up sections that are too far away
+    cleanUpDistantSections(playerSection) {
+        this.loadedSections.forEach(sectionIndex => {
+            if (Math.abs(sectionIndex - playerSection) > 2) { // Adjust buffer as needed
+                this.unloadSection(sectionIndex);
+            }
+        });
+    }
+
+    // Update debug graphics if enabled
+    updateDebugGraphics() {
         if (this.showDebug) {
             this.drawDebugGraphics();
         } else if (this.boundaryGraphics) {
             this.boundaryGraphics.clear();
         }
     }
+    
 
     /****************************
      * LEVEL LOADING & MANAGEMENT
@@ -518,23 +548,24 @@ export class WayneWorld extends BaseScene {
      ****************************/
     
     updateSectionEntities(playerSection) {
-        // Calculate range for entities
-        const minEntitySection = Math.max(0, playerSection - this.entityBuffer);
-        const maxEntitySection = Math.min(
-            Math.ceil(this.singleLevelWidth / this.sectionWidth),
-            playerSection + this.entityBuffer
-        );
-
+        const minEntitySection = Math.max(0, playerSection - WayneWorld.ENTITY_ACTIVE_BUFFER);
+        const maxEntitySection = playerSection + WayneWorld.ENTITY_ACTIVE_BUFFER;
+    
+        console.log(`Player section: ${playerSection}`);
+        console.log(`Active range: ${minEntitySection} to ${maxEntitySection}`);
+    
         // Load new entities
         for (let i = minEntitySection; i <= maxEntitySection; i++) {
             if (!this.activeEntities.has(i)) {
+                console.log(`Loading entities for section ${i}`);
                 this.loadSectionEntities(i);
             }
         }
-
-        // Remove far entities
+    
+        // Unload far entities
         for (const [sectionIndex, entities] of this.activeEntities) {
             if (sectionIndex < minEntitySection || sectionIndex > maxEntitySection) {
+                console.log(`Unloading entities for section ${sectionIndex}`);
                 this.removeSectionEntities(sectionIndex);
             }
         }
@@ -608,18 +639,25 @@ export class WayneWorld extends BaseScene {
 
     removeSectionEntities(sectionIndex) {
         const entities = this.activeEntities.get(sectionIndex);
-        if (!entities) return;
+        if (!entities) {
+            console.warn(`No entities found to unload for section ${sectionIndex}`);
+            return;
+        }
     
-        console.log(`Removing entities from section ${sectionIndex}`);
+        console.log(`Removing entities for section ${sectionIndex}`);
     
         entities.forEach(entity => {
             if (entity.destroy) {
-                entity.destroy(); // Destroy Phaser entity
+                console.log(`Destroying entity:`, entity);
+                entity.destroy(); // Properly destroy the Phaser entity
+            } else {
+                console.warn(`Entity does not have a destroy method:`, entity);
             }
         });
     
-        this.activeEntities.delete(sectionIndex);
+        this.activeEntities.delete(sectionIndex); // Ensure the section is removed
     }
+    
 
     /****************************
      * PLAYER MANAGEMENT
