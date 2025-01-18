@@ -1,9 +1,23 @@
+/**
+ * TextStyleManager.js
+ * Manages text styles and visual effects for the game's UI
+ * Provides consistent styling across different UI components
+ * Includes retro-themed styles, colors, and animations
+ */
 export class TextStyleManager {
+    /**
+     * Initialize style manager for a scene
+     * @param {Scene} scene - Phaser scene to manage styles for
+     */
     constructor(scene) {
         this.scene = scene;
         this.styles = this.initializeStyles();
     }
 
+    /**
+     * Creates basic UI styles with consistent formatting
+     * @returns {Object} Collection of common UI styles
+     */
     initializeStyles() {
         return {
             score: { ...TextStyleManager.baseStyles.retro, fontSize: '24px', fill: TextStyleManager.colors.score },
@@ -16,7 +30,11 @@ export class TextStyleManager {
         };
     }
 
-    // Base styles that other styles can extend
+    /**
+     * Base text styles for different themes
+     * Retro style uses pixel font with stroke
+     * Arcade style uses classic arcade font
+     */
     static get baseStyles() {
         return {
             retro: {
@@ -32,7 +50,11 @@ export class TextStyleManager {
         };
     }
 
-    // Shadow effects that can be applied to text
+    /**
+     * Text shadow presets for visual effects
+     * Neon: Strong glow effect for titles
+     * Subtle: Soft shadow for UI elements
+     */
     static get shadowEffects() {
         return {
             neon: {
@@ -52,31 +74,45 @@ export class TextStyleManager {
         };
     }
 
-    // Color schemes
+    /**
+     * Game color palette
+     * Cyberpunk-inspired colors for UI elements
+     * Each color serves a specific UI purpose
+     */
     static get colors() {
         return {
-            primary: '#00ffff',    // Cyan
-            secondary: '#ff00ff',  // Magenta
-            accent: '#ffd700',     // Gold
-            warning: '#ff0000',    // Red
-            success: '#00ff00',    // Green
-            neutral: '#ffffff',    // White
-            score: '#00ffff',      // Cyan
-            lives: '#ff1493',      // Deep Pink
-            hp: '#00ff00',         // Lime
-            bitcoin: '#ffd700',    // Gold
-            timer: '#ff00ff',      // Magenta
-            wallet: '#40e0d0',     // Turquoise
-            scene: '#9370db',      // Medium Purple
-            config: '#ffffff',     // White
-            pause: '#ffffff'       // White for pause menu
+            // Primary colors for main UI elements
+            primary: '#00ffff',    // Cyan - Main UI
+            secondary: '#ff00ff',  // Magenta - Highlights
+            accent: '#ffd700',     // Gold - Special items
+            
+            // Status indicators
+            warning: '#ff0000',    // Red - Danger/alerts
+            success: '#00ff00',    // Green - Success/positive
+            neutral: '#ffffff',    // White - Default text
+            
+            // Game UI elements
+            score: '#00ffff',      // Cyan - Score display
+            lives: '#ff1493',      // Deep Pink - Life counter
+            hp: '#00ff00',         // Lime - Health bar
+            bitcoin: '#ffd700',    // Gold - Currency
+            timer: '#ff00ff',      // Magenta - Timer
+            wallet: '#40e0d0',     // Turquoise - Wallet
+            
+            // Menu elements
+            scene: '#9370db',      // Medium Purple - Scene titles
+            config: '#ffffff',     // White - Config text
+            pause: '#ffffff'       // White - Pause menu
         };
     }
 
-    // Main style definitions
+    /**
+     * Complete style definitions for all UI elements
+     * Combines base styles, colors, and effects
+     */
     static get styles() {
         return {
-            // Title styles
+            // Title styles with neon effects
             mainTitle: {
                 ...this.baseStyles.retro,
                 fontSize: '100px',
@@ -95,7 +131,7 @@ export class TextStyleManager {
                 shadow: this.shadowEffects.subtle
             },
 
-            // Button styles
+            // Interactive button styles
             menuButton: {
                 ...this.baseStyles.retro,
                 fontSize: '72px',
@@ -123,11 +159,11 @@ export class TextStyleManager {
                 strokeThickness: 2,
                 shadow: {
                     ...this.shadowEffects.neon,
-                    color: '#4a4a4a'  // Dark gray
+                    color: '#4a4a4a'
                 }
             },
 
-            // UI styles
+            // Game UI element styles
             gameUI: {
                 ...this.baseStyles.retro,
                 fontSize: '24px',
@@ -143,7 +179,7 @@ export class TextStyleManager {
                 strokeThickness: 1,
                 shadow: {
                     ...this.shadowEffects.subtle,
-                    color: '#005555'  // Darker cyan
+                    color: '#005555'
                 }
             },
             livesUI: {
@@ -154,7 +190,7 @@ export class TextStyleManager {
                 strokeThickness: 1,
                 shadow: {
                     ...this.shadowEffects.subtle,
-                    color: '#8b0a50'  // Darker pink
+                    color: '#8b0a50'
                 }
             },
             hpUI: {
@@ -165,7 +201,7 @@ export class TextStyleManager {
                 strokeThickness: 1,
                 shadow: {
                     ...this.shadowEffects.subtle,
-                    color: '#006400'  // Dark green
+                    color: '#006400'
                 }
             },
             bitcoinUI: {
@@ -176,7 +212,7 @@ export class TextStyleManager {
                 strokeThickness: 1,
                 shadow: {
                     ...this.shadowEffects.subtle,
-                    color: '#b8860b'  // Dark golden rod
+                    color: '#b8860b'
                 }
             },
             timerUI: {
@@ -187,7 +223,7 @@ export class TextStyleManager {
                 strokeThickness: 1,
                 shadow: {
                     ...this.shadowEffects.subtle,
-                    color: '#8b008b'  // Dark magenta
+                    color: '#8b008b'
                 }
             },
             walletUI: {
@@ -198,7 +234,7 @@ export class TextStyleManager {
                 strokeThickness: 1,
                 shadow: {
                     ...this.shadowEffects.subtle,
-                    color: '#20b2aa'  // Light Sea Green
+                    color: '#20b2aa'
                 }
             },
             sceneUI: {
@@ -209,9 +245,11 @@ export class TextStyleManager {
                 strokeThickness: 2,
                 shadow: {
                     ...this.shadowEffects.subtle,
-                    color: '#483d8b'  // Dark Slate Blue
+                    color: '#483d8b'
                 }
             },
+
+            // Special state styles
             gameUIHighlight: {
                 ...this.baseStyles.retro,
                 fontSize: '24px',
@@ -231,6 +269,8 @@ export class TextStyleManager {
                 color: this.colors.warning,
                 shadow: this.shadowEffects.neon
             },
+
+            // Configuration and debug styles
             configUI: {
                 ...this.baseStyles.retro,
                 fontSize: '24px',
@@ -245,8 +285,6 @@ export class TextStyleManager {
                 fontFamily: 'Arial',
                 align: 'left'
             },
-
-            // Configuration styles
             configText: {
                 ...this.baseStyles.arcade,
                 fontSize: '24px',
@@ -260,17 +298,27 @@ export class TextStyleManager {
         };
     }
 
-    // Helper method to get a style with fallback
+    /**
+     * Retrieves a style by name with fallback
+     * @param {string} styleName - Name of the style to retrieve
+     * @returns {Object} Style object or default style if not found
+     */
     static getStyle(styleName) {
         const style = this.styles[styleName];
         if (!style) {
             console.warn(`Style '${styleName}' not found in TextStyleManager`);
-            return this.styles.configText; // fallback to basic style
+            return this.styles.configText;
         }
         return typeof style === 'function' ? style() : { ...style };
     }
 
-    // Helper method to apply hover effects
+    /**
+     * Adds hover animation to text objects
+     * Scales up and changes color on hover
+     * @param {Phaser.GameObjects.Text} textObject - Text to make interactive
+     * @param {string} hoverColor - Color when hovered
+     * @param {string} baseColor - Default color
+     */
     static applyHoverEffect(textObject, hoverColor = this.colors.secondary, baseColor = this.colors.primary) {
         if (!textObject) return;
 
@@ -285,7 +333,17 @@ export class TextStyleManager {
             });
     }
 
-    // Helper method to create text with style
+    /**
+     * Creates a text object with specified style
+     * @param {Scene} scene - Scene to add text to
+     * @param {number} x - X position
+     * @param {number} y - Y position
+     * @param {string} text - Text content
+     * @param {string} styleName - Name of style to use
+     * @param {number} origin - Text origin point
+     * @param {boolean} interactive - Whether to add hover effects
+     * @returns {Phaser.GameObjects.Text} Created text object
+     */
     static createText(scene, x, y, text, styleName, origin = 0.5, interactive = false) {
         const textObject = scene.add.text(x, y, text, this.getStyle(styleName))
             .setOrigin(origin);

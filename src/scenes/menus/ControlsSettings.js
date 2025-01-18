@@ -1,28 +1,42 @@
+/**
+ * ControlsSettings.js
+ * Manages key bindings and control configuration for the game
+ * Provides UI for viewing, modifying, and resetting control schemes
+ */
 import { Scene } from 'phaser';
 import { PlayerController } from '../../modules/controls/PlayerController';
 
 export default class ControlsSettings extends Scene {
+    /**
+     * Initialize controls settings scene
+     * Sets up state management for key binding process
+     */
     constructor() {
         super('ControlsSettings');
-        this.selectedButton = null;
-        this.isWaitingForKey = false;
-        this.scrollPosition = 0;
-        this.targetScrollPosition = 0;
-        this.controlsContainer = null;
-        this.fromPause = false;
-        this.parentScene = null;
+        // Scene state
+        this.selectedButton = null;        // Currently selected control button
+        this.isWaitingForKey = false;      // Whether waiting for key input
+        this.scrollPosition = 0;           // Current scroll position
+        this.targetScrollPosition = 0;      // Target position for smooth scrolling
+        this.controlsContainer = null;      // Container for scrollable controls
+        this.fromPause = false;            // Whether accessed from pause menu
+        this.parentScene = null;           // Reference to previous scene
         
-        // Bind the methods to maintain correct 'this' context
+        // Bind event handlers to maintain context
         this.handleKeyPress = this.handleKeyPress.bind(this);
         this.handleMousePress = this.handleMousePress.bind(this);
         this.preventDefault = this.preventDefault.bind(this);
     }
 
+    /**
+     * Setup scene based on entry point
+     * Handles pause state when accessed from game
+     */
     init(data) {
         this.fromPause = data?.fromPause || false;
         this.parentScene = data?.parentScene;
         
-        // If we're coming from pause menu, make sure parent scene stays paused
+        // Maintain pause state if coming from game
         if (this.fromPause && this.parentScene) {
             const gameScene = this.scene.get(this.parentScene);
             if (gameScene) {
@@ -38,28 +52,31 @@ export default class ControlsSettings extends Scene {
         }
     }
 
+    /**
+     * Load required assets
+     * Includes background, fonts and sound effects
+     */
     preload() {
         this.load.image('settingsBackground', 'assets/settings/settings.png');
         this.load.font('Gameplay', 'assets/fonts/retronoid/Gameplay.ttf');
         this.load.audio('confirmSound', 'assets/sounds/confirmation.mp3');
     }
 
+    /**
+     * Build the controls settings interface
+     * Creates scrollable list of configurable controls
+     */
     create() {
         const { width: canvasWidth, height: canvasHeight } = this.cameras.main;
 
-        // Store the fromPause and parentScene values passed from Settings
-        // this.fromPause = this.scene.settings.data?.fromPause;
-        // this.parentScene = this.scene.settings.data?.parentScene;
-
-        // Add background
+        // Setup background and overlay
         const bg = this.add.image(canvasWidth / 2, canvasHeight / 2, 'settingsBackground');
         bg.setDisplaySize(canvasWidth, canvasHeight);
 
-        // Add semi-transparent overlay for better text visibility
         const overlay = this.add.rectangle(0, 0, canvasWidth, canvasHeight, 0x000000, 0.3);
         overlay.setOrigin(0, 0);
 
-        // Add title
+        // Add title text
         this.add.text(canvasWidth / 2, canvasHeight * 0.15, 'CONTROLS', {
             fontFamily: 'Gameplay',
             fontSize: '64px',
@@ -69,7 +86,7 @@ export default class ControlsSettings extends Scene {
             fontWeight: 'bold'
         }).setOrigin(0.5);
 
-        // Define scrollable area
+        // Define scrollable area dimensions
         const scrollableArea = {
             x: 0,
             y: canvasHeight * 0.25,
@@ -77,20 +94,20 @@ export default class ControlsSettings extends Scene {
             height: canvasHeight * 0.5
         };
 
-        // Create container for controls
+        // Setup scrollable container
         this.controlsContainer = this.add.container(0, scrollableArea.y + 50);
 
-        // Create mask for scrollable area
+        // Create mask for scroll area
         const mask = this.add.graphics()
             .fillStyle(0x000000, 0)
             .fillRect(0, scrollableArea.y, canvasWidth, scrollableArea.height);
         this.controlsContainer.setMask(new Phaser.Display.Masks.GeometryMask(this, mask));
 
-        // Create temporary PlayerController to access key bindings
+        // Get current key bindings
         const playerController = new PlayerController(this);
         const currentBindings = playerController.keyBindings;
 
-        // Create controls buttons
+        // Define control buttons configuration
         const controlsConfig = [
             { action: 'up', label: 'UP' },
             { action: 'down', label: 'DOWN' },
@@ -101,11 +118,12 @@ export default class ControlsSettings extends Scene {
             { action: 'specialAttack', label: 'SPECIAL ATTACK' }
         ];
 
+        // Create control buttons
         const spacing = canvasHeight * 0.09;
         controlsConfig.forEach((control, index) => {
             const y = index * spacing;
             
-            // Add label with outline for better visibility
+            // Create label
             const label = this.add.text(canvasWidth * 0.3, y, control.label, {
                 fontFamily: 'Gameplay',
                 fontSize: '36px',
@@ -115,7 +133,7 @@ export default class ControlsSettings extends Scene {
                 fontWeight: 'bold'
             }).setOrigin(1, 0.5);
 
-            // Add key button
+            // Create key binding button
             const keyName = playerController.getKeyName(currentBindings[control.action]);
             const button = this.add.text(canvasWidth * 0.7, y, keyName, {
                 fontFamily: 'Gameplay',
@@ -126,9 +144,9 @@ export default class ControlsSettings extends Scene {
                 fontWeight: 'bold'
             }).setOrigin(0, 0.5)
                 .setInteractive({ useHandCursor: true })
-                .setData('action', control.action);  // Store the action with the button
+                .setData('action', control.action);
 
-            // Add hover effects
+            // Setup button interactions
             button.on('pointerover', () => button.setStyle({ fill: '#00ff00' }));
             button.on('pointerout', () => {
                 if (this.selectedButton?.button !== button) {
@@ -136,28 +154,28 @@ export default class ControlsSettings extends Scene {
                 }
             });
 
-            // Handle click
+            // Handle key binding
             button.on('pointerdown', (pointer, localX, localY, event) => {
                 event.stopPropagation();
                 
                 if (this.isWaitingForKey) {
-                    // If we're already waiting for a key, handle this click as a binding
                     if (this.selectedButton === button) {
                         this.handleMousePress(pointer);
                     }
                     return;
                 }
 
+                // Enter key binding mode
                 this.isWaitingForKey = true;
                 this.selectedButton = button;
                 button.setText('PRESS ANY KEY');
                 button.setStyle({ fill: '#ffff00' });
 
-                // Disable right-click menu
+                // Disable context menu during binding
                 const canvas = this.sys.game.canvas;
                 canvas.addEventListener('contextmenu', this.preventDefault);
 
-                // Add listeners after a short delay to avoid the current click
+                // Setup input listeners
                 this.time.delayedCall(100, () => {
                     this.input.keyboard.once('keydown', this.handleKeyPress, this);
                     this.input.on('pointerdown', this.handleMousePress, this);
@@ -167,43 +185,39 @@ export default class ControlsSettings extends Scene {
             this.controlsContainer.add([label, button]);
         });
 
-        // Calculate max scroll based on content height
+        // Setup scrolling
         const contentHeight = controlsConfig.length * spacing;
         const maxScroll = Math.max(0, contentHeight - scrollableArea.height);
-        const startY = scrollableArea.y + 50; // Store initial Y position
+        const startY = scrollableArea.y + 50;
         this.scrollPosition = startY;
         this.targetScrollPosition = startY;
 
-        // Add mouse wheel scrolling
+        // Mouse wheel scrolling
         this.input.on('wheel', (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
             if (pointer.y >= scrollableArea.y && pointer.y <= scrollableArea.y + scrollableArea.height) {
-                // Adjust scroll speed and direction
-                const scrollSpeed = 0.5; // Reduce this value to slow down scrolling
+                const scrollSpeed = 0.5;
                 this.targetScrollPosition = Phaser.Math.Clamp(
                     this.targetScrollPosition - (deltaY * scrollSpeed),
-                    startY - maxScroll, // Use startY as the lower bound
-                    startY // Use startY as the upper bound
+                    startY - maxScroll,
+                    startY
                 );
             }
         });
 
-        // Add smooth scrolling update
+        // Smooth scrolling update
         this.events.on('update', () => {
             if (this.scrollPosition !== this.targetScrollPosition) {
-                // Interpolate towards target position
-                const lerp = 0.2; // Adjust this value to change smoothing (0-1)
+                const lerp = 0.2;
                 this.scrollPosition = Phaser.Math.Linear(
                     this.scrollPosition,
                     this.targetScrollPosition,
                     lerp
                 );
-                
-                // Update container position
                 this.controlsContainer.y = Math.round(this.scrollPosition);
             }
         });
 
-        // Helper function to play confirmation sound
+        // Sound effect helper
         const playConfirmSound = () => {
             const sfxVolume = this.registry.get('sfxVolume') || 1;
             const confirmSound = this.sound.add('confirmSound');
@@ -214,7 +228,7 @@ export default class ControlsSettings extends Scene {
             });
         };
 
-        // Add reset button
+        // Create reset button
         const resetButton = this.add.text(canvasWidth / 2, canvasHeight * 0.8, 'RESET TO DEFAULT', {
             fontFamily: 'Gameplay',
             fontSize: '36px',
@@ -232,7 +246,7 @@ export default class ControlsSettings extends Scene {
             this.resetBindings();
         });
 
-        // Add back button
+        // Create back button
         const backButton = this.add.text(canvasWidth / 2, canvasHeight * 0.9, 'BACK', {
             fontFamily: 'Gameplay',
             fontSize: '36px',
@@ -250,17 +264,24 @@ export default class ControlsSettings extends Scene {
             this.scene.start('Settings', { fromPause: this.fromPause, parentScene: this.parentScene });
         });
 
-        // Clean up when scene changes
+        // Cleanup on scene change
         this.events.on('shutdown', () => {
             const canvas = this.sys.game.canvas;
             canvas.removeEventListener('contextmenu', this.preventDefault);
         });
     }
 
+    /**
+     * Prevent default browser actions during key binding
+     */
     preventDefault(e) {
         e.preventDefault();
     }
 
+    /**
+     * Handle mouse button binding
+     * Maps mouse buttons to corresponding actions
+     */
     handleMousePress(pointer) {
         if (!this.isWaitingForKey || !this.selectedButton) return;
 
@@ -275,51 +296,55 @@ export default class ControlsSettings extends Scene {
         this.updateBinding(newBinding);
     }
 
+    /**
+     * Handle keyboard key binding
+     * Maps keyboard events to actions
+     */
     handleKeyPress(event) {
         if (!this.isWaitingForKey || !this.selectedButton) return;
         this.updateBinding(event.keyCode);
     }
 
+    /**
+     * Update control binding and related UI
+     * Propagates changes to active game scene
+     */
     updateBinding(newBinding) {
         const action = this.selectedButton.getData('action');
         const playerController = new PlayerController(this);
         
-        // Update the key binding
+        // Save new binding
         playerController.keyBindings[action] = newBinding;
         playerController.saveKeyBindings();
 
-        // Update the button text
+        // Update UI
         this.selectedButton.setText(playerController.getKeyName(newBinding));
         this.selectedButton.setStyle({ fill: '#ffffff' });
 
-        // Reset state
+        // Reset binding state
         this.isWaitingForKey = false;
         this.selectedButton = null;
 
-        // Remove event listeners
+        // Cleanup listeners
         this.input.keyboard.off('keydown', this.handleKeyPress, this);
         this.input.off('pointerdown', this.handleMousePress, this);
-
-        // Re-enable right-click menu
         const canvas = this.sys.game.canvas;
         canvas.removeEventListener('contextmenu', this.preventDefault);
 
-        // Update controls in the active game scene if it exists
+        // Update active game scene
         if (this.parentScene) {
             const gameScene = this.scene.get(this.parentScene);
             if (gameScene && gameScene.player && gameScene.player.controller) {
-                // Destroy old controls
+                // Update controller
                 gameScene.player.controller.destroy();
-                
-                // Create new controller with updated bindings
                 gameScene.player.controller = new PlayerController(gameScene);
                 
-                // Re-setup shooting controls if needed
+                // Refresh shooting controls if needed
                 if (action === 'shoot') {
                     gameScene.player.controller.setupShootingControls(gameScene.player);
                 }
 
-                // Update tutorial text if in tutorial
+                // Update tutorial if active
                 if (gameScene.tutorialManager) {
                     gameScene.tutorialManager.updateTutorialSteps();
                     gameScene.tutorialManager.showCurrentStep();
@@ -328,24 +353,24 @@ export default class ControlsSettings extends Scene {
         }
     }
 
+    /**
+     * Reset all controls to default values
+     * Updates both settings and active game
+     */
     resetBindings() {
         const playerController = new PlayerController(this);
         playerController.resetToDefaults();
         
-        // Update controls in the active game scene if it exists
+        // Update active game scene
         if (this.parentScene) {
             const gameScene = this.scene.get(this.parentScene);
             if (gameScene && gameScene.player && gameScene.player.controller) {
-                // Destroy old controls
+                // Reset controller
                 gameScene.player.controller.destroy();
-                
-                // Create new controller with default bindings
                 gameScene.player.controller = new PlayerController(gameScene);
-                
-                // Re-setup shooting controls
                 gameScene.player.controller.setupShootingControls(gameScene.player);
 
-                // Update tutorial text if in tutorial
+                // Update tutorial if active
                 if (gameScene.tutorialManager) {
                     gameScene.tutorialManager.updateTutorialSteps();
                     gameScene.tutorialManager.showCurrentStep();
@@ -353,12 +378,15 @@ export default class ControlsSettings extends Scene {
             }
         }
         
-        // Refresh the scene to show default bindings
+        // Refresh UI
         this.scene.restart();
     }
 
+    /**
+     * Convert key codes to readable names
+     * Maps common keys to symbols or text
+     */
     getKeyName(keyCode) {
-        // Convert key code to readable name
         const keyMap = {
             [Phaser.Input.Keyboard.KeyCodes.W]: 'W',
             [Phaser.Input.Keyboard.KeyCodes.A]: 'A',

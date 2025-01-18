@@ -1,16 +1,28 @@
+/**
+ * LDTKTileManager.js
+ * Manages tile-based collision system from LDtk level data
+ * Creates and maintains physics hitboxes for solid tiles
+ * Handles progressive loading and cleanup of level sections
+ */
+
 export class LDTKTileManager {
+    /**
+     * Initialize tile collision system
+     * @param {Phaser.Scene} scene - Scene to create hitboxes in
+     */
     constructor(scene) {
         this.scene = scene;
-        this.hitboxes = new Map(); // Store hitboxes for cleanup
-        this.sectionHitboxes = new Map(); // Store hitboxes by section
+        this.hitboxes = new Map();        // All active hitboxes
+        this.sectionHitboxes = new Map(); // Hitboxes by level section
     }
 
     /**
-     * Process LDTK level data and create hitboxes for solid tiles
-     * @param {Object} levelData - The LDTK level data
-     * @param {number} worldX - World X offset for the level
-     * @param {number} worldY - World Y offset for the level
-     * @param {number} sectionWidth - Width of the section to load
+     * Create collision hitboxes for level section
+     * Called when loading new level chunks
+     * @param {Object} levelData - LDtk level definition
+     * @param {number} worldX - Section X offset
+     * @param {number} worldY - Section Y offset
+     * @param {number} sectionWidth - Section width in pixels
      */
     createTileHitboxes(levelData, worldX = 0, worldY = 0, sectionWidth) {
         if (!levelData || !levelData.layerInstances) {
@@ -18,7 +30,7 @@ export class LDTKTileManager {
             return;
         }
 
-        // Find the Solid layer
+        // Find collision layer in LDtk data
         const solidLayer = levelData.layerInstances.find(layer => 
             layer.__identifier === 'Solid' || layer.__type === 'IntGrid'
         );
@@ -28,34 +40,35 @@ export class LDTKTileManager {
             return;
         }
 
+        // Track hitboxes for this section
         const sectionHitboxes = new Set();
         this.sectionHitboxes.set(worldX, sectionHitboxes);
 
-        // Process auto-layer tiles
+        // Process different tile types
         if (solidLayer.autoLayerTiles) {
             this.processAutoLayerTiles(solidLayer.autoLayerTiles, worldX, worldY, sectionWidth, sectionHitboxes);
         }
 
-        // Process IntGrid tiles if present
         if (solidLayer.intGridCsv) {
             this.processIntGridTiles(solidLayer, worldX, worldY, sectionWidth, sectionHitboxes);
         }
     }
 
     /**
-     * Process auto-layer tiles and create hitboxes
-     * @param {Array} tiles - Array of auto-layer tiles
-     * @param {number} worldX - World X offset
-     * @param {number} worldY - World Y offset
-     * @param {number} sectionWidth - Width of the section
-     * @param {Set} sectionHitboxes - Set to store hitboxes for this section
+     * Process auto-placed tiles from LDtk
+     * Creates hitboxes for solid auto-tiles
+     * @param {Array} tiles - Auto-layer tile data
+     * @param {number} worldX - Section offset X
+     * @param {number} worldY - Section offset Y
+     * @param {number} sectionWidth - Section bounds
+     * @param {Set} sectionHitboxes - Current section's hitboxes
      */
     processAutoLayerTiles(tiles, worldX, worldY, sectionWidth, sectionHitboxes) {
         const sectionEnd = worldX + sectionWidth;
         
         tiles.forEach(tile => {
             const tileX = tile.px[0] + worldX;
-            // Only create hitboxes for tiles within this section
+            // Only process tiles in current section
             if (tileX >= worldX && tileX < sectionEnd) {
                 const tileY = tile.px[1] + worldY;
                 const hitbox = this.createHitbox(tileX, tileY);
@@ -67,24 +80,27 @@ export class LDTKTileManager {
     }
 
     /**
-     * Process IntGrid tiles and create hitboxes
-     * @param {Object} layer - The IntGrid layer
-     * @param {number} worldX - World X offset
-     * @param {number} worldY - World Y offset
-     * @param {number} sectionWidth - Width of the section
-     * @param {Set} sectionHitboxes - Set to store hitboxes for this section
+     * Process integer grid tiles from LDtk
+     * Creates hitboxes for solid grid cells
+     * @param {Object} layer - IntGrid layer data
+     * @param {number} worldX - Section offset X
+     * @param {number} worldY - Section offset Y
+     * @param {number} sectionWidth - Section bounds
+     * @param {Set} sectionHitboxes - Current section's hitboxes
      */
     processIntGridTiles(layer, worldX, worldY, sectionWidth, sectionHitboxes) {
-        const tileSize = 32; // Standard tile size
+        const tileSize = 32;              // Tile dimensions
         const sectionEnd = worldX + sectionWidth;
         const startTile = Math.floor(worldX / tileSize);
         const endTile = Math.ceil(sectionEnd / tileSize);
         
+        // Scan grid cells in section
         for (let x = startTile; x < endTile; x++) {
             for (let y = 0; y < layer.__cHei; y++) {
                 const idx = y * layer.__cWid + x;
                 const value = layer.intGridCsv[idx];
                 
+                // Create hitbox for solid cells (value > 0)
                 if (value > 0) {
                     const tileX = x * tileSize + worldX;
                     const tileY = y * tileSize + worldY;
@@ -98,26 +114,28 @@ export class LDTKTileManager {
     }
 
     /**
-     * Create a hitbox at the specified position
-     * @param {number} x - X position
-     * @param {number} y - Y position
-     * @returns {Phaser.GameObjects.Rectangle} The created hitbox
+     * Create physics hitbox at position
+     * Sets up collision properties
+     * @param {number} x - World position X
+     * @param {number} y - World position Y
+     * @returns {Phaser.GameObjects.Rectangle} Physics hitbox
      */
     createHitbox(x, y) {
         const hitbox = this.scene.add.rectangle(x, y, 32, 32);
         this.scene.physics.add.existing(hitbox, true);
-        hitbox.body.allowGravity = false;
-        hitbox.body.immovable = true;
+        hitbox.body.allowGravity = false;  // Static position
+        hitbox.body.immovable = true;      // Solid collision
         this.hitboxes.set(`${x},${y}`, hitbox);
         return hitbox;
     }
 
     /**
-     * Clean up hitboxes that are before the specified X position
-     * @param {number} cleanupX - X position before which to remove hitboxes
+     * Remove hitboxes from old sections
+     * Called during level progression
+     * @param {number} cleanupX - Remove sections before this X
      */
     cleanupHitboxes(cleanupX) {
-        // Remove section hitboxes
+        // Clean up by section
         for (const [sectionX, hitboxes] of this.sectionHitboxes.entries()) {
             if (sectionX < cleanupX) {
                 for (const hitbox of hitboxes) {
@@ -131,8 +149,9 @@ export class LDTKTileManager {
     }
 
     /**
-     * Add a collider between an object and all hitboxes
-     * @param {Phaser.GameObjects.GameObject} object - The object to add collisions with
+     * Add collision between object and hitboxes
+     * Used for player and enemy physics
+     * @param {Phaser.GameObjects.GameObject} object - Entity to collide
      */
     addCollider(object) {
         for (const hitbox of this.hitboxes.values()) {

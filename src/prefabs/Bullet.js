@@ -1,47 +1,67 @@
+/**
+ * Bullet Game Object
+ * Represents a projectile in the game world
+ * Handles physics, movement, and lifecycle management
+ */
 export class Bullet extends Phaser.Physics.Arcade.Sprite {
+    /**
+     * Create a new bullet instance
+     * @param {Phaser.Scene} scene - The scene this bullet belongs to
+     * @param {number} x - Initial X position
+     * @param {number} y - Initial Y position
+     */
     constructor(scene, x, y) {
         super(scene, x, y, 'bullet_animation');
         
-        // Set up physics body
+        // Physics setup
         scene.physics.add.existing(this);
-        this.body.setAllowGravity(false);  // Ensure no gravity affects the bullet
-        this.body.setSize(24, 24);
-        this.body.setImmovable(true);  // Make bullet not affected by collisions
+        this.body.setAllowGravity(false);    // Bullets ignore gravity
+        this.body.setSize(24, 24);           // Collision box size
+        this.body.setImmovable(true);        // No physics reactions
         
-        // Set initial scale and alpha
+        // Visual setup
         this.setScale(1);
         this.setAlpha(1);
-        
-        // Play bullet animation
-        this.play('bullet_anim');
+        this.play('bullet_anim');            // Start animation
     }
 
+    /**
+     * Activate and launch the bullet
+     * @param {number} x - Starting X position
+     * @param {number} y - Starting Y position
+     * @param {string} direction - Direction to fire ('left' or 'right')
+     */
     fire(x, y, direction) {
+        // Enable bullet
         this.setActive(true);
         this.setVisible(true);
         this.body.enable = true;
         
-        // Position the bullet at player's position
+        // Position at firing point
         this.setPosition(x, y);
         
-        // Set bullet rotation and velocity based on direction
-        this.setAngle(direction === 'right' ? 0 : 180);
-        const speed = 600;
+        // Set direction and velocity
+        this.setAngle(direction === 'right' ? 0 : 180);  // Face direction
+        const speed = 600;                                // Pixels per second
         this.setVelocity(
-            direction === 'right' ? speed : -speed,
-            0  // No vertical velocity
+            direction === 'right' ? speed : -speed,       // Horizontal speed
+            0                                            // No vertical movement
         );
     }
 
+    /**
+     * Update bullet state
+     * Handles out-of-bounds detection and cleanup
+     * @param {number} time - Current time
+     * @param {number} delta - Time since last update
+     */
     preUpdate(time, delta) {
         super.preUpdate(time, delta);
 
-        // Get level bounds from physics world
+        // Check if bullet is out of bounds
         const levelWidth = this.scene.physics.world.bounds.width;
-
-        // Destroy bullet if it goes off screen
         if (this.x < -50 || this.x > levelWidth + 50) {
-            this.destroy();
+            this.destroy();  // Remove bullet when off screen
         }
     }
 }

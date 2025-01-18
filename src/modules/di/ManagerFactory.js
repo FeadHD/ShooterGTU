@@ -1,3 +1,9 @@
+/**
+ * ManagerFactory.js
+ * Factory class responsible for creating and managing game system instances.
+ * Handles dependency injection and ensures proper initialization order.
+ */
+
 import { GameStateManager } from '../managers/state/GameStateManager';
 import { PersistenceManager } from '../managers/state/PersistenceManager';
 import AudioManager from '../managers/AudioManager';
@@ -16,6 +22,8 @@ import { AssetManager } from '../managers/AssetManager';
 import { container } from './ServiceContainer';
 import { eventBus } from '../events/EventBus';
 import { UIManager } from '../../scenes/elements/UIManager';
+
+// Entity prefabs
 import Enemy from '../../prefabs/Enemy';
 import { Bitcoin } from '../../prefabs/Bitcoin';
 import { Slime } from '../../prefabs/Slime';
@@ -28,44 +36,63 @@ import { DisappearingPlatform } from '../../prefabs/DisappearingPlatform';
 import { Turret } from '../../prefabs/Turret';
 import MeleeWarrior from '../../prefabs/MeleeWarrior';
 import { Zapper } from '../../prefabs/enemies/Zapper';
+
+// Game systems
 import { BulletManager } from '../../modules/managers/BulletManager';
 import { BulletPool } from '../../modules/managers/pools/BulletPool';
 import { CameraManager } from '../../modules/managers/CameraManager';
 
 export class ManagerFactory {
+    /**
+     * Creates and initializes all game managers for a scene
+     * @param {Phaser.Scene} scene - The scene to create managers for
+     * @returns {Object} Collection of initialized managers
+     */
     static createManagers(scene) {
-        // 1. Register core dependencies
+        /**
+         * CORE DEPENDENCIES
+         * Register fundamental scene services
+         */
         container.register('scene', scene);
         container.register('eventBus', eventBus);
 
-        // 2. Create and register asset manager
+        /**
+         * ASSET MANAGEMENT
+         * Initialize asset loading and tracking
+         */
         const assets = new AssetManager(scene);
         container.register('assets', assets);
 
-        // 3. Create and register state managers
+        /**
+         * STATE MANAGEMENT
+         * Setup game state and persistence
+         */
         const gameState = new GameStateManager(scene);
         const persistence = new PersistenceManager(gameState);
 
-        // ---------------------------------------------------------------------
-        // AUDIO MANAGER: Use an if-else to avoid creating it multiple times
-        // ---------------------------------------------------------------------
+        /**
+         * AUDIO SYSTEM
+         * Create or reuse global audio manager
+         */
         let audio;
         if (container.services.has('audio')) {
-            // If AudioManager already exists, just retrieve it
             audio = container.get('audio');
-            // If you need to switch its internal "scene" reference each time:
-            // audio.setScene(scene);
         } else {
-            // No AudioManager yet? Create one, then register it
             audio = new AudioManager(scene);
             container.register('audio', audio);
         }
 
-        // 4. Create entity managers
+        /**
+         * ENTITY MANAGEMENT
+         * Setup entity creation and tracking
+         */
         const entityManager = new EntityManager(scene);
         const ldtkEntityManager = new LDTKEntityManager(scene);
 
-        // 5. Register entity factories with LDTKEntityManager
+        /**
+         * ENTITY FACTORIES
+         * Register entity creation functions for LDTK
+         */
         ldtkEntityManager.registerEntityFactories({
             Enemy: (scene, x, y, fields) => new Enemy(scene, x, y),
             Bitcoin: (scene, x, y, fields) => new Bitcoin(scene, x, y),
@@ -82,7 +109,10 @@ export class ManagerFactory {
             PlayerStart: (scene, x, y, fields) => ({ x, y, type: 'PlayerStart' })
         });
 
-        // 6. Other gameplay managers
+        /**
+         * GAMEPLAY SYSTEMS
+         * Initialize core gameplay managers
+         */
         const enemies = new EnemyManager(scene);
         const hazards = new HazardManager(scene);
         const animations = new AnimationManager(scene);
@@ -92,7 +122,10 @@ export class ManagerFactory {
         const collision = new CollisionManager(scene);
         const ui = new UIManager(scene);
 
-        // 7. Event Manager
+        /**
+         * EVENT SYSTEM
+         * Setup or reuse global event management
+         */
         let events = scene.game.globalEventManager;
         if (!events) {
             console.warn('Global EventManager not found, creating new instance');
@@ -100,10 +133,12 @@ export class ManagerFactory {
             scene.game.globalEventManager = events;
         }
 
-        // 8. Register everything in container
+        /**
+         * DEPENDENCY REGISTRATION
+         * Register all managers in the container
+         */
         container.register('gameState', gameState);
         container.register('persistence', persistence);
-        // (We already registered 'audio' in the if-else)
         container.register('entityManager', entityManager);
         container.register('ldtkEntityManager', ldtkEntityManager);
         container.register('enemies', enemies);
@@ -116,16 +151,19 @@ export class ManagerFactory {
         container.register('ui', ui);
         container.register('events', events);
 
-        // 9. Initialize managers that need it
+        /**
+         * INITIALIZATION
+         * Initialize managers that require it
+         */
         events.initialize();
         assets.initialize();
 
-        // 10. Return references
+        // Return all manager references
         return {
             assets,
             gameState,
             persistence,
-            audio, // Single shared AudioManager
+            audio,
             entityManager,
             ldtkEntityManager,
             enemies,
@@ -139,6 +177,11 @@ export class ManagerFactory {
             ui
         };
     }
+
+    /**
+     * SINGLETON ACCESSORS
+     * Get or create singleton instances of various managers
+     */
 
     static getAnimationManager() {
         if (!this.animationManager) {

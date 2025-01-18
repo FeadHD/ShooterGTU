@@ -14,7 +14,6 @@ import { Slime } from '../../prefabs/Slime';
 import Drone from '../../prefabs/Drone';
 import Trampoline from '../../prefabs/Trampoline';
 import { Trap } from '../../prefabs/Trap';
-import { TrapManager } from '../../modules/managers/TrapManager';
 import { EnemyManager } from '../../modules/managers/entities/EnemyManager';
 import { EffectsManager } from '../../modules/managers/EffectsManager';
 import { BulletPool } from '../../modules/managers/pools/BulletPool';
@@ -26,6 +25,7 @@ import { DestructibleBlock } from '../../prefabs/DestructibleBlock';
 import { FallingDestructibleBlock } from '../../prefabs/FallingDestructibleBlock';
 import { DisappearingPlatform } from '../../prefabs/DisappearingPlatform';
 import { Turret } from '../../prefabs/Turret';
+import { HazardManager } from '../../modules/managers/entities/HazardManager'; 
 
 export class GameScene1 extends BaseScene {
     constructor() {
@@ -504,7 +504,7 @@ export class GameScene1 extends BaseScene {
     setupRestOfScene() {
         // Initialize managers and UI
         this.gameUI = this.managers.ui;
-        this.trapManager = new TrapManager(this);
+        this.hazardManager = new HazardManager(this);
         this.enemyManager = new EnemyManager(this);
         this.effectsManager = new EffectsManager(this);
         this.bulletPool = new BulletPool(this);
@@ -843,7 +843,7 @@ export class GameScene1 extends BaseScene {
         if (this.platforms) {
             // Create a new trap at the specified coordinates
             const trap = new Trap(this, 835, 448);
-            this.trapManager.traps.add(trap);
+            this.hazardManager.traps.add(trap);
             
             // Enable physics for the trap
             this.physics.world.enable(trap);
@@ -856,7 +856,7 @@ export class GameScene1 extends BaseScene {
             // Set up trap collisions with player
             this.physics.add.overlap(
                 this.player,
-                this.trapManager.traps,
+                this.hazardManager.traps,
                 (player, trap) => trap.damagePlayer(player)
             );
         }

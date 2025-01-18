@@ -1,24 +1,30 @@
-// File: src/modules/managers/AudioManager.js
-// Purpose: Manage BOTH SFX and Music in one file, merged from old AudioManager and “Other MusicManager”
+/**
+ * AudioManager.js
+ * Unified manager for both sound effects (SFX) and background music
+ * Handles volume control, muting, and audio state persistence
+ */
 
 import { BaseManager } from '../di/BaseManager';
 
 export default class AudioManager extends BaseManager {
+    /**
+     * Initialize audio management system
+     * Sets up volume controls and registry listeners
+     */
     constructor(scene) {
         super();
         this.scene = scene;
 
-        // For SFX (sound effects)
-        this.sounds = new Map(); // storing multiple SFX keyed by string
-        this.soundVolume = scene.registry.get('soundVolume') ?? 1;
+        // Sound Effects (SFX) Setup
+        this.sounds = new Map();                                      // Key-value store for sound effects
+        this.soundVolume = scene.registry.get('soundVolume') ?? 1;    // Default volume = 1
         this.isMuted = false;
 
-        // For Music (merging logic from both old MusicManagers)
-        // We keep a single "currentMusic" reference if we only play 1 track at a time.
-        this.currentMusic = null;
-        this.musicVolume = scene.registry.get('musicVolume') ?? 1;
+        // Background Music Setup
+        this.currentMusic = null;                                     // Single track playing at a time
+        this.musicVolume = scene.registry.get('musicVolume') ?? 1;    // Default volume = 1
 
-        // Listen for volume changes for SFX
+        // Volume Change Listeners
         scene.registry.events.on('changedata-soundVolume', (_, newValue) => {
             if (this.soundVolume !== newValue) {
                 this.soundVolume = newValue;
@@ -26,7 +32,6 @@ export default class AudioManager extends BaseManager {
             }
         });
 
-        // Listen for volume changes for music
         scene.registry.events.on('changedata-musicVolume', (_, newValue) => {
             if (this.musicVolume !== newValue) {
                 this.musicVolume = newValue;
@@ -37,9 +42,11 @@ export default class AudioManager extends BaseManager {
         });
     }
 
-    /** ----------------------------------------------------------------
-     *  SFX METHODS (from old AudioManager code)
-     * ----------------------------------------------------------------*/
+    /**
+     * SOUND EFFECTS (SFX) MANAGEMENT
+     */
+
+    // Add new sound to cache without playing
     add(key, config = {}) {
         if (!this.sounds.has(key)) {
             const soundObj = this.scene.sound.add(key, {
@@ -50,8 +57,8 @@ export default class AudioManager extends BaseManager {
         }
     }
 
+    // Play sound effect, create if not cached
     play(key, config = {}) {
-        // If globally muted, do nothing
         if (this.isMuted) return;
 
         let soundObj = this.sounds.get(key);
@@ -68,6 +75,7 @@ export default class AudioManager extends BaseManager {
         }
     }
 
+    // Stop specific sound effect
     stop(key) {
         const soundObj = this.sounds.get(key);
         if (soundObj) {
@@ -75,50 +83,59 @@ export default class AudioManager extends BaseManager {
         }
     }
 
+    // Stop all sound effects
     stopAll() {
         this.sounds.forEach(soundObj => {
             soundObj.stop();
         });
     }
 
+    /**
+     * GLOBAL AUDIO CONTROL
+     */
+
+    // Mute all audio (both SFX and music)
     mute() {
         this.isMuted = true;
 
-        // Pause SFX that is playing
         this.sounds.forEach(soundObj => {
             if (soundObj.isPlaying) {
                 soundObj.pause();
             }
         });
 
-        // Also pause music if playing
         if (this.currentMusic && this.currentMusic.isPlaying) {
             this.currentMusic.pause();
         }
     }
 
+    // Resume all previously playing audio
     unmute() {
         this.isMuted = false;
 
-        // Resume paused SFX
         this.sounds.forEach(soundObj => {
             if (soundObj.isPaused) {
                 soundObj.resume();
             }
         });
 
-        // Resume music if paused
         if (this.currentMusic && this.currentMusic.isPaused) {
             this.currentMusic.resume();
         }
     }
 
+    // Update volume for all sound effects
     _updateAllSoundVolumes() {
         this.sounds.forEach(soundObj => {
             soundObj.setVolume(this.soundVolume);
         });
     }
 
+    /**
+     * VOLUME CONTROL
+     */
+
+    // Update SFX volume and persist to registry
     setSoundVolume(value) {
         if (this.soundVolume === value) return;
         this.soundVolume = value;
@@ -129,6 +146,7 @@ export default class AudioManager extends BaseManager {
         return this.soundVolume;
     }
 
+    // Update music volume and persist to registry
     setMusicVolume(value) {
         if (this.musicVolume === value) return;
         this.musicVolume = value;
@@ -139,60 +157,45 @@ export default class AudioManager extends BaseManager {
         return this.musicVolume;
     }
 
-    /** ----------------------------------------------------------------
-     *  MUSIC METHODS (merged from "Other MusicManager.js")
-     * ----------------------------------------------------------------*/
+    /**
+     * BACKGROUND MUSIC MANAGEMENT
+     */
 
     /**
-     * playMusic(key, config = {})
-     * This new approach (from the other MusicManager) is simpler:
-     *  - If there's current music, we stop it.
-     *  - We create a new Phaser sound for "key" with loop = true by default
-     *  - We apply the musicVolume from registry
-     *  - Then we play it immediately.
+     * Play background music track
+     * Stops current track if different from requested
+     * @param {string} key - Asset key for music track
+     * @param {object} config - Phaser sound config (loop=true by default)
      */
     playMusic(key, config = {}) {
-        // If we already have this music playing, just ensure volume is correct
         if (this.currentMusic?.key === key && this.currentMusic.isPlaying) {
             this.currentMusic.setVolume(this.musicVolume);
             return;
         }
 
-        // Stop current music if it exists
         this.stopMusic();
 
-        // Create new music object
         this.currentMusic = this.scene.sound.add(key, {
-            loop: true, // Typically background music loops
+            loop: true,
             volume: this.musicVolume,
             ...config
         });
 
-        // If globally muted, skip playing it
-        if (this.isMuted) {
-            return;
+        if (!this.isMuted) {
+            this.currentMusic.play();
         }
-
-        // Play it
-        this.currentMusic.play();
     }
 
-    /**
-     * stopMusic()
-     * If there's current music, stop and set null
-     */
+    // Stop and cleanup current music track
     stopMusic() {
         if (this.currentMusic) {
             this.currentMusic.stop();
-            this.currentMusic.destroy();  // Properly cleanup the sound
+            this.currentMusic.destroy();
             this.currentMusic = null;
         }
     }
 
-    /**
-     * playBackgroundMusic(trackKey)
-     * Alias for playMusic with default loop=true
-     */
+    // Convenience method for looping background music
     playBackgroundMusic(trackKey) {
         this.playMusic(trackKey, { loop: true });
     }

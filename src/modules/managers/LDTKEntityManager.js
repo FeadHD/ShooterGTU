@@ -1,19 +1,26 @@
 /**
- * Manages the loading and initialization of entities from LDtk level data.
- * Works in conjunction with LevelLoader and LDTKTileManager to handle entity-specific aspects.
+ * LDTKEntityManager.js
+ * Manages game entities defined in LDtk level editor
+ * Handles entity creation, tracking, and lifecycle management
+ * Provides debug visualization of entity states
  */
 export class LDTKEntityManager {
+    /**
+     * Initialize entity management system
+     * @param {Phaser.Scene} scene - Scene to create entities in
+     */
     constructor(scene) {
         this.scene = scene;
-        this.entityInstances = new Map(); // Store entity instances by their LDtk IID
-        this.entityLayers = new Map();    // Store entities by layer name
-        this.entityFactories = new Map(); // Store entity creation functions by entity type
-        this.debug = false;               // Debug flag
+        this.entityInstances = new Map(); // Track entities by unique ID
+        this.entityLayers = new Map();    // Group entities by layer
+        this.entityFactories = new Map(); // Store creation functions
+        this.debug = false;               // Debug visualization
     }
 
     /**
-     * Initialize entity factories for different entity types
-     * @param {Object} factories - Map of entity types to their factory functions
+     * Register entity creation functions
+     * Maps entity types to their factory methods
+     * @param {Object} factories - Type-to-factory mapping
      */
     registerEntityFactories(factories) {
         Object.entries(factories).forEach(([type, factory]) => {
@@ -22,15 +29,16 @@ export class LDTKEntityManager {
     }
 
     /**
-     * Process and create entities from LDtk level data
-     * @param {Object} levelData - The LDtk level data
-     * @param {number} worldX - World X offset for the level
-     * @param {number} worldY - World Y offset for the level
+     * Create all entities in level
+     * Called when loading new level section
+     * @param {Object} levelData - LDtk level definition
+     * @param {number} worldX - Level X offset
+     * @param {number} worldY - Level Y offset
      */
     createEntities(levelData, worldX = 0, worldY = 0) {
         const layerInstances = levelData.layerInstances || [];
         
-        // Process each layer that contains entities
+        // Process entity-containing layers
         layerInstances.forEach(layer => {
             if (layer.__type === "Entities") {
                 this.processEntityLayer(layer, worldX, worldY);
@@ -39,10 +47,11 @@ export class LDTKEntityManager {
     }
 
     /**
-     * Process a single entity layer
-     * @param {Object} layer - The entity layer data from LDtk
-     * @param {number} worldX - World X offset
-     * @param {number} worldY - World Y offset
+     * Process single entity layer
+     * Creates and tracks all entities in layer
+     * @param {Object} layer - LDtk layer data
+     * @param {number} worldX - World offset X
+     * @param {number} worldY - World offset Y
      */
     processEntityLayer(layer, worldX, worldY) {
         const layerEntities = new Set();
@@ -58,11 +67,12 @@ export class LDTKEntityManager {
     }
 
     /**
-     * Create a single entity instance
-     * @param {Object} entityData - The entity data from LDtk
-     * @param {number} worldX - World X offset
-     * @param {number} worldY - World Y offset
-     * @returns {Object} The created entity instance
+     * Create single game entity
+     * Uses registered factory for entity type
+     * @param {Object} entityData - LDtk entity definition
+     * @param {number} worldX - World position X
+     * @param {number} worldY - World position Y
+     * @returns {Object} Created entity instance
      */
     createEntityInstance(entityData, worldX, worldY) {
         const factory = this.entityFactories.get(entityData.__identifier);
@@ -71,14 +81,14 @@ export class LDTKEntityManager {
             return null;
         }
 
-        // Calculate world position
+        // Convert level to world coordinates
         const x = entityData.px[0] + worldX;
         const y = entityData.px[1] + worldY;
 
-        // Process entity fields
+        // Extract entity properties
         const fields = this.processEntityFields(entityData.fieldInstances);
 
-        // Create the entity using the factory
+        // Instantiate entity
         const entity = factory(this.scene, x, y, fields);
         
         if (this.debug) {
@@ -90,9 +100,10 @@ export class LDTKEntityManager {
     }
 
     /**
-     * Process entity fields from LDtk
-     * @param {Array} fieldInstances - Array of field instances from LDtk
-     * @returns {Object} Processed fields
+     * Process entity custom fields
+     * Extracts properties defined in LDtk
+     * @param {Array} fieldInstances - LDtk field definitions
+     * @returns {Object} Processed field values
      */
     processEntityFields(fieldInstances) {
         const fields = {};
@@ -103,25 +114,28 @@ export class LDTKEntityManager {
     }
 
     /**
-     * Get an entity instance by its LDtk IID
-     * @param {string} iid - The entity's LDtk IID
-     * @returns {Object} The entity instance
+     * Get entity by unique ID
+     * Used for entity relationships
+     * @param {string} iid - LDtk unique identifier
+     * @returns {Object} Entity instance
      */
     getEntityById(iid) {
         return this.entityInstances.get(iid);
     }
 
     /**
-     * Get all entities in a specific layer
-     * @param {string} layerName - The name of the layer
-     * @returns {Set} Set of entities in the layer
+     * Get entities in layer
+     * Used for layer-specific updates
+     * @param {string} layerName - Layer identifier
+     * @returns {Set} Layer's entities
      */
     getEntitiesByLayer(layerName) {
         return this.entityLayers.get(layerName) || new Set();
     }
 
     /**
-     * Clean up entities when transitioning levels or scenes
+     * Reset entity tracking
+     * Called during level transitions
      */
     cleanup() {
         this.entityInstances.clear();
@@ -129,12 +143,14 @@ export class LDTKEntityManager {
     }
 
     /**
-     * Enable or disable debug mode
-     * @param {boolean} enabled - Whether to enable debug mode
+     * Toggle debug visualization
+     * Shows entity counts and distribution
+     * @param {boolean} enabled - Debug state
      */
     setDebug(enabled) {
         this.debug = enabled;
         if (this.debug) {
+            // Create debug overlay
             this.debugText = this.scene.add.text(16, 48, '', {
                 fontFamily: 'Arial',
                 fontSize: '16px',
@@ -150,17 +166,20 @@ export class LDTKEntityManager {
     }
 
     /**
-     * Update debug text with current entity counts
+     * Update debug statistics
+     * Shows current entity counts
      */
     updateDebugText() {
         if (!this.debug || !this.debugText) return;
 
+        // Count entities by type
         const counts = {};
         this.entityInstances.forEach(entity => {
             const type = entity.constructor.name;
             counts[type] = (counts[type] || 0) + 1;
         });
 
+        // Format debug display
         const text = [
             'LDTKEntityManager Debug:',
             `Total Entities: ${this.entityInstances.size}`,

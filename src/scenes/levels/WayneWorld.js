@@ -143,7 +143,7 @@ export class WayneWorld extends BaseScene {
         // Get managers from container
         this.ldtkEntityManager = this.managers.ldtkEntityManager;
         this.enemyManager = this.managers.enemies;
-        this.trapManager = this.managers.traps;
+        this.hazardManager = this.managers.hazards;
         this.bulletPool = this.managers.bullets;
         this.effectsManager = this.managers.effects;
 

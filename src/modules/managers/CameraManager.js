@@ -1,41 +1,52 @@
+/**
+ * CameraManager.js
+ * Controls game camera behavior, following, and transitions
+ * Handles progressive level loading and intro sequences
+ * Manages camera bounds and UI camera separation
+ */
+
 export class CameraManager {
+    /**
+     * Initialize camera system with level dimensions
+     * Sets up following, deadzone, and progressive loading settings
+     */
     constructor(scene, levelWidth = 3840, levelHeight = 1080) {
         this.scene = scene;
         this.camera = scene.cameras.main;
         this.isIntroPlaying = false;
         this.defaultZoom = 1.5;
-        this.player = null; // To be assigned later
-        
-        // Get game dimensions
+        this.player = null;
+
+        // Game dimensions
         const { width, height } = scene.scale;
         this.gameWidth = width;
         this.gameHeight = height;
-        
-        // Level dimensions from parameters or default to level 1 size
         this.levelWidth = levelWidth;
         this.levelHeight = levelHeight;
 
-        // Find UI camera if it exists
+        // Separate UI camera from main camera
         this.uiCamera = scene.cameras.cameras.find(cam => cam !== this.camera);
-
-        // Store active tweens
         this.introTweens = [];
 
-        // Camera settings from CombinedLevelCamera
-        this.followOffsetX = width / 8; // Small offset to the right (1/8 of screen width)
+        // Camera follow settings
+        this.followOffsetX = width / 8;     // Offset right by 1/8 screen
         this.followOffsetY = 0;
-        this.followLerpX = 0.1;
+        this.followLerpX = 0.1;             // Smooth follow interpolation
         this.followLerpY = 0.1;
-        this.deadZoneWidth = width / 4; // Keep smaller deadzone for smooth movement
+        this.deadZoneWidth = width / 4;     // Player movement buffer zone
         this.deadZoneHeight = height / 4;
 
-        // Progressive loading properties
+        // Progressive level loading settings
         this.lastUpdateTime = performance.now();
-        this.updateInterval = 100; // Update every 100ms
-        this.loadBuffer = 2; // Number of sections to keep loaded
-        this.sectionWidth = 640; // Width of each section in pixels
+        this.updateInterval = 100;          // Check every 100ms
+        this.loadBuffer = 2;                // Keep 2 sections loaded
+        this.sectionWidth = 640;            // Section size in pixels
     }
 
+    /**
+     * Set up camera with player and level bounds
+     * Initializes following, zoom, and rendering settings
+     */
     init({ player, levelBounds }) {
         if (!player) {
             console.warn('CameraManager: No player provided for initialization');
@@ -44,20 +55,17 @@ export class CameraManager {
 
         this.player = player;
         
-        // Ensure camera exists
         if (!this.camera) {
             console.warn('CameraManager: Camera not found');
             return;
         }
 
-        // Initialize camera bounds with level dimensions
+        // Set camera bounds from level or default dimensions
         const width = levelBounds?.width || this.levelWidth;
         const height = levelBounds?.height || this.levelHeight;
-        
-        // Set camera bounds to full level width and height
         this.camera.setBounds(0, 0, width, height);
-        this.levelWidth = width;  // Update levelWidth to match bounds
-        this.levelHeight = height;  // Update levelHeight to match bounds
+        this.levelWidth = width;
+        this.levelHeight = height;
         
         console.log("Camera Bounds set to:", { 
             width, 
@@ -65,45 +73,47 @@ export class CameraManager {
             playerPos: { x: player.x, y: player.y }
         });
         
-        // Set up camera to follow player with lerp
+        // Configure camera properties
         this.camera.startFollow(player, true, this.followLerpX, this.followLerpY);
         this.camera.setZoom(this.defaultZoom);
-        this.camera.setRoundPixels(true);  // Enable pixel-perfect rendering
-        
-        // Set up deadzone for smoother camera movement
+        this.camera.setRoundPixels(true);
         this.camera.setDeadzone(this.deadZoneWidth, this.deadZoneHeight);
-        
-        // Offset camera slightly to the right
         this.camera.setFollowOffset(-this.followOffsetX, this.followOffsetY);
 
-        // Make sure UI camera ignores game objects
+        // Update UI camera settings if UI exists
         if (this.scene.gameUI) {
             this.scene.gameUI.updateCameraIgnoreList();
         }
     }
 
+    /**
+     * Basic camera setup for following player
+     * Used when full initialization isn't needed
+     */
     setupCamera() {
         console.log('Setting up camera');
-        // Add your camera setup logic here
         const camera = this.scene.cameras.main;
-        camera.startFollow(this.scene.player); // Example: follow the player
+        camera.startFollow(this.scene.player);
     }
 
+    /**
+     * Update camera bounds and check for progressive loading
+     * Called every frame when not in intro sequence
+     */
     update() {
         if (!this.player || this.isIntroPlaying) return;
         
+        // Throttle updates to updateInterval
         const now = performance.now();
         if (now - this.lastUpdateTime < this.updateInterval) return;
         this.lastUpdateTime = now;
 
-        // Safety check for camera
         if (!this.camera || !this.camera.bounds) return;
 
-        // Get current level
+        // Update bounds based on current level
         const currentLevel = this.scene.currentLevel || 0;
         const levelWidth = this.scene.scale.width;
         
-        // Calculate camera bounds for current level
         const targetBounds = {
             x: currentLevel * levelWidth,
             y: 0,
@@ -111,7 +121,7 @@ export class CameraManager {
             height: this.scene.scale.height
         };
 
-        // Check if bounds need updating
+        // Only update bounds if they've changed
         const boundsChanged = 
             this.camera.bounds.x !== targetBounds.x ||
             this.camera.bounds.y !== targetBounds.y ||
@@ -128,24 +138,24 @@ export class CameraManager {
             console.log("Camera Bounds:", { x: targetBounds.x, y: targetBounds.y, width: targetBounds.width, height: targetBounds.height });
         }
 
-        // Check for progressive loading if the scene supports it
         this.checkProgressiveLoading();
     }
 
+    /**
+     * Check and trigger progressive level loading
+     * Loads sections ahead of and behind player position
+     */
     checkProgressiveLoading() {
-        // Early return if player or loadLevelSection doesn't exist
         if (!this.player || !this.scene.loadLevelSection) return;
 
-        // Get player section
         const playerX = this.player.x;
         if (typeof playerX === 'undefined') return;
 
-        // Calculate which section the player is in
         const playerSection = Math.floor(playerX / this.sectionWidth);
         
-        // Load sections around player
         if (this.scene.loadLevelSection) {
-            const sectionsToLoad = [-1, 0, 1]; // Load previous, current, and next sections
+            // Load previous, current, and next sections
+            const sectionsToLoad = [-1, 0, 1];
             sectionsToLoad.forEach(offset => {
                 const sectionToLoad = playerSection + offset;
                 if (sectionToLoad >= 0) {
@@ -155,6 +165,9 @@ export class CameraManager {
         }
     }
 
+    /**
+     * Reset camera bounds to full level dimensions
+     */
     updateCameraBounds() {
         if (!this.camera) return;
         
@@ -162,15 +175,18 @@ export class CameraManager {
         console.log("Camera Bounds:", { x: 0, y: 0, width: this.levelWidth, height: this.levelHeight });
     }
 
+    /**
+     * Play camera intro sequence
+     * Pans to player position with easing
+     */
     playIntroSequence(player) {
         this.isIntroPlaying = true;
         this.player = player;
 
-        // Store current camera position
         const startX = this.camera.scrollX;
         const startY = this.camera.scrollY;
 
-        // Create pan tween
+        // Pan camera to player
         this.introTweens.push(
             this.scene.tweens.add({
                 targets: this.camera,
@@ -185,16 +201,19 @@ export class CameraManager {
         );
     }
 
+    /**
+     * Stop intro sequence and resume normal camera following
+     */
     stopIntroSequence() {
         this.isIntroPlaying = false;
         
-        // Stop all intro tweens
+        // Clean up tweens
         this.introTweens.forEach(tween => {
             if (tween.isPlaying) tween.stop();
         });
         this.introTweens = [];
 
-        // Resume normal camera following
+        // Resume player following
         if (this.player) {
             this.camera.startFollow(this.player, true, this.followLerpX, this.followLerpY);
         }

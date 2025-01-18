@@ -1,8 +1,3 @@
-
-=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/modules/managers/TrapManager.js ===
-4:export class TrapManager {
-
-
 === /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/modules/managers/StateManager.js ===
 2:export class StateManager {
 

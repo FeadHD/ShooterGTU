@@ -1,11 +1,22 @@
+/**
+ * AnimationManager.js
+ * Manages sprite animations for all game entities
+ * Handles creation, playback, and validation of animations
+ */
+
 export class AnimationManager {
+    /**
+     * Initialize animation system
+     * @param {Phaser.Scene} scene - Scene to attach animations to
+     */
     constructor(scene) {
         this.scene = scene;
         this.initialized = false;
     }
 
     /**
-     * Initialize all game animations
+     * Initialize all game animations if not already done
+     * Called once at scene startup
      */
     initialize() {
         if (!this.initialized) {
@@ -15,14 +26,18 @@ export class AnimationManager {
     }
 
     /**
-     * Check if an animation exists
+     * Check if animation exists in scene
+     * @param {string} key - Animation identifier
      */
     hasAnimation(key) {
         return this.scene.anims.exists(key);
     }
 
     /**
-     * Play an animation on a game object if it exists
+     * Play animation on game object
+     * @param {Phaser.GameObjects.Sprite} gameObject - Target sprite
+     * @param {string} key - Animation to play
+     * @param {boolean} ignoreIfPlaying - Skip if already playing
      */
     play(gameObject, key, ignoreIfPlaying = true) {
         if (this.hasAnimation(key)) {
@@ -32,32 +47,44 @@ export class AnimationManager {
         return false;
     }
 
+    /**
+     * Create bullet projectile animation
+     * Two-frame looping animation
+     */
     createBulletAnimation() {
         if (!this.scene.anims.exists('bullet')) {
             this.scene.anims.create({
                 key: 'bullet',
                 frames: this.scene.anims.generateFrameNumbers('bullet', { start: 0, end: 1 }),
                 frameRate: 10,
-                repeat: -1
+                repeat: -1        // Loop indefinitely
             });
         }
     }
 
+    /**
+     * Create hit impact effect animation
+     * Quick five-frame sequence
+     */
     createHitEffectAnimation() {
         if (!this.scene.anims.exists('hit-effect')) {
             this.scene.anims.create({
                 key: 'hit-effect',
                 frames: this.scene.anims.generateFrameNumbers('hit-effect', { start: 0, end: 4 }),
                 frameRate: 15,
-                repeat: 0
+                repeat: 0         // Play once
             });
         }
     }
 
+    /**
+     * Create player character animations
+     * Includes idle, run, jump, fall, and roll states
+     */
     createCharacterAnimations() {
         console.log('Creating character animations...');
 
-        // Idle animation
+        // Idle animation - Continuous loop
         if (!this.scene.anims.exists('character_Idle')) {
             this.scene.anims.create({
                 key: 'character_Idle',
@@ -67,7 +94,7 @@ export class AnimationManager {
             });
         }
 
-        // Run animation
+        // Run animation - Continuous movement
         if (!this.scene.anims.exists('character_Run')) {
             this.scene.anims.create({
                 key: 'character_Run',
@@ -77,7 +104,7 @@ export class AnimationManager {
             });
         }
 
-        // Jump animation
+        // Jump animation - Single upward motion
         if (!this.scene.anims.exists('character_Jump')) {
             this.scene.anims.create({
                 key: 'character_Jump',
@@ -87,7 +114,7 @@ export class AnimationManager {
             });
         }
 
-        // Fall animation
+        // Fall animation - Single downward motion
         if (!this.scene.anims.exists('character_Fall')) {
             this.scene.anims.create({
                 key: 'character_Fall',
@@ -97,7 +124,7 @@ export class AnimationManager {
             });
         }
 
-        // Rollover animation
+        // Rollover animation - Evasive maneuver
         if (!this.scene.anims.exists('character_Rollover')) {
             this.scene.anims.create({
                 key: 'character_Rollover',
@@ -111,8 +138,12 @@ export class AnimationManager {
         console.log('Available animations:', Object.keys(this.scene.anims.anims.entries));
     }
 
+    /**
+     * Create enemy NPC animations
+     * Basic movement and attack sequences
+     */
     createEnemyAnimations() {
-        // Enemy idle animation
+        // Idle state - Continuous patrol
         if (!this.scene.anims.exists('enemy-idle')) {
             this.scene.anims.create({
                 key: 'enemy-idle',
@@ -122,7 +153,7 @@ export class AnimationManager {
             });
         }
 
-        // Enemy run animation
+        // Chase state - Faster movement
         if (!this.scene.anims.exists('enemy-run')) {
             this.scene.anims.create({
                 key: 'enemy-run',
@@ -132,7 +163,7 @@ export class AnimationManager {
             });
         }
 
-        // Enemy attack animation
+        // Attack sequence - Single strike
         if (!this.scene.anims.exists('enemy-attack')) {
             this.scene.anims.create({
                 key: 'enemy-attack',
@@ -143,16 +174,20 @@ export class AnimationManager {
         }
     }
 
+    /**
+     * Create warrior enemy animations
+     * Complex state machine with multiple actions
+     */
     createWarriorAnimations() {
         const animConfigs = {
-            'IDLE': { endFrame: 5, repeat: -1, frameRate: 8 },
-            'WALK': { endFrame: 7, repeat: -1, frameRate: 8 },
+            'IDLE': { endFrame: 5, repeat: -1, frameRate: 8 },      // Patrol state
+            'WALK': { endFrame: 7, repeat: -1, frameRate: 8 },      // Slow movement
             'ATTACK': { endFrame: 6, repeat: 0, frameRate: 12, spriteKey: 'enemymeleewarrior_ATTACK 1' },
-            'DEATH': { endFrame: 8, repeat: 0, frameRate: 8 },
-            'HURT': { endFrame: 3, repeat: 0, frameRate: 10 },
-            'DEFEND': { endFrame: 3, repeat: 0, frameRate: 8 },
-            'RUN': { endFrame: 7, repeat: -1, frameRate: 12 },
-            'JUMP': { endFrame: 3, repeat: 0, frameRate: 8 }
+            'DEATH': { endFrame: 8, repeat: 0, frameRate: 8 },      // Defeat sequence
+            'HURT': { endFrame: 3, repeat: 0, frameRate: 10 },      // Damage reaction
+            'DEFEND': { endFrame: 3, repeat: 0, frameRate: 8 },     // Block stance
+            'RUN': { endFrame: 7, repeat: -1, frameRate: 12 },      // Chase state
+            'JUMP': { endFrame: 3, repeat: 0, frameRate: 8 }        // Leap attack
         };
 
         Object.entries(animConfigs).forEach(([key, config]) => {
@@ -174,45 +209,57 @@ export class AnimationManager {
         });
     }
 
+    /**
+     * Create zapper enemy animations
+     * Electrical attack patterns
+     */
     createZapperAnimations(scene) {
         scene.anims.create({
             key: 'zapper_idle',
             frames: scene.anims.generateFrameNumbers('zapper_idle', { start: 0, end: 3 }),
             frameRate: 8,
-            repeat: -1
+            repeat: -1           // Continuous patrol
         });
     
         scene.anims.create({
             key: 'zapper_wake',
             frames: scene.anims.generateFrameNumbers('zapper_wake', { start: 0, end: 5 }),
             frameRate: 10,
-            repeat: 0
+            repeat: 0            // Activation sequence
         });
     
         scene.anims.create({
             key: 'zapper_walk',
             frames: scene.anims.generateFrameNumbers('zapper_walk', { start: 0, end: 7 }),
             frameRate: 12,
-            repeat: -1
+            repeat: -1           // Chase movement
         });
     
         scene.anims.create({
             key: 'zapper_shock',
             frames: scene.anims.generateFrameNumbers('zapper_shock', { start: 0, end: 5 }),
             frameRate: 15,
-            repeat: 0
+            repeat: 0            // Electric attack
         });
     }
 
+    /**
+     * Create projectile animations
+     * Bullet travel effects
+     */
     createBulletAnimations(scene) {
         scene.anims.create({
             key: 'bullet-travel',
             frames: scene.anims.generateFrameNumbers('bullet', { start: 0, end: 7 }),
             frameRate: 16,
-            repeat: -1
+            repeat: -1           // Continuous motion
         });
     }
 
+    /**
+     * Initialize all game animations
+     * Called once during scene setup
+     */
     createAllAnimations() {
         console.log('Creating all game animations...');
         this.createBulletAnimation();

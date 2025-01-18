@@ -25,7 +25,6 @@
 /home/kdsm/TKU/DECEMBER202024/ShooterGTU/scripts/../src/modules/state/Store.js
 /home/kdsm/TKU/DECEMBER202024/ShooterGTU/scripts/../src/modules/state/GameStateManager.js
 /home/kdsm/TKU/DECEMBER202024/ShooterGTU/scripts/../src/modules/controls/PlayerController.js
-/home/kdsm/TKU/DECEMBER202024/ShooterGTU/scripts/../src/modules/managers/TrapManager.js
 /home/kdsm/TKU/DECEMBER202024/ShooterGTU/scripts/../src/modules/managers/state/PersistenceManager.js
 /home/kdsm/TKU/DECEMBER202024/ShooterGTU/scripts/../src/modules/managers/state/GameStateManager.js
 /home/kdsm/TKU/DECEMBER202024/ShooterGTU/scripts/../src/modules/managers/StateManager.js

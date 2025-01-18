@@ -1,24 +1,39 @@
+/**
+ * Settings.js
+ * Main settings scene that provides access to controls and sound configuration.
+ * Handles both standalone settings access and in-game pause menu settings.
+ */
+
 import 'phaser';
 
 export default class Settings extends Phaser.Scene {
     constructor() {
         super('Settings');
-        this.isMusicOn = true;
-        this.fromPause = false;
-        this.parentScene = null;
+        this.isMusicOn = true;          // Music toggle state
+        this.fromPause = false;         // Whether accessed from pause menu
+        this.parentScene = null;        // Reference to paused game scene
     }
 
+    /**
+     * ASSET LOADING
+     * Load required images, fonts, and sounds
+     */
     preload() {
         this.load.image('settingsBackground', 'assets/settings/settings.png');
         this.load.font('Gameplay', 'assets/fonts/retronoid/Gameplay.ttf');
         this.load.audio('confirmSound', 'assets/sounds/confirmation.mp3');
     }
 
+    /**
+     * SCENE INITIALIZATION
+     * Setup scene state based on how it was launched
+     */
     init(data) {
+        // Store navigation context
         this.fromPause = data?.fromPause || false;
         this.parentScene = data?.parentScene;
         
-        // If we're coming from pause menu, make sure parent scene stays paused
+        // Maintain pause state when accessed from game
         if (this.fromPause && this.parentScene) {
             const gameScene = this.scene.get(this.parentScene);
             if (gameScene) {
@@ -34,18 +49,22 @@ export default class Settings extends Phaser.Scene {
         }
     }
 
+    /**
+     * SCENE CREATION
+     * Build the settings menu interface
+     */
     create() {
         const { width: canvasWidth, height: canvasHeight } = this.cameras.main;
 
-        // Store the fromPause and parentScene values passed from PauseMenu
+        // Get navigation context from scene data
         this.fromPause = this.scene.settings.data?.fromPause;
         this.parentScene = this.scene.settings.data?.parentScene;
 
-        // Add background
+        // Setup background
         const bg = this.add.image(canvasWidth / 2, canvasHeight / 2, 'settingsBackground');
         bg.setDisplaySize(canvasWidth, canvasHeight);
 
-        // Add title
+        // Add settings title
         this.add.text(canvasWidth / 2, canvasHeight * 0.2, 'SETTINGS', {
             fontFamily: 'Gameplay',
             fontSize: '64px',
@@ -55,10 +74,13 @@ export default class Settings extends Phaser.Scene {
             fontWeight: 'bold'
         }).setOrigin(0.5);
 
-        // Helper function to play confirmation sound
+        /**
+         * SOUND EFFECT HANDLER
+         * Plays confirmation sound with proper volume
+         */
         const playConfirmSound = () => {
-            const sfxVolume = this.registry.get('sfxVolume') ?? 1;  // Use nullish coalescing
-            // Do not create or play any sound if volume is 0
+            const sfxVolume = this.registry.get('sfxVolume') ?? 1;
+            // Only create sound if volume > 0
             if (sfxVolume !== 0 && Number.isFinite(sfxVolume)) {
                 const confirmSound = this.sound.add('confirmSound');
                 confirmSound.setVolume(sfxVolume);
@@ -69,7 +91,11 @@ export default class Settings extends Phaser.Scene {
             }
         };
 
-        // Add Controls button
+        /**
+         * NAVIGATION BUTTONS
+         * Create interactive menu buttons with hover effects
+         */
+        // Controls settings button
         const controlsButton = this.add.text(canvasWidth / 2, canvasHeight * 0.4, 'Controls', {
             fontFamily: 'Gameplay',
             fontSize: '48px',
@@ -87,7 +113,7 @@ export default class Settings extends Phaser.Scene {
                 this.scene.start('ControlsSettings', { fromPause: this.fromPause, parentScene: this.parentScene });
             });
 
-        // Add Sound Settings button
+        // Sound settings button
         const soundButton = this.add.text(canvasWidth / 2, canvasHeight * 0.5, 'Sound Settings', {
             fontFamily: 'Gameplay',
             fontSize: '48px',
@@ -105,7 +131,7 @@ export default class Settings extends Phaser.Scene {
                 this.scene.start('SoundSettings', { fromPause: this.fromPause, parentScene: this.parentScene });
             });
 
-        // Add Back button
+        // Back navigation button
         const backButton = this.add.text(canvasWidth / 2, canvasHeight * 0.8, 'Back', {
             fontFamily: 'Gameplay',
             fontSize: '48px',
@@ -121,7 +147,7 @@ export default class Settings extends Phaser.Scene {
             .on('pointerdown', () => {
                 playConfirmSound();
                 if (this.fromPause) {
-                    // Return to pause menu and ensure game stays paused
+                    // Return to pause menu while maintaining game pause state
                     const gameScene = this.scene.get(this.parentScene);
                     if (gameScene) {
                         gameScene.scene.pause();
@@ -133,7 +159,7 @@ export default class Settings extends Phaser.Scene {
                             }
                         }
                     }
-                    // Resume the pause menu scene instead of launching a new one
+                    // Resume existing pause menu or create new one
                     const pauseMenu = this.scene.get('PauseMenu');
                     if (pauseMenu) {
                         this.scene.wake('PauseMenu');
@@ -149,8 +175,11 @@ export default class Settings extends Phaser.Scene {
             });
     }
 
+    /**
+     * SETTINGS PERSISTENCE
+     * Save current settings to local storage
+     */
     saveSettings() {
-        // Save current settings to local storage
         const settings = {
             // Add your settings here
             timestamp: Date.now() // Add timestamp for versioning

@@ -1,3 +1,9 @@
+/**
+ * EnemyManager.js
+ * Manages enemy entities in the game, including their lifecycle, combat interactions,
+ * and level progression tracking. Extends EntityManager for core entity functionality.
+ */
+
 import { EntityManager } from './EntityManager';
 import { GameConfig } from '../../../config/GameConfig';
 import { GameEvents } from '../../../modules/managers/EventManager';
@@ -14,59 +20,72 @@ import { GameEvents } from '../../../modules/managers/EventManager';
  * - EventBus: Game-wide event communication
  */
 export class EnemyManager extends EntityManager {
+    /**
+     * Initialize the enemy management system
+     * @param {Phaser.Scene} scene - The game scene this manager belongs to
+     */
     constructor(scene) {
         super(scene);
-        this.remainingEnemies = 0;
+        this.remainingEnemies = 0; // Tracks enemies for level completion
     }
 
     /** 
-     * Adds an enemy to the manager with compatibility layer.
+     * Register a new enemy with the management system
      * 
-     * Integration Patterns:
-     * 1. Event-based: Uses 'healthChanged' and 'died' events
-     * 2. Traditional: Direct health property management
+     * Features:
+     * - Supports both modern (event-based) and legacy enemies
+     * - Automatically sets up health tracking
+     * - Initializes event listeners for health and death
      * 
      * @param {Object} enemy - Enemy instance to manage
-     * @param {Phaser.GameObjects.Sprite} sprite - Enemy's sprite reference
-     * @param {number} [health] - Initial health for traditional enemies
+     * @param {Phaser.GameObjects.Sprite} sprite - Enemy's visual representation
+     * @param {number} [health] - Starting health for legacy enemies
      */
     addEnemy(enemy, sprite, health) {
         super.add(enemy, 'enemy');
         this.remainingEnemies++;
 
+        // Set up appropriate health tracking system
         if (typeof enemy.on === 'function') {
+            // Modern event-based enemy
             enemy.on('healthChanged', this.handleEnemyHealthChanged.bind(this));
             enemy.on('died', this.handleEnemyDeath.bind(this));
         } else if (health !== undefined) {
+            // Legacy enemy with direct property access
             enemy.currentHealth = health;
             enemy.maxHealth = health;
         }
     }
 
     /** 
-     * Collision resolution between bullets and enemies.
+     * Process bullet collision with enemy
      * 
-     * System Interactions:
-     * 1. EffectsManager: Hit effects and sounds
-     * 2. Health System: Damage calculation and application
-     * 3. Death System: Cleanup and event emission
+     * Workflow:
+     * 1. Trigger hit effects (visual/audio)
+     * 2. Calculate and apply damage
+     * 3. Check for death condition
+     * 4. Clean up bullet
      * 
-     * @param {Phaser.GameObjects.GameObject} bullet - The bullet that hit
-     * @param {Phaser.GameObjects.Sprite} enemySprite - The enemy's sprite that was hit
+     * @param {Phaser.GameObjects.GameObject} bullet - Colliding bullet
+     * @param {Phaser.GameObjects.Sprite} enemySprite - Hit enemy sprite
      */
     handleBulletHit(bullet, enemySprite) {
+        // Visual and audio feedback
         if (this.scene.effectsManager) {
             this.scene.effectsManager.createHitEffect(bullet.x, bullet.y);
             this.scene.effectsManager.playSound('hit');
         }
 
+        // Damage application
         const enemy = this.getEnemyBySprite(enemySprite);
         if (enemy) {
             const damage = bullet.damage || GameConfig.PLAYER.DAMAGE || 1;
 
             if (typeof enemy.takeDamage === 'function') {
+                // Modern enemy with damage handler
                 enemy.takeDamage(damage);
             } else {
+                // Legacy enemy with direct health manipulation
                 enemy.currentHealth -= damage;
                 
                 if (enemy.updateHealthBar) {
@@ -80,34 +99,36 @@ export class EnemyManager extends EntityManager {
             }
         }
 
+        // Cleanup collided bullet
         if (bullet?.destroy) bullet.destroy();
     }
 
     /** 
-     * Event handler for health changes. Broadcasts to EventBus for:
-     * - UI updates
-     * - Achievement tracking
-     * - Sound effects
+     * Broadcast enemy health changes to interested systems
+     * Used for UI updates, achievements, and sound effects
      * 
-     * @param {Object} enemy - Enemy whose health changed
+     * @param {Object} enemy - Enemy with changed health
      */
     handleEnemyHealthChanged(enemy) {
         this.eventBus.emit('enemyHealthChanged', { enemy });
     }
 
     /** 
-     * Death processing pipeline:
-     * 1. Entity cleanup (EntityManager)
-     * 2. Counter management (remainingEnemies)
-     * 3. Score system integration
-     * 4. Level progression check
+     * Process enemy death event
      * 
-     * @param {Object} enemy - Enemy that died
+     * Actions:
+     * 1. Remove from management system
+     * 2. Update enemy counter
+     * 3. Award score points
+     * 4. Check level completion
+     * 
+     * @param {Object} enemy - Defeated enemy
      */
     handleEnemyDeath(enemy) {
         this.remove(enemy, 'enemy');
         this.remainingEnemies--;
 
+        // Award points based on enemy type
         const points = enemy.isBoss ? 50 : 10;
         if (this.scene.gameState?.increment) {
             this.scene.gameState.increment('score', points);
@@ -117,19 +138,19 @@ export class EnemyManager extends EntityManager {
     }
 
     /** 
-     * Entity lookup by sprite reference.
-     * Used by collision system to map sprites back to entities.
+     * Find enemy entity from sprite reference
+     * Essential for collision system sprite-to-entity mapping
      * 
      * @param {Phaser.GameObjects.Sprite} sprite - Sprite to look up
-     * @returns {Object} Associated enemy entity
+     * @returns {Object} Matching enemy entity or undefined
      */
     getEnemyBySprite(sprite) {
         return this.getAll('enemy').find(enemy => enemy.sprite === sprite);
     }
 
     /** 
-     * Level completion check.
-     * Triggers game progression via EventBus when all enemies are defeated.
+     * Check and handle level completion
+     * Emits 'levelComplete' when all enemies are defeated
      */
     checkLevelComplete() {
         if (this.remainingEnemies <= 0) {

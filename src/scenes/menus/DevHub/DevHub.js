@@ -1,32 +1,42 @@
+/**
+ * DevHub.js
+ * A developer tools scene providing quick access to game levels, documentation, and sound testing.
+ * Features a Matrix-style background and dropdown menus for navigation.
+ */
+
 import { Scene } from 'phaser';
 import { createRetroButton } from '../ui-helpers';
 
 export class DevHub extends Scene {
     constructor() {
         super({ key: 'DevHub' });
-        this.buttonY = 0;
-        this.currentOpenDropdown = null;
-        this.baseDropdownDepth = 10;
+        this.buttonY = 0;                     // Tracks vertical position for UI elements
+        this.currentOpenDropdown = null;      // Reference to currently open dropdown
+        this.baseDropdownDepth = 10;          // Base z-index for dropdowns
         this.currentMaxDepth = this.baseDropdownDepth;
     }
 
+    /**
+     * SCENE INITIALIZATION
+     * Sets up the developer hub interface with Matrix background and UI sections
+     */
     create() {
         this.cameras.main.setBackgroundColor('#2c3e50');
         
-        // Create Matrix background
+        // Create animated Matrix-style background
         this.createMatrixBackground();
         
-        // Create a dark overlay to improve text readability
+        // Add semi-transparent overlay for better readability
         this.add.rectangle(0, 0, this.cameras.main.width, this.cameras.main.height, 0x000000, 0.7)
             .setOrigin(0)
             .setDepth(1);
 
-        // Create containers for different sections with proper depth
-        this.mainContainer = this.add.container(0, 0).setDepth(2);
-        this.dropdownContainer = this.add.container(0, 0).setDepth(10);
-        this.activeDropdownContainer = this.add.container(0, 0).setDepth(1000);
+        // Setup layered containers for UI elements
+        this.mainContainer = this.add.container(0, 0).setDepth(2);          // Base UI elements
+        this.dropdownContainer = this.add.container(0, 0).setDepth(10);     // Inactive dropdowns
+        this.activeDropdownContainer = this.add.container(0, 0).setDepth(1000); // Active dropdown
 
-        // Title
+        // Hub title
         const title = this.add.text(
             this.cameras.main.centerX,
             80,
@@ -37,13 +47,14 @@ export class DevHub extends Scene {
 
         this.buttonY = 150;
 
+        // Create main sections with spacing
         this.createQuickLaunchSection();
-        this.buttonY += 20;  // Add extra spacing between sections
+        this.buttonY += 20;
         this.createDocumentationSection();
-        this.buttonY += 20;  // Add extra spacing between sections
+        this.buttonY += 20;
         this.createSoundTestingSection();
 
-        // Back button
+        // Add return to main menu button
         const backButton = this.add.text(
             this.cameras.main.centerX,
             this.cameras.main.height - 50,
@@ -58,8 +69,12 @@ export class DevHub extends Scene {
         this.mainContainer.add(backButton);
     }
 
+    /**
+     * QUICK LAUNCH SECTION
+     * Creates dropdown for quick access to different game levels
+     */
     createQuickLaunchSection() {
-        // Section title
+        // Section header
         const sectionTitle = this.add.text(
             this.cameras.main.centerX,
             this.buttonY,
@@ -69,6 +84,7 @@ export class DevHub extends Scene {
         this.mainContainer.add(sectionTitle);
         this.buttonY += 50;
 
+        // Level selection dropdown
         this.createDropdown('Select Level...', [
             { key: 'GameScene1', title: 'Game Scene 1' },
             { key: 'CombinedGtuLevel', title: 'Combined GTU Level' },
@@ -77,22 +93,22 @@ export class DevHub extends Scene {
         ]);
     }
 
+    /**
+     * DOCUMENTATION SECTION
+     * Creates dropdown menu for accessing game documentation
+     */
     createDocumentationSection() {
-        // Section title
+        // Section header
         const docTitle = this.add.text(
             this.cameras.main.centerX,
             this.buttonY,
             'Documentation:',
-            {
-                fontSize: '24px',
-                fill: '#00ff00',
-                fontFamily: 'Courier'
-            }
+            { fontSize: '24px', fill: '#00ff00', fontFamily: 'Courier' }
         ).setOrigin(0.5).setDepth(2);
         this.mainContainer.add(docTitle);
         this.buttonY += 40;
 
-        // Documentation files from the docs directory
+        // List of available documentation files
         const documentationFiles = [
             { path: 'animation-manager-documentation.html', title: 'Animation Manager' },
             { path: 'arcade-physics-documentation.html', title: 'Arcade Physics' },
@@ -122,26 +138,32 @@ export class DevHub extends Scene {
             { path: 'ui-manager-documentation.html', title: 'UI Manager' }
         ];
 
-        // Create dropdown items with proper formatting
+        // Create documentation dropdown
         const dropdownItems = documentationFiles.map(doc => ({
             key: doc.path.replace('.html', ''),
             title: doc.title,
             path: doc.path
         }));
 
-        // Create the dropdown with the documentation items
         this.createDropdown('Select Documentation...', dropdownItems);
     }
 
+    /**
+     * Opens documentation in new window/tab
+     */
     handleDocumentationSelect(item) {
-        // Open documentation in a new window/tab
         if (item && item.path) {
             const docPath = `${window.location.origin}/docs/${item.path}`;
             window.open(docPath, '_blank');
         }
     }
 
+    /**
+     * SOUND TESTING SECTION
+     * Creates button to access sound testing interface
+     */
     createSoundTestingSection() {
+        // Section header
         const sectionTitle = this.add.text(
             this.cameras.main.centerX,
             this.buttonY,
@@ -151,6 +173,7 @@ export class DevHub extends Scene {
         this.mainContainer.add(sectionTitle);
         this.buttonY += 50;
 
+        // Sound tester launch button
         const soundTesterButton = this.add.text(
             this.cameras.main.centerX,
             this.buttonY,
@@ -167,9 +190,13 @@ export class DevHub extends Scene {
         this.buttonY += 40;
     }
 
+    /**
+     * DROPDOWN MANAGEMENT
+     * Handles closing of currently open dropdown menu
+     */
     closeDropdown() {
         if (this.currentOpenDropdown) {
-            // Move elements back to regular container
+            // Return elements to default container
             this.dropdownContainer.add([
                 this.currentOpenDropdown.header,
                 this.currentOpenDropdown.optionsContainer
@@ -178,6 +205,7 @@ export class DevHub extends Scene {
                 this.dropdownContainer.add(this.currentOpenDropdown.scrollbar);
             }
             
+            // Reset dropdown state
             this.currentOpenDropdown.isOpen = false;
             this.currentOpenDropdown.arrow.setText('▼');
             this.currentOpenDropdown.optionsContainer.setVisible(false);
@@ -188,85 +216,83 @@ export class DevHub extends Scene {
         }
     }
 
+    /**
+     * Updates z-index for dropdown components
+     */
     setDropdownDepth(dropdownState, depth) {
-        // Set depths for all dropdown components
+        // Set depths for container elements
         dropdownState.header.setDepth(depth);
         dropdownState.optionsContainer.setDepth(depth + 1);
         if (dropdownState.scrollbar) {
             dropdownState.scrollbar.setDepth(depth + 2);
         }
         
-        // Set depth for all children in the options container
+        // Update depths for option items
         dropdownState.optionsContainer.each(child => {
             child.setDepth(depth + 1);
         });
         
-        // Set depth for all children in the header
+        // Update depths for header items
         dropdownState.header.each(child => {
             child.setDepth(depth);
         });
     }
 
+    /**
+     * DROPDOWN CREATION
+     * Creates an interactive dropdown menu with scrolling support
+     */
     createDropdown(placeholder, items) {
         const dropdownWidth = 300;
         const dropdownHeight = 40;
         const dropdownX = this.cameras.main.centerX - (dropdownWidth / 2);
         const currentY = this.buttonY;
-        const maxDropdownHeight = 400; // Maximum height for the dropdown
+        const maxDropdownHeight = 400;
+        
+        // Initialize dropdown state
         let dropdownState = {
             optionsContainer: null,
             header: null,
             arrow: null,
             scrollbar: null,
             isOpen: false,
-            baseDepth: this.baseDropdownDepth // Store the base depth for this dropdown
+            baseDepth: this.baseDropdownDepth
         };
 
-        // Create dropdown header with initial depth
+        // Create dropdown header
         const header = this.add.container(0, currentY);
         dropdownState.header = header;
         
-        const dropdownBg = this.add.rectangle(
-            dropdownX,
-            0,
-            dropdownWidth,
-            dropdownHeight,
-            0x2c3e50
-        ).setOrigin(0);
+        // Create visual elements
+        const dropdownBg = this.add.rectangle(dropdownX, 0, dropdownWidth, dropdownHeight, 0x2c3e50)
+            .setOrigin(0);
 
         const dropdownText = this.add.text(
             dropdownX + 10,
             10,
             placeholder,
-            { 
-                fontSize: '18px', 
-                fill: '#00ff00',
-                fontFamily: 'Courier' 
-            }
+            { fontSize: '18px', fill: '#00ff00', fontFamily: 'Courier' }
         );
 
         const arrow = this.add.text(
             dropdownX + dropdownWidth - 30,
             10,
             '▼',
-            { 
-                fontSize: '18px', 
-                fill: '#00ff00',
-                fontFamily: 'Courier' 
-            }
+            { fontSize: '18px', fill: '#00ff00', fontFamily: 'Courier' }
         );
         dropdownState.arrow = arrow;
 
+        // Add elements to containers
         header.add([dropdownBg, dropdownText, arrow]);
         this.dropdownContainer.add(header);
 
-        // Create scrollable container for options with proper depth
+        // Create options container
         const optionsContainer = this.add.container(dropdownX, currentY + dropdownHeight);
         optionsContainer.setDepth(dropdownState.baseDepth);
         dropdownState.optionsContainer = optionsContainer;
         this.dropdownContainer.add(optionsContainer);
 
-        // Create options background with semi-transparent black
+        // Add semi-transparent background
         const optionsBackground = this.add.rectangle(
             0,
             0,
@@ -277,7 +303,7 @@ export class DevHub extends Scene {
         ).setOrigin(0);
         optionsContainer.add(optionsBackground);
 
-        // Add scrollbar if needed
+        // Add scrollbar if content exceeds max height
         const contentHeight = items.length * dropdownHeight;
         if (contentHeight > maxDropdownHeight) {
             const scrollbarWidth = 8;
@@ -313,7 +339,7 @@ export class DevHub extends Scene {
             });
         }
 
-        // Add options
+        // Add dropdown options
         items.forEach((item, index) => {
             const bg = this.add.rectangle(
                 0,
@@ -420,17 +446,19 @@ export class DevHub extends Scene {
         return dropdownState;
     }
 
+    /**
+     * MATRIX BACKGROUND
+     * Creates animated Matrix-style background effect
+     */
     createMatrixBackground() {
-        // Initialize arrays
+        // Initialize character arrays
         this.matrixChars = [];
         this.streams = [];
         
-        // Matrix green color
         const matrixGreen = '#00ff00';
+        const streamCount = Math.floor(this.cameras.main.width / 20);
         
-        // Create character streams
-        const streamCount = Math.floor(this.cameras.main.width / 20); // Space streams every 20 pixels
-        
+        // Create vertical character streams
         for (let i = 0; i < streamCount; i++) {
             const x = i * 20;
             const speed = Phaser.Math.Between(2, 5);
@@ -445,15 +473,15 @@ export class DevHub extends Scene {
                 update: 0
             };
             
-            // Create characters in the stream
+            // Add characters to stream
             const streamLength = Phaser.Math.Between(5, 15);
             for (let j = 0; j < streamLength; j++) {
                 const char = this.add.text(x, -20 - (j * 20), this.getRandomMatrixChar(), {
                     fontSize: '20px',
                     fontFamily: 'Courier',
                     color: matrixGreen,
-                    alpha: j === 0 ? 1 : 0.5 // First character brighter
-                }).setDepth(0);  // Set matrix characters to depth 0
+                    alpha: j === 0 ? 1 : 0.5
+                }).setDepth(0);
                 stream.chars.push(char);
                 this.matrixChars.push(char);
             }
@@ -461,45 +489,53 @@ export class DevHub extends Scene {
             this.streams.push(stream);
         }
         
-        // Update the streams
+        // Animate streams
         this.time.addEvent({
             delay: 50,
-            callback: () => {
-                if (!this.scene.isActive()) return;  // Don't update if scene is not active
-                
-                this.streams.forEach(stream => {
-                    if (stream.delay > 0) {
-                        stream.delay -= 50;
-                        return;
-                    }
-
-                    stream.update += 50;
-                    if (stream.update >= 100) {
-                        stream.update = 0;
-                        
-                        stream.chars.forEach(char => {
-                            if (char && char.active) {  // Check if character still exists and is active
-                                char.y += stream.speed;
-                                 
-                                // Randomly change characters
-                                if (Phaser.Math.Between(0, 20) === 0) {
-                                    char.setText(this.getRandomMatrixChar());
-                                }
-                                 
-                                // Reset if off screen
-                                if (char.y > this.cameras.main.height) {
-                                    char.y = -20;
-                                }
-                            }
-                        });
-                    }
-                });
-            },
+            callback: this.updateMatrixStreams,
             callbackScope: this,
             loop: true
         });
     }
 
+    /**
+     * Updates Matrix stream animations
+     */
+    updateMatrixStreams() {
+        if (!this.scene.isActive()) return;
+        
+        this.streams.forEach(stream => {
+            if (stream.delay > 0) {
+                stream.delay -= 50;
+                return;
+            }
+
+            stream.update += 50;
+            if (stream.update >= 100) {
+                stream.update = 0;
+                
+                stream.chars.forEach(char => {
+                    if (char && char.active) {
+                        char.y += stream.speed;
+                        
+                        // Randomly change characters
+                        if (Phaser.Math.Between(0, 20) === 0) {
+                            char.setText(this.getRandomMatrixChar());
+                        }
+                        
+                        // Reset position when off screen
+                        if (char.y > this.cameras.main.height) {
+                            char.y = -20;
+                        }
+                    }
+                });
+            }
+        });
+    }
+
+    /**
+     * Returns a random Matrix character
+     */
     getRandomMatrixChar() {
         const chars = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ1234567890@#$%&*';
         return chars[Math.floor(Math.random() * chars.length)];

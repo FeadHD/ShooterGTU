@@ -1,21 +1,36 @@
+/**
+ * main.js
+ * Entry point for the game application.
+ * Handles game initialization and browser-level event management.
+ */
+
 import 'phaser';
 import { config } from './config/config';
 
-// Create game instance
+/**
+ * GAME INITIALIZATION
+ */
+
+// Initialize Phaser game instance with configuration
 const game = new Phaser.Game(config);
 
-// Prevent right-click context menu globally
+/**
+ * BROWSER EVENT HANDLERS
+ * Setup event listeners for browser interactions
+ */
+
+// Disable context menu to prevent interference with game controls
 document.addEventListener('contextmenu', (e) => {
     e.preventDefault();
     return false;
 }, false);
 
-// Handle window resize
+// Responsive design: Adjust game canvas on window resize
 window.addEventListener('resize', () => {
     game.scale.resize(window.innerWidth, window.innerHeight);
 });
 
-// Allow browser zoom controls
+// Browser zoom handling: Allow Ctrl+Wheel zoom while preventing game interference
 window.addEventListener('wheel', (e) => {
     if (e.ctrlKey) {
         e.stopPropagation();
@@ -23,8 +38,8 @@ window.addEventListener('wheel', (e) => {
     }
 }, true);
 
-// Handle zoom changes
+// Update game canvas when browser zoom level changes
 window.visualViewport.addEventListener('resize', () => {
     game.scale.resize(window.innerWidth, window.innerHeight);
-    game.scale.refresh();
+    game.scale.refresh();  // Ensure proper rendering after zoom
 });

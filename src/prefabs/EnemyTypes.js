@@ -1,73 +1,75 @@
-// Enemy class definitions with different health points
+/**
+ * EnemyTypes.js
+ * Defines different enemy classes with varying attributes and behaviors
+ * Implements a hierarchical enemy system from weak to boss enemies
+ */
+
+/**
+ * Base Enemy class
+ * Provides core functionality for all enemy types:
+ * - Health and damage system
+ * - Physics and collision handling
+ * - AI behavior (patrol and chase)
+ * - Visual feedback (health bars, hit effects)
+ */
 class Enemy {
+    /**
+     * Initialize enemy with core attributes and physics
+     * @param {Phaser.Scene} scene - Current game scene
+     * @param {number} x - Initial X position
+     * @param {number} y - Initial Y position
+     * @param {string} sprite - Sprite key for enemy
+     * @param {number} health - Initial health points
+     * @param {number} tint - Color tint for enemy sprite
+     */
     constructor(scene, x, y, sprite, health, tint = 0xff0000) {
         this.scene = scene;
         
-        // Calculate proper spawn height based on ground position
+        // Position enemy above ground level
         const groundTop = scene.groundTop || (scene.scale.height - 100);
         y = groundTop - 24; // Ensure enemy spawns above ground
         
-        // Only create sprite if not overridden by child class
+        // Create physics sprite if not handled by child class
         if (!this.sprite) {
             this.sprite = scene.add.rectangle(x, y, 32, 48, tint);
             scene.physics.add.existing(this.sprite);
-            this.sprite.setScale(1);  // All enemies have same scale
-            
-            // Store reference to this enemy instance on the sprite
-            this.sprite.enemy = this;
+            this.sprite.setScale(1);  // Consistent base scale
+            this.sprite.enemy = this; // Reference for collision handling
         }
         
+        // Health system initialization
         this.maxHealth = health;
         this.currentHealth = health;
         
-        // Set up physics properties if sprite exists
+        // Configure physics for movement and collisions
         if (this.sprite && this.sprite.body) {
-            this.sprite.body.setCollideWorldBounds(true);
-            this.sprite.body.setBounce(0.2);
-            this.sprite.body.setFriction(1);
-            this.sprite.body.setGravityY(800); // Match world gravity
-            this.sprite.body.setDragX(200); // Increased drag for better control
-            this.sprite.body.setMaxVelocity(300, 1000); // Limit maximum velocity
-            
-            // Adjust physics body size and offset for better collisions
-            this.sprite.body.setSize(28, 44); // Slightly smaller for better collision
-            this.sprite.body.setOffset(2, 2); // Center the collision box
+            this.setupPhysics();
         }
 
-        // Enemy behavior properties
-        this.aggroRange = 300; // Distance at which enemy starts chasing player
-        this.moveSpeed = 150;  // Movement speed when chasing
-        this.patrolSpeed = 100; // Movement speed when patrolling
-        this.direction = 1; // 1 for right, -1 for left
+        // AI behavior configuration
+        this.setupBehavior();
         
-        // Set up patrol boundaries
-        this.leftBound = 20;  // Just enough space to not trigger scene change
-        this.rightBound = scene.scale.width - 20;  // Just enough space to not trigger scene change
-        
-        // Set initial velocity for patrol
-        this.setVelocityX(this.patrolSpeed * this.direction);
-        
-        // Create health bar after all setup is complete (except for BossEnemy)
+        // Create health bar for non-boss enemies
         if (!(this instanceof BossEnemy)) {
             this.createHealthBar();
         }
     }
 
+    /**
+     * Creates and positions the health bar display
+     * Scales with enemy size and updates with health changes
+     */
     createHealthBar() {
-        // Calculate actual display size (accounting for scale)
+        // Calculate display dimensions
         const displayWidth = this.sprite.width * this.sprite.scaleX;
         const displayHeight = this.sprite.height * this.sprite.scaleY;
         
-        // Make health bar wider than the enemy
-        const healthBarWidth = displayWidth * 1.5; // 50% wider than enemy
-        
-        // Health bar height scales with enemy size
+        // Configure health bar size
+        const healthBarWidth = displayWidth * 1.5; // Wider than enemy
         const healthBarHeight = Math.max(6, Math.floor(displayHeight * 0.08));
-        
-        // Position above enemy's head with padding
         const yOffset = displayHeight / 2 + healthBarHeight * 2;
         
-        // Create the bars
+        // Create background and foreground bars
         this.healthBarBackground = this.scene.add.rectangle(
             this.sprite.x,
             this.sprite.y - yOffset,
@@ -85,31 +87,24 @@ class Enemy {
         );
     }
 
-    setVelocityX(velocity) {
-        this.sprite.body.setVelocityX(velocity);
-    }
-
-    setVelocityY(velocity) {
-        this.sprite.body.setVelocityY(velocity);
-    }
-
-    getX() {
-        return this.sprite.x;
-    }
-
+    /**
+     * Handle damage taken and update visual feedback
+     * @param {number} amount - Damage amount to apply
+     * @returns {boolean} True if enemy died from damage
+     */
     damage(amount) {
         this.currentHealth -= amount;
         
-        // Update health bar width based on current health percentage
+        // Update health bar display
         const healthPercent = this.currentHealth / this.maxHealth;
-        const baseWidth = this.healthBarBackground.width; // Use background width as reference
+        const baseWidth = this.healthBarBackground.width;
         this.healthBar.width = baseWidth * healthPercent;
         
-        // Keep bars centered on enemy
+        // Keep health bar centered
         this.healthBar.x = this.sprite.x;
         this.healthBarBackground.x = this.sprite.x;
         
-        // Flash the enemy when hit only if sprite exists
+        // Visual feedback for damage
         if (this.sprite && this.sprite.active) {
             this.sprite.setAlpha(0.5);
             setTimeout(() => {
@@ -122,6 +117,39 @@ class Enemy {
         return this.currentHealth <= 0;
     }
 
+    /**
+     * Main update loop for enemy AI
+     * Handles patrol behavior and player chase logic
+     */
+    update() {
+        if (!this.sprite || !this.sprite.active) return;
+
+        const player = this.scene.player;
+        if (!player) return;
+
+        // Update health bar position
+        this.updateHealthBarPosition();
+
+        // Calculate distance to player for AI
+        const distanceToPlayer = Phaser.Math.Distance.Between(
+            this.sprite.x,
+            this.sprite.y,
+            player.x,
+            player.y
+        );
+
+        // AI behavior: Chase or patrol
+        if (distanceToPlayer < this.aggroRange) {
+            this.chasePlayer(player);
+        } else {
+            this.patrol();
+        }
+    }
+
+    /**
+     * Clean up enemy resources
+     * Removes health bars and sprite from scene
+     */
     destroy() {
         if (this.healthBar) {
             this.healthBar.destroy();
@@ -137,100 +165,175 @@ class Enemy {
         }
     }
 
-    reverseDirection() {
-        this.direction *= -1;
+    /**
+     * Set up physics properties for the enemy
+     * Configures collision, movement, and gravity settings
+     * @private
+     */
+    setupPhysics() {
+        this.sprite.body.setCollideWorldBounds(true);
+        this.sprite.body.setBounce(0.2);
+        this.sprite.body.setFriction(1);
+        this.sprite.body.setGravityY(800);       // Match world gravity
+        this.sprite.body.setDragX(200);          // Smooth deceleration
+        this.sprite.body.setMaxVelocity(300, 1000); // Speed limits
+        
+        // Optimize collision box
+        this.sprite.body.setSize(28, 44);        // Slightly smaller than sprite
+        this.sprite.body.setOffset(2, 2);        // Center alignment
+    }
+
+    /**
+     * Configure AI behavior settings
+     * Sets up patrol and chase parameters
+     * @private
+     */
+    setupBehavior() {
+        // Core behavior settings
+        this.aggroRange = 300;    // Player detection range
+        this.moveSpeed = 150;     // Chase speed
+        this.patrolSpeed = 100;   // Patrol speed
+        this.direction = 1;       // Initial direction (right)
+        
+        // Patrol boundaries
+        this.leftBound = 20;      // Left scene margin
+        this.rightBound = this.scene.scale.width - 20;  // Right scene margin
+        
+        // Start patrolling
         this.setVelocityX(this.patrolSpeed * this.direction);
     }
 
-    update() {
-        if (!this.sprite || !this.sprite.active) return;
-
-        const player = this.scene.player;
-        if (!player) return;
-
-        // Update health bar position to follow enemy
+    /**
+     * Update health bar position to follow enemy
+     * Called every frame during update
+     * @private
+     */
+    updateHealthBarPosition() {
         const enemyHeight = this.sprite.height * this.sprite.scaleY;
         const healthBarHeight = Math.max(6, Math.floor(enemyHeight * 0.08));
         const yOffset = enemyHeight / 2 + healthBarHeight * 2;
+        
+        // Sync position with enemy
         this.healthBarBackground.y = this.sprite.y - yOffset;
         this.healthBar.y = this.sprite.y - yOffset;
         this.healthBarBackground.x = this.sprite.x;
         this.healthBar.x = this.sprite.x;
+    }
 
-        // Calculate distance to player
-        const distanceToPlayer = Phaser.Math.Distance.Between(
-            this.sprite.x,
-            this.sprite.y,
-            player.x,
-            player.y
-        );
-
-        // If player is within aggro range, chase them
-        if (distanceToPlayer < this.aggroRange) {
-            // Move towards player on X axis only
-            if (this.sprite.x < player.x) {
-                this.setVelocityX(this.moveSpeed);
-            } else {
-                this.setVelocityX(-this.moveSpeed);
-            }
+    /**
+     * Chase behavior when player is in range
+     * Moves enemy towards player on X axis
+     * @param {Phaser.GameObjects.Sprite} player - Player to chase
+     * @private
+     */
+    chasePlayer(player) {
+        if (this.sprite.x < player.x) {
+            this.setVelocityX(this.moveSpeed);
         } else {
-            // Normal patrol behavior when player is out of range
-            if (this.getX() >= this.rightBound) {
-                this.reverseDirection();
-            } else if (this.getX() <= this.leftBound) {
-                this.reverseDirection();
-            }
+            this.setVelocityX(-this.moveSpeed);
         }
+    }
+
+    /**
+     * Patrol behavior when player is out of range
+     * Moves enemy back and forth between boundaries
+     * @private
+     */
+    patrol() {
+        if (this.getX() >= this.rightBound || this.getX() <= this.leftBound) {
+            this.reverseDirection();
+        }
+    }
+
+    /**
+     * Set X velocity for enemy movement
+     * @param {number} velocity - X velocity to set
+     */
+    setVelocityX(velocity) { this.sprite.body.setVelocityX(velocity); }
+    
+    /**
+     * Set Y velocity for enemy movement
+     * @param {number} velocity - Y velocity to set
+     */
+    setVelocityY(velocity) { this.sprite.body.setVelocityY(velocity); }
+    
+    /**
+     * Get current X position of enemy
+     * @returns {number} Current X position
+     */
+    getX() { return this.sprite.x; }
+    
+    /**
+     * Reverse patrol direction and update velocity
+     */
+    reverseDirection() {
+        this.direction *= -1;
+        this.setVelocityX(this.patrolSpeed * this.direction);
     }
 }
 
+/**
+ * Weak Enemy - Fast but fragile
+ * Yellow-tinted enemy with low health
+ */
 class WeakEnemy extends Enemy {
     constructor(scene, x, y) {
-        super(scene, x, y, 'weak_enemy', 1, 0xffff00); // Yellow color for weak enemies
+        super(scene, x, y, 'weak_enemy', 1, 0xffff00);
         this.moveSpeed = 100;
         this.patrolSpeed = 75;
     }
 }
 
+/**
+ * Medium Enemy - Balanced stats
+ * Cyan-tinted enemy with moderate health and speed
+ */
 class MediumEnemy extends Enemy {
     constructor(scene, x, y) {
-        super(scene, x, y, 'player', 2, 0x00ffff); // Cyan color for medium enemies
+        super(scene, x, y, 'player', 2, 0x00ffff);
         this.aggroRange = 300;
         this.moveSpeed = 140;
     }
 }
 
+/**
+ * Strong Enemy - Tough and aggressive
+ * Magenta-tinted enemy with high health
+ */
 class StrongEnemy extends Enemy {
     constructor(scene, x, y) {
-        super(scene, x, y, 'strong_enemy', 3, 0xff00ff); // Magenta color for strong enemies
+        super(scene, x, y, 'strong_enemy', 3, 0xff00ff);
         this.moveSpeed = 150;
         this.patrolSpeed = 100;
     }
 }
 
+/**
+ * Boss Enemy - Unique behaviors and high stats
+ * Large red enemy with special physics properties
+ */
 class BossEnemy extends Enemy {
     constructor(scene, x, y) {
-        super(scene, x, y, 'boss_enemy', 5, 0xff0000); // Keep boss as red
+        super(scene, x, y, 'boss_enemy', 5, 0xff0000);
         
-        // Boss is bigger
+        // Enhanced physical presence
         this.sprite.setScale(2);
-        
-        // Adjust physics body for larger size and ensure it stays on ground
         this.sprite.body.setSize(32, 46);
         this.sprite.body.setOffset(0, 1);
-        this.sprite.body.setGravityY(2000); // Stronger gravity to stay grounded
-        this.sprite.body.setMass(2); // Heavier mass
+        this.sprite.body.setGravityY(2000);
+        this.sprite.body.setMass(2);
         
-        // Create health bar only after setting scale
+        // Create custom-sized health bar
         this.createHealthBar();
         
-        this.aggroRange = 400; // Longest range
+        // Aggressive behavior settings
+        this.aggroRange = 400;
         this.moveSpeed = 200;
         this.patrolSpeed = 75;
         
-        // Force position above ground
+        // Ensure proper ground positioning
         const groundTop = scene.groundTop || (scene.scale.height - 100);
-        this.sprite.y = groundTop - (46 * this.sprite.scale); // Account for scaled size
+        this.sprite.y = groundTop - (46 * this.sprite.scale);
     }
 }
 

@@ -55,7 +55,6 @@ src/modules/
 ├── managers/
 │   ├── CollisionManager.js    # Physics & collision handling
 │   ├── AnimationManager.js    # Sprite animations
-│   ├── TrapManager.js        # Trap system
 │   ├── EnemyManager.js       # Enemy spawning & control
 │   ├── EffectsManager.js     # Visual effects
 │   ├── TextStyleManager.js   # Text styling

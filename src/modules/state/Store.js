@@ -1,15 +1,28 @@
+/**
+ * Store.js
+ * Redux-like state management store for the game
+ * Handles state updates, history tracking, and persistence
+ */
+
 import { EventEmitter } from 'events';
 import { ActionTypes, GameStatus, PlayerState } from './types';
 
 export class Store extends EventEmitter {
+    /**
+     * Initialize store with default state and event handling
+     */
     constructor() {
         super();
         this.state = this.getInitialState();
         this.subscribers = new Set();
         this.history = [];
-        this.maxHistoryLength = 100;
+        this.maxHistoryLength = 100;  // Limit history to prevent memory issues
     }
 
+    /**
+     * Define initial state structure with default values
+     * Contains game status, player stats, and settings
+     */
     getInitialState() {
         return {
             game: {
@@ -35,43 +48,47 @@ export class Store extends EventEmitter {
         };
     }
 
-    // Get current state
+    /**
+     * STATE ACCESS
+     */
+
+    // Return copy of current state to prevent direct mutations
     getState() {
         return { ...this.state };
     }
 
-    // Get specific state slice
+    // Get specific state slice using selector function
     select(selector) {
         return selector(this.state);
     }
 
-    // Dispatch an action to update state
+    /**
+     * STATE UPDATES AND EVENTS
+     */
+
+    // Process action and update state, tracking history
     dispatch(action) {
         const prevState = { ...this.state };
         const nextState = this.reducer(prevState, action);
         
-        // Save to history
         this.addToHistory({ action, prevState, nextState });
-        
-        // Update state
         this.state = nextState;
-        
-        // Notify subscribers
         this.notifySubscribers(action);
-        
-        // Emit change event
         this.emit('stateChanged', this.state);
         
         return nextState;
     }
 
-    // Subscribe to state changes
+    // Register callback for state changes, returns unsubscribe function
     subscribe(callback) {
         this.subscribers.add(callback);
         return () => this.subscribers.delete(callback);
     }
 
-    // Main reducer
+    /**
+     * STATE REDUCER
+     * Handles all state updates based on action type
+     */
     reducer(state, action) {
         switch (action.type) {
             case ActionTypes.UPDATE_SCORE:
@@ -151,34 +168,41 @@ export class Store extends EventEmitter {
         }
     }
 
-    // Add state change to history
+    /**
+     * HISTORY MANAGEMENT
+     */
+
+    // Track state changes with timestamps
     addToHistory({ action, prevState, nextState }) {
         const timestamp = Date.now();
         this.history.push({ action, prevState, nextState, timestamp });
         
-        // Maintain history length
         if (this.history.length > this.maxHistoryLength) {
-            this.history.shift();
+            this.history.shift();  // Remove oldest entry
         }
     }
 
-    // Notify all subscribers
+    // Notify subscribers of state changes
     notifySubscribers(action) {
         this.subscribers.forEach(callback => callback(this.state, action));
     }
 
-    // Get state history
+    // Get copy of state change history
     getHistory() {
         return [...this.history];
     }
 
-    // Reset state to initial
+    /**
+     * STATE PERSISTENCE
+     */
+
+    // Reset to initial state
     reset() {
         this.state = this.getInitialState();
         this.notifySubscribers({ type: 'RESET' });
     }
 
-    // Save state to storage
+    // Save state to localStorage
     persist() {
         try {
             localStorage.setItem('gameState', JSON.stringify(this.state));
@@ -187,7 +211,7 @@ export class Store extends EventEmitter {
         }
     }
 
-    // Load state from storage
+    // Load state from localStorage
     hydrate() {
         try {
             const savedState = localStorage.getItem('gameState');

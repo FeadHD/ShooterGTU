@@ -1,3 +1,9 @@
+/**
+ * ControlsSettingsScene.js
+ * Manages the controls configuration screen where players can
+ * customize their key bindings for game actions.
+ */
+
 import { Scene } from 'phaser';
 import { PlayerController } from '../../modules/controls/PlayerController';
 
@@ -6,20 +12,32 @@ export class ControlsSettingsScene extends Scene {
         super({ key: 'ControlsSettingsScene' });
     }
 
+    /**
+     * SCENE CREATION
+     * Builds the controls configuration interface
+     */
     create() {
         const canvasWidth = this.cameras.main.width;
         const canvasHeight = this.cameras.main.height;
 
-        // Add background
+        /**
+         * BACKGROUND SETUP
+         * Creates layered background with overlay
+         */
+        // Set background image
         const bg = this.add.image(0, 0, 'mainbg');
         bg.setOrigin(0, 0);
         bg.setDisplaySize(canvasWidth, canvasHeight);
 
-        // Add semi-transparent overlay
+        // Add darkening overlay
         this.add.rectangle(0, 0, canvasWidth, canvasHeight, 0x000000, 0.7)
             .setOrigin(0, 0);
 
-        // Add title with retro style
+        /**
+         * TEXT STYLES
+         * Define consistent text appearance
+         */
+        // Title text style
         const titleStyle = {
             fontFamily: 'Retronoid, Arial',
             fontSize: '92px',
@@ -36,10 +54,11 @@ export class ControlsSettingsScene extends Scene {
             }
         };
 
+        // Add scene title
         this.add.text(canvasWidth / 2, 100, 'CONTROLS', titleStyle)
             .setOrigin(0.5);
 
-        // Button style matching main menu
+        // Button text style
         const buttonStyle = {
             fontFamily: 'Retronoid, Arial',
             fontSize: '72px',
@@ -55,18 +74,25 @@ export class ControlsSettingsScene extends Scene {
             }
         };
 
-        // Create container for control buttons
+        /**
+         * CONTROLS CONTAINER
+         * Groups all control buttons for organization
+         */
         const container = this.add.container(canvasWidth / 2, 250);
         
-        // Create temporary PlayerController instance for key bindings
+        // Initialize controller for key management
         const controller = new PlayerController(this);
         
-        // Helper function to create interactive buttons
+        /**
+         * BUTTON FACTORY
+         * Creates consistent interactive buttons
+         */
         const createButton = (text, y) => {
             const button = this.add.text(0, y, text, buttonStyle)
                 .setOrigin(0.5)
                 .setInteractive({ useHandCursor: true });
 
+            // Add hover effects
             button.on('pointerover', () => {
                 button.setScale(1.2);
                 button.setColor('#ff00ff');
@@ -80,7 +106,10 @@ export class ControlsSettingsScene extends Scene {
             return button;
         };
 
-        // Create buttons for each control
+        /**
+         * CONTROL BUTTONS
+         * Create interactive buttons for each control action
+         */
         const controls = ['up', 'down', 'left', 'right'];
         const controlButtons = {};
         
@@ -91,17 +120,19 @@ export class ControlsSettingsScene extends Scene {
                 yPos
             );
             
+            // Handle key rebinding
             button.on('pointerdown', () => {
-                // Update all button texts to show current bindings
+                // Refresh all button labels
                 controls.forEach(ctrl => {
                     controlButtons[ctrl].setText(
                         `${ctrl.toUpperCase()}: ${controller.getKeyName(controller.keyBindings[ctrl])}`
                     );
                 });
                 
-                // Show 'Press any key' for the selected button
+                // Show binding prompt
                 button.setText(`${action.toUpperCase()}: PRESS ANY KEY`);
                 
+                // Listen for new key
                 const keyHandler = (event) => {
                     event.preventDefault();
                     controller.changeKeyBinding(action, event);
@@ -118,7 +149,11 @@ export class ControlsSettingsScene extends Scene {
             controlButtons[action] = button;
         });
 
-        // Add reset button
+        /**
+         * UTILITY BUTTONS
+         * Add reset and back navigation options
+         */
+        // Reset controls to defaults
         const resetButton = createButton('RESET TO DEFAULT', controls.length * 100 + 50);
         resetButton.on('pointerdown', () => {
             controller.resetToDefaults();
@@ -130,7 +165,7 @@ export class ControlsSettingsScene extends Scene {
         });
         container.add(resetButton);
 
-        // Add back button
+        // Return to main menu
         const backButton = createButton('BACK', controls.length * 100 + 150);
         backButton.on('pointerdown', () => {
             this.scene.start('MainMenu');

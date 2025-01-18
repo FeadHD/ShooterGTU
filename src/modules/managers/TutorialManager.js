@@ -1,17 +1,27 @@
+/**
+ * TutorialManager.js
+ * Manages the in-game tutorial system, displaying step-by-step instructions
+ * with typewriter effects and dynamic key binding display.
+ */
+
 export class TutorialManager {
+    /**
+     * Initialize tutorial system with text effects and player tracking
+     * @param {Phaser.Scene} scene - The game scene this manager belongs to
+     */
     constructor(scene) {
         this.scene = scene;
-        this.tutorialTexts = [];
-        this.currentStep = 0;
-        this.isActive = true;
-        this.isTyping = false;
-        this.currentText = '';
-        this.targetText = '';
-        this.typeTimer = null;
-        this.charIndex = 0;
-        this.typeSpeed = 50; // milliseconds per character
-        
-        // Style for tutorial text
+        this.tutorialTexts = [];          // Active tutorial text objects
+        this.currentStep = 0;             // Current tutorial step index
+        this.isActive = true;             // Tutorial system active state
+        this.isTyping = false;            // Text animation state
+        this.currentText = '';            // Current displayed text
+        this.targetText = '';             // Complete text to be typed
+        this.typeTimer = null;            // Timer for typewriter effect
+        this.charIndex = 0;               // Current character in typing animation
+        this.typeSpeed = 50;              // Milliseconds per character
+
+        // Text style configuration for tutorial messages
         this.textStyle = {
             fontFamily: 'Gameplay',
             fontSize: '16px',
@@ -23,10 +33,10 @@ export class TutorialManager {
             padding: { x: 10, y: 5 }
         };
 
-        // Define tutorial steps with dynamic key bindings
+        // Initialize tutorial steps with current key bindings
         this.updateTutorialSteps();
 
-        // Initialize tracking variables
+        // Player action tracking flags
         this.hasMovedLeft = false;
         this.hasMovedRight = false;
         this.hasJumped = false;
@@ -34,10 +44,14 @@ export class TutorialManager {
         this.hasShot = false;
     }
 
+    /**
+     * Convert key codes to readable key names
+     * Handles both keyboard keys and mouse buttons
+     */
     getKeyName(keyCode) {
         if (!keyCode) return 'UNKNOWN';
         
-        // Handle mouse buttons
+        // Handle mouse button names
         if (typeof keyCode === 'string' && keyCode.startsWith('MOUSE_')) {
             switch (keyCode) {
                 case 'MOUSE_LEFT': return 'Left Click';
@@ -47,7 +61,7 @@ export class TutorialManager {
             }
         }
 
-        // Handle keyboard keys
+        // Keyboard key mapping
         const keyNames = {
             32: 'SPACE',
             37: 'LEFT',
@@ -63,12 +77,10 @@ export class TutorialManager {
             90: 'Z'
         };
 
-        // Convert numeric key code
+        // Handle different key code formats
         if (typeof keyCode === 'number') {
             return keyNames[keyCode] || String.fromCharCode(keyCode);
         }
-
-        // Convert Phaser key code object
         if (typeof keyCode === 'object' && keyCode.hasOwnProperty('value')) {
             return keyNames[keyCode.value] || String.fromCharCode(keyCode.value);
         }
@@ -76,6 +88,10 @@ export class TutorialManager {
         return 'UNKNOWN';
     }
 
+    /**
+     * Update tutorial steps with current control bindings
+     * Creates step objects with text and completion conditions
+     */
     updateTutorialSteps() {
         if (!this.scene.player || !this.scene.player.controller) {
             return;
@@ -116,22 +132,29 @@ export class TutorialManager {
         ];
     }
 
+    /**
+     * Begin tutorial sequence
+     * Updates key bindings and shows first step
+     */
     start() {
         if (!this.isActive) return;
-        // Update tutorial steps with current key bindings before showing
         this.updateTutorialSteps();
         this.showCurrentStep();
     }
 
+    /**
+     * Track player actions and progress tutorial
+     * Called every frame during gameplay
+     */
     update() {
         if (!this.isActive) return;
 
-        // Track player movement
+        // Track player movement and abilities
         if (this.scene.player) {
             if (this.scene.player.body.velocity.x < 0) this.hasMovedLeft = true;
             if (this.scene.player.body.velocity.x > 0) this.hasMovedRight = true;
             
-            // Track jumps and hover
+            // Track jump and hover states
             if (this.scene.player.body.velocity.y < 0 && 
                 this.scene.player.controller.controls.jump.isDown) {
                 if (!this.scene.player.body.touching.down) {
@@ -139,13 +162,12 @@ export class TutorialManager {
                 }
             }
 
-            // Track hover
             if (this.scene.player.isHovering) {
                 this.hasHovered = true;
             }
         }
 
-        // Check if current step is completed
+        // Progress to next step if current is complete
         if (!this.isTyping && 
             this.currentStep < this.tutorialSteps.length && 
             this.tutorialSteps[this.currentStep].condition()) {
@@ -153,6 +175,10 @@ export class TutorialManager {
         }
     }
 
+    /**
+     * Animate text typing effect
+     * Adds one character at a time with delay
+     */
     typeText() {
         if (this.charIndex < this.targetText.length) {
             this.currentText += this.targetText[this.charIndex];
@@ -167,8 +193,11 @@ export class TutorialManager {
         }
     }
 
+    /**
+     * Display current tutorial step
+     * Creates text object and starts typing animation
+     */
     showCurrentStep() {
-        // Clear previous text and timer
         this.clearTutorialTexts();
         if (this.typeTimer) {
             this.typeTimer.remove();
@@ -181,35 +210,39 @@ export class TutorialManager {
         const x = this.scene.SCENE_WIDTH * step.position.x;
         const y = this.scene.SCENE_HEIGHT * step.position.y;
 
-        // Create text object with empty string
+        // Create text object and position it
         const text = this.scene.add.text(x, y, '', this.textStyle)
             .setOrigin(0.5)
             .setScrollFactor(0)
-            .setDepth(-1); // Set depth to be behind player
+            .setDepth(-1);
 
         this.tutorialTexts.push(text);
 
-        // Setup typing effect
+        // Initialize typing animation
         this.currentText = '';
         this.targetText = step.text;
         this.charIndex = 0;
         this.isTyping = true;
-        
-        // Start typing effect
         this.typeText();
     }
 
+    /**
+     * Progress to next tutorial step
+     */
     nextStep() {
         this.currentStep++;
         this.showCurrentStep();
     }
 
+    /**
+     * Remove all active tutorial text objects
+     */
     clearTutorialTexts() {
         this.tutorialTexts.forEach(text => text.destroy());
         this.tutorialTexts = [];
     }
 
-    // Condition checking methods
+    // Player action tracking methods
     hasPlayerMoved() {
         return this.hasMovedLeft && this.hasMovedRight;
     }
@@ -226,6 +259,9 @@ export class TutorialManager {
         return this.hasShot;
     }
 
+    /**
+     * Check if player is near the level end zone
+     */
     isNearEndZone() {
         if (!this.scene.player || !this.scene.endZone) return false;
         const distance = Phaser.Math.Distance.Between(
@@ -237,10 +273,17 @@ export class TutorialManager {
         return distance < 200;
     }
 
+    /**
+     * Track player shooting action
+     */
     onPlayerShoot() {
         this.hasShot = true;
     }
 
+    /**
+     * Clean up tutorial system
+     * Removes text objects and timers
+     */
     destroy() {
         this.clearTutorialTexts();
         if (this.typeTimer) {

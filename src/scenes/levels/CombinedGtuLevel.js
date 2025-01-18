@@ -12,7 +12,6 @@ import { Slime } from '../../prefabs/Slime';
 import Drone from '../../prefabs/Drone';
 import Trampoline from '../../prefabs/Trampoline';
 import { Trap } from '../../prefabs/Trap';
-import { TrapManager } from '../../modules/managers/TrapManager';
 import { DestructibleBlock } from '../../prefabs/DestructibleBlock';
 import { FallingDestructibleBlock } from '../../prefabs/FallingDestructibleBlock';
 import { DisappearingPlatform } from '../../prefabs/DisappearingPlatform';
@@ -252,7 +251,7 @@ export class CombinedGtuLevel extends BaseScene {
 
         // Initialize managers after player and tiles are loaded
         this.enemyManager = this.managers.enemies;
-        this.trapManager = this.managers.traps;
+        this.hazardManager = this.managers.hazards;
         this.bulletPool = this.managers.bullets;
 
         // Set up camera bounds and following
@@ -723,7 +722,7 @@ export class CombinedGtuLevel extends BaseScene {
         // Clean up managers
         if (this.enemyManager) this.enemyManager.cleanup();
         if (this.effectsManager) this.effectsManager.cleanup();
-        if (this.trapManager) this.trapManager.cleanup();
+        if (this.hazardManager) this.hazardManager.cleanup();
         if (this.bulletPool) this.bulletPool.destroy();
         
         // Clean up physics groups

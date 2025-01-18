@@ -1,9 +1,20 @@
+/**
+ * Player Input Controller
+ * Handles keyboard and mouse input for player actions
+ * Supports key rebinding and persistent control settings
+ */
 import Phaser from 'phaser';
 
 export class PlayerController {
+    /**
+     * Initialize player controls with default or saved key bindings
+     * @param {Phaser.Scene} scene - The game scene this controller belongs to
+     */
     constructor(scene) {
         this.scene = scene;
-        this.enabled = true;  
+        this.enabled = true;  // Control state flag
+        
+        // Default key mapping configuration
         this.defaultBindings = {
             up: Phaser.Input.Keyboard.KeyCodes.W,
             down: Phaser.Input.Keyboard.KeyCodes.S,
@@ -15,16 +26,21 @@ export class PlayerController {
             shift: Phaser.Input.Keyboard.KeyCodes.SHIFT
         };
         
-        // Load saved bindings from localStorage or use defaults
+        // Initialize controls from saved settings or defaults
         this.keyBindings = this.loadKeyBindings();
         this.controls = this.createControls();
     }
 
+    /**
+     * Create control objects for each action
+     * Handles both keyboard and mouse inputs
+     * @private
+     */
     createControls() {
         const controls = {};
         for (const [action, key] of Object.entries(this.keyBindings)) {
             if (typeof key === 'string' && key.startsWith('MOUSE_')) {
-                // Handle mouse button bindings
+                // Create mouse button handlers
                 controls[action] = {
                     isDown: () => {
                         if (!this.enabled) return false;
@@ -37,59 +53,64 @@ export class PlayerController {
                     }
                 };
             } else {
-                // Handle keyboard bindings
+                // Create keyboard key handlers
                 controls[action] = this.scene.input.keyboard.addKey(key);
             }
         }
         return controls;
     }
 
+    /**
+     * Load saved key bindings from localStorage
+     * @returns {Object} Key bindings configuration
+     * @private
+     */
     loadKeyBindings() {
         const savedBindings = localStorage.getItem('keyBindings');
         return savedBindings ? JSON.parse(savedBindings) : {...this.defaultBindings};
     }
 
+    /**
+     * Save current key bindings to localStorage
+     * @private
+     */
     saveKeyBindings() {
         localStorage.setItem('keyBindings', JSON.stringify(this.keyBindings));
     }
 
+    /**
+     * Change key binding for a specific action
+     * @param {string} action - Action to rebind
+     * @param {KeyboardEvent} event - Key event containing new binding
+     */
     changeKeyBinding(action, event) {
-        // Handle both keyCode and key for better arrow key support
         let keyCode;
         
-        // Map arrow keys to their Phaser key codes
+        // Map special keys to Phaser key codes
         switch(event.key) {
-            case 'ArrowUp':
-                keyCode = Phaser.Input.Keyboard.KeyCodes.UP;
-                break;
-            case 'ArrowDown':
-                keyCode = Phaser.Input.Keyboard.KeyCodes.DOWN;
-                break;
-            case 'ArrowLeft':
-                keyCode = Phaser.Input.Keyboard.KeyCodes.LEFT;
-                break;
-            case 'ArrowRight':
-                keyCode = Phaser.Input.Keyboard.KeyCodes.RIGHT;
-                break;
-            default:
-                // For non-arrow keys, use the keyCode
-                keyCode = event.keyCode;
+            case 'ArrowUp': keyCode = Phaser.Input.Keyboard.KeyCodes.UP; break;
+            case 'ArrowDown': keyCode = Phaser.Input.Keyboard.KeyCodes.DOWN; break;
+            case 'ArrowLeft': keyCode = Phaser.Input.Keyboard.KeyCodes.LEFT; break;
+            case 'ArrowRight': keyCode = Phaser.Input.Keyboard.KeyCodes.RIGHT; break;
+            default: keyCode = event.keyCode;
         }
 
+        // Update binding and recreate control
         this.keyBindings[action] = keyCode;
-        
-        // Clean up old key binding
         if (this.controls[action]) {
             this.controls[action].destroy();
         }
-        
-        // Create new key binding
         this.controls[action] = this.scene.input.keyboard.addKey(keyCode);
         this.saveKeyBindings();
     }
 
+    /**
+     * Get display name for a key code
+     * @param {(number|string)} keyCode - Key code or mouse button identifier
+     * @returns {string} Human-readable key name
+     */
     getKeyName(keyCode) {
-        // Handle mouse buttons
+        // Handle mouse button names
         if (typeof keyCode === 'string' && keyCode.startsWith('MOUSE_')) {
             switch (keyCode) {
                 case 'MOUSE_LEFT': return 'LMB';
@@ -99,7 +120,7 @@ export class PlayerController {
             }
         }
 
-        // Handle keyboard keys
+        // Map key codes to display names
         const keyMap = {
             // Letters
             65: 'A', 66: 'B', 67: 'C', 68: 'D', 69: 'E', 70: 'F', 71: 'G', 72: 'H',
@@ -137,10 +158,13 @@ export class PlayerController {
         return keyMap[keyCode] || 'NONE';
     }
 
+    /**
+     * Create UI for key binding configuration
+     * Allows players to rebind controls in-game
+     */
     setupKeyBindingUI() {
         const actions = Object.keys(this.keyBindings);
         actions.forEach(action => {
-            // Create UI elements for key binding
             const button = document.createElement('button');
             button.textContent = `Change ${action} key: ${this.getKeyName(this.keyBindings[action])}`;
             
@@ -161,20 +185,18 @@ export class PlayerController {
         });
     }
 
+    /**
+     * Reset all key bindings to defaults
+     */
     resetToDefaults() {
-        this.keyBindings = {
-            up: Phaser.Input.Keyboard.KeyCodes.W,
-            down: Phaser.Input.Keyboard.KeyCodes.S,
-            left: Phaser.Input.Keyboard.KeyCodes.A,
-            right: Phaser.Input.Keyboard.KeyCodes.D,
-            jump: Phaser.Input.Keyboard.KeyCodes.SPACE,
-            specialAttack: Phaser.Input.Keyboard.KeyCodes.Q,
-            shoot: 'MOUSE_LEFT',
-            shift: Phaser.Input.Keyboard.KeyCodes.SHIFT
-        };
+        this.keyBindings = { ...this.defaultBindings };
         this.saveKeyBindings();
     }
 
+    /**
+     * Set up mouse-based shooting controls
+     * @param {Object} player - Player object to control
+     */
     setupShootingControls(player) {
         this.scene.input.on('pointerdown', (pointer) => {
             if (pointer.leftButtonDown()) {
@@ -184,36 +206,21 @@ export class PlayerController {
         });
     }
 
-    isMovingUp() {
-        return this.enabled && this.controls.up.isDown;
-    }
+    // Input state check methods
+    isMovingUp() { return this.enabled && this.controls.up.isDown; }
+    isMovingDown() { return this.enabled && this.controls.down.isDown; }
+    isMovingLeft() { return this.enabled && this.controls.left.isDown; }
+    isMovingRight() { return this.enabled && this.controls.right.isDown; }
+    isSpecialAttacking() { return this.enabled && Phaser.Input.Keyboard.JustDown(this.controls.specialAttack); }
+    isShooting() { return this.enabled && this.controls.shoot.isDown; }
+    isRolling() { return this.controls.shift.isDown && (this.isMovingLeft() || this.isMovingRight()); }
 
-    isMovingDown() {
-        return this.enabled && this.controls.down.isDown;
-    }
-
-    isMovingLeft() {
-        return this.enabled && this.controls.left.isDown;
-    }
-
-    isMovingRight() {
-        return this.enabled && this.controls.right.isDown;
-    }
-
-    isSpecialAttacking() {
-        return this.enabled && Phaser.Input.Keyboard.JustDown(this.controls.specialAttack);
-    }
-
-    isShooting() {
-        return this.enabled && this.controls.shoot.isDown;
-    }
-
-    isRolling() {
-        return this.controls.shift.isDown && (this.isMovingLeft() || this.isMovingRight());
-    }
-
+    /**
+     * Clean up controller resources
+     * Called when removing the controller
+     */
     destroy() {
-        // Clean up all controls
+        // Clean up control objects
         if (this.controls) {
             Object.values(this.controls).forEach(control => {
                 if (control && typeof control.destroy === 'function') {

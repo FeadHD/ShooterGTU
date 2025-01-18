@@ -1,13 +1,26 @@
-// 3. StateManager.js
+/**
+ * StateManager.js
+ * Manages game state, persistence, and data flow between scenes
+ * Handles score, lives, health, and other game-wide variables
+ */
+
 export class StateManager {
+    /**
+     * Initialize state management system
+     * @param {Phaser.Scene} scene - Scene this manager belongs to
+     */
     constructor(scene) {
         this.scene = scene;
-        this.registry = scene.registry;
-        this.events = scene.events;
+        this.registry = scene.registry;      // Phaser's global registry
+        this.events = scene.events;          // Scene event emitter
     }
 
+    /**
+     * Set up initial game state values
+     * Called when starting a new game or resetting state
+     */
     initializeGameState() {
-        // Initialize game state if not already set
+        // Set default values if not already present
         if (!this.registry.has('score')) {
             this.registry.set('score', 0);
         }
@@ -31,15 +44,32 @@ export class StateManager {
         }
     }
 
+    /**
+     * Get value from game state
+     * @param {string} key - State variable name
+     * @returns {any} Current value
+     */
     get(key) {
         return this.registry.get(key);
     }
 
+    /**
+     * Set value in game state
+     * @param {string} key - State variable name
+     * @param {any} value - New value
+     * @returns {any} Updated value
+     */
     set(key, value) {
         this.registry.set(key, value);
         return value;
     }
 
+    /**
+     * Increase numeric state value
+     * @param {string} key - State variable name
+     * @param {number} amount - Amount to increase (default: 1)
+     * @returns {number} New value after increase
+     */
     increment(key, amount = 1) {
         const currentValue = this.registry.get(key);
         const newValue = currentValue + amount;
@@ -47,6 +77,12 @@ export class StateManager {
         return newValue;
     }
 
+    /**
+     * Decrease numeric state value (minimum 0)
+     * @param {string} key - State variable name
+     * @param {number} amount - Amount to decrease (default: 1)
+     * @returns {number} New value after decrease
+     */
     decrement(key, amount = 1) {
         const currentValue = this.registry.get(key);
         const newValue = Math.max(0, currentValue - amount);
@@ -54,6 +90,11 @@ export class StateManager {
         return newValue;
     }
 
+    /**
+     * Reset state to default values
+     * Can reset single key or all state variables
+     * @param {string} [key] - Optional key to reset
+     */
     reset(key) {
         const defaults = {
             score: 0,
@@ -74,14 +115,26 @@ export class StateManager {
         }
     }
 
+    /**
+     * Register state change listener
+     * @param {Function} callback - Function to call on state change
+     */
     onStateChange(callback) {
         this.registry.events.on('changedata', callback);
     }
 
+    /**
+     * Remove state change listener
+     * @param {Function} callback - Function to remove from listeners
+     */
     offStateChange(callback) {
         this.registry.events.off('changedata', callback);
     }
 
+    /**
+     * Save current game state to browser storage
+     * Persists between game sessions
+     */
     saveToLocalStorage() {
         const gameState = {};
         ['score', 'lives', 'playerHP', 'bitcoins', 'musicEnabled', 'gameStarted', 'stamina'].forEach(key => {
@@ -90,6 +143,10 @@ export class StateManager {
         localStorage.setItem('gameState', JSON.stringify(gameState));
     }
 
+    /**
+     * Load saved game state from browser storage
+     * @returns {boolean} True if state was loaded successfully
+     */
     loadFromLocalStorage() {
         const savedState = localStorage.getItem('gameState');
         if (savedState) {
@@ -102,10 +159,17 @@ export class StateManager {
         return false;
     }
 
+    /**
+     * Clear saved game state from browser storage
+     */
     clearSavedState() {
         localStorage.removeItem('gameState');
     }
 
+    /**
+     * Handle game over condition
+     * Transitions to game over scene
+     */
     handleGameOver() {
         this.scene.scene.start('GameOver');
     }

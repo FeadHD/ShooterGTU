@@ -1,13 +1,31 @@
+/**
+ * Player.js
+ * Core player character class that handles all player-related mechanics
+ * including movement, combat, stamina, and state management.
+ */
+
 import Phaser from 'phaser';
 import { PlayerController } from '../modules/controls/PlayerController';
 import { eventBus } from '../modules/events/EventBus';
 import { GameConfig } from '../config/GameConfig';
 
+/**
+ * Player class extending Phaser's Arcade Sprite
+ * Manages player state, movement, abilities, and interactions
+ */
 export class Player extends Phaser.Physics.Arcade.Sprite {
+    /**
+     * Initialize player with core mechanics and state
+     * @param {Phaser.Scene} scene - Current game scene
+     * @param {number} x - Initial X position
+     * @param {number} y - Initial Y position
+     */
     constructor(scene, x, y) {
         super(scene, x, y, 'character_idle');
         
         this.scene = scene;
+        
+        // Core movement mechanics
         this.maxJumps = 1;                // Maximum number of jumps
         this.jumpsAvailable = 1;          // Current jumps available
         this.isJumping = false;           // Track if currently in jump
@@ -17,10 +35,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.isDying = false;
         this.invulnerableUntil = 0;
         this.movementSpeed = 300;
+        
+        // Health system
         this.playerHP = scene.registry.get('playerHP') || GameConfig.PLAYER.INITIAL_HP;
         this.lastDamageTaken = 0;
         
-        // Stamina mechanics
+        // Stamina system initialization
         this.maxStamina = 100;
         this.currentStamina = scene.registry.get('stamina') || this.maxStamina;
         scene.registry.set('stamina', this.currentStamina); // Initialize registry
@@ -97,6 +117,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.controller.setupShootingControls(this);
     }
 
+    /**
+     * Creates animations for the player character
+     * Includes idle, run, jump, fall, and rollover animations
+     */
     createAnimations() {
         const anims = [
             {
@@ -172,6 +196,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         console.log('Available animations:', Object.keys(this.scene.anims.anims.entries));
     }
 
+    /**
+     * Plays an animation on the player character
+     * @param {string} key - Animation key to play
+     * @param {boolean} ignoreIfPlaying - Whether to ignore if the animation is already playing
+     */
     playAnimation(key, ignoreIfPlaying = true) {
         try {
             if (this.scene.anims.exists(key)) {
@@ -189,6 +218,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         }
     }
 
+    /**
+     * Handles player shooting mechanics
+     * Creates and fires a bullet in the specified direction
+     * @param {string} direction - Direction to fire ('right' or 'left')
+     */
     shoot(direction = 'right') {
         // Get a bullet from the scene's bullets group
         const bullet = this.scene.bullets.get(this.x, this.y);
@@ -203,6 +237,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         }
     }
 
+    /**
+     * Processes damage taken by the player
+     * Handles invulnerability frames and death state
+     * @param {number} amount - Amount of damage to take
+     */
     takeDamage(amount = GameConfig.PLAYER.DAMAGE) {
         if (this.isDying) return;
         
@@ -227,6 +266,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.makeInvulnerable();
     }
 
+    /**
+     * Activates temporary invulnerability with visual feedback
+     * Used after taking damage or during special states
+     */
     makeInvulnerable() {
         // Set invulnerability for 1000ms
         this.invulnerableUntil = this.scene.time.now + 1000;
@@ -249,6 +292,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         }
     }
 
+    /**
+     * Handles player death state and respawn logic
+     * Manages lives system and triggers game over if needed
+     */
     die() {
         if (this.isDying) return;  // Prevent multiple death calls
         
@@ -274,6 +321,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.respawn();
     }
 
+    /**
+     * Specialized death handling for falling off the map
+     * Immediately triggers respawn without animation
+     */
     fallDeath() {
         if (this.isDying) return;
 
@@ -296,6 +347,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.respawn();
     }
 
+    /**
+     * Resets player state and position after death
+     * Restores HP and triggers invulnerability period
+     */
     respawn() {
         // Reset player state
         this.isDying = false;
@@ -317,6 +372,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.setVelocity(0, 0);
     }
 
+    /**
+     * Calculates stamina cost for rolling based on duration
+     * Uses progressive cost system for balanced gameplay
+     * @param {number} elapsedTime - Time spent rolling in ms
+     * @returns {number} Stamina cost per second
+     */
     getRollStaminaCost(elapsedTime) {
         for (let i = 0; i < this.rollStaminaCosts.length; i++) {
             if (elapsedTime <= this.rollStaminaCosts[i].time) {
@@ -326,6 +387,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         return this.rollStaminaCosts[this.rollStaminaCosts.length - 1].cost;
     }
 
+    /**
+     * Calculates stamina cost for hovering based on duration
+     * Uses progressive cost system for balanced gameplay
+     * @param {number} elapsedTime - Time spent hovering in ms
+     * @returns {number} Stamina cost per second
+     */
     getHoverStaminaCost(elapsedTime) {
         for (let i = 0; i < this.hoverStaminaCosts.length; i++) {
             if (elapsedTime <= this.hoverStaminaCosts[i].time) {
@@ -335,6 +402,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         return this.hoverStaminaCosts[this.hoverStaminaCosts.length - 1].cost;
     }
 
+    /**
+     * Manages roll mechanic including:
+     * - Roll activation and direction
+     * - Stamina consumption
+     * - Movement and animation
+     */
     handleRoll() {
         const currentTime = this.scene.time.now;
         const isRollKeyHeld = this.controller.controls.shift.isDown;
@@ -395,6 +468,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         }
     }
 
+    /**
+     * Manages hover mechanic including:
+     * - Hover activation and duration
+     * - Stamina consumption
+     * - Vertical movement control
+     */
     handleHover() {
         const currentTime = this.scene.time.now;
         const isHoverKeyHeld = this.controller.controls.jump.isDown;
@@ -461,6 +540,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         }
     }
 
+    /**
+     * Handles jump mechanics including:
+     * - Jump buffering
+     * - Coyote time
+     * - Multiple jumps
+     * - Animation states
+     */
     handleJump() {
         const currentTime = this.scene.time.now;
         
@@ -504,6 +590,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         }
     }
 
+    /**
+     * Main update loop for player
+     * Handles all continuous mechanics:
+     * - Movement and controls
+     * - Stamina regeneration
+     * - State checks and updates
+     * - Animation management
+     */
     update() {
         if (this.body && !this.isDying) {  
             const currentTime = this.scene.time.now;
@@ -606,6 +700,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         }
     }
 
+    /**
+     * Cleanup method for player instance
+     * Removes event listeners and cleans up resources
+     */
     destroy() {
         if (this.controller) {
             this.controller.destroy();

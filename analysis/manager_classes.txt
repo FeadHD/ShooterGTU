@@ -25,5 +25,4 @@ c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\manager
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\managers\state\PersistenceManager.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\managers\StateManager.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\managers\TextStyleManager.js
-c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\managers\TrapManager.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\managers\TutorialManager.js

@@ -57,7 +57,6 @@ c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\manager
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\managers\state\PersistenceManager.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\managers\StateManager.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\managers\TextStyleManager.js
-c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\managers\TrapManager.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\managers\TutorialManager.js
 ```
 
@@ -191,7 +190,6 @@ c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\manager
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\managers\LDTKTileManager.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\managers\LevelLoader.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\managers\SceneInitializer.js
-c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\managers\TrapManager.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\pathfinding\PathFinder.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\prefabs\AntivirusWall.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\prefabs\Bitcoin.js
@@ -248,7 +246,6 @@ c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\manager
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\managers\state\PersistenceManager.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\managers\StateManager.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\managers\TextStyleManager.js
-c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\managers\TrapManager.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\managers\TutorialManager.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\pathfinding\PathFinder.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\state\GameStateManager.js

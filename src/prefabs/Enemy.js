@@ -1,45 +1,55 @@
+/**
+ * Base Enemy Class
+ * Provides core functionality for all enemy types in the game
+ * Handles health, movement, attacks, and visual representation
+ */
 class Enemy {
+    /**
+     * Create a new enemy instance
+     * @param {Phaser.Scene} scene - The scene this enemy belongs to
+     * @param {number} x - Initial X position
+     * @param {number} y - Initial Y position
+     * @param {Object} config - Enemy configuration options
+     */
     constructor(scene, x, y, config = {}) {
-        // Basic enemy properties
+        // Core properties
         this.scene = scene;
         this.x = x;
         this.y = y;
 
-        // Health and damage configuration
+        // Combat attributes
         this.maxHealth = config.maxHealth || 100;
         this.currentHealth = this.maxHealth;
         this.damage = config.damage || 10;
 
-        // Movement and behavior
+        // Behavior settings
         this.speed = config.speed || 50;
         this.isAlive = true;
-
-        // Enemy type or variant
         this.type = config.type || 'basic';
 
-        // Optional sprite or game object configuration
+        // Visual components
         this.sprite = null;
         this.initializeSprite(config.spriteKey);
-
-        // Create health bar
         this.createHealthBar();
     }
 
+    /**
+     * Initialize the enemy's sprite and physics
+     * @param {string} spriteKey - Key for the sprite texture
+     * @private
+     */
     initializeSprite(spriteKey = 'enemy') {
-        // Only create sprite if it doesn't exist
         if (!this.sprite) {
-            // Create sprite in the scene with initial position
+            // Create physics-enabled sprite
             this.sprite = this.scene.physics.add.sprite(this.x, this.y, spriteKey);
             
-            // Configure sprite physics
             if (this.sprite.body) {
+                // Configure physics properties
                 this.sprite.setCollideWorldBounds(true);
-                
-                // Set up basic physics properties
                 this.sprite.body.setBounce(0.2);
                 this.sprite.body.setDrag(200, 0);
                 
-                // If this is a flying type, disable gravity
+                // Special handling for flying enemies
                 if (this.type === 'flying') {
                     this.sprite.body.setAllowGravity(false);
                     this.sprite.body.setGravity(0, 0);
@@ -48,29 +58,37 @@ class Enemy {
         }
     }
 
+    /**
+     * Create health bar visual elements
+     * Displays current health as a green bar above enemy
+     * @private
+     */
     createHealthBar() {
         if (!this.sprite) return;
 
-        // Create health bar background
+        // Background bar (black)
         this.healthBarBackground = this.scene.add.graphics();
         this.healthBarBackground.fillStyle(0x000000, 0.5);
         this.healthBarBackground.fillRect(0, 0, 32, 4);
 
-        // Create health bar foreground
+        // Foreground bar (green)
         this.healthBar = this.scene.add.graphics();
-
-        // Update initial health bar
         this.updateHealthBar();
     }
 
+    /**
+     * Update health bar position and fill amount
+     * Called when health changes or enemy moves
+     * @private
+     */
     updateHealthBar() {
         if (!this.healthBar || !this.healthBarBackground || !this.sprite) return;
 
-        // Clear previous health bars
+        // Reset graphics
         this.healthBar.clear();
         this.healthBarBackground.clear();
 
-        // Health bar background (dark)
+        // Draw background bar
         this.healthBarBackground.fillStyle(0x000000, 0.5);
         this.healthBarBackground.fillRect(
             this.sprite.x - 16, 
@@ -79,13 +97,9 @@ class Enemy {
             4
         );
 
-        // Calculate health percentage
+        // Calculate and draw health percentage
         const healthPercentage = this.currentHealth / this.maxHealth;
-
-        // Health bar color (slime-like green)
         const barColor = 0x00ff00;
-
-        // Draw health bar foreground
         this.healthBar.fillStyle(barColor, 1);
         this.healthBar.fillRect(
             this.sprite.x - 16, 
@@ -95,10 +109,13 @@ class Enemy {
         );
     }
 
+    /**
+     * Handle enemy taking damage
+     * Updates health and triggers death if health reaches 0
+     * @param {number} amount - Amount of damage to take
+     */
     takeDamage(amount) {
         this.currentHealth -= amount;
-        
-        // Update health bar
         this.updateHealthBar();
         
         if (this.currentHealth <= 0) {
@@ -106,28 +123,36 @@ class Enemy {
         }
     }
 
+    /**
+     * Handle enemy death
+     * Cleans up sprites and visual elements
+     */
     die() {
         this.isAlive = false;
         
-        // Destroy health bar
+        // Clean up visual elements
         if (this.healthBar) {
             this.healthBar.destroy();
             this.healthBarBackground.destroy();
         }
         
-        // Optional: Add death animation or effects
         if (this.sprite) {
             this.sprite.destroy();
         }
     }
 
+    /**
+     * Move enemy towards a target position
+     * @param {number} targetX - Target X coordinate
+     * @param {number} targetY - Target Y coordinate
+     */
     move(targetX, targetY) {
         if (!this.isAlive) return;
 
-        // Basic movement towards a target
+        // Calculate movement angle
         const angle = Math.atan2(targetY - this.y, targetX - this.x);
         
-        // Update sprite velocity based on angle and speed
+        // Apply velocity
         if (this.sprite) {
             this.sprite.setVelocity(
                 Math.cos(angle) * this.speed, 
@@ -136,16 +161,22 @@ class Enemy {
         }
     }
 
+    /**
+     * Basic attack implementation
+     * Override in subclasses for specific behavior
+     * @param {Object} target - Target to attack
+     */
     attack(target) {
-        // Basic attack method
         if (!this.isAlive) return;
-
-        // Optional: Implement attack logic
         console.log(`Enemy attacking with ${this.damage} damage`);
     }
 
+    /**
+     * Update loop for enemy behavior
+     * @param {number} time - Current time
+     * @param {number} delta - Time since last update
+     */
     update(time, delta) {
-        // Update health bar position if alive
         if (this.isAlive && this.sprite) {
             this.updateHealthBar();
         }

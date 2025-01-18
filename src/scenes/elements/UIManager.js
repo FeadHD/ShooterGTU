@@ -1,3 +1,8 @@
+/**
+ * UIManager.js
+ * Manages all UI elements, HUD, and debug information in the game
+ * Handles UI updates, animations, and camera management for UI layer
+ */
 import { Scene } from 'phaser';
 import { TextStyleManager } from '../../modules/managers/TextStyleManager';
 import { eventBus } from '../../modules/events/EventBus';
@@ -5,107 +10,93 @@ import { GameConfig } from '../../config/GameConfig';
 import { PlayerHUD } from '../../prefabs/ui/PlayerHUD';
 
 export class UIManager {
+    /**
+     * Initialize UI manager and set up core components
+     * @param {Scene} scene - The Phaser scene this UI belongs to
+     */
     constructor(scene) {
         console.log('UIManager: Starting initialization...');
         this.scene = scene;
         
-        // Initialize TextStyleManager
+        // Core UI setup
         this.textStyleManager = new TextStyleManager(scene);
-        
-        // Create main UI container
-        console.log('UIManager: Creating UI container');
         this.container = this.scene.add.container(0, 0);
         this.container.setDepth(100);
         this.lastFpsUpdate = 0;
-        
-        // Initialize pending updates map
         this.pendingUpdates = new Map();
         
-        // Create UI camera that stays fixed
-        console.log('UIManager: Setting up UI camera');
+        // Create dedicated UI camera that stays fixed
         const { width, height } = scene.scale;
         this.uiCamera = scene.cameras.add(0, 0, width, height);
         this.uiCamera.setScroll(0, 0);
-        
-        // Make UI elements fixed on screen
         this.container.setScrollFactor(0);
 
-        // Initialize PlayerHUD only when assets are loaded
+        // Initialize HUD when assets are ready
         if (this.scene.textures.exists('lifebar')) {
             this.initializePlayerHUD();
         } else {
-            console.log('UIManager: Waiting for assets to load before creating PlayerHUD');
-            this.scene.load.once('complete', () => {
-                this.initializePlayerHUD();
-            });
+            this.scene.load.once('complete', () => this.initializePlayerHUD());
         }
 
-        console.log('UIManager: Setting up initial UI elements');
+        // Set up UI components and event listeners
         this.setupUI();
         this.createStartMessage();
         this.createDebugInfo();
         this.updateCameraIgnoreList();
 
-        console.log('UIManager: Setting up event listeners');
-        // Set up registry event listeners
+        // Register event handlers
         this.scene.registry.events.on('changedata', this.handleRegistryChange, this);
-        
-        // Listen for scene events
         this.scene.events.on('create', this.updateCameraIgnoreList, this);
         this.scene.events.on('wake', this.updateCameraIgnoreList, this);
         this.scene.events.on('resume', this.updateCameraIgnoreList, this);
-        
-        // Listen for new objects
         this.scene.events.on('addedtoscene', this.handleNewObject, this);
         
-        // Listen for HP changes
-        eventBus.on('playerHPChanged', (hp) => {
-            console.log('UIManager: Updating HP display:', hp);
-            this.updateHP(hp);
-        });
+        // Listen for player health changes
+        eventBus.on('playerHPChanged', this.updateHP.bind(this));
         
-        // Debug flag
         this.debugMode = true;
-        console.log('UIManager: Initialization complete');
     }
 
+    /**
+     * Initialize player HUD with health and stamina bars
+     * Called once required assets are loaded
+     */
     initializePlayerHUD() {
         const PLAYER_HUD_X = 25;
         const PLAYER_HUD_Y = 20;
         this.playerHUD = new PlayerHUD(this.scene, PLAYER_HUD_X, PLAYER_HUD_Y, true);
-        console.log('UIManager: PlayerHUD initialized');
     }
 
-    // ============================
-    // SECTION: OBJECT MANAGEMENT
-    // ============================
+    /**
+     * Ensures new game objects are ignored by UI camera
+     * Prevents game world objects from appearing on UI layer
+     */
     handleNewObject = (gameObject) => {
         if (!this.uiCamera || !gameObject || gameObject === this.container) return;
-        
         try {
-            // Ignore the new object in the UI camera
             this.uiCamera.ignore(gameObject);
         } catch (error) {
             console.error('Error handling new object:', error);
         }
     }
 
+    /**
+     * Updates camera ignore lists to maintain UI/game world separation
+     * Called on scene changes and new object creation
+     */
     updateCameraIgnoreList() {
-        if (!this.uiCamera || !this.scene || !this.container) {
-            console.log('Cannot update camera ignore list - missing components');
-            return;
-        }
+        if (!this.uiCamera || !this.scene || !this.container) return;
 
         try {
-            // Make main camera ignore UI container and PlayerHUD
-            if (this.scene.cameras && this.scene.cameras.main) {
+            // Make main camera ignore UI elements
+            if (this.scene.cameras?.main) {
                 this.scene.cameras.main.ignore(this.container);
-                if (this.playerHUD && this.playerHUD.container) {
+                if (this.playerHUD?.container) {
                     this.scene.cameras.main.ignore(this.playerHUD.container);
                 }
             }
 
-            // Make UI camera ignore everything except UI container and PlayerHUD
+            // Make UI camera ignore game world objects
             this.scene.children.list.forEach(child => {
                 if (child && 
                     child !== this.container && 
@@ -114,8 +105,8 @@ export class UIManager {
                 }
             });
 
-            // Ignore specific game objects and groups in UI camera
-            const objectsToIgnore = [
+            // Ignore specific game objects and groups
+            [
                 this.scene.player,
                 this.scene.enemies,
                 this.scene.bullets,
@@ -124,82 +115,62 @@ export class UIManager {
                 this.scene.techLights,
                 this.scene.particles,
                 this.scene.spikes
-            ];
-
-            objectsToIgnore.forEach(obj => {
+            ].forEach(obj => {
                 if (obj) {
                     if (obj.getChildren) {
-                        // If it's a group/container, ignore all children
                         obj.getChildren().forEach(child => {
                             if (child) this.uiCamera.ignore(child);
                         });
                     } else {
-                        // If it's a single object
                         this.uiCamera.ignore(obj);
                     }
                 }
             });
-
         } catch (error) {
             console.error('Error in updateCameraIgnoreList:', error);
         }
     }
 
-    // ============================
-    // SECTION: UI CREATION
-    // ============================
+    /**
+     * Creates and positions all UI elements
+     * Includes score, timer, lives, and bitcoin display
+     */
     setupUI() {
         const { width, height } = this.scene.scale;
-        console.log('UIManager: Setting up UI elements...');
-
-        try {
-            // Constants for UI positioning
-            const LEFT_MARGIN = 25;
-            const TOP_MARGIN = 100;  // Increased to be below PlayerHUD
-            const VERTICAL_SPACING = 30;
-            const TEXT_WIDTH = 150;
-
-            // Clear existing UI elements
-            console.log('UIManager: Clearing existing UI elements');
-            if (this.container.list.length > 0) {
-                this.container.removeAll(true);
-            }
-
-            // Create timer text (first)
-            console.log('UIManager: Creating timer text');
-            this.timerText = this.scene.add.text(LEFT_MARGIN, TOP_MARGIN, 'Time: 00:00', this.textStyleManager.styles.timer);
-            this.container.add(this.timerText);
-
-            // Create bitcoins text (second)
-            console.log('UIManager: Creating bitcoins text');
-            this.bitcoinText = this.scene.add.text(LEFT_MARGIN, TOP_MARGIN + VERTICAL_SPACING, 'Bitcoins: 0', this.textStyleManager.styles.bitcoin);
-            this.container.add(this.bitcoinText);
-
-            // Create score text (third)
-            console.log('UIManager: Creating score text');
-            this.scoreText = this.scene.add.text(LEFT_MARGIN, TOP_MARGIN + VERTICAL_SPACING * 2, 'Score: 0', this.textStyleManager.styles.score);
-            this.container.add(this.scoreText);
-
-            // Create lives text (fourth)
-            console.log('UIManager: Creating lives text');
-            this.livesText = this.scene.add.text(LEFT_MARGIN, TOP_MARGIN + VERTICAL_SPACING * 3, 'Lives: 3', this.textStyleManager.styles.lives);
-            this.container.add(this.livesText);
-
-            // Make sure all UI elements are visible
-            console.log('UIManager: Setting visibility and scroll factors');
-            this.container.setVisible(true);
-            this.container.setScrollFactor(0);
-            this.container.setDepth(100);
-
-            console.log('UIManager: UI setup complete');
-        } catch (error) {
-            console.error('Error in setupUI:', error);
+        
+        // UI layout constants
+        const LEFT_MARGIN = 25;
+        const TOP_MARGIN = 100;
+        const VERTICAL_SPACING = 30;
+        
+        // Clear existing UI
+        if (this.container.list.length > 0) {
+            this.container.removeAll(true);
         }
+
+        // Create UI elements with consistent positioning
+        this.timerText = this.scene.add.text(LEFT_MARGIN, TOP_MARGIN, 'Time: 00:00', this.textStyleManager.styles.timer);
+        this.bitcoinText = this.scene.add.text(LEFT_MARGIN, TOP_MARGIN + VERTICAL_SPACING, 'Bitcoins: 0', this.textStyleManager.styles.bitcoin);
+        this.scoreText = this.scene.add.text(LEFT_MARGIN, TOP_MARGIN + VERTICAL_SPACING * 2, 'Score: 0', this.textStyleManager.styles.score);
+        this.livesText = this.scene.add.text(LEFT_MARGIN, TOP_MARGIN + VERTICAL_SPACING * 3, 'Lives: 3', this.textStyleManager.styles.lives);
+        
+        // Add all elements to container
+        [this.timerText, this.bitcoinText, this.scoreText, this.livesText].forEach(element => {
+            this.container.add(element);
+        });
+
+        // Set container properties
+        this.container.setVisible(true);
+        this.container.setScrollFactor(0);
+        this.container.setDepth(100);
     }
 
-    // ============================
-    // SECTION: UPDATE LOOP
-    // ============================
+    /**
+     * Updates the game state every frame
+     * Handles FPS counter, player HUD updates, and timer updates
+     * @param {number} time - Current time in milliseconds
+     * @param {number} delta - Time difference since last frame
+     */
     update(time, delta) {
         if (!this.scene || !this.scene.registry) return;
 
@@ -225,6 +196,9 @@ export class UIManager {
         }
     }
 
+    /**
+     * Smoothly transitions UI elements into view
+     */
     fadeInUI() {
         const duration = 500;
         const ease = 'Power1';
@@ -241,6 +215,9 @@ export class UIManager {
         });
     }
 
+    /**
+     * Fades out all UI elements
+     */
     fadeOut() {
         if (!this.container) return;
         
@@ -256,27 +233,39 @@ export class UIManager {
         });
     }
 
-    // ============================
-    // SECTION: UI UPDATERS
-    // ============================
+    /**
+     * Updates score display with new score value
+     * @param {number} score - New score value
+     */
     updateScore(score) {
         if (this.scoreText) {
             this.scoreText.setText('Score: ' + score);
         }
     }
 
+    /**
+     * Updates lives display with new lives value
+     * @param {number} lives - New lives value
+     */
     updateLives(lives) {
         if (this.livesText) {
             this.livesText.setText('Lives: ' + lives);
         }
     }
 
+    /**
+     * Updates player health display with new health value
+     * @param {number} hp - New health value
+     */
     updateHP(hp) {
         if (this.playerHUD) {
             this.playerHUD.updateHealth(hp);
         }
     }
 
+    /**
+     * Updates timer display with current elapsed time
+     */
     updateTimer() {
         if (!this.isTimerRunning || !this.timerText) return;
         
@@ -285,54 +274,60 @@ export class UIManager {
         this.timerText.setText(`Time: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
     }
 
+    /**
+     * Updates bitcoin display with new bitcoin value
+     * @param {number} bitcoins - New bitcoin value
+     */
     updateBitcoins(bitcoins) {
         if (this.bitcoinText) {
             this.bitcoinText.setText('Bitcoins: ' + bitcoins);
         }
     }
 
+    /**
+     * Toggles visibility of FPS counter
+     */
     toggleFPS() {
         if (this.fpsText) {
             this.fpsText.setVisible(!this.fpsText.visible);
         }
     }
 
-    // ============================
-    // SECTION: START MESSAGE
-    // ============================
+    /**
+     * Creates skip intro message with background
+     * Appears at bottom of screen with pulsing animation
+     */
     createStartMessage() {
         const { width, height } = this.scene.scale;
         
-        // Create black background
+        // Semi-transparent background
         this.startMessageBg = this.scene.add.rectangle(
-            width - 120, // Position from right
-            height - 30, // Position from bottom
-            200, // Width
-            40,  // Height
-            0x000000, // Black color
-            0.7      // Semi-transparent
+            width - 120,
+            height - 30,
+            200,
+            40,
+            0x000000,
+            0.7
         );
         this.startMessageBg.setOrigin(0.5);
         this.startMessageBg.setDepth(999);
         this.startMessageBg.setScrollFactor(0);
         this.startMessageBg.setVisible(false);
         
-        // Create text
+        // Message text
         this.startMessage = this.scene.add.text(
-            width - 120, // Same x as background
-            height - 30, // Same y as background
+            width - 120,
+            height - 30,
             'Skip Intro (Space)',
             this.textStyleManager.styles.wallet
         );
-        
-        // Style the text
         this.startMessage.setOrigin(0.5);
         this.startMessage.setDepth(1000);
         this.startMessage.setScrollFactor(0);
         this.startMessage.setVisible(false);
-        this.startMessage.setColor('#ffffff'); // White text
+        this.startMessage.setColor('#ffffff');
         
-        // Add a slight pulsing effect to both
+        // Add pulsing animation
         this.scene.tweens.add({
             targets: [this.startMessage, this.startMessageBg],
             alpha: 0.7,
@@ -342,6 +337,9 @@ export class UIManager {
         });
     }
 
+    /**
+     * Shows skip intro message
+     */
     showStartMessage() {
         if (this.startMessage) {
             this.startMessage.setVisible(true);
@@ -349,6 +347,9 @@ export class UIManager {
         }
     }
 
+    /**
+     * Hides skip intro message
+     */
     hideStartMessage() {
         if (this.startMessage) {
             this.startMessage.setVisible(false);
@@ -356,9 +357,10 @@ export class UIManager {
         }
     }
 
-    // ============================
-    // SECTION: REGISTRY / DATA
-    // ============================
+    /**
+     * Sets up event listeners for registry changes
+     * Updates UI elements when registry data changes
+     */
     setupRegistryListeners() {
         // Listen for registry changes
         this.scene.registry.events.on('changedata', this.handleRegistryChange, this);
@@ -370,6 +372,12 @@ export class UIManager {
         this.updateBitcoins(this.scene.registry.get('bitcoins') || 0);
     }
 
+    /**
+     * Handles registry changes and updates UI elements accordingly
+     * @param {string} parent - Parent key of changed data
+     * @param {string} key - Key of changed data
+     * @param {*} value - New value of changed data
+     */
     handleRegistryChange(parent, key, value) {
         // If PlayerHUD isn't ready yet, store the update for later
         if (!this.playerHUD) {
@@ -409,9 +417,10 @@ export class UIManager {
         }
     }
 
-    // ============================
-    // SECTION: UI ANIMATIONS
-    // ============================
+    /**
+     * Animates UI elements from center to final positions
+     * Creates smooth transition when UI is first shown
+     */
     animateUIElements() {
         const elements = [
             { text: this.timerText, finalPos: { x: 25, y: 100 } },
@@ -426,23 +435,21 @@ export class UIManager {
         elements.forEach(({ text, finalPos }) => {
             if (text) {
                 text.setVisible(true);
-                // Fade in at center
+                // Fade in centered
                 this.scene.tweens.add({
                     targets: text,
                     alpha: 1,
                     duration: 500,
                     delay: delay,
                     onComplete: () => {
-                        // Move to final position
+                        // Move to position
                         this.scene.tweens.add({
                             targets: text,
                             x: finalPos.x,
                             y: finalPos.y,
                             duration: 1000,
                             ease: 'Power2',
-                            onStart: () => {
-                                text.setOrigin(0, 0);
-                            }
+                            onStart: () => text.setOrigin(0, 0)
                         });
                     }
                 });
@@ -450,17 +457,15 @@ export class UIManager {
             }
         });
 
-        // Show FPS counter after transition
+        // Show FPS last
         this.scene.time.delayedCall(delay + 1500, () => {
-            if (this.fpsText) {
-                this.fpsText.setVisible(true);
-            }
+            if (this.fpsText) this.fpsText.setVisible(true);
         });
     }
 
-    // ============================
-    // SECTION: TIMER CONTROLS
-    // ============================
+    /**
+     * Starts the game timer
+     */
     startTimer() {
         this.isTimerRunning = true;
         this.elapsedSeconds = 0;
@@ -487,6 +492,9 @@ export class UIManager {
         this.updateTimer();
     }
 
+    /**
+     * Stops the game timer
+     */
     stopTimer() {
         this.isTimerRunning = false;
         if (this.timerEvent) {
@@ -495,6 +503,9 @@ export class UIManager {
         }
     }
 
+    /**
+     * Resets the game timer
+     */
     resetTimer() {
         this.stopTimer();
         this.elapsedSeconds = 0;
@@ -516,47 +527,41 @@ export class UIManager {
         this.updateTimer();
     }
 
-    // ============================
-    // SECTION: CLEANUP & VISIBILITY
-    // ============================
+    /**
+     * Cleans up UI resources when scene changes
+     * Removes cameras, containers and event listeners
+     */
     destroy() {
         if (this.playerHUD) {
             this.playerHUD.reset();
         }
-        // Clean up other resources
         if (this.container) {
             this.container.destroy();
             this.container = null;
         }
-        
         if (this.uiCamera) {
             this.scene.cameras.remove(this.uiCamera);
             this.uiCamera = null;
         }
     }
 
+    /**
+     * Shows UI and updates all elements with current values
+     */
     show() {
-        // Show the container
-        if (this.container) {
-            this.container.setVisible(true);
-        }
-        
-        // Show UI camera
-        if (this.uiCamera) {
-            this.uiCamera.setVisible(true);
-        }
-
-        // Re-setup UI elements with current values
+        if (this.container) this.container.setVisible(true);
+        if (this.uiCamera) this.uiCamera.setVisible(true);
         this.setupUI();
     }
 
-    // ============================
-    // SECTION: DEBUG INFO
-    // ============================
+    /**
+     * Creates debug overlay with game state information
+     * Only visible when debug mode is enabled
+     */
     createDebugInfo() {
         const { width } = this.scene.scale;
         
-        // Create black background
+        // Semi-transparent background
         this.debugBackground = this.scene.add.rectangle(
             width - 200, 10, 190, 120,
             0x000000, 0.8
@@ -565,7 +570,7 @@ export class UIManager {
         this.debugBackground.setScrollFactor(0);
         this.container.add(this.debugBackground);
 
-        // Create debug text
+        // Debug text display
         this.debugInfo = this.scene.add.text(
             width - 190, 15,
             'Debug Info', {
@@ -574,15 +579,17 @@ export class UIManager {
             fill: '#ffffff',
             padding: { x: 5, y: 5 }
         });
-        
-        // Style the text
         this.debugInfo.setScrollFactor(0);
         this.container.add(this.debugInfo);
 
-        // Update debug info every frame
+        // Update every frame
         this.scene.events.on('update', this.updateDebugInfo, this);
     }
 
+    /**
+     * Updates debug overlay with current game state
+     * Shows section info, tile counts, and player position
+     */
     updateDebugInfo() {
         if (!this.debugInfo || !this.scene.player) return;
 

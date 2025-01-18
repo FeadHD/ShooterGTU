@@ -1,15 +1,30 @@
+/**
+ * TransitionScreen.js
+ * Manages scene transitions with animated overlays and UI elements.
+ * Provides smooth visual transitions between different game states.
+ */
+
 import { TextStyleManager } from '../../modules/managers/TextStyleManager';
 import { UIManager } from './UIManager';
 import { ManagerFactory } from '../../modules/di/ManagerFactory';
 
 export class TransitionScreen {
+    /**
+     * Creates a new transition screen manager
+     * @param {Phaser.Scene} scene - The scene this transition belongs to
+     */
     constructor(scene) {
         this.scene = scene;
-        this.elements = [];
-        this.isTransitioning = false;
-        this.managers = scene.managers; // Store managers reference
-        
+        this.elements = [];              // Stores transition visual elements
+        this.isTransitioning = false;    // Prevents multiple transitions
+        this.managers = scene.managers;   // Reference to scene managers
+
+        /**
+         * TEXT STYLES
+         * Defines styles for different UI elements during transition
+         */
         this.styles = {
+            // Score display style
             score: {
                 fontFamily: 'Retronoid',
                 fontSize: '24px',
@@ -24,6 +39,7 @@ export class TransitionScreen {
                     fill: true
                 }
             },
+            // Lives counter style
             lives: {
                 fontFamily: 'Retronoid',
                 fontSize: '24px',
@@ -38,6 +54,7 @@ export class TransitionScreen {
                     fill: true
                 }
             },
+            // Health points style
             hp: {
                 fontFamily: 'Retronoid',
                 fontSize: '24px',
@@ -52,6 +69,7 @@ export class TransitionScreen {
                     fill: true
                 }
             },
+            // Bitcoin counter style
             bitcoin: {
                 fontFamily: 'Retronoid',
                 fontSize: '24px',
@@ -66,6 +84,7 @@ export class TransitionScreen {
                     fill: true
                 }
             },
+            // Timer display style
             timer: {
                 fontFamily: 'Retronoid',
                 fontSize: '24px',
@@ -83,29 +102,34 @@ export class TransitionScreen {
         };
     }
 
+    /**
+     * TRANSITION START
+     * Initiates the transition sequence with a fade to black
+     * @param {Function} onComplete - Callback after transition completes
+     */
     start(onComplete) {
         if (this.isTransitioning) return;
         this.isTransitioning = true;
 
-        // Set up camera for transition screen to match GameScene1
+        // Configure camera for transition
         this.scene.scale.setGameSize(1920, 1080);
         const mainCamera = this.scene.cameras.main;
         mainCamera.setViewport(0, 0, 1920, 1080);
-        mainCamera.setZoom(1); // Set zoom to 1
+        mainCamera.setZoom(1);
 
-        // Create black overlay at GameScene1 size
+        // Create fade overlay
         const overlay = this.scene.add.rectangle(
             0, 0,
             1920,
             1080,
             0x000000
         );
-        overlay.setDepth(9000);
-        overlay.setAlpha(0);
-        overlay.setOrigin(0);
+        overlay.setDepth(9000);      // Ensure overlay is on top
+        overlay.setAlpha(0);         // Start transparent
+        overlay.setOrigin(0);        // Align to top-left
         this.elements.push(overlay);
 
-        // Make sure UIManager exists
+        // Initialize UI if needed
         if (!this.scene.gameUI) {
             if (!this.scene.managers) {
                 this.scene.managers = ManagerFactory.createManagers(this.scene);
@@ -113,7 +137,7 @@ export class TransitionScreen {
             this.scene.gameUI = this.scene.managers.ui;
         }
 
-        // Fade in black screen
+        // Animate fade in
         this.scene.tweens.add({
             targets: overlay,
             alpha: 1,
@@ -122,21 +146,25 @@ export class TransitionScreen {
         });
     }
 
+    /**
+     * UI ANIMATION
+     * Shows and animates UI elements during transition
+     * @param {Function} onComplete - Callback after animations finish
+     */
     showElements(onComplete) {
-        // Create black overlay at GameScene1 size
-        const overlay = this.elements[0]; // The black overlay
+        const overlay = this.elements[0];
 
-        // Start the UI animation sequence
+        // Trigger UI animations
         if (this.scene.gameUI) {
             this.scene.gameUI.animateUIElements();
         }
 
-        // After animations complete, start scene transition
-        this.scene.time.delayedCall(4500, () => { // Wait for all UI animations
+        // Wait for animations then transition
+        this.scene.time.delayedCall(4500, () => {
             if (onComplete) {
                 onComplete();
                 
-                // After scene transition, fade out the black overlay
+                // Fade out overlay
                 this.scene.time.delayedCall(100, () => {
                     if (overlay) {
                         this.scene.tweens.add({
@@ -146,7 +174,7 @@ export class TransitionScreen {
                             ease: 'Power2',
                             onComplete: () => {
                                 overlay.destroy();
-                                // Make sure UI elements persist in GameScene1
+                                // Ensure UI stays visible
                                 if (this.scene.gameUI) {
                                     this.scene.gameUI.container.setDepth(100);
                                 }
@@ -158,6 +186,10 @@ export class TransitionScreen {
         });
     }
 
+    /**
+     * CLEANUP
+     * Removes all transition elements and resets state
+     */
     destroy() {
         this.elements.forEach(element => element.destroy());
         this.elements = [];

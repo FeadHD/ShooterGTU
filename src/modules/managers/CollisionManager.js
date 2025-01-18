@@ -1,3 +1,10 @@
+/**
+ * CollisionManager.js
+ * Centralized collision handling system for game physics
+ * Manages player, enemy, bullet, and environment interactions
+ * Handles damage calculations, effects, and event dispatching
+ */
+
 export class CollisionManager {
     constructor(scene) {
         // Store the scene reference for accessing game objects (e.g. enemies, bullets, player, etc.)

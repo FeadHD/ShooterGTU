@@ -259,7 +259,7 @@ export class MainMenu extends Scene {
                     // Transition to game scene with fade effect
                     this.cameras.main.fadeOut(1000);
                     this.cameras.main.once('camerafadeoutcomplete', () => {
-                        this.scene.start('CombinedGtuLevel');
+                        this.scene.start('WayneWorld');
                     });
                 }
             },

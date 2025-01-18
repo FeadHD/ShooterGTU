@@ -1,3 +1,9 @@
+/**
+ * SoundSettings.js
+ * Manages audio configuration for both music and sound effects.
+ * Provides interactive sliders for volume control and persists settings.
+ */
+
 import 'phaser';
 import AudioManager from '../../modules/managers/AudioManager';
 
@@ -6,11 +12,15 @@ export default class SoundSettings extends Phaser.Scene {
         super('SoundSettings');
     }
 
+    /**
+     * SCENE INITIALIZATION
+     * Setup scene state and handle pause menu integration
+     */
     init(data) {
         this.fromPause = data?.fromPause || false;
         this.parentScene = data?.parentScene;
         
-        // If we're coming from pause menu, make sure parent scene stays paused
+        // Maintain pause state when accessed from game
         if (this.fromPause && this.parentScene) {
             const gameScene = this.scene.get(this.parentScene);
             if (gameScene) {
@@ -26,33 +36,40 @@ export default class SoundSettings extends Phaser.Scene {
         }
     }
 
+    /**
+     * ASSET LOADING
+     * Load required images, fonts, and sounds
+     */
     preload() {
         this.load.image('settingsBackground', 'public/assets/settings/settings.png');
         this.load.font('Gameplay', 'public/assets/fonts/retronoid/Gameplay.ttf');
         this.load.audio('confirmSound', 'public/assets/sounds/confirmation.mp3');
     }
 
+    /**
+     * SCENE CREATION
+     * Build the sound settings interface with volume controls
+     */
     create() {
         const { width, height } = this.cameras.main;
         const centerX = width / 2;
         const centerY = height / 2;
 
-        // Initialize audio manager instance
+        // Setup audio management
         this.audioManager = new AudioManager(this);
 
-        // Load current volume settings
+        // Get stored volume preferences
         const musicVolume = this.registry.get('musicVolume') ?? 1;
         const sfxVolume = this.registry.get('soundVolume') ?? 1;
 
-        // Store the fromPause and parentScene values passed from Settings
+        // Get navigation context
         this.fromPause = this.scene.settings.data?.fromPause;
         this.parentScene = this.scene.settings.data?.parentScene;
 
-        // Add background
+        // Setup background and title
         const bg = this.add.image(centerX, centerY, 'settingsBackground');
         bg.setDisplaySize(width, height);
 
-        // Add title
         this.add.text(centerX, height * 0.15, 'SOUND SETTINGS', {
             fontFamily: 'Gameplay',
             fontSize: '64px',
@@ -62,15 +79,18 @@ export default class SoundSettings extends Phaser.Scene {
             fontWeight: 'bold'
         }).setOrigin(0.5);
 
-        // Calculate positions for better layout
-        const startY = height * 0.35;  // Start lower down
-        const spacing = height * 0.15;  // More vertical space between elements
-        
-        // Move text more to the left, and sliders more to the right
-        const textX = width * 0.15;     // Text starts at 15% of screen width (moved left)
-        const sliderX = width * 0.40;   // Slider starts at 40% of screen width
+        /**
+         * LAYOUT CONFIGURATION
+         * Calculate positions for consistent UI spacing
+         */
+        const startY = height * 0.35;    // Vertical start position
+        const spacing = height * 0.15;    // Space between controls
+        const textX = width * 0.15;       // Left-aligned labels
+        const sliderX = width * 0.40;     // Right-aligned sliders
 
-        // Music Section
+        /**
+         * MUSIC VOLUME CONTROL
+         */
         const musicText = this.add.text(textX, startY, 'MUSIC', {
             fontFamily: 'Gameplay',
             fontSize: '48px',
@@ -80,16 +100,17 @@ export default class SoundSettings extends Phaser.Scene {
             fontWeight: 'bold'
         }).setOrigin(0, 0.5);
 
-        // Create music volume controls
+        // Create interactive music volume slider
         this.createVolumeSlider(sliderX, startY, musicVolume, (value) => {
             value = Math.abs(value) < 0.01 ? 0 : value;
             if (Number.isFinite(value)) {
-                // Update music volume through AudioManager
                 this.audioManager.setMusicVolume(value);
             }
         });
 
-        // Sound Effects Section
+        /**
+         * SOUND EFFECTS VOLUME CONTROL
+         */
         const sfxText = this.add.text(textX, startY + spacing, 'SOUND EFFECTS', {
             fontFamily: 'Gameplay',
             fontSize: '48px',
@@ -99,19 +120,20 @@ export default class SoundSettings extends Phaser.Scene {
             fontWeight: 'bold'
         }).setOrigin(0, 0.5);
 
-        // Create SFX volume slider
+        // Create interactive SFX volume slider
         this.createVolumeSlider(sliderX, startY + spacing, sfxVolume, (value) => {
             value = Math.abs(value) < 0.01 ? 0 : value;
             if (Number.isFinite(value)) {
-                // Update sound effects volume through AudioManager
                 this.audioManager.setSoundVolume(value);
             }
         });
 
-        // Helper function to play confirmation sound
+        /**
+         * SOUND EFFECT HANDLER
+         * Plays confirmation sound with proper volume
+         */
         const playConfirmSound = () => {
-            const sfxVolume = this.registry.get('soundVolume') ?? 1;  // Use nullish coalescing
-            // Do not create or play any sound if volume is 0
+            const sfxVolume = this.registry.get('soundVolume') ?? 1;
             if (sfxVolume !== 0 && Number.isFinite(sfxVolume)) {
                 const confirmSound = this.sound.add('confirmSound');
                 confirmSound.setVolume(sfxVolume);
@@ -122,7 +144,9 @@ export default class SoundSettings extends Phaser.Scene {
             }
         };
 
-        // Add Back button at the bottom
+        /**
+         * BACK NAVIGATION
+         */
         const backButton = this.add.text(centerX, height * 0.8, 'BACK', {
             fontFamily: 'Gameplay',
             fontSize: '48px',
@@ -137,7 +161,7 @@ export default class SoundSettings extends Phaser.Scene {
             .on('pointerout', () => backButton.setStyle({ fill: '#ffffff' }))
             .on('pointerdown', () => {
                 playConfirmSound();
-                // Return to Settings scene with the same pause state
+                // Maintain pause state if needed
                 if (this.fromPause && this.parentScene) {
                     const gameScene = this.scene.get(this.parentScene);
                     if (gameScene) {
@@ -151,7 +175,7 @@ export default class SoundSettings extends Phaser.Scene {
                         }
                     }
                 }
-                // Start the settings scene with the same data
+                // Return to settings menu
                 this.scene.start('Settings', { 
                     fromPause: this.fromPause, 
                     parentScene: this.parentScene 
@@ -160,35 +184,41 @@ export default class SoundSettings extends Phaser.Scene {
             });
     }
 
+    /**
+     * VOLUME SLIDER CREATION
+     * Creates an interactive slider for volume control
+     * @param {number} x - X position of slider
+     * @param {number} y - Y position of slider
+     * @param {number} initialValue - Initial volume value (0-1)
+     * @param {Function} onChange - Callback when volume changes
+     */
     createVolumeSlider(x, y, initialValue, onChange) {
-        const width = 400;  // Increased width
-        const height = 15;  // Increased height
-        const padding = 15; // Increased padding
+        const width = 400;   // Slider width
+        const height = 15;   // Slider height
+        const padding = 15;  // Spacing between elements
 
-        // Create slider background with rounded corners
+        // Create slider track
         const sliderBg = this.add.rectangle(x, y, width, height, 0x333333);
         sliderBg.setOrigin(0, 0.5);
         sliderBg.setStrokeStyle(2, 0x666666);
 
-        // Create slider fill with orange color
+        // Create volume level indicator
         const sliderFill = this.add.rectangle(x, y, width * initialValue, height, 0xFF8C00);
         sliderFill.setOrigin(0, 0.5);
 
-        // Create slider handle with a metallic look
+        // Create draggable handle
         const handle = this.add.circle(x + (width * initialValue), y, height * 1.2, 0xffffff);
         handle.setStrokeStyle(2, 0x999999);
 
-        // Add percentage text
+        // Add percentage display
         const percentText = this.add.text(x + width + padding * 2, y, Math.round(initialValue * 100) + '%', {
             fontFamily: 'Gameplay',
             fontSize: '32px',
             fill: '#ffffff'
         }).setOrigin(0, 0.5);
 
-        // Make handle interactive
+        // Setup drag interaction
         handle.setInteractive({ draggable: true });
-
-        // Track if we're currently dragging
         let isDragging = false;
 
         handle.on('dragstart', () => {
@@ -198,22 +228,16 @@ export default class SoundSettings extends Phaser.Scene {
         handle.on('drag', (pointer, dragX) => {
             if (!isDragging) return;
 
-            // Clamp dragX to slider bounds
+            // Keep handle within slider bounds
             dragX = Phaser.Math.Clamp(dragX, x, x + width);
             
-            // Update handle position
+            // Update UI elements
             handle.x = dragX;
-            
-            // Calculate new value
             const value = (dragX - x) / width;
-            
-            // Update fill width
             sliderFill.width = (dragX - x);
-            
-            // Update percentage text
             percentText.setText(Math.round(value * 100) + '%');
             
-            // Call onChange with new value
+            // Update volume
             onChange(value);
         });
 
@@ -221,22 +245,18 @@ export default class SoundSettings extends Phaser.Scene {
             isDragging = false;
         });
 
-        // Make background interactive for clicking
+        // Allow clicking anywhere on slider
         sliderBg.setInteractive();
         sliderBg.on('pointerdown', (pointer) => {
             const value = (pointer.x - x) / width;
             const clampedValue = Phaser.Math.Clamp(value, 0, 1);
             
-            // Update handle position
+            // Update UI elements
             handle.x = x + (width * clampedValue);
-            
-            // Update fill width
             sliderFill.width = width * clampedValue;
-            
-            // Update percentage text
             percentText.setText(Math.round(clampedValue * 100) + '%');
             
-            // Call onChange with new value
+            // Update volume
             onChange(clampedValue);
         });
     }

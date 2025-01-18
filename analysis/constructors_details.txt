@@ -63,10 +63,6 @@
 4:    constructor(scene) {
 
 
-=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/modules/managers/TrapManager.js ===
-5:    constructor(scene) {
-
-
 === /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/modules/managers/StateManager.js ===
 3:    constructor(scene) {
 
