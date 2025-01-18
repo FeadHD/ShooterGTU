@@ -471,9 +471,17 @@ export class WayneWorld extends BaseScene {
                 
                 // Track created entities for this section
                 if (createdEntities && createdEntities.length > 0) {
+                    // Store in active entities map
+                    const sectionEntities = this.activeEntities.get(sectionIndex) || [];
+                    sectionEntities.push(...createdEntities);
+                    this.activeEntities.set(sectionIndex, sectionEntities);
+
+                    // Update entity stats
                     this.entityStats.totalLoaded += createdEntities.length;
-                    this.entityStats.activeBySection.set(sectionIndex, 
-                        (this.entityStats.activeBySection.get(sectionIndex) || 0) + createdEntities.length);
+                    const currentCount = this.entityStats.activeBySection.get(sectionIndex) || 0;
+                    this.entityStats.activeBySection.set(sectionIndex, currentCount + createdEntities.length);
+
+                    console.log(`Added ${createdEntities.length} entities to section ${sectionIndex}`);
                 }
             }
         }
@@ -508,21 +516,8 @@ export class WayneWorld extends BaseScene {
         
         console.log(`Unloading section ${sectionIndex}`);
         
-        // Remove entities in this section
-        const sectionEntities = this.activeEntities.get(sectionIndex);
-        if (sectionEntities) {
-            // Track unloaded entities in stats
-            this.entityStats.totalUnloaded += sectionEntities.length;
-            this.entityStats.activeBySection.delete(sectionIndex);
-
-            // Destroy entities
-            sectionEntities.forEach(entity => {
-                if (entity && entity.destroy) {
-                    entity.destroy();
-                }
-            });
-            this.activeEntities.delete(sectionIndex);
-        }
+        // First unload entities in this section
+        this.removeSectionEntities(sectionIndex);
         
         // Remove tiles in this section
         const sectionStartX = sectionIndex * this.sectionWidth;
@@ -541,6 +536,36 @@ export class WayneWorld extends BaseScene {
     
         // Mark section as unloaded
         this.loadedSections.delete(sectionIndex);
+    }
+
+    removeSectionEntities(sectionIndex) {
+        const entities = this.activeEntities.get(sectionIndex);
+        if (!entities) {
+            console.warn(`No entities found to unload for section ${sectionIndex}`);
+            return;
+        }
+    
+        console.log(`Removing ${entities.length} entities from section ${sectionIndex}`);
+    
+        // Track unloaded entities in stats
+        this.entityStats.totalUnloaded += entities.length;
+        this.entityStats.activeBySection.delete(sectionIndex);
+    
+        // Destroy each entity
+        let destroyedCount = 0;
+        entities.forEach(entity => {
+            if (entity && entity.destroy) {
+                entity.destroy();
+                destroyedCount++;
+            } else {
+                console.warn(`Entity could not be destroyed:`, entity);
+            }
+        });
+    
+        console.log(`Successfully destroyed ${destroyedCount}/${entities.length} entities in section ${sectionIndex}`);
+    
+        // Clear from tracking
+        this.activeEntities.delete(sectionIndex);
     }
 
     /****************************
@@ -636,28 +661,6 @@ export class WayneWorld extends BaseScene {
     
         return true; // All tiles in range are loaded
     }
-
-    removeSectionEntities(sectionIndex) {
-        const entities = this.activeEntities.get(sectionIndex);
-        if (!entities) {
-            console.warn(`No entities found to unload for section ${sectionIndex}`);
-            return;
-        }
-    
-        console.log(`Removing entities for section ${sectionIndex}`);
-    
-        entities.forEach(entity => {
-            if (entity.destroy) {
-                console.log(`Destroying entity:`, entity);
-                entity.destroy(); // Properly destroy the Phaser entity
-            } else {
-                console.warn(`Entity does not have a destroy method:`, entity);
-            }
-        });
-    
-        this.activeEntities.delete(sectionIndex); // Ensure the section is removed
-    }
-    
 
     /****************************
      * PLAYER MANAGEMENT
