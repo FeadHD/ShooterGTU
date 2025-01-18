@@ -14,6 +14,7 @@ export class LDTKEntityManager {
         this.entityInstances = new Map(); // Track entities by unique ID
         this.entityLayers = new Map();    // Group entities by layer
         this.entityFactories = new Map(); // Store creation functions
+        this.loadedEntityPositions = new Set(); // Keep track of loaded entity positions
         this.debug = false;               // Debug visualization
     }
 
@@ -38,7 +39,6 @@ export class LDTKEntityManager {
     createEntities(levelData, worldX = 0, worldY = 0) {
         const layerInstances = levelData.layerInstances || [];
         
-        // Process entity-containing layers
         layerInstances.forEach(layer => {
             if (layer.__type === "Entities") {
                 this.processEntityLayer(layer, worldX, worldY);
@@ -58,10 +58,16 @@ export class LDTKEntityManager {
         this.entityLayers.set(layer.__identifier, layerEntities);
 
         layer.entityInstances.forEach(entity => {
-            const instance = this.createEntityInstance(entity, worldX, worldY);
-            if (instance) {
-                this.entityInstances.set(entity.iid, instance);
-                layerEntities.add(instance);
+            const positionKey = `${entity.px[0] + worldX},${entity.px[1] + worldY}`;
+            if (!this.loadedEntityPositions.has(positionKey)) {
+                const instance = this.createEntityInstance(entity, worldX, worldY);
+                if (instance) {
+                    this.entityInstances.set(entity.iid, instance);
+                    layerEntities.add(instance);
+                    this.loadedEntityPositions.add(positionKey);
+                }
+            } else {
+                console.warn(`Entity already exists at position (${positionKey}), skipping creation.`);
             }
         });
     }
