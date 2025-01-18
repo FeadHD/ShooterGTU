@@ -101,6 +101,21 @@ export class LDTKEntityManager {
         console.log(`Creating entity of type: ${entityData.__identifier} at (${entityData.px[0] + worldX}, ${entityData.px[1] + worldY})`);
     
         try {
+            const x = entityData.px[0] + worldX;
+            const y = entityData.px[1] + worldY;
+
+            // Special handling for PlayerStart
+            if (entityData.__identifier === 'PlayerStart') {
+                console.log('Found PlayerStart position:', { x, y });
+                // Store the position but don't create an entity
+                if (this.scene.createPlayer) {
+                    this.scene.createPlayer(x, y);
+                } else {
+                    console.warn('createPlayer method not found in scene');
+                }
+                return null;
+            }
+
             // Get texture data from AssetManager
             const textureData = this.assetManager.getTextureKeyForEntity(entityData.__identifier);
             if (!textureData) {
@@ -108,10 +123,6 @@ export class LDTKEntityManager {
             }
 
             // Create entity sprite
-            const x = entityData.px[0] + worldX;
-            const y = entityData.px[1] + worldY;
-            
-            // Validate texture exists
             const spritesheet = this.scene.textures.exists(textureData.spritesheet) 
                 ? textureData.spritesheet 
                 : 'default_sprite';

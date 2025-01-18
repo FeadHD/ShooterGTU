@@ -202,38 +202,59 @@ export class AssetManager {
     }
 
     getTextureKeyForEntity(entityType) {
-        // Map of entity types to their texture/animation keys
-        const textureMap = {
-            'Zapper': {
+        // Normalize entity type to handle case variations
+        const type = entityType.toLowerCase();
+        
+        // Map of entity types to their asset configurations
+        const entityAssets = {
+            'zapper': {
                 spritesheet: 'zapper_sheet',
                 defaultAnim: 'zapper_idle',
-                animations: ['zapper_idle', 'zapper_attack']
+                animations: ['zapper_idle', 'zapper_attack'],
+                width: 32,
+                height: 32
             },
-            'Player': {
-                spritesheet: 'character_sheet',
-                defaultAnim: 'character_idle'
+            'enemy': {
+                spritesheet: 'enemy_sheet',
+                defaultAnim: 'enemy_idle',
+                animations: ['enemy_idle', 'enemy_walk', 'enemy_attack'],
+                width: 32,
+                height: 32
             },
-            // Add more entity mappings as needed
+            // Add more entity types as needed
         };
 
-        const entityData = textureMap[entityType];
-        if (!entityData) {
-            console.warn(`No texture mapping found for entity type: ${entityType}`);
+        // Get asset configuration for this entity type
+        const assetConfig = entityAssets[type];
+        
+        if (!assetConfig) {
+            console.warn(`No asset configuration found for entity type: ${entityType}`);
             return {
                 spritesheet: 'default_sprite',
-                defaultAnim: 'default_idle'
+                defaultAnim: null,
+                animations: [],
+                width: 32,
+                height: 32
             };
         }
 
-        return entityData;
+        // Validate that required textures exist
+        if (!this.scene.textures.exists(assetConfig.spritesheet)) {
+            console.warn(`Spritesheet ${assetConfig.spritesheet} not found for entity type: ${entityType}`);
+            return {
+                spritesheet: 'default_sprite',
+                defaultAnim: null,
+                animations: [],
+                width: assetConfig.width,
+                height: assetConfig.height
+            };
+        }
+
+        return assetConfig;
     }
 
     validateTexture(textureKey) {
-        if (!this.scene.textures.exists(textureKey)) {
-            console.warn(`Texture ${textureKey} not found, using default`);
-            return false;
-        }
-        return true;
+        return this.scene.textures.exists(textureKey);
     }
 
     getDefaultTexture() {

@@ -629,6 +629,30 @@ export class WayneWorld extends BaseScene {
                 try {
                     console.log(`Recreating entity from saved data:`, data);
     
+                    // Special handling for Zapper
+                    if (data.type === 'Zapper') {
+                        console.log('Creating Zapper entity...');
+                        const entity = this.scene.add.sprite(data.x, data.y, 'zapper_sheet');
+    
+                        // Add physics
+                        this.scene.physics.add.existing(entity);
+                        if (entity.body) {
+                            entity.body.setCollideWorldBounds(true);
+                            entity.body.setImmovable(true);
+                        }
+    
+                        // Play default Zapper animation
+                        if (this.scene.anims.exists('zapper_idle')) {
+                            entity.anims.play('zapper_idle');
+                        }
+    
+                        entity.type = 'Zapper';
+                        sectionEntities.push(entity);
+                        console.log('Zapper entity created:', entity);
+                        return;
+                    }
+    
+                    // Default entity creation
                     const entity = this.ldtkEntityManager.createEntityInstance(
                         { __identifier: data.type, px: [data.x, data.y], fieldInstances: data.properties },
                         0,
@@ -669,6 +693,7 @@ export class WayneWorld extends BaseScene {
             console.log(`No entities found to load for section ${sectionIndex}`);
         }
     }
+    
     
 
     /****************************
