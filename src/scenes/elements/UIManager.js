@@ -600,11 +600,32 @@ export class UIManager {
             this.scene.groundLayer.getTilesWithin().filter(t => t.index !== -1).length +
             this.scene.platformLayer.getTilesWithin().filter(t => t.index !== -1).length : 0;
 
-        this.debugInfo.setText(
-            `Sections: ${loadedSections}\n` +
-            `Current: ${currentSection}\n` +
-            `Active Tiles: ${activeTiles}\n` +
-            `Pos: ${Math.floor(player.x)},${Math.floor(player.y)}`
-        );
+        // Get entity stats
+        const entityStats = this.scene.entityStats || { totalLoaded: 0, totalUnloaded: 0, activeBySection: new Map() };
+        let totalCurrentEntities = 0;
+        entityStats.activeBySection.forEach(count => totalCurrentEntities += count);
+
+        const debugText = [
+            `Section: ${currentSection}`,
+            `Loaded Sections: ${loadedSections}`,
+            `Active Tiles: ${activeTiles}`,
+            `Entities Loaded: ${entityStats.totalLoaded}`,
+            `Entities Unloaded: ${entityStats.totalUnloaded}`,
+            `Active Entities: ${totalCurrentEntities}`,
+            `Entities/Section: ${Array.from(entityStats.activeBySection.entries())
+                .map(([section, count]) => `[${section}:${count}]`).join(' ')}`
+        ].join('\n');
+
+        this.debugInfo.setText(debugText);
+        
+        // Adjust background height based on content
+        const lineCount = debugText.split('\n').length;
+        const lineHeight = 20; // Approximate line height
+        const padding = 20; // Extra padding
+        this.debugBackground.height = lineCount * lineHeight + padding;
+        
+        // Update position when window is resized
+        this.debugBackground.x = this.scene.scale.width - 200;
+        this.debugInfo.x = this.scene.scale.width - 190;
     }
 }

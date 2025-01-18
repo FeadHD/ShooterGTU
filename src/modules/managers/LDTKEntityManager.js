@@ -35,15 +35,20 @@ export class LDTKEntityManager {
      * @param {Object} levelData - LDtk level definition
      * @param {number} worldX - Level X offset
      * @param {number} worldY - Level Y offset
+     * @returns {Array} Array of created entity instances
      */
     createEntities(levelData, worldX = 0, worldY = 0) {
         const layerInstances = levelData.layerInstances || [];
+        const createdEntities = [];
         
         layerInstances.forEach(layer => {
             if (layer.__type === "Entities") {
-                this.processEntityLayer(layer, worldX, worldY);
+                const layerEntities = this.processEntityLayer(layer, worldX, worldY);
+                createdEntities.push(...layerEntities);
             }
         });
+
+        return createdEntities;
     }
 
     /**
@@ -52,9 +57,11 @@ export class LDTKEntityManager {
      * @param {Object} layer - LDtk layer data
      * @param {number} worldX - World offset X
      * @param {number} worldY - World offset Y
+     * @returns {Array} Array of created entity instances
      */
     processEntityLayer(layer, worldX, worldY) {
         const layerEntities = new Set();
+        const createdEntities = [];
         this.entityLayers.set(layer.__identifier, layerEntities);
 
         layer.entityInstances.forEach(entity => {
@@ -65,11 +72,14 @@ export class LDTKEntityManager {
                     this.entityInstances.set(entity.iid, instance);
                     layerEntities.add(instance);
                     this.loadedEntityPositions.add(positionKey);
+                    createdEntities.push(instance);
                 }
             } else {
                 console.warn(`Entity already exists at position (${positionKey}), skipping creation.`);
             }
         });
+
+        return createdEntities;
     }
 
     /**

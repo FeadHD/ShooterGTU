@@ -35,6 +35,13 @@ export class WayneWorld extends BaseScene {
             height: 0  // Will be updated with actual level data
         };
         this.levelHeight = 0; // Initialize levelHeight as instance property
+        
+        // Debug tracking
+        this.entityStats = {
+            totalLoaded: 0,
+            totalUnloaded: 0,
+            activeBySection: new Map()
+        };
     }
 
     preload() {
@@ -342,9 +349,6 @@ export class WayneWorld extends BaseScene {
             return;
         }
 
-        // Reset tile counter for this section
-        let sectionTilesCount = 0;
-
         // Calculate which levels this section spans
         const startLevelIndex = Math.floor(startX / this.singleLevelWidth);
         const endLevelIndex = Math.floor((startX + this.sectionWidth - 1) / this.singleLevelWidth);
@@ -356,19 +360,13 @@ export class WayneWorld extends BaseScene {
             sectionWidth: this.sectionWidth
         });
 
-        // Process each level that this section spans
+        // First pass: Load all tiles for this section
         for (let currentLevelIndex = startLevelIndex; currentLevelIndex <= endLevelIndex; currentLevelIndex++) {
             const currentLevel = this.currentLevelData.levels[currentLevelIndex];
             if (!currentLevel) continue;
 
             const levelStartX = currentLevelIndex * this.singleLevelWidth;
             
-            // Process entities for this level section
-            if (this.ldtkEntityManager) {
-                console.log(`Creating entities for level ${currentLevelIndex} at offset ${levelStartX}`);
-                this.ldtkEntityManager.createEntities(currentLevel, levelStartX, 0);
-            }
-
             // Find the Solid layer
             const solidLayer = currentLevel.layerInstances.find(layer => 
                 layer.__identifier === 'Solid' || layer.__type === 'IntGrid'
@@ -381,13 +379,6 @@ export class WayneWorld extends BaseScene {
                 const width = solidLayer.__cWid;
                 const height = solidLayer.__cHei;
 
-                console.log(`Processing tiles for level ${currentLevelIndex}:`, {
-                    startTile,
-                    endTile,
-                    width,
-                    height
-                });
-
                 // Process IntGrid values
                 if (solidLayer.intGridCsv) {
                     for (let y = 0; y < height; y++) {
@@ -398,18 +389,11 @@ export class WayneWorld extends BaseScene {
                             if (value > 0) {
                                 const worldX = Math.floor((x * 32 + levelStartX) / 32);
                                 const worldY = y;
-
-                                // Use the actual tile ID from the LDTK data
-                                const tileId = value - 1; // LDTK uses 1-based indices, Phaser uses 0-based
+                                const tileId = value - 1;
                                 
-                                // Place solid tiles in ground layer
                                 const groundTile = this.groundLayer.putTileAt(tileId, worldX, worldY, true);
                                 if (groundTile) {
                                     groundTile.setCollision(true);
-                                }
-
-                                if (sectionIndex === 3) {
-                                    console.log(`Placed tile at (${worldX}, ${worldY}) from level ${currentLevelIndex}`);
                                 }
                             }
                         }
@@ -425,11 +409,8 @@ export class WayneWorld extends BaseScene {
                         if (tileX >= startX && tileX < startX + this.sectionWidth) {
                             const gridX = Math.floor(tileX / 32);
                             const gridY = Math.floor(tileY / 32);
-                            
-                            // Use the actual tile ID from the autoLayer data
                             const tileId = tile.t;
                             
-                            // Place platform tiles in platform layer
                             const platformTile = this.platformLayer.putTileAt(tileId, gridX, gridY, true);
                             if (platformTile) {
                                 platformTile.setCollision(true);
@@ -442,6 +423,30 @@ export class WayneWorld extends BaseScene {
 
         // Set collision for the platform layer
         this.platformLayer.setCollisionByExclusion([-1]);
+
+        // Force physics world update to ensure all colliders are active
+        this.physics.world.step(0);
+
+        // Second pass: Create entities after tiles are loaded and physics is updated
+        for (let currentLevelIndex = startLevelIndex; currentLevelIndex <= endLevelIndex; currentLevelIndex++) {
+            const currentLevel = this.currentLevelData.levels[currentLevelIndex];
+            if (!currentLevel) continue;
+
+            const levelStartX = currentLevelIndex * this.singleLevelWidth;
+            
+            // Process entities for this level section after tiles are loaded
+            if (this.ldtkEntityManager) {
+                console.log(`Creating entities for level ${currentLevelIndex} at offset ${levelStartX}`);
+                const createdEntities = this.ldtkEntityManager.createEntities(currentLevel, levelStartX, 0);
+                
+                // Track created entities for this section
+                if (createdEntities && createdEntities.length > 0) {
+                    this.entityStats.totalLoaded += createdEntities.length;
+                    this.entityStats.activeBySection.set(sectionIndex, 
+                        (this.entityStats.activeBySection.get(sectionIndex) || 0) + createdEntities.length);
+                }
+            }
+        }
         
         console.log(`Section ${sectionIndex} loaded successfully`);
     }
@@ -473,29 +478,37 @@ export class WayneWorld extends BaseScene {
         
         console.log(`Unloading section ${sectionIndex}`);
         
-        // Calculate section bounds
+        // Remove entities in this section
+        const sectionEntities = this.activeEntities.get(sectionIndex);
+        if (sectionEntities) {
+            // Track unloaded entities in stats
+            this.entityStats.totalUnloaded += sectionEntities.length;
+            this.entityStats.activeBySection.delete(sectionIndex);
+
+            // Destroy entities
+            sectionEntities.forEach(entity => {
+                if (entity && entity.destroy) {
+                    entity.destroy();
+                }
+            });
+            this.activeEntities.delete(sectionIndex);
+        }
+        
+        // Remove tiles in this section
         const sectionStartX = sectionIndex * this.sectionWidth;
         const sectionEndX = sectionStartX + this.sectionWidth;
-        
-        // Remove entities in this section
-        this.activeEntities.forEach((entities, index) => {
-            if (index === sectionIndex) {
-                this.removeSectionEntities(index);
-            }
-        });
-        
-        // Clear tiles in this section
+    
         if (this.groundLayer) {
             for (let x = Math.floor(sectionStartX / 32); x < Math.ceil(sectionEndX / 32); x++) {
                 for (let y = 0; y < this.groundLayer.layer.height; y++) {
-                    this.groundLayer.putTileAt(-1, x, y);
+                    this.groundLayer.putTileAt(-1, x, y); // Unload ground tiles
                     if (this.platformLayer) {
-                        this.platformLayer.putTileAt(-1, x, y);
+                        this.platformLayer.putTileAt(-1, x, y); // Unload platform tiles
                     }
                 }
             }
         }
-        
+    
         // Mark section as unloaded
         this.loadedSections.delete(sectionIndex);
     }
@@ -531,63 +544,80 @@ export class WayneWorld extends BaseScene {
         if (this.activeEntities.has(sectionIndex)) {
             return; // Already loaded
         }
-
+    
         const sectionStartX = sectionIndex * this.sectionWidth;
         const sectionEndX = sectionStartX + this.sectionWidth;
-        
-        // Get entities for this section from LDTK
+    
+        // Ensure tiles are loaded
+        const tilesInRangeLoaded = this.areTilesInRangeLoaded(sectionStartX, sectionEndX);
+        if (!tilesInRangeLoaded) {
+            console.log(`Tiles not ready for section ${sectionIndex}. Delaying entity load.`);
+            this.time.delayedCall(100, () => this.loadSectionEntities(sectionIndex));
+            return;
+        }
+    
+        // Proceed with entity loading
         const levelIndex = Math.floor(sectionStartX / this.singleLevelWidth);
         const currentLevel = this.currentLevelData.levels[levelIndex];
         if (!currentLevel) return;
-
+    
         const levelStartX = levelIndex * this.singleLevelWidth;
         const sectionEntities = [];
+    
+        const entityLayer = currentLevel.layerInstances.find(layer =>
+            layer.__identifier === 'Entities'
+        );
+    
+        if (entityLayer) {
+            const sectionEntitiesData = entityLayer.entityInstances.filter(entity => {
+                const worldX = entity.px[0] + levelStartX;
+                return worldX >= sectionStartX && worldX < sectionEndX;
+            });
+    
+            sectionEntitiesData.forEach(entityData => {
+                const entity = this.ldtkEntityManager.createEntity(
+                    entityData.__identifier,
+                    entityData.px[0] + levelStartX,
+                    entityData.px[1],
+                    entityData.fieldInstances
+                );
+                if (entity) {
+                    sectionEntities.push(entity);
+                }
+            });
+        }
+    
+        this.activeEntities.set(sectionIndex, sectionEntities);
+    }
 
-        // Create entities through the manager
-        if (this.ldtkEntityManager) {
-            console.log(`Creating entities for section ${sectionIndex} (level ${levelIndex})`);
-            
-            // Filter entities that belong to this section
-            const entityLayer = currentLevel.layerInstances.find(layer => 
-                layer.__identifier === 'Entities'
-            );
-
-            if (entityLayer) {
-                const sectionEntitiesData = entityLayer.entityInstances.filter(entity => {
-                    const worldX = entity.__worldX + levelStartX;
-                    return worldX >= sectionStartX && worldX < sectionEndX;
-                });
-
-                // Create each entity in this section
-                sectionEntitiesData.forEach(entityData => {
-                    const entity = this.ldtkEntityManager.createEntity(
-                        entityData.__identifier,
-                        entityData.__worldX + levelStartX,
-                        entityData.__worldY,
-                        entityData.fieldInstances
-                    );
-                    if (entity) {
-                        sectionEntities.push(entity);
-                    }
-                });
+    areTilesInRangeLoaded(startX, endX) {
+        const tileRangeStartX = Math.floor(startX / 32) - 3; // Approx. 100px = 3 tiles
+        const tileRangeEndX = Math.ceil(endX / 32) + 3;
+    
+        for (let x = tileRangeStartX; x <= tileRangeEndX; x++) {
+            for (let y = 0; y < this.groundLayer.layer.height; y++) {
+                const tile = this.groundLayer.getTileAt(x, y);
+                if (tile && tile.index === -1) {
+                    return false; // Tile is not loaded
+                }
             }
         }
-
-        this.activeEntities.set(sectionIndex, sectionEntities);
+    
+        return true; // All tiles in range are loaded
     }
 
     removeSectionEntities(sectionIndex) {
         const entities = this.activeEntities.get(sectionIndex);
         if (!entities) return;
-
+    
         console.log(`Removing entities from section ${sectionIndex}`);
-        
+    
         entities.forEach(entity => {
             if (entity.destroy) {
-                entity.destroy();
+                entity.destroy(); // Destroy Phaser entity
             }
         });
-
+    
         this.activeEntities.delete(sectionIndex);
     }
 
@@ -761,47 +791,36 @@ export class WayneWorld extends BaseScene {
      ****************************/
     
     drawDebugGraphics() {
-        if (!this.boundaryGraphics) {
-            this.boundaryGraphics = this.add.graphics();
-        }
-
+        if (!this.boundaryGraphics) return;
+        
         this.boundaryGraphics.clear();
 
-        // Draw world boundaries in red
-        this.boundaryGraphics.lineStyle(4, 0xff0000, 1);
-        const totalWidth = this.singleLevelWidth * this.totalLevels;
-        this.boundaryGraphics.strokeRect(0, 0, totalWidth, this.scale.height);
+        // Draw section boundaries
+        this.boundaryGraphics.lineStyle(2, 0xff0000, 1);
+        this.loadedSections.forEach(sectionIndex => {
+            const x = sectionIndex * this.sectionWidth;
+            this.boundaryGraphics.strokeRect(x, 0, this.sectionWidth, this.cameras.main.height);
+        });
 
-        // Draw section boundaries in blue
-        this.boundaryGraphics.lineStyle(2, 0x0000ff, 1);
-        for (let i = 0; i <= this.lastLoadedSection + 1; i++) {
-            const sectionX = i * this.sectionWidth;
-            this.boundaryGraphics.strokeRect(sectionX, 0, this.sectionWidth, this.scale.height);
+        // Update debug text with entity information
+        let totalCurrentEntities = 0;
+        this.entityStats.activeBySection.forEach(count => totalCurrentEntities += count);
+
+        const debugInfo = [
+            `Section: ${Math.floor(this.player?.x / this.sectionWidth) || 0}`,
+            `Loaded Sections: ${Array.from(this.loadedSections).join(', ')}`,
+            `Active Tiles: ${this.loadedTilesCount}`,
+            `Total Entities Loaded: ${this.entityStats.totalLoaded}`,
+            `Total Entities Unloaded: ${this.entityStats.totalUnloaded}`,
+            `Current Active Entities: ${totalCurrentEntities}`,
+            `Entities by Section: ${Array.from(this.entityStats.activeBySection.entries())
+                .map(([section, count]) => `[${section}:${count}]`).join(' ')}`
+        ].join('\n');
+
+        if (this.debugText) {
+            this.debugText.setText(debugInfo);
+            this.debugText.setVisible(true);
         }
-
-        // Draw camera boundaries in green
-        this.boundaryGraphics.lineStyle(2, 0x00ff00, 1);
-        const camera = this.cameras.main;
-        this.boundaryGraphics.strokeRect(
-            camera.scrollX,
-            camera.scrollY,
-            camera.width,
-            camera.height
-        );
-
-        // Draw player position in yellow
-        if (this.player) {
-            this.boundaryGraphics.lineStyle(4, 0xffff00, 1);
-            this.boundaryGraphics.strokeRect(
-                this.player.x - 16,
-                this.player.y - 16,
-                32,
-                32
-            );
-        }
-
-        // Set graphics depth to be above everything
-        this.boundaryGraphics.setDepth(1000);
     }
 
     /****************************
