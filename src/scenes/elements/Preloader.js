@@ -157,49 +157,76 @@ export class Preloader extends Scene {
      * ENEMY SPRITES
      */
     loadEnemySprites() {
-        // Load drone
-        this.load.image('Bot1v1', 'assets/enemys/drone/Bot1v1.png');
-
-        // Load slime animations
-        const slimeStates = {
-            'idle': { endFrame: 3 },
-            'jump': { endFrame: 3 },
-            'death': { endFrame: 4 }
+        const enemyAssets = {
+            // Define drone assets
+            drone: [
+                { key: 'Bot1v1', path: 'assets/enemys/drone/Bot1v1.png', type: 'image' }
+            ],
+    
+            // Define slime animations
+            slime: [
+                { key: 'slime_idle', path: './assets/enemys/slime/slime_idle.png', frameWidth: 32, frameHeight: 32, endFrame: 3 },
+                { key: 'slime_jump', path: './assets/enemys/slime/slime_jump.png', frameWidth: 32, frameHeight: 32, endFrame: 3 },
+                { key: 'slime_death', path: './assets/enemys/slime/slime_death.png', frameWidth: 32, frameHeight: 32, endFrame: 4 }
+            ],
+    
+            // Define zapper animations
+            zapper: [
+                { key: 'zapper_idle', path: 'assets/zapper/zapper_idle.png', frameWidth: 32, frameHeight: 32, endFrame: 3 },
+                { key: 'zapper_attack', path: 'assets/zapper/zapper_attack.png', frameWidth: 32, frameHeight: 32, endFrame: 3 },
+                { key: 'zapper_walk', path: 'assets/zapper/zapper_walk.png', frameWidth: 32, frameHeight: 32, endFrame: 5 },
+                { key: 'zapper_hit', path: 'assets/zapper/zapper_hit.png', frameWidth: 32, frameHeight: 32, endFrame: 2 },
+                { key: 'zapper_death', path: 'assets/zapper/zapper_death.png', frameWidth: 32, frameHeight: 32, endFrame: 7 },
+                { key: 'zapper_shock', path: 'assets/zapper/zapper_shock.png', frameWidth: 32, frameHeight: 32, endFrame: 6 }
+            ],
+    
+            // Define melee warrior animations
+            meleeWarrior: {
+                config: { frameWidth: 96, frameHeight: 84, spacing: 0, margin: 0, startFrame: 0 },
+                states: {
+                    'IDLE': 5,
+                    'WALK': 7,
+                    'ATTACK 1': 6,
+                    'DEATH': 8,
+                    'HURT': 3,
+                    'DEFEND': 3,
+                    'RUN': 7,
+                    'JUMP': 3
+                }
+            }
         };
-
-        Object.entries(slimeStates).forEach(([state, config]) => {
-            this.load.spritesheet(`slime_${state}`, `./assets/enemys/slime/slime_${state}.png`, {
-                frameWidth: 32,
-                frameHeight: 32,
+    
+        // Load drone assets
+        enemyAssets.drone.forEach(asset => {
+            if (asset.type === 'image') {
+                this.load.image(asset.key, asset.path);
+            }
+        });
+    
+        // Load slime animations
+        enemyAssets.slime.forEach(slime => {
+            this.load.spritesheet(slime.key, slime.path, {
+                frameWidth: slime.frameWidth,
+                frameHeight: slime.frameHeight,
                 startFrame: 0,
-                endFrame: config.endFrame
+                endFrame: slime.endFrame
             });
         });
-
-        // Melee warrior configuration
-        const meleeWarriorConfig = {
-            frameWidth: 96,
-            frameHeight: 84,
-            spacing: 0,
-            margin: 0,
-            startFrame: 0
-        };
-
-        // Load warrior animations
-        const warriorStates = {
-            'IDLE': 5,
-            'WALK': 7,
-            'ATTACK 1': 6,
-            'DEATH': 8,
-            'HURT': 3,
-            'DEFEND': 3,
-            'RUN': 7,
-            'JUMP': 3
-        };
-
-        Object.entries(warriorStates).forEach(([state, endFrame]) => {
+    
+        // Load zapper animations
+        enemyAssets.zapper.forEach(zapper => {
+            this.load.spritesheet(zapper.key, zapper.path, {
+                frameWidth: zapper.frameWidth,
+                frameHeight: zapper.frameHeight,
+                startFrame: 0,
+                endFrame: zapper.endFrame
+            });
+        });
+    
+        // Load melee warrior animations
+        Object.entries(enemyAssets.meleeWarrior.states).forEach(([state, endFrame]) => {
             this.load.spritesheet(`enemymeleewarrior_${state}`, `/assets/enemys/warrior/${state}.png`, {
-                ...meleeWarriorConfig,
+                ...enemyAssets.meleeWarrior.config,
                 endFrame
             });
         });

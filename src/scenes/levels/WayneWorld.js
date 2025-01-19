@@ -466,8 +466,16 @@ export class WayneWorld extends BaseScene {
             
             // Process entities for this level section after tiles are loaded
             if (this.ldtkEntityManager) {
-                console.log(`Creating entities for level ${currentLevelIndex} at offset ${levelStartX}`);
+                console.log('zzz --------- Starting entity creation ---------');
+                console.log('zzz Level data:', {
+                    levelIndex: currentLevelIndex,
+                    offset: levelStartX,
+                    entityLayers: currentLevel.layerInstances.filter(l => l.__type === "Entities").length
+                });
+                
                 const createdEntities = this.ldtkEntityManager.createEntities(currentLevel, levelStartX, 0);
+                console.log('zzz Created entities count:', createdEntities.length);
+                console.log('zzz --------- Entity creation complete ---------');
                 
                 // Track created entities for this section
                 if (createdEntities && createdEntities.length > 0) {

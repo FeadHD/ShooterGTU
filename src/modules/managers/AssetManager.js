@@ -44,6 +44,7 @@ export class AssetManager {
     }
 
     loadDefaultSprite() {
+        // Load default sprite from public assets
         this.scene.load.image('default_sprite', 'assets/default.png');
     }
 
@@ -69,20 +70,59 @@ export class AssetManager {
      */
     loadCharacterSprites() {
         const characterSprites = [
-            { key: 'character_idle', file: 'character_Idle.png' },     // Standing
-            { key: 'character_jump', file: 'character_Jump.png' },     // Jumping
-            { key: 'character_crouch', file: 'character_Crouch.png' }, // Ducking
-            { key: 'character_death', file: 'character_Death.png' },   // Death
-            { key: 'character_rollover', file: 'character_Rollover.png' }, // Dodge
-            { key: 'character_walking', file: 'character_Walking.png' }   // Movement
+            { key: 'player_idle', file: 'character_Idle.png' },     // Standing
+            { key: 'player_jump', file: 'character_Jump.png' },     // Jumping
+            { key: 'player_crouch', file: 'character_Crouch.png' }, // Ducking
+            { key: 'player_death', file: 'character_Death.png' },   // Death
+            { key: 'player_rollover', file: 'character_Rollover.png' }, // Dodge
+            { key: 'player_walk', file: 'character_Walking.png' }   // Movement
         ];
 
         // Load each sprite with consistent dimensions
         characterSprites.forEach(sprite => {
+            console.log('zzz Loading character sprite:', sprite.key);
             this.scene.load.spritesheet(sprite.key, `assets/character/${sprite.file}`, {
                 frameWidth: 32,
                 frameHeight: 48
             });
+        });
+
+        // Create character animations
+        this.scene.load.once('complete', () => {
+            console.log('zzz Creating character animations...');
+            
+            // Idle animation
+            if (this.scene.textures.exists('player_idle')) {
+                this.scene.anims.create({
+                    key: 'player_idle',
+                    frames: this.scene.anims.generateFrameNumbers('player_idle', { start: 0, end: 3 }),
+                    frameRate: 10,
+                    repeat: -1
+                });
+                console.log('zzz Animation player_idle created');
+            }
+
+            // Walk animation
+            if (this.scene.textures.exists('player_walk')) {
+                this.scene.anims.create({
+                    key: 'player_walk',
+                    frames: this.scene.anims.generateFrameNumbers('player_walk', { start: 0, end: 5 }),
+                    frameRate: 12,
+                    repeat: -1
+                });
+                console.log('zzz Animation player_walk created');
+            }
+
+            // Jump animation
+            if (this.scene.textures.exists('player_jump')) {
+                this.scene.anims.create({
+                    key: 'player_jump',
+                    frames: this.scene.anims.generateFrameNumbers('player_jump', { start: 0, end: 3 }),
+                    frameRate: 10,
+                    repeat: 0
+                });
+                console.log('zzz Animation player_jump created');
+            }
         });
     }
 
@@ -171,78 +211,127 @@ export class AssetManager {
      * Special enemy with electrical attacks
      */
     loadZapperAssets() {
-        // Load zapper sprite sheet for animations
-        this.scene.load.spritesheet('zapper_sheet', 'assets/zapper/zapper_idle.png', {
+        console.log('zzz Loading Zapper assets...');
+        
+        // Load all zapper spritesheets
+        this.scene.load.spritesheet('zapper_idle', 'assets/zapper/zapper_idle.png', {
             frameWidth: 32,
-            frameHeight: 32
+            frameHeight: 32,
+            endFrame: 3
         });
 
-        // Load attack animation spritesheet
-        this.scene.load.spritesheet('zapper_attack_sheet', 'assets/zapper/zapper_attack.png', {
+        this.scene.load.spritesheet('zapper_walk', 'assets/zapper/zapper_walk.png', {
             frameWidth: 32,
-            frameHeight: 32
+            frameHeight: 32,
+            endFrame: 5
+        });
+
+        this.scene.load.spritesheet('zapper_attack', 'assets/zapper/zapper_attack.png', {
+            frameWidth: 32,
+            frameHeight: 32,
+            endFrame: 3
+        });
+
+        this.scene.load.spritesheet('zapper_hit', 'assets/zapper/zapper_hit.png', {
+            frameWidth: 32,
+            frameHeight: 32,
+            endFrame: 2
+        });
+
+        this.scene.load.spritesheet('zapper_death', 'assets/zapper/zapper_death.png', {
+            frameWidth: 32,
+            frameHeight: 32,
+            endFrame: 7
+        });
+
+        this.scene.load.spritesheet('zapper_shock', 'assets/zapper/zapper_shock.png', {
+            frameWidth: 32,
+            frameHeight: 32,
+            endFrame: 6
         });
 
         // Create animations once assets are loaded
         this.scene.load.once('complete', () => {
+            console.log('zzz Creating Zapper animations...');
             this.createZapperAnimations();
         });
     }
 
     createZapperAnimations() {
         // Idle animation
-        if (this.scene.textures.exists('zapper_sheet')) {
+        if (this.scene.textures.exists('zapper_idle')) {
             this.scene.anims.create({
                 key: 'zapper_idle',
-                frames: this.scene.anims.generateFrameNumbers('zapper_sheet', { start: 0, end: 3 }),
+                frames: this.scene.anims.generateFrameNumbers('zapper_idle', { start: 0, end: 3 }),
                 frameRate: 10,
                 repeat: -1
             });
+            console.log('zzz Animation zapper_idle created.');
         } else {
-            console.error('Zapper idle spritesheet not found!');
+            console.error('zzz zapper_idle spritesheet not found!');
+        }
+
+        // Walk animation
+        if (this.scene.textures.exists('zapper_walk')) {
+            this.scene.anims.create({
+                key: 'zapper_walk',
+                frames: this.scene.anims.generateFrameNumbers('zapper_walk', { start: 0, end: 5 }),
+                frameRate: 12,
+                repeat: -1
+            });
+            console.log('zzz Animation zapper_walk created.');
         }
 
         // Attack animation
-        if (this.scene.textures.exists('zapper_attack_sheet')) {
+        if (this.scene.textures.exists('zapper_attack')) {
             this.scene.anims.create({
                 key: 'zapper_attack',
-                frames: this.scene.anims.generateFrameNumbers('zapper_attack_sheet', { start: 0, end: 3 }),
+                frames: this.scene.anims.generateFrameNumbers('zapper_attack', { start: 0, end: 3 }),
                 frameRate: 15,
                 repeat: 0
             });
-        } else {
-            console.error('Zapper attack spritesheet not found!');
+            console.log('zzz Animation zapper_attack created.');
+        }
+
+        // Hit animation
+        if (this.scene.textures.exists('zapper_hit')) {
+            this.scene.anims.create({
+                key: 'zapper_hit',
+                frames: this.scene.anims.generateFrameNumbers('zapper_hit', { start: 0, end: 2 }),
+                frameRate: 10,
+                repeat: 0
+            });
+            console.log('zzz Animation zapper_hit created.');
+        }
+
+        // Death animation
+        if (this.scene.textures.exists('zapper_death')) {
+            this.scene.anims.create({
+                key: 'zapper_death',
+                frames: this.scene.anims.generateFrameNumbers('zapper_death', { start: 0, end: 7 }),
+                frameRate: 12,
+                repeat: 0
+            });
+            console.log('zzz Animation zapper_death created.');
+        }
+
+        // Shock animation
+        if (this.scene.textures.exists('zapper_shock')) {
+            this.scene.anims.create({
+                key: 'zapper_shock',
+                frames: this.scene.anims.generateFrameNumbers('zapper_shock', { start: 0, end: 6 }),
+                frameRate: 15,
+                repeat: 0
+            });
+            console.log('zzz Animation zapper_shock created.');
         }
     }
 
     getTextureKeyForEntity(entityType) {
-        // Normalize entity type to handle case variations
-        const type = entityType.toLowerCase();
-        
-        // Map of entity types to their asset configurations
-        const entityAssets = {
-            'zapper': {
-                spritesheet: 'zapper_sheet',
-                defaultAnim: 'zapper_idle',
-                animations: ['zapper_idle', 'zapper_attack'],
-                width: 32,
-                height: 32
-            },
-            'enemy': {
-                spritesheet: 'enemy_sheet',
-                defaultAnim: 'enemy_idle',
-                animations: ['enemy_idle', 'enemy_walk', 'enemy_attack'],
-                width: 32,
-                height: 32
-            },
-            // Add more entity types as needed
-        };
-
-        // Get asset configuration for this entity type
-        const assetConfig = entityAssets[type];
-        
-        if (!assetConfig) {
-            console.warn(`No asset configuration found for entity type: ${entityType}`);
+        // Check if entityType is valid
+        if (!entityType || typeof entityType !== 'string') {
+            console.error('❌ zzz Invalid or missing entity type:', entityType);
+            debugger; // This will pause execution in the browser dev tools
             return {
                 spritesheet: 'default_sprite',
                 defaultAnim: null,
@@ -252,15 +341,51 @@ export class AssetManager {
             };
         }
 
-        // Validate that required textures exist
-        if (!this.scene.textures.exists(assetConfig.spritesheet)) {
-            console.warn(`Spritesheet ${assetConfig.spritesheet} not found for entity type: ${entityType}`);
+        // Debug log to show what entity type is being requested
+        console.log('🎮 Getting texture for entity type:', entityType);
+        debugger; // This will pause execution in the browser dev tools
+        
+        // Normalize entity type to handle case variations
+        const type = entityType;
+        
+        // Map of entity types to their asset configurations
+        const entityAssets = {
+            'PlayerStart': {
+                spritesheet: 'player_idle',
+                defaultAnim: 'player_idle',
+                animations: ['player_idle', 'player_walk', 'player_jump', 'player_shoot'],
+                width: 32,
+                height: 32
+            },
+            'Zapper': {
+                spritesheet: 'zapper_idle',
+                defaultAnim: 'zapper_idle',
+                animations: ['zapper_idle', 'zapper_attack', 'zapper_walk', 'zapper_hit', 'zapper_death', 'zapper_shock'],
+                width: 32,
+                height: 32
+            },
+            'Enemy': {
+                spritesheet: 'enemy_sheet',
+                defaultAnim: 'enemy_idle',
+                animations: ['enemy_idle', 'enemy_walk', 'enemy_attack'],
+                width: 32,
+                height: 32
+            }
+            // Add more entity types as needed
+        };
+
+        // Get asset configuration for this entity type - try different case variations
+        const assetConfig = entityAssets[entityType] || entityAssets[entityType.toLowerCase()] || entityAssets[entityType.charAt(0).toUpperCase() + entityType.slice(1)];
+        
+        if (!assetConfig) {
+            console.warn(`zzz No asset configuration found for entity type: ${entityType}`);
+            debugger; // This will pause execution in the browser dev tools
             return {
                 spritesheet: 'default_sprite',
                 defaultAnim: null,
                 animations: [],
-                width: assetConfig.width,
-                height: assetConfig.height
+                width: 32,
+                height: 32
             };
         }
 

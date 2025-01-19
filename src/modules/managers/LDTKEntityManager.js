@@ -67,25 +67,35 @@ export class LDTKEntityManager {
      * @returns {Array} Array of created entity instances
      */
     processEntityLayer(layer, worldX, worldY) {
+        console.log('zzz Processing entity layer:', layer.__identifier);
+        console.log('zzz Number of entities in layer:', layer.entityInstances.length);
+        
         const layerEntities = new Set();
         const createdEntities = [];
         this.entityLayers.set(layer.__identifier, layerEntities);
 
         layer.entityInstances.forEach(entity => {
+            console.log('zzz Processing entity:', entity.__identifier);
             const positionKey = `${entity.px[0] + worldX},${entity.px[1] + worldY}`;
+            
             if (!this.loadedEntityPositions.has(positionKey)) {
+                console.log('zzz Creating new entity at position:', positionKey);
                 const instance = this.createEntityInstance(entity, worldX, worldY);
                 if (instance) {
+                    console.log('zzz Entity created successfully:', instance.type);
                     this.entityInstances.set(entity.iid, instance);
                     layerEntities.add(instance);
                     this.loadedEntityPositions.add(positionKey);
                     createdEntities.push(instance);
+                } else {
+                    console.warn('zzz Entity creation returned null or undefined');
                 }
             } else {
-                console.warn(`Entity already exists at position (${positionKey}), skipping creation.`);
+                console.warn(`zzz Entity already exists at position (${positionKey}), skipping creation.`);
             }
         });
 
+        console.log('zzz Layer processing complete. Created entities:', createdEntities.length);
         return createdEntities;
     }
 
@@ -107,7 +117,6 @@ export class LDTKEntityManager {
             // Special handling for PlayerStart
             if (entityData.__identifier === 'PlayerStart') {
                 console.log('Found PlayerStart position:', { x, y });
-                // Store the position but don't create an entity
                 if (this.scene.createPlayer) {
                     this.scene.createPlayer(x, y);
                 } else {
@@ -118,6 +127,8 @@ export class LDTKEntityManager {
 
             // Get texture data from AssetManager
             const textureData = this.assetManager.getTextureKeyForEntity(entityData.__identifier);
+            console.log('Texture data for entity:', textureData);
+
             if (!textureData) {
                 throw new Error(`No texture data found for entity type: ${entityData.__identifier}`);
             }
@@ -126,8 +137,10 @@ export class LDTKEntityManager {
             const spritesheet = this.scene.textures.exists(textureData.spritesheet) 
                 ? textureData.spritesheet 
                 : 'default_sprite';
-                
+            console.log('Using spritesheet:', spritesheet);
+
             const entity = this.scene.add.sprite(x, y, spritesheet);
+            console.log('Entity sprite created:', entity);
 
             // Add physics
             this.scene.physics.add.existing(entity);
@@ -157,28 +170,46 @@ export class LDTKEntityManager {
             return this.createFallbackEntity(entityData, worldX, worldY);
         }
     }
+    
 
     createFallbackEntity(entityData, worldX, worldY) {
         console.warn(`Creating fallback entity for ${entityData.__identifier}`);
+        
+        // Add detailed logs for debugging
+        console.log('Fallback entity details:', {
+            identifier: entityData.__identifier,
+            position: { x: entityData.px[0] + worldX, y: entityData.px[1] + worldY },
+            fieldInstances: entityData.fieldInstances || null,
+            worldOffsets: { worldX, worldY }
+        });
+    
+        // Pause execution to inspect variables in the console
+        debugger;
+    
         const x = entityData.px[0] + worldX;
         const y = entityData.px[1] + worldY;
-
+    
         // Create basic sprite with default texture
         const fallbackEntity = this.scene.add.sprite(x, y, 'default_sprite');
-        
+        console.log('Created fallback entity sprite:', fallbackEntity);
+    
         // Add basic physics
         this.scene.physics.add.existing(fallbackEntity);
         if (fallbackEntity.body) {
             fallbackEntity.body.setCollideWorldBounds(true);
             fallbackEntity.body.setImmovable(true);
+        } else {
+            console.warn('Fallback entity does not have a physics body.');
         }
-
+    
         // Store basic metadata
         fallbackEntity.type = entityData.__identifier;
         fallbackEntity.isFallback = true;
-
+    
+        console.log('Final fallback entity:', fallbackEntity);
         return fallbackEntity;
     }
+    
 
     setupEntityBehavior(entity) {
         switch (entity.type) {
