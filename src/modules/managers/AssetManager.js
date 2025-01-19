@@ -14,7 +14,7 @@ export class AssetManager {
     constructor(scene) {
         this.scene = scene;
         this.initialized = false;
-        console.log('AssetManager initialized for scene:', this.scene.sys.settings.key);
+        console.log('AssetManager initialized for scene:', scene.sys.settings.key);
     }
     
     /**

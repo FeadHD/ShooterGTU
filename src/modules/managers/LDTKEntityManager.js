@@ -28,6 +28,7 @@ export class LDTKEntityManager {
         // Check if AssetManager is available
         if (!this.assetManager) {
             console.error('AssetManager is not linked to LDTKEntityManager.');
+            console.log('AssetManager linked to LDTKEntityManager:', this.assetManager);
         }
     }
 

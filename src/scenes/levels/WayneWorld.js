@@ -2,6 +2,7 @@ import { BaseScene } from '../elements/BaseScene';
 import { GameConfig } from '../../config/GameConfig';
 import { Player } from '../../prefabs/Player';
 import { ManagerFactory } from '../../modules/di/ManagerFactory';
+import { AssetManager } from '../../modules/managers/AssetManager';
 
 export class WayneWorld extends BaseScene {
     // Constants
@@ -49,11 +50,16 @@ export class WayneWorld extends BaseScene {
 
     preload() {
         super.preload();
-        
-        // Get AssetManager from ManagerFactory
-        this.managers = ManagerFactory.createManagers(this);
-        this.managers.assets.loadAssets();
+    
+        // Initialize AssetManager and attach it to the scene
+        const assets = new AssetManager(this);
+        this.assetManager = assets; // Attach AssetManager to the scene
+        console.log('AssetManager assigned to scene:', this.assetManager);
+    
+        // Load assets via AssetManager
+        this.assetManager.loadAssets();
     }
+    
 
 
     create() {
