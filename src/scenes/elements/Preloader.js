@@ -158,19 +158,19 @@ export class Preloader extends Scene {
      */
     loadEnemySprites() {
         const enemyAssets = {
-            // Define drone assets
+            // Drone assets
             drone: [
                 { key: 'Bot1v1', path: 'assets/enemys/drone/Bot1v1.png', type: 'image' }
             ],
     
-            // Define slime animations
+            // Slime assets
             slime: [
                 { key: 'slime_idle', path: './assets/enemys/slime/slime_idle.png', frameWidth: 32, frameHeight: 32, endFrame: 3 },
                 { key: 'slime_jump', path: './assets/enemys/slime/slime_jump.png', frameWidth: 32, frameHeight: 32, endFrame: 3 },
                 { key: 'slime_death', path: './assets/enemys/slime/slime_death.png', frameWidth: 32, frameHeight: 32, endFrame: 4 }
             ],
     
-            // Define zapper animations
+            // Zapper assets
             zapper: [
                 { key: 'zapper_idle', path: 'assets/zapper/zapper_idle.png', frameWidth: 32, frameHeight: 32, endFrame: 3 },
                 { key: 'zapper_attack', path: 'assets/zapper/zapper_attack.png', frameWidth: 32, frameHeight: 32, endFrame: 3 },
@@ -178,28 +178,14 @@ export class Preloader extends Scene {
                 { key: 'zapper_hit', path: 'assets/zapper/zapper_hit.png', frameWidth: 32, frameHeight: 32, endFrame: 2 },
                 { key: 'zapper_death', path: 'assets/zapper/zapper_death.png', frameWidth: 32, frameHeight: 32, endFrame: 7 },
                 { key: 'zapper_shock', path: 'assets/zapper/zapper_shock.png', frameWidth: 32, frameHeight: 32, endFrame: 6 }
-            ],
-    
-            // Define melee warrior animations
-            meleeWarrior: {
-                config: { frameWidth: 96, frameHeight: 84, spacing: 0, margin: 0, startFrame: 0 },
-                states: {
-                    'IDLE': 5,
-                    'WALK': 7,
-                    'ATTACK 1': 6,
-                    'DEATH': 8,
-                    'HURT': 3,
-                    'DEFEND': 3,
-                    'RUN': 7,
-                    'JUMP': 3
-                }
-            }
+            ]
         };
     
         // Load drone assets
         enemyAssets.drone.forEach(asset => {
             if (asset.type === 'image') {
                 this.load.image(asset.key, asset.path);
+                console.log(`Loading drone asset: ${asset.key}`);
             }
         });
     
@@ -211,6 +197,7 @@ export class Preloader extends Scene {
                 startFrame: 0,
                 endFrame: slime.endFrame
             });
+            console.log(`Loading slime animation: ${slime.key}`);
         });
     
         // Load zapper animations
@@ -221,16 +208,10 @@ export class Preloader extends Scene {
                 startFrame: 0,
                 endFrame: zapper.endFrame
             });
-        });
-    
-        // Load melee warrior animations
-        Object.entries(enemyAssets.meleeWarrior.states).forEach(([state, endFrame]) => {
-            this.load.spritesheet(`enemymeleewarrior_${state}`, `/assets/enemys/warrior/${state}.png`, {
-                ...enemyAssets.meleeWarrior.config,
-                endFrame
-            });
+            console.log(`Loading zapper animation: ${zapper.key}`);
         });
     }
+    
 
     /**
      * PROJECTILES AND EFFECTS

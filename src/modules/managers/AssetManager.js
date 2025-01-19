@@ -327,71 +327,52 @@ export class AssetManager {
         }
     }
 
-    getTextureKeyForEntity(entityType) {
-        // Check if entityType is valid
-        if (!entityType || typeof entityType !== 'string') {
-            console.error('❌ zzz Invalid or missing entity type:', entityType);
-            debugger; // This will pause execution in the browser dev tools
-            return {
-                spritesheet: 'default_sprite',
-                defaultAnim: null,
-                animations: [],
-                width: 32,
-                height: 32
-            };
-        }
+getTextureKeyForEntity(entityType) {
+    const type = entityType.toLowerCase(); // Normalize the entity type to lowercase
 
-        // Debug log to show what entity type is being requested
-        console.log('🎮 Getting texture for entity type:', entityType);
-        debugger; // This will pause execution in the browser dev tools
-        
-        // Normalize entity type to handle case variations
-        const type = entityType;
-        
-        // Map of entity types to their asset configurations
-        const entityAssets = {
-            'PlayerStart': {
-                spritesheet: 'player_idle',
-                defaultAnim: 'player_idle',
-                animations: ['player_idle', 'player_walk', 'player_jump', 'player_shoot'],
-                width: 32,
-                height: 32
-            },
-            'Zapper': {
-                spritesheet: 'zapper_idle',
-                defaultAnim: 'zapper_idle',
-                animations: ['zapper_idle', 'zapper_attack', 'zapper_walk', 'zapper_hit', 'zapper_death', 'zapper_shock'],
-                width: 32,
-                height: 32
-            },
-            'Enemy': {
-                spritesheet: 'enemy_sheet',
-                defaultAnim: 'enemy_idle',
-                animations: ['enemy_idle', 'enemy_walk', 'enemy_attack'],
-                width: 32,
-                height: 32
-            }
-            // Add more entity types as needed
+    const entityAssets = {
+        zapper: {
+            spritesheet: 'zapper_idle',
+            defaultAnim: 'zapper_idle',
+            animations: ['zapper_idle', 'zapper_attack', 'zapper_walk'],
+            width: 32,
+            height: 32
+        }
+    };
+
+    console.log('Entity type received:', entityType);
+    console.log('Mapped type (lowercase):', type);
+    console.log('Asset configuration for type:', entityAssets[type]);
+
+    const assetConfig = entityAssets[type];
+
+    if (!assetConfig) {
+        console.warn(`No asset configuration found for entity type: ${entityType}`);
+        return {
+            spritesheet: 'default_sprite',
+            defaultAnim: null,
+            animations: [],
+            width: 32,
+            height: 32
         };
-
-        // Get asset configuration for this entity type - try different case variations
-        const assetConfig = entityAssets[entityType] || entityAssets[entityType.toLowerCase()] || entityAssets[entityType.charAt(0).toUpperCase() + entityType.slice(1)];
-        
-        if (!assetConfig) {
-            console.warn(`zzz No asset configuration found for entity type: ${entityType}`);
-            debugger; // This will pause execution in the browser dev tools
-            return {
-                spritesheet: 'default_sprite',
-                defaultAnim: null,
-                animations: [],
-                width: 32,
-                height: 32
-            };
-        }
-
-        return assetConfig;
     }
 
+    if (!this.scene.textures.exists(assetConfig.spritesheet)) {
+        console.warn(`Spritesheet ${assetConfig.spritesheet} not found in Phaser textures for entity type: ${entityType}`);
+        return {
+            spritesheet: 'default_sprite',
+            defaultAnim: null,
+            animations: [],
+            width: assetConfig.width,
+            height: assetConfig.height
+        };
+    }
+
+    return assetConfig;
+}
+
+    
+    
     validateTexture(textureKey) {
         return this.scene.textures.exists(textureKey);
     }
