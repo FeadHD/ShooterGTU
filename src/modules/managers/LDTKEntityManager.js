@@ -64,14 +64,6 @@ export class LDTKEntityManager {
         return createdEntities;
     }
 
-    /**
-     * Process single entity layer
-     * Creates and tracks all entities in layer
-     * @param {Object} layer - LDtk layer data
-     * @param {number} worldX - World offset X
-     * @param {number} worldY - World offset Y
-     * @returns {Array} Array of created entity instances
-     */
     processEntityLayer(layer, worldX, worldY) {
         console.log('Processing entity layer:', layer.__identifier);
         console.log('Number of entities in layer:', layer.entityInstances.length);
@@ -84,18 +76,24 @@ export class LDTKEntityManager {
         layer.entityInstances.forEach(entity => {
             const positionKey = this.getPositionKey(entity, worldX, worldY);
     
-            // Ensure the entity position is unique before creating it
-            if (!this.loadedEntityPositions.has(positionKey)) {
-                console.log('Creating new entity at position:', positionKey);
-    
-                const instance = this.tryCreateEntity(entity, worldX, worldY, positionKey);
-                if (instance) {
-                    this.registerEntity(instance, entity, layerEntities, positionKey, createdEntities);
-                } else {
-                    console.warn('Entity creation failed for:', entity.__identifier);
-                }
-            } else {
+            // Skip creation if entity already exists at this position
+            if (this.loadedEntityPositions.has(positionKey)) {
                 console.warn(`Entity already exists at position (${positionKey}), skipping creation.`);
+                return;
+            }
+    
+            // Attempt to create the entity
+            console.log('Attempting to create entity:', {
+                identifier: entity.__identifier,
+                positionKey,
+                worldPosition: { x: entity.px[0] + worldX, y: entity.px[1] + worldY }
+            });
+    
+            const instance = this.tryCreateEntity(entity, worldX, worldY);
+            if (instance) {
+                this.registerEntity(instance, entity, layerEntities, positionKey, createdEntities);
+            } else {
+                console.warn('Entity creation failed for:', entity.__identifier);
             }
         });
     
@@ -104,48 +102,37 @@ export class LDTKEntityManager {
     
         return createdEntities;
     }
-
+    
     getPositionKey(entity, worldX, worldY) {
         return `${entity.px[0] + worldX},${entity.px[1] + worldY}`;
     }
-
-    /**
-     * Try to create an entity instance
-     * @param {Object} entity - LDtk entity definition
-     * @param {number} worldX - World position X
-     * @param {number} worldY - World position Y
-     * @param {string} positionKey - Unique position identifier
-     * @returns {Object} Created entity instance
-     */
-    tryCreateEntity(entity, worldX, worldY, positionKey) {
-        console.log('Processing entity:', {
-            identifier: entity.__identifier,
-            position: { x: entity.px[0], y: entity.px[1] },
-            worldPosition: { x: entity.px[0] + worldX, y: entity.px[1] + worldY },
-            fields: entity.fieldInstances || []
-        });
     
+    tryCreateEntity(entity, worldX, worldY) {
         try {
+            console.log('Creating entity with data:', {
+                identifier: entity.__identifier,
+                position: { x: entity.px[0], y: entity.px[1] },
+                worldPosition: { x: entity.px[0] + worldX, y: entity.px[1] + worldY }
+            });
+    
             const instance = this.createEntityInstance(entity, worldX, worldY);
+            console.log('Entity instance created:', {
+                identifier: entity.__identifier,
+                instance
+            });
+    
             return instance;
         } catch (error) {
-            console.error(`Error creating entity at position (${positionKey}):`, error);
+            console.error(`Error creating entity (${entity.__identifier}):`, error);
             return null;
         }
     }
-
-    /**
-     * Register created entity instance
-     * @param {Object} instance - Entity instance
-     * @param {Object} entity - LDtk entity definition
-     * @param {Set} layerEntities - Set of entities in the layer
-     * @param {string} positionKey - Unique position identifier
-     * @param {Array} createdEntities - Array of created entities
-     */
+    
     registerEntity(instance, entity, layerEntities, positionKey, createdEntities) {
-        console.log('Entity created successfully:', {
-            type: instance.type,
-            position: { x: instance.x, y: instance.y }
+        console.log('Registering entity:', {
+            identifier: entity.__identifier,
+            positionKey,
+            instance
         });
     
         this.entityInstances.set(entity.iid, instance);
@@ -153,7 +140,7 @@ export class LDTKEntityManager {
         this.loadedEntityPositions.add(positionKey);
         createdEntities.push(instance);
     }
-
+    
     /**
      * Create single game entity
      * Uses registered factory for entity type
