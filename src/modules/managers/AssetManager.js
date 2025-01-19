@@ -14,8 +14,9 @@ export class AssetManager {
     constructor(scene) {
         this.scene = scene;
         this.initialized = false;
+        console.log('AssetManager initialized for scene:', this.scene.sys.settings.key);
     }
-
+    
     /**
      * One-time initialization check
      * Prevents duplicate asset loading
@@ -327,52 +328,55 @@ export class AssetManager {
         }
     }
 
-getTextureKeyForEntity(entityType) {
-    const type = entityType.toLowerCase(); // Normalize the entity type to lowercase
-
-    const entityAssets = {
-        zapper: {
-            spritesheet: 'zapper_idle',
-            defaultAnim: 'zapper_idle',
-            animations: ['zapper_idle', 'zapper_attack', 'zapper_walk'],
-            width: 32,
-            height: 32
+    getTextureKeyForEntity(entityType) {
+        console.log('zzz Asset Manager - Got Entity Type:', entityType);
+        const type = entityType.toLowerCase();
+    
+        const entityAssets = {
+            zapper: {
+                spritesheet: 'zapper_idle',
+                defaultAnim: 'zapper_idle',
+                animations: ['zapper_idle', 'zapper_attack', 'zapper_walk'],
+                width: 32,
+                height: 32
+            },
+            playerstart: {
+                spritesheet: 'player_idle',
+                defaultAnim: 'player_idle',
+                animations: ['player_idle'],
+                width: 48,
+                height: 48
+            }
+            // Add more entities as needed
+        };
+    
+        const assetConfig = entityAssets[type];
+        if (!assetConfig) {
+            console.warn(`No asset configuration found for entity type: ${entityType}`);
+            return {
+                spritesheet: 'default_sprite',
+                defaultAnim: null,
+                animations: [],
+                width: 32,
+                height: 32
+            };
         }
-    };
-
-    console.log('Entity type received:', entityType);
-    console.log('Mapped type (lowercase):', type);
-    console.log('Asset configuration for type:', entityAssets[type]);
-
-    const assetConfig = entityAssets[type];
-
-    if (!assetConfig) {
-        console.warn(`No asset configuration found for entity type: ${entityType}`);
-        return {
-            spritesheet: 'default_sprite',
-            defaultAnim: null,
-            animations: [],
-            width: 32,
-            height: 32
-        };
-    }
-
-    if (!this.scene.textures.exists(assetConfig.spritesheet)) {
-        console.warn(`Spritesheet ${assetConfig.spritesheet} not found in Phaser textures for entity type: ${entityType}`);
-        return {
-            spritesheet: 'default_sprite',
-            defaultAnim: null,
-            animations: [],
-            width: assetConfig.width,
-            height: assetConfig.height
-        };
-    }
-
-    return assetConfig;
-}
-
     
+        if (!this.scene.textures.exists(assetConfig.spritesheet)) {
+            console.warn(`Spritesheet ${assetConfig.spritesheet} not found in Phaser textures for entity type: ${entityType}`);
+            return {
+                spritesheet: 'default_sprite',
+                defaultAnim: null,
+                animations: [],
+                width: assetConfig.width,
+                height: assetConfig.height
+            };
+        }
     
+        return assetConfig;
+    }
+    
+     
     validateTexture(textureKey) {
         return this.scene.textures.exists(textureKey);
     }

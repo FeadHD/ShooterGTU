@@ -11,6 +11,7 @@ export class LDTKEntityManager {
      */
     constructor(scene) {
         this.scene = scene;
+        this.assetManager = scene.assetManager;
         this.entityInstances = new Map(); // Track entities by unique ID
         this.entityLayers = new Map();    // Group entities by layer
         this.entityFactories = new Map(); // Store creation functions
@@ -23,6 +24,11 @@ export class LDTKEntityManager {
             getTextureKeyForEntity: () => ({ spritesheet: 'default_sprite', defaultAnim: null }),
             getDefaultTexture: () => 'default_sprite'
         };
+
+        // Check if AssetManager is available
+        if (!this.assetManager) {
+            console.error('AssetManager is not linked to LDTKEntityManager.');
+        }
     }
 
     /**
@@ -74,33 +80,19 @@ export class LDTKEntityManager {
         const createdEntities = [];
         this.entityLayers.set(layer.__identifier, layerEntities);
     
+        // Process each entity in the layer
         layer.entityInstances.forEach(entity => {
-            // Log the entity being processed
-            console.log('Processing entity:', {
-                identifier: entity.__identifier,
-                position: { x: entity.px[0], y: entity.px[1] },
-                worldPosition: { x: entity.px[0] + worldX, y: entity.px[1] + worldY },
-                fields: entity.fieldInstances || []
-            });
+            const positionKey = this.getPositionKey(entity, worldX, worldY);
     
-            const positionKey = `${entity.px[0] + worldX},${entity.px[1] + worldY}`;
-    
+            // Ensure the entity position is unique before creating it
             if (!this.loadedEntityPositions.has(positionKey)) {
                 console.log('Creating new entity at position:', positionKey);
     
-                const instance = this.createEntityInstance(entity, worldX, worldY);
+                const instance = this.tryCreateEntity(entity, worldX, worldY, positionKey);
                 if (instance) {
-                    console.log('Entity created successfully:', {
-                        type: instance.type,
-                        position: { x: instance.x, y: instance.y }
-                    });
-    
-                    this.entityInstances.set(entity.iid, instance);
-                    layerEntities.add(instance);
-                    this.loadedEntityPositions.add(positionKey);
-                    createdEntities.push(instance);
+                    this.registerEntity(instance, entity, layerEntities, positionKey, createdEntities);
                 } else {
-                    console.warn('Entity creation returned null or undefined for:', entity.__identifier);
+                    console.warn('Entity creation failed for:', entity.__identifier);
                 }
             } else {
                 console.warn(`Entity already exists at position (${positionKey}), skipping creation.`);
@@ -112,7 +104,55 @@ export class LDTKEntityManager {
     
         return createdEntities;
     }
+
+    getPositionKey(entity, worldX, worldY) {
+        return `${entity.px[0] + worldX},${entity.px[1] + worldY}`;
+    }
+
+    /**
+     * Try to create an entity instance
+     * @param {Object} entity - LDtk entity definition
+     * @param {number} worldX - World position X
+     * @param {number} worldY - World position Y
+     * @param {string} positionKey - Unique position identifier
+     * @returns {Object} Created entity instance
+     */
+    tryCreateEntity(entity, worldX, worldY, positionKey) {
+        console.log('Processing entity:', {
+            identifier: entity.__identifier,
+            position: { x: entity.px[0], y: entity.px[1] },
+            worldPosition: { x: entity.px[0] + worldX, y: entity.px[1] + worldY },
+            fields: entity.fieldInstances || []
+        });
     
+        try {
+            const instance = this.createEntityInstance(entity, worldX, worldY);
+            return instance;
+        } catch (error) {
+            console.error(`Error creating entity at position (${positionKey}):`, error);
+            return null;
+        }
+    }
+
+    /**
+     * Register created entity instance
+     * @param {Object} instance - Entity instance
+     * @param {Object} entity - LDtk entity definition
+     * @param {Set} layerEntities - Set of entities in the layer
+     * @param {string} positionKey - Unique position identifier
+     * @param {Array} createdEntities - Array of created entities
+     */
+    registerEntity(instance, entity, layerEntities, positionKey, createdEntities) {
+        console.log('Entity created successfully:', {
+            type: instance.type,
+            position: { x: instance.x, y: instance.y }
+        });
+    
+        this.entityInstances.set(entity.iid, instance);
+        layerEntities.add(instance);
+        this.loadedEntityPositions.add(positionKey);
+        createdEntities.push(instance);
+    }
 
     /**
      * Create single game entity
@@ -122,47 +162,57 @@ export class LDTKEntityManager {
      * @param {number} worldY - World position Y
      * @returns {Object} Created entity instance
      */
-    createEntityInstance(entityData, worldX = 0, worldY = 0) {
-        console.log(`Creating entity of type: ${entityData.__identifier} at (${entityData.px[0] + worldX}, ${entityData.px[1] + worldY})`);
+    createEntityInstance(entityData, worldX = 0, worldY = 0, retryCount = 0) {
+        const MAX_RETRIES = 5;
+        const RETRY_DELAY = 100;
     
-        try {
-            const x = entityData.px[0] + worldX;
-            const y = entityData.px[1] + worldY;
+        console.log('Creating entity with data:', {
+            identifier: entityData.__identifier,
+            position: { x: entityData.px[0], y: entityData.px[1] },
+            worldPosition: { x: entityData.px[0] + worldX, y: entityData.px[1] + worldY }
+        });
     
-            // Log before calling getTextureKeyForEntity
-            console.log('Entity identifier passed to getTextureKeyForEntity:', entityData.__identifier);
+        // Normalize the identifier
+        const normalizedIdentifier = entityData.__identifier.toLowerCase();
+        console.log('Normalized identifier:', normalizedIdentifier);
     
-            // Retrieve texture data
-            const textureData = this.assetManager.getTextureKeyForEntity(entityData.__identifier);
-            console.log('Texture data retrieved:', textureData);
+        // Call AssetManager to retrieve texture data
+        const textureData = this.assetManager.getTextureKeyForEntity(normalizedIdentifier);
+        console.log('Texture data retrieved from AssetManager:', textureData);
     
-            // Check if the spritesheet exists in Phaser textures
-            console.log('Checking if zapper_idle exists in Phaser textures:', this.scene.textures.exists('zapper_idle'));
-    
-            const spritesheet = this.scene.textures.exists(textureData.spritesheet)
-                ? textureData.spritesheet
-                : 'default_sprite';
-            console.log('Using spritesheet:', spritesheet);
-    
-            if (spritesheet === 'default_sprite') {
-                console.warn(`Fallback triggered: Texture ${textureData.spritesheet} not found.`);
+        // Check if the texture exists in Phaser
+        if (!this.scene.textures.exists(textureData.spritesheet)) {
+            if (retryCount < MAX_RETRIES) {
+                console.warn(`Texture ${textureData.spritesheet} not registered. Retrying (${retryCount + 1}/${MAX_RETRIES})...`);
+                setTimeout(() => {
+                    this.createEntityInstance(entityData, worldX, worldY, retryCount + 1);
+                }, RETRY_DELAY);
+                return null;
+            } else {
+                console.error(`Failed to create entity after ${MAX_RETRIES} retries: ${normalizedIdentifier}`);
+                return null;
             }
-    
-            // Create the sprite entity
-            const entity = this.scene.add.sprite(x, y, spritesheet);
-            console.log('Entity sprite created:', {
-                type: entityData.__identifier,
-                position: { x, y },
-                texture: spritesheet
-            });
-    
-            // Return the created entity
-            return entity;
-    
-        } catch (error) {
-            console.error(`Failed to create entity of type ${entityData.__identifier}:`, error);
-            return this.createFallbackEntity(entityData, worldX, worldY);
         }
+    
+        // Use the spritesheet to create the entity
+        const spritesheet = textureData.spritesheet;
+        const x = entityData.px[0] + worldX;
+        const y = entityData.px[1] + worldY;
+    
+        const entity = this.scene.add.sprite(x, y, spritesheet);
+        console.log('Entity created with texture:', {
+            identifier: normalizedIdentifier,
+            texture: spritesheet,
+            position: { x, y }
+        });
+    
+        return entity;
+    }
+    
+
+    normalizeIdentifier(identifier) {
+        // Normalize by converting to lowercase
+        return identifier.toLowerCase();
     }
     
     createFallbackEntity(entityData, worldX, worldY) {
