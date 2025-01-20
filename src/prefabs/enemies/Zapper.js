@@ -184,9 +184,11 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
     }
 
     preUpdate(time, delta) {
+
+        console.log('Zapper preUpdate called:', { time, delta });
         // Don't update if destroyed
         if (!this.scene || this.isDead) return;
-        
+
         super.preUpdate(time, delta);
 
         // Update shock sprite position if visible

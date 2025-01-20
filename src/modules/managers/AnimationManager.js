@@ -214,33 +214,39 @@ export class AnimationManager {
      * Electrical attack patterns
      */
     createZapperAnimations(scene) {
+        // Idle animation
         scene.anims.create({
             key: 'zapper_idle',
             frames: scene.anims.generateFrameNumbers('zapper_idle', { start: 0, end: 3 }),
             frameRate: 8,
-            repeat: -1           // Continuous patrol
+            repeat: -1,
         });
     
+        // Wake animation
         scene.anims.create({
             key: 'zapper_wake',
             frames: scene.anims.generateFrameNumbers('zapper_wake', { start: 0, end: 5 }),
             frameRate: 10,
-            repeat: 0            // Activation sequence
+            repeat: 0,
         });
     
+        // Walk animation
         scene.anims.create({
             key: 'zapper_walk',
             frames: scene.anims.generateFrameNumbers('zapper_walk', { start: 0, end: 7 }),
             frameRate: 12,
-            repeat: -1           // Chase movement
+            repeat: -1,
         });
     
+        // Shock animation
         scene.anims.create({
             key: 'zapper_shock',
             frames: scene.anims.generateFrameNumbers('zapper_shock', { start: 0, end: 5 }),
             frameRate: 15,
-            repeat: 0            // Electric attack
+            repeat: 0,
         });
+    
+        console.log('Zapper animations created successfully');
     }
 
     /**

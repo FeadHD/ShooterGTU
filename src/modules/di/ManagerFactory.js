@@ -74,10 +74,11 @@ export class ManagerFactory {
         const entityManager = new EntityManager(scene);
         const ldtkEntityManager = new LDTKEntityManager(scene);
         console.log('LDTKEntityManager created:', ldtkEntityManager);
+        container.register('ldtkEntityManager', ldtkEntityManager);
 
         // Entity factories
         console.log('Registering entity factories...');
-        
+
         ldtkEntityManager.registerEntityFactories({
             Enemy: (scene, x, y, fields) => {
                 console.log(`Factory invoked for Enemy at (${x}, ${y}) with fields:`, fields);

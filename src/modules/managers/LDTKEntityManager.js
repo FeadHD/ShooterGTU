@@ -33,26 +33,49 @@ export class LDTKEntityManager {
         });
     }
 
-    createEntities(levelData, worldX = 0, worldY = 0) {
-        // Log start of entity creation
-        console.log('Creating entities for level data:', levelData);
+    createEntityInstance(entityData, worldX = 0, worldY = 0, retryCount = 0) {
+        const factory = this.entityFactories.get(entityData.__identifier);
+        if (!factory) {
+            console.warn(`No factory found for entity type: ${entityData.__identifier}`);
+            return this.createFallbackEntity(entityData, worldX, worldY);
+        }
+    
+        const x = entityData.px[0] + worldX;
+        const y = entityData.px[1] + worldY;
+        const fields = entityData.fieldInstances || [];
+    
+        console.log(`Creating entity of type ${entityData.__identifier} at (${x}, ${y})`);
+    
+        const instance = factory(this.scene, x, y, fields);
+    
+        // Add to the enemies group if applicable
+        if (this.scene.enemies && instance instanceof Phaser.Physics.Arcade.Sprite) {
+            this.scene.enemies.add(instance);
+            console.log(`Added ${entityData.__identifier} to enemies group`);
+        }
+    
+        return instance;
+    }
 
+    createEntities(levelData, worldX = 0, worldY = 0) {
+        console.log('Creating entities for level data:', levelData);
+    
         const layerInstances = levelData.layerInstances || [];
         const createdEntities = [];
-
+    
         layerInstances.forEach(layer => {
             if (layer.__type === "Entities") {
-                console.log(`Processing layer: ${layer.__identifier}`); // Log layer being processed
+                console.log(`Processing layer: ${layer.__identifier}`);
                 const layerEntities = this.processEntityLayer(layer, worldX, worldY);
                 createdEntities.push(...layerEntities);
             }
         });
-
-        // Log total created entities
+    
         console.log('Total entities created:', createdEntities.length);
         return createdEntities;
     }
-
+    
+    
     processEntityLayer(layer, worldX, worldY) {
         console.log('Processing entity layer:', layer.__identifier);
         console.log('Number of entities in layer:', layer.entityInstances.length);
@@ -133,23 +156,38 @@ export class LDTKEntityManager {
     }
 
     createEntityInstance(entityData, worldX = 0, worldY = 0) {
-        console.log('Processing entity with identifier:', entityData.__identifier);
-    
         const factory = this.entityFactories.get(entityData.__identifier);
         if (!factory) {
             console.warn(`No factory found for entity type: ${entityData.__identifier}`);
             return this.createFallbackEntity(entityData, worldX, worldY);
         }
     
-        console.log(`Factory found for type: ${entityData.__identifier}`);
         const x = entityData.px[0] + worldX;
         const y = entityData.px[1] + worldY;
         const fields = entityData.fieldInstances || [];
         const instance = factory(this.scene, x, y, fields);
-        console.log(`Factory created instance for type: ${entityData.__identifier}`, instance);
+    
+        // Categorize entities into different groups
+        if (entityData.__identifier === 'Zapper' || entityData.__identifier === 'Enemy') {
+            if (this.scene.enemies) {
+                this.scene.enemies.add(instance);
+                console.log(`Added ${entityData.__identifier} to enemies group`);
+            }
+        } else if (entityData.__identifier === 'NeutralObject') {
+            if (this.scene.neutralEntities) {
+                this.scene.neutralEntities.add(instance);
+                console.log(`Added ${entityData.__identifier} to neutralEntities group`);
+            }
+        } else if (entityData.__identifier === 'InteractiveObject') {
+            if (this.scene.interactiveEntities) {
+                this.scene.interactiveEntities.add(instance);
+                console.log(`Added ${entityData.__identifier} to interactiveEntities group`);
+            }
+        }
     
         return instance;
     }
+    
     
 
     createFallbackEntity(entityData, worldX, worldY) {

@@ -214,118 +214,31 @@ export class AssetManager {
     loadZapperAssets() {
         console.log('zzz Loading Zapper assets...');
         
-        // Load all zapper spritesheets
+        // Load all Zapper spritesheets
         this.scene.load.spritesheet('zapper_idle', 'assets/zapper/zapper_idle.png', {
             frameWidth: 32,
             frameHeight: 32,
-            endFrame: 3
         });
-
+    
         this.scene.load.spritesheet('zapper_walk', 'assets/zapper/zapper_walk.png', {
             frameWidth: 32,
             frameHeight: 32,
-            endFrame: 5
         });
-
+    
         this.scene.load.spritesheet('zapper_attack', 'assets/zapper/zapper_attack.png', {
             frameWidth: 32,
             frameHeight: 32,
-            endFrame: 3
         });
-
-        this.scene.load.spritesheet('zapper_hit', 'assets/zapper/zapper_hit.png', {
+    
+        this.scene.load.spritesheet('zapper_wake', 'assets/zapper/zapper_wake.png', {
             frameWidth: 32,
             frameHeight: 32,
-            endFrame: 2
         });
-
-        this.scene.load.spritesheet('zapper_death', 'assets/zapper/zapper_death.png', {
-            frameWidth: 32,
-            frameHeight: 32,
-            endFrame: 7
-        });
-
+    
         this.scene.load.spritesheet('zapper_shock', 'assets/zapper/zapper_shock.png', {
             frameWidth: 32,
             frameHeight: 32,
-            endFrame: 6
         });
-
-        // Create animations once assets are loaded
-        this.scene.load.once('complete', () => {
-            console.log('zzz Creating Zapper animations...');
-            this.createZapperAnimations();
-        });
-    }
-
-    createZapperAnimations() {
-        // Idle animation
-        if (this.scene.textures.exists('zapper_idle')) {
-            this.scene.anims.create({
-                key: 'zapper_idle',
-                frames: this.scene.anims.generateFrameNumbers('zapper_idle', { start: 0, end: 3 }),
-                frameRate: 10,
-                repeat: -1
-            });
-            console.log('zzz Animation zapper_idle created.');
-        } else {
-            console.error('zzz zapper_idle spritesheet not found!');
-        }
-
-        // Walk animation
-        if (this.scene.textures.exists('zapper_walk')) {
-            this.scene.anims.create({
-                key: 'zapper_walk',
-                frames: this.scene.anims.generateFrameNumbers('zapper_walk', { start: 0, end: 5 }),
-                frameRate: 12,
-                repeat: -1
-            });
-            console.log('zzz Animation zapper_walk created.');
-        }
-
-        // Attack animation
-        if (this.scene.textures.exists('zapper_attack')) {
-            this.scene.anims.create({
-                key: 'zapper_attack',
-                frames: this.scene.anims.generateFrameNumbers('zapper_attack', { start: 0, end: 3 }),
-                frameRate: 15,
-                repeat: 0
-            });
-            console.log('zzz Animation zapper_attack created.');
-        }
-
-        // Hit animation
-        if (this.scene.textures.exists('zapper_hit')) {
-            this.scene.anims.create({
-                key: 'zapper_hit',
-                frames: this.scene.anims.generateFrameNumbers('zapper_hit', { start: 0, end: 2 }),
-                frameRate: 10,
-                repeat: 0
-            });
-            console.log('zzz Animation zapper_hit created.');
-        }
-
-        // Death animation
-        if (this.scene.textures.exists('zapper_death')) {
-            this.scene.anims.create({
-                key: 'zapper_death',
-                frames: this.scene.anims.generateFrameNumbers('zapper_death', { start: 0, end: 7 }),
-                frameRate: 12,
-                repeat: 0
-            });
-            console.log('zzz Animation zapper_death created.');
-        }
-
-        // Shock animation
-        if (this.scene.textures.exists('zapper_shock')) {
-            this.scene.anims.create({
-                key: 'zapper_shock',
-                frames: this.scene.anims.generateFrameNumbers('zapper_shock', { start: 0, end: 6 }),
-                frameRate: 15,
-                repeat: 0
-            });
-            console.log('zzz Animation zapper_shock created.');
-        }
     }
 
     getTextureKeyForEntity(entityType) {

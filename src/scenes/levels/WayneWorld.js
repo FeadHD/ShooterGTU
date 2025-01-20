@@ -66,6 +66,7 @@ export class WayneWorld extends BaseScene {
             Enemy: (scene, x, y, fields) => new Enemy(scene, x, y),
             Bitcoin: (scene, x, y, fields) => new Bitcoin(scene, x, y),
             Zapper: (scene, x, y, fields) => new Zapper(scene, x, y, fields),
+            PlayerStart: (scene, x, y, fields) => new PlayerStart(scene, x, y),
             // Add other entities here
         });
     
@@ -177,6 +178,14 @@ export class WayneWorld extends BaseScene {
         animationManager.createBulletAnimations(this);
 
         console.log('animations created:', this.anims.exists('zapper_idle'));
+        // Create animations
+        this.anims.create({
+            key: 'zapper_wake',
+            frames: this.anims.generateFrameNumbers('zapper_spritesheet', { start: 0, end: 3 }), // Update the frame range
+            frameRate: 10,
+            repeat: 0,
+        });
+        
 
         // Get managers from container
         this.ldtkEntityManager = this.managers.ldtkEntityManager;
@@ -336,7 +345,21 @@ export class WayneWorld extends BaseScene {
             const playerSection = Math.floor(this.player.x / this.sectionWidth);
             this.handleSectionManagement(playerSection);
         }
+
+        // Update all enemies in the scene, including Zapper/
+        if (this.enemies) {
+            this.enemies.children.iterate(enemy => {
+                if (enemy.update) {
+                    enemy.update(time, delta);
+                }
+            });
+        }
     
+    // Log LDTKEntityManager details outside the loop
+    console.log('LDTKEntityManager instance in WayneWorld:', this.ldtkEntityManager);
+    console.log('Available methods on LDTKEntityManager:', Object.keys(this.ldtkEntityManager));
+    console.log('Zapper.update called', { time, delta });
+
         // Update debug graphics if enabled
         this.updateDebugGraphics();
     }
