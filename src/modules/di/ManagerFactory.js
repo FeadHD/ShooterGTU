@@ -77,20 +77,60 @@ export class ManagerFactory {
 
         // Entity factories
         console.log('Registering entity factories...');
+        
         ldtkEntityManager.registerEntityFactories({
-            Enemy: (scene, x, y, fields) => new Enemy(scene, x, y),
-            Bitcoin: (scene, x, y, fields) => new Bitcoin(scene, x, y),
-            Slime: (scene, x, y, fields) => new Slime(scene, x, y),
-            Drone: (scene, x, y, fields) => new Drone(scene, x, y),
-            Trampoline: (scene, x, y, fields) => new Trampoline(scene, x, y),
-            Trap: (scene, x, y, fields) => new Trap(scene, x, y),
-            DestructibleBlock: (scene, x, y, fields) => new DestructibleBlock(scene, x, y),
-            FallingDestructibleBlock: (scene, x, y, fields) => new FallingDestructibleBlock(scene, x, y),
-            DisappearingPlatform: (scene, x, y, fields) => new DisappearingPlatform(scene, x, y),
-            Turret: (scene, x, y, fields) => new Turret(scene, x, y),
-            MeleeWarrior: (scene, x, y, fields) => new MeleeWarrior(scene, x, y),
-            Zapper: (scene, x, y, fields) => new Zapper(scene, x, y, fields),
-            PlayerStart: (scene, x, y, fields) => ({ x, y, type: 'PlayerStart' }),
+            Enemy: (scene, x, y, fields) => {
+                console.log(`Factory invoked for Enemy at (${x}, ${y}) with fields:`, fields);
+                return new Enemy(scene, x, y);
+            },
+            Bitcoin: (scene, x, y, fields) => {
+                console.log(`Factory invoked for Bitcoin at (${x}, ${y}) with fields:`, fields);
+                return new Bitcoin(scene, x, y);
+            },
+            Slime: (scene, x, y, fields) => {
+                console.log(`Factory invoked for Slime at (${x}, ${y}) with fields:`, fields);
+                return new Slime(scene, x, y);
+            },
+            Drone: (scene, x, y, fields) => {
+                console.log(`Factory invoked for Drone at (${x}, ${y}) with fields:`, fields);
+                return new Drone(scene, x, y);
+            },
+            Trampoline: (scene, x, y, fields) => {
+                console.log(`Factory invoked for Trampoline at (${x}, ${y}) with fields:`, fields);
+                return new Trampoline(scene, x, y);
+            },
+            Trap: (scene, x, y, fields) => {
+                console.log(`Factory invoked for Trap at (${x}, ${y}) with fields:`, fields);
+                return new Trap(scene, x, y);
+            },
+            DestructibleBlock: (scene, x, y, fields) => {
+                console.log(`Factory invoked for DestructibleBlock at (${x}, ${y}) with fields:`, fields);
+                return new DestructibleBlock(scene, x, y);
+            },
+            FallingDestructibleBlock: (scene, x, y, fields) => {
+                console.log(`Factory invoked for FallingDestructibleBlock at (${x}, ${y}) with fields:`, fields);
+                return new FallingDestructibleBlock(scene, x, y);
+            },
+            DisappearingPlatform: (scene, x, y, fields) => {
+                console.log(`Factory invoked for DisappearingPlatform at (${x}, ${y}) with fields:`, fields);
+                return new DisappearingPlatform(scene, x, y);
+            },
+            Turret: (scene, x, y, fields) => {
+                console.log(`Factory invoked for Turret at (${x}, ${y}) with fields:`, fields);
+                return new Turret(scene, x, y);
+            },
+            MeleeWarrior: (scene, x, y, fields) => {
+                console.log(`Factory invoked for MeleeWarrior at (${x}, ${y}) with fields:`, fields);
+                return new MeleeWarrior(scene, x, y);
+            },
+            Zapper: (scene, x, y, fields) => {
+                console.log(`Factory invoked for Zapper at (${x}, ${y}) with fields:`, fields);
+                return new Zapper(scene, x, y, fields);
+            },
+            PlayerStart: (scene, x, y, fields) => {
+                console.log(`Factory invoked for PlayerStart at (${x}, ${y}) with fields:`, fields);
+                return { x, y, type: 'PlayerStart' };
+            },
         });
 
         // Gameplay systems

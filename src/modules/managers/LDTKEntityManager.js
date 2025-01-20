@@ -26,11 +26,10 @@ export class LDTKEntityManager {
     }
 
     registerEntityFactories(factories) {
-        // Log factory registration
-        console.log('Registering entity factories:', factories);
-
+        console.log('Registering entity factories:', Object.keys(factories));
         Object.entries(factories).forEach(([type, factory]) => {
             this.entityFactories.set(type, factory);
+            console.log(`Factory registered for type: ${type}`);
         });
     }
 
@@ -57,6 +56,7 @@ export class LDTKEntityManager {
     processEntityLayer(layer, worldX, worldY) {
         console.log('Processing entity layer:', layer.__identifier);
         console.log('Number of entities in layer:', layer.entityInstances.length);
+        console.log('Entities in layer:', layer.entityInstances.map(e => e.__identifier));
 
         const layerEntities = new Set();
         const createdEntities = [];
@@ -132,46 +132,33 @@ export class LDTKEntityManager {
         createdEntities.push(instance);
     }
 
-    createEntityInstance(entityData, worldX = 0, worldY = 0, retryCount = 0) {
-        const MAX_RETRIES = 5;
-        const RETRY_DELAY = 100;
-
-        console.log('Creating entity instance with data:', {
-            identifier: entityData.__identifier,
-            position: { x: entityData.px[0], y: entityData.px[1] },
-            worldPosition: { x: entityData.px[0] + worldX, y: entityData.px[1] + worldY },
-        });
-
-        const normalizedIdentifier = entityData.__identifier.toLowerCase();
-        console.log('Normalized identifier:', normalizedIdentifier);
-
-        const textureData = this.assetManager.getTextureKeyForEntity(normalizedIdentifier);
-        console.log('Texture data retrieved from AssetManager:', textureData);
-
-        if (!this.scene.textures.exists(textureData.spritesheet)) {
-            if (retryCount < MAX_RETRIES) {
-                console.warn(`Texture ${textureData.spritesheet} not registered. Retrying (${retryCount + 1}/${MAX_RETRIES})...`);
-                setTimeout(() => {
-                    this.createEntityInstance(entityData, worldX, worldY, retryCount + 1);
-                }, RETRY_DELAY);
-                return null;
-            } else {
-                console.error(`Failed to create entity after ${MAX_RETRIES} retries: ${normalizedIdentifier}`);
-                return null;
-            }
+    createEntityInstance(entityData, worldX = 0, worldY = 0) {
+        console.log('Processing entity with identifier:', entityData.__identifier);
+    
+        const factory = this.entityFactories.get(entityData.__identifier);
+        if (!factory) {
+            console.warn(`No factory found for entity type: ${entityData.__identifier}`);
+            return this.createFallbackEntity(entityData, worldX, worldY);
         }
-
-        const spritesheet = textureData.spritesheet;
+    
+        console.log(`Factory found for type: ${entityData.__identifier}`);
         const x = entityData.px[0] + worldX;
         const y = entityData.px[1] + worldY;
+        const fields = entityData.fieldInstances || [];
+        const instance = factory(this.scene, x, y, fields);
+        console.log(`Factory created instance for type: ${entityData.__identifier}`, instance);
+    
+        return instance;
+    }
+    
 
-        const entity = this.scene.add.sprite(x, y, spritesheet);
-        console.log('Entity created with texture:', {
-            identifier: normalizedIdentifier,
-            texture: spritesheet,
-            position: { x, y },
-        });
-
-        return entity;
+    createFallbackEntity(entityData, worldX, worldY) {
+        console.warn(`Creating fallback entity for ${entityData.__identifier}`);
+        const x = entityData.px[0] + worldX;
+        const y = entityData.px[1] + worldY;
+    
+        const fallbackEntity = this.scene.add.sprite(x, y, 'default_sprite');
+        this.scene.physics.add.existing(fallbackEntity);
+        return fallbackEntity;
     }
 }
