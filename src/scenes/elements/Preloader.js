@@ -13,27 +13,43 @@ export class Preloader extends Scene {
 
     /**
      * LOADING UI SETUP
-     * Creates loading bar and progress indicators
+     * Creates preloader animation
      */
     init() {
-        // Create centered loading text
-        const loadingText = this.add.text(this.scale.width/2, this.scale.height/2, 'Loading...', {
-            fontFamily: 'Arial',
-            fontSize: '24px',
-            color: '#ffffff'
-        }).setOrigin(0.5);
+        // Track loading start time
+        this.loadStartTime = Date.now();
+        
+        // Create preloader animation
+        this.anims.create({
+            key: 'loading',
+            frames: this.anims.generateFrameNumbers('preloader', { start: 0, end: 15 }), // 16 frames total
+            frameRate: 12, // We'll show each frame for about 0.083 seconds (1/12)
+            repeat: -1
+        });
 
-        // Create progress bar container and fill
-        const progressBar = this.add.graphics();
-        const progressBox = this.add.graphics();
-        progressBox.fillStyle(0x222222, 0.8);
-        progressBox.fillRect(this.scale.width/2 - 160, this.scale.height/2 + 20, 320, 28);
+        // Create and play the preloader sprite
+        this.preloaderSprite = this.add.sprite(this.scale.width/2, this.scale.height/2, 'preloader')
+            .setOrigin(0.5)
+            .setScale(1.5) // Adjusted scale since we have the correct frame size now
+            .play('loading');
 
-        // Update progress bar as assets load
+        // Track load progress
         this.load.on('progress', (value) => {
-            progressBar.clear();
-            progressBar.fillStyle(0x00ffff, 1);
-            progressBar.fillRect(this.scale.width/2 - 156, this.scale.height/2 + 24, 312 * value, 20);
+            // Calculate how long we've been loading
+            const timeElapsed = (Date.now() - this.loadStartTime) / 1000; // in seconds
+            console.log(`Loading progress: ${Math.round(value * 100)}% after ${timeElapsed.toFixed(2)} seconds`);
+            
+            // Adjust animation speed based on progress
+            // Start slower and speed up as we progress
+            const baseSpeed = 1;
+            const speedMultiplier = 1 + value; // Will go from 1x to 2x speed
+            this.preloaderSprite.anims.timeScale = baseSpeed * speedMultiplier;
+        });
+
+        // Log when loading completes
+        this.load.on('complete', () => {
+            const totalTime = (Date.now() - this.loadStartTime) / 1000;
+            console.log(`Loading completed in ${totalTime.toFixed(2)} seconds`);
         });
 
         // Handle loading errors

@@ -21,6 +21,12 @@ export class Boot extends Scene {
         // Configure asset loading to use the current URL as base
         // This ensures assets are loaded relative to the game's location
         this.load.setBaseURL(window.location.href);
+        
+        // Load preloader animation sprite
+        this.load.spritesheet('preloader', 'preloader/preloader.png', {
+            frameWidth: 88,  // Adjust these values based on your sprite dimensions
+            frameHeight: 88
+        });
     }
 
     /**

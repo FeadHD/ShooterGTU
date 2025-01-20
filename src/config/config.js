@@ -31,9 +31,8 @@ import SoundSettings from '../scenes/menus/SoundSettings';
 import { SoundTester } from '../scenes/menus/DevHub/SoundTester';
 
 // Core engine scenes
+import { Boot } from '../scenes/elements/Boot';
 import { Preloader } from '../scenes/elements/Preloader';
-import { TitleScene } from '../scenes/elements/TitleScene';
-import { IntroScene } from '../scenes/elements/IntroScene';
 import { PauseMenu } from '../scenes/elements/PauseMenu';
 
 /**
@@ -84,21 +83,21 @@ export const config = {
     // Scene sequence (loaded in order)
     scene: [
         // Boot sequence
+        Boot,            // Initial setup and system initialization
         Preloader,      // Asset loading
-        TitleScene,     // Title screen
-        IntroScene,     // Opening sequence
+        MainMenu,       // Game start menu
         
         // Main menus
-        MainMenu,       // Game start menu
         Settings,       // General settings
         ControlsSettings,
         SoundSettings,
         
         // Game levels
-        GameScene1,
-        CombinedGtuLevel,
-        TestingGroundScene,
         WayneWorld,
+        CombinedGtuLevel,
+        GameScene1,
+        TestingGroundScene,
+
         
         // UI overlays
         Leaderboard,
