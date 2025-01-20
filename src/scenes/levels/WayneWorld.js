@@ -53,15 +53,30 @@ export class WayneWorld extends BaseScene {
     
         // Initialize AssetManager and attach it to the scene
         const assets = new AssetManager(this);
-        this.assetManager = assets; // Attach AssetManager to the scene
+    
+        // Initialize ManagerFactory
+        const managerFactory = new ManagerFactory();
+        console.log('ManagerFactory initialized:', managerFactory);
+    
+        // Create LDTK Entity Manager first
+        const ldtkEntityManager = ManagerFactory.createEntityManager(this);
+    
+        // Now register entity factories
+        ldtkEntityManager.registerEntityFactories({
+            Enemy: (scene, x, y, fields) => new Enemy(scene, x, y),
+            Bitcoin: (scene, x, y, fields) => new Bitcoin(scene, x, y),
+            Zapper: (scene, x, y, fields) => new Zapper(scene, x, y, fields),
+            // Add other entities here
+        });
+    
+        // Assign AssetManager to the scene
+        this.assetManager = assets;
         console.log('AssetManager assigned to scene:', this.assetManager);
     
         // Load assets via AssetManager
         this.assetManager.loadAssets();
     }
     
-
-
     create() {
         super.create();
 
@@ -72,6 +87,13 @@ export class WayneWorld extends BaseScene {
         if (!this.audioManager) {
             this.audioManager = this.managers.audio;
             this.initializeAudioSystem();
+        }
+
+        // Use the LDTKEntityManager created in preload or initialize again if necessary
+        if (!this.ldtkEntityManager) {
+            const ldtkEntityManager = ManagerFactory.createEntityManager(this);
+            console.log('LDTKEntityManager initialized in create:', ldtkEntityManager);
+            this.ldtkEntityManager = ldtkEntityManager;
         }
 
         // Access CameraManager through ManagerFactory
