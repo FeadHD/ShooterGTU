@@ -3,6 +3,7 @@ import { GameConfig } from '../../config/GameConfig';
 import { Player } from '../../prefabs/Player';
 import { ManagerFactory } from '../../modules/di/ManagerFactory';
 import { AssetManager } from '../../modules/managers/AssetManager';
+import { Zapper } from '../../prefabs/enemies/Zapper';
 
 export class WayneWorld extends BaseScene {
     // Constants
@@ -378,26 +379,31 @@ export class WayneWorld extends BaseScene {
         }
     }
 
-    // Update section management    
     handleSectionManagement(playerSection) {
-        // Load adjacent sections around the player
-        this.loadAdjacentSections(this.player.x);
+        console.log(`Managing sections for player in section: ${playerSection}`);
     
-        // Clean up sections that are too far away
+        // First clean up distant sections
         this.cleanUpDistantSections(playerSection);
     
-        // Update entities in nearby sections
+        // Then load adjacent sections
+        this.loadAdjacentSections(this.player.x);
+    
+        // Finally update entities for active sections
         this.updateSectionEntities(playerSection);
     }
+    
 
-    // Clean up sections that are too far away
     cleanUpDistantSections(playerSection) {
+        const bufferSections = WayneWorld.ENTITY_ACTIVE_BUFFER;
+    
         this.loadedSections.forEach(sectionIndex => {
-            if (Math.abs(sectionIndex - playerSection) > 2) { // Adjust buffer as needed
+            if (sectionIndex < playerSection - bufferSections || sectionIndex > playerSection + bufferSections) {
+                console.log(`Unloading section ${sectionIndex} (too far from player section ${playerSection})`);
                 this.unloadSection(sectionIndex);
             }
         });
     }
+    
 
     // Update debug graphics if enabled
     updateDebugGraphics() {
@@ -416,12 +422,11 @@ export class WayneWorld extends BaseScene {
     loadLevelSection(startX) {
         const sectionIndex = Math.floor(startX / this.sectionWidth);
         if (this.loadedSections.has(sectionIndex)) {
+            console.log(`Section ${sectionIndex} is already loaded.`);
             return;
         }
-        
-        console.log(`Loading section ${sectionIndex} at startX: ${startX}`);
-        
-        // Mark this section as loaded
+    
+        console.log(`Loading section ${sectionIndex} at ${startX}`);
         this.loadedSections.add(sectionIndex);
         this.lastLoadedSection = Math.max(this.lastLoadedSection, sectionIndex);
         
@@ -550,32 +555,27 @@ export class WayneWorld extends BaseScene {
 
     loadAdjacentSections(playerX) {
         const playerSection = Math.floor(playerX / this.sectionWidth);
-        const bufferSections = 2; // Keep 2 sections loaded in each direction
-        
-        // Load sections in both directions
+        const bufferSections = WayneWorld.ENTITY_ACTIVE_BUFFER;
+    
         for (let offset = -bufferSections; offset <= bufferSections; offset++) {
             const sectionToLoad = playerSection + offset;
-            
-            // Don't try to load sections before the start of the level
+    
             if (sectionToLoad >= 0 && !this.loadedSections.has(sectionToLoad)) {
                 const sectionStart = sectionToLoad * this.sectionWidth;
-                console.log(`Loading section ${sectionToLoad} around player position`);
+                console.log(`Loading section ${sectionToLoad} at ${sectionStart}`);
                 this.loadLevelSection(sectionStart);
             }
         }
-
-        // Handle entity loading/unloading
-        this.updateSectionEntities(playerSection);
     }
+    
 
     unloadSection(sectionIndex) {
         if (!this.loadedSections.has(sectionIndex)) {
+            console.log(`Section ${sectionIndex} is not loaded.`);
             return;
         }
-        
+    
         console.log(`Unloading section ${sectionIndex}`);
-        
-        // First unload entities in this section
         this.removeSectionEntities(sectionIndex);
         
         // Remove tiles in this section
@@ -660,70 +660,49 @@ export class WayneWorld extends BaseScene {
             }
         }
     }
-    
 
     loadSectionEntities(sectionIndex) {
+        console.log(`GRAY Attempting to load entities for section ${sectionIndex}`);
         if (this.activeEntities.has(sectionIndex)) {
             console.log(`Entities for section ${sectionIndex} are already loaded.`);
             return;
         }
     
         console.log(`Loading entities for section ${sectionIndex}`);
-        const sectionEntities = [];
+        const sectionEntities = []; // Temporary array for recreated entities
     
+        // Fetch saved entities for the section
+        console.log('GRAY Current saved entities:', this.sectionEntities);
         const savedEntities = this.sectionEntities.get(sectionIndex);
+        console.log(`GRAY Fetched saved entities for section ${sectionIndex}:`, savedEntities);
+    
         if (savedEntities) {
             savedEntities.forEach(data => {
-                try {
-                    console.log(`Recreating entity:`, data);
-    
-                    // Determine entity type and handle accordingly
-                    let entity;
-                    switch (data.type) {
-                        case 'Zapper':
-                            entity = new Zapper(this, data.x, data.y);
-                            break;
-    
-                        // Add cases for other specific entity types if needed
-                        case 'PlayerStart':
-                            entity = new PlayerStart(this, data.x, data.y, data.properties);
-                            break;
-    
-                        case 'Bitcoin':
-                            entity = new Bitcoin(this, data.x, data.y, data.properties);
-                            break;
-    
-                        default:
-                            // Fallback: Attempt generic creation via LDtkEntityManager
-                            if (this.ldtkEntityManager) {
-                                entity = this.ldtkEntityManager.createEntityInstance(
-                                    { __identifier: data.type, px: [data.x, data.y], fieldInstances: data.properties },
-                                    0,
-                                    0
-                                );
-                            }
-    
-                            // Log warning for unhandled types
-                            if (!entity) {
-                                console.warn(`Unknown entity type "${data.type}" - creating placeholder`);
-                                entity = this.add.sprite(data.x, data.y, 'defaultTexture');
-                                this.physics.add.existing(entity);
-                                entity.body.setCollideWorldBounds(true);
-                            }
-                            break;
-                    }
-    
-                    // Restore properties if entity was created
-                    if (entity) {
-                        Object.assign(entity, data.properties); // Restore additional properties
-                        sectionEntities.push(entity);
-                    }
-                } catch (error) {
-                    console.error(`Failed to recreate entity:`, error, data);
+                console.log(`Recreating entity:`, data);
+                let entity;
+            
+                if (data.type === 'Zapper') {
+                    entity = new Zapper(this, data.x, data.y);
+                    console.log('Zapper created:', entity);
+                } else {
+                    entity = this.ldtkEntityManager.createEntityInstance(
+                        { __identifier: data.type, px: [data.x, data.y], fieldInstances: data.properties },
+                        0,
+                        0
+                    );
+                    console.log(`${data.type} entity created:`, entity);
+                }
+            
+                if (entity) {
+                    Object.assign(entity, data.properties || {}); // Restore properties
+                    sectionEntities.push(entity);
+                } else {
+                    console.warn(`Failed to recreate entity:`, data);
                 }
             });
+            
     
-            // Clear saved data after reloading
+            // Clear saved data after successfully recreating entities
             this.sectionEntities.delete(sectionIndex);
         } else {
             console.warn(`No saved entities found for section ${sectionIndex}`);
@@ -731,9 +710,10 @@ export class WayneWorld extends BaseScene {
     
         if (sectionEntities.length > 0) {
             this.activeEntities.set(sectionIndex, sectionEntities);
-            console.log(`Loaded ${sectionEntities.length} entities in section ${sectionIndex}`);
+            console.log(`Entities loaded for section ${sectionIndex}:`, sectionEntities);            
         }
     }
+    
     
     /****************************
      * PLAYER MANAGEMENT
