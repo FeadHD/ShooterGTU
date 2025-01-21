@@ -7,7 +7,7 @@ import { Zapper } from '../../prefabs/enemies/Zapper';
 
 export class WayneWorld extends BaseScene {
     // Constants
-    static ENTITY_ACTIVE_BUFFER = 2; // Number of sections around the player to keep entities active
+    static ENTITY_ACTIVE_BUFFER = 3; // Number of sections around the player to keep entities active
 
     constructor() {
         super({ key: 'WayneWorld' });
