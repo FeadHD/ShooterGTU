@@ -607,30 +607,22 @@ export class WayneWorld extends BaseScene {
         console.log(`Removing ${entities.length} entities from section ${sectionIndex}`);
     
         // Save entity data for reloading
-        const entityData = entities.map(entity => {
-            const type = entity.type || entity.ldtkData?.__identifier || 'Unknown'; // Ensure type is saved
-            console.log(`Saving entity of type "${type}" at (${entity.x}, ${entity.y})`);
+        const entityData = entities.map(entity => ({
+            type: entity.type || entity.ldtkData?.__identifier || 'Unknown',
+            x: entity.x,
+            y: entity.y,
+            properties: entity.properties || {}, // Additional properties
+        }));
     
-            return {
-                type: type,
-                x: entity.x,
-                y: entity.y,
-                properties: entity.properties || {}, // Include additional properties
-            };
-        });
-    
-        console.log(`Saving entity data for section ${sectionIndex}:`, entityData);
-        this.sectionEntities.set(sectionIndex, entityData); // Store for reloading
+        this.sectionEntities.set(sectionIndex, entityData); // Safely save data
     
         // Destroy each entity
         entities.forEach(entity => {
-            if (entity && entity.destroy) {
-                console.log(`Destroying entity:`, entity);
+            if (entity && typeof entity.destroy === 'function') {
                 entity.destroy();
             }
         });
     
-        // Clear from tracking
         this.activeEntities.delete(sectionIndex);
     
         console.log(`Entities removed and saved for section ${sectionIndex}`);
@@ -679,58 +671,33 @@ export class WayneWorld extends BaseScene {
         console.log(`Loading entities for section ${sectionIndex}`);
         const sectionEntities = [];
     
-        // Check if there is saved entity data
-        if (this.sectionEntities.has(sectionIndex)) {
-            const savedEntities = this.sectionEntities.get(sectionIndex);
-            console.log(`Found saved entities for section ${sectionIndex}:`, savedEntities);
-    
+        const savedEntities = this.sectionEntities.get(sectionIndex);
+        if (savedEntities) {
             savedEntities.forEach(data => {
                 try {
-                    console.log(`Recreating entity from saved data:`, data);
+                    console.log(`Recreating entity:`, data);
     
-                    // Special handling for Zapper
+                    // Handle specific entity types if needed
+                    let entity;
                     if (data.type === 'Zapper') {
-                        console.log('Creating Zapper entity...');
-                        
-                        // Create Zapper with the correct spritesheet
-                        const entity = new Zapper(this, data.x, data.y);
-                        
-                        // Add to section entities
-                        sectionEntities.push(entity);
-                        console.log('Zapper entity created:', entity);
-                        return;
+                        entity = new Zapper(this, data.x, data.y);
+                    } else {
+                        entity = this.ldtkEntityManager.createEntityInstance(
+                            { __identifier: data.type, px: [data.x, data.y], fieldInstances: data.properties },
+                            0,
+                            0
+                        );
                     }
-    
-                    // Default entity creation
-                    const entity = this.ldtkEntityManager.createEntityInstance(
-                        { __identifier: data.type, px: [data.x, data.y], fieldInstances: data.properties },
-                        0,
-                        0
-                    );
     
                     if (entity) {
-                        // Restore additional properties
-                        if (data.properties) {
-                            Object.assign(entity, data.properties);
-                        }
+                        Object.assign(entity, data.properties); // Restore additional properties
                         sectionEntities.push(entity);
-                        console.log(`Reloaded entity:`, entity);
                     }
                 } catch (error) {
-                    console.error(`Failed to reload entity:`, error, data);
-    
-                    // Fallback: Create a placeholder entity
-                    const fallbackEntity = this.scene.add.sprite(data.x, data.y, 'defaultTexture');
-                    this.scene.physics.add.existing(fallbackEntity);
-                    if (fallbackEntity.body) {
-                        fallbackEntity.body.setCollideWorldBounds(true);
-                    }
-                    sectionEntities.push(fallbackEntity);
-                    console.warn(`Fallback entity created for section ${sectionIndex}.`);
+                    console.error(`Failed to recreate entity:`, error);
                 }
             });
-    
-            this.sectionEntities.delete(sectionIndex); // Remove saved data after reloading
+            this.sectionEntities.delete(sectionIndex); // Clear saved data after reloading
         } else {
             console.warn(`No saved entities found for section ${sectionIndex}`);
         }
@@ -738,14 +705,9 @@ export class WayneWorld extends BaseScene {
         if (sectionEntities.length > 0) {
             this.activeEntities.set(sectionIndex, sectionEntities);
             console.log(`Loaded ${sectionEntities.length} entities in section ${sectionIndex}`);
-        } else {
-            console.log(`No entities found to load for section ${sectionIndex}`);
         }
     }
     
-    
-    
-
     /****************************
      * PLAYER MANAGEMENT
      ****************************/
