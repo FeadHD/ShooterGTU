@@ -6,6 +6,7 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
         // Use a default texture if zapper_idle is not loaded
         const textureKey = scene.textures.exists('zapper_idle') ? 'zapper_idle' : 'bullet';
         super(scene, x, y, textureKey);
+        this.type = 'Zapper'; // Explicitly set type
 
         console.log('Creating Zapper with texture:', textureKey);
 

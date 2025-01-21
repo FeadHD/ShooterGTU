@@ -677,27 +677,54 @@ export class WayneWorld extends BaseScene {
                 try {
                     console.log(`Recreating entity:`, data);
     
-                    // Handle specific entity types if needed
+                    // Determine entity type and handle accordingly
                     let entity;
-                    if (data.type === 'Zapper') {
-                        entity = new Zapper(this, data.x, data.y);
-                    } else {
-                        entity = this.ldtkEntityManager.createEntityInstance(
-                            { __identifier: data.type, px: [data.x, data.y], fieldInstances: data.properties },
-                            0,
-                            0
-                        );
+                    switch (data.type) {
+                        case 'Zapper':
+                            entity = new Zapper(this, data.x, data.y);
+                            break;
+    
+                        // Add cases for other specific entity types if needed
+                        case 'PlayerStart':
+                            entity = new PlayerStart(this, data.x, data.y, data.properties);
+                            break;
+    
+                        case 'Bitcoin':
+                            entity = new Bitcoin(this, data.x, data.y, data.properties);
+                            break;
+    
+                        default:
+                            // Fallback: Attempt generic creation via LDtkEntityManager
+                            if (this.ldtkEntityManager) {
+                                entity = this.ldtkEntityManager.createEntityInstance(
+                                    { __identifier: data.type, px: [data.x, data.y], fieldInstances: data.properties },
+                                    0,
+                                    0
+                                );
+                            }
+    
+                            // Log warning for unhandled types
+                            if (!entity) {
+                                console.warn(`Unknown entity type "${data.type}" - creating placeholder`);
+                                entity = this.add.sprite(data.x, data.y, 'defaultTexture');
+                                this.physics.add.existing(entity);
+                                entity.body.setCollideWorldBounds(true);
+                            }
+                            break;
                     }
     
+                    // Restore properties if entity was created
                     if (entity) {
                         Object.assign(entity, data.properties); // Restore additional properties
                         sectionEntities.push(entity);
                     }
                 } catch (error) {
-                    console.error(`Failed to recreate entity:`, error);
+                    console.error(`Failed to recreate entity:`, error, data);
                 }
             });
-            this.sectionEntities.delete(sectionIndex); // Clear saved data after reloading
+    
+            // Clear saved data after reloading
+            this.sectionEntities.delete(sectionIndex);
         } else {
             console.warn(`No saved entities found for section ${sectionIndex}`);
         }
