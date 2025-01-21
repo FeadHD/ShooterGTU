@@ -246,6 +246,22 @@ export class AnimationManager {
             repeat: 0,
         });
     
+        // Death animation
+        scene.anims.create({
+            key: 'zapper_death',
+            frames: scene.anims.generateFrameNumbers('zapper_death', { start: 0, end: 4 }),
+            frameRate: 10,
+            repeat: 0,
+        });
+
+        // Attack animation
+        scene.anims.create({
+            key: 'zapper_attack',
+            frames: scene.anims.generateFrameNumbers('zapper_attack', { start: 0, end: 5 }),
+            frameRate: 15,
+            repeat: 0,
+        });
+    
         console.log('Zapper animations created successfully');
     }
 
