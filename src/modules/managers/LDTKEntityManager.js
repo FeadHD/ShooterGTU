@@ -43,7 +43,7 @@ export class LDTKEntityManager {
         const x = entityData.px[0] + worldX;
         const y = entityData.px[1] + worldY;
         const fields = entityData.fieldInstances || [];
-    
+
         console.log(`Creating entity of type ${entityData.__identifier} at (${x}, ${y})`);
     
         const instance = factory(this.scene, x, y, fields);
@@ -59,21 +59,28 @@ export class LDTKEntityManager {
 
     createEntities(levelData, worldX = 0, worldY = 0) {
         console.log('Creating entities for level data:', levelData);
-    
+      
         const layerInstances = levelData.layerInstances || [];
         const createdEntities = [];
-    
+      
         layerInstances.forEach(layer => {
-            if (layer.__type === "Entities") {
-                console.log(`Processing layer: ${layer.__identifier}`);
-                const layerEntities = this.processEntityLayer(layer, worldX, worldY);
-                createdEntities.push(...layerEntities);
-            }
+          if (layer.__type === "Entities") {
+            console.log(`Processing layer: ${layer.__identifier}`);
+      
+            // 2) Process all other entities normally
+            const layerEntities = this.processEntityLayer(layer, worldX, worldY);
+            createdEntities.push(...layerEntities);
+          }
         });
-    
+      
         console.log('Total entities created:', createdEntities.length);
-        return createdEntities;
-    }
+      
+        // Return both the array of created entities and the spawn point
+        return {
+          entities: createdEntities,
+        };
+      }
+      
     
     
     processEntityLayer(layer, worldX, worldY) {
@@ -198,5 +205,47 @@ export class LDTKEntityManager {
         const fallbackEntity = this.scene.add.sprite(x, y, 'default_sprite');
         this.scene.physics.add.existing(fallbackEntity);
         return fallbackEntity;
+    }
+
+/**
+ * Retrieves the player start coordinates from the level data.
+ * @param {object} levelData - The level data object.
+ * @returns {object} - The player start coordinates as an object with 'x' and 'y' properties.
+ */
+getPlayerStart(levelData, worldX = 0, worldY = 0) {
+    console.log('Getting PlayerStart from level data:', levelData);
+    
+    // Handle both direct layerInstances and nested levels structure
+    const layerInstances = levelData.layerInstances || 
+                          (levelData.levels?.[0]?.layerInstances) || 
+                          [];
+    
+    console.log('Layer instances:', layerInstances);
+    
+    for (const layer of layerInstances) {
+        console.log('Checking layer:', {
+            identifier: layer.__identifier,
+            type: layer.__type,
+            entityCount: layer.entityInstances?.length
+        });
+        
+        if (layer.__type === "Entities") {
+            // Then find the entity named "PlayerStart"
+            const playerStartEntity = layer.entityInstances?.find(
+              e => e.__identifier === "PlayerStart"
+            );
+          
+            console.log('PlayerStart entity found:', playerStartEntity);
+          
+            if (playerStartEntity) {
+              const spawn = {
+                x: playerStartEntity.px[0],
+                y: playerStartEntity.px[1]
+              };
+              console.log('Found PlayerStart:', spawn);
+              return spawn;
+            }
+          }
+        }
     }
 }

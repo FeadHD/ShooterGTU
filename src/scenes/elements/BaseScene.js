@@ -162,7 +162,7 @@ export class BaseScene extends Scene {
         // Setup gameplay elements
         this.#storeSpawnInfo(width, height);
         this.#initializeGameSystems();
-        this.#createPlayerIfNeeded(width);
+        //this.#createPlayerIfNeeded(width);
         
         // Setup state and events
         this.#initializeController();
@@ -248,10 +248,13 @@ export class BaseScene extends Scene {
      */
     #storeSpawnInfo(width, height) {
         this.groundTop = getGroundTop(height);
-        this.playerSpawnPoint = {
-            x: width * GameConfig.PLAYER.SPAWN_OFFSET_X,
-            y: this.getSpawnHeight()
-        };
+        // Only set playerSpawnPoint if it hasn't already been set
+        if (!this.playerSpawnPoint) {
+            this.playerSpawnPoint = {
+                x: width * GameConfig.PLAYER.SPAWN_OFFSET_X,
+                y: getGroundTop(height)  // Use the imported function directly
+            };
+        }
     }
 
     /**
@@ -284,11 +287,14 @@ export class BaseScene extends Scene {
      * 
      * @param {number} width - The width of the game world
      */
-    #createPlayerIfNeeded(width) {
-        if (!this.skipPlayerCreation) {
-            this.createPlayer(width);
-            this.boundaries.createBoundaries(this.player);
-        }
+    createPlayer(x, y) {
+        // Create player using the Player prefab and the stored spawn point
+        this.player = new Player(this, x, y);
+        
+        // Add collision with platforms
+        this.physics.add.collider(this.player, this.platforms);
+    
+        return this.player;
     }
 
     /**
@@ -302,15 +308,15 @@ export class BaseScene extends Scene {
      * @param {number} width - The width of the game world
      * @returns {Player} The created player character
      */
-    createPlayer(width) {
-        // Create player using the Player prefab
-        this.player = new Player(this, width * GameConfig.PLAYER.SPAWN_OFFSET_X, this.playerSpawnPoint.y);
+    // createPlayer(width) {
+    //     // Create player using the Player prefab and the stored spawn point
+    //     this.player = new Player(this, this.playerSpawnPoint.x, this.playerSpawnPoint.y);
         
-        // Add collision with platforms
-        this.physics.add.collider(this.player, this.platforms);
-
-        return this.player;
-    }
+    //     // Add collision with platforms
+    //     this.physics.add.collider(this.player, this.platforms);
+    
+    //     return this.player;
+    // }
 
     // =====================
     // State and Event Methods

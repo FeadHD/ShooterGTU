@@ -96,11 +96,7 @@ export class WayneWorld extends BaseScene {
             const ldtkEntityManager = ManagerFactory.createEntityManager(this);
             console.log('LDTKEntityManager initialized in create:', ldtkEntityManager);
             this.ldtkEntityManager = ldtkEntityManager;
-        }
-
-        // Access CameraManager through ManagerFactory
-        this.cameraManager = ManagerFactory.getCameraManager(this);
-        this.cameraManager.setupCamera(); // Set up the camera
+        }   
 
         // Load LDTK data first to get dimensions
         const ldtkData = this.cache.json.get('combined-level');
@@ -249,36 +245,29 @@ export class WayneWorld extends BaseScene {
         // Set up collision detection
         this.setupCollisions();
 
-        // Find player start position from LDTK data
-        let playerStartX = 100;
-        let playerStartY = 100;
-    
-        if (this.currentLevelData && this.currentLevelData.levels[0].layerInstances) {
-            const entitiesLayer = this.currentLevelData.levels[0].layerInstances.find(
-                layer => layer.__identifier === 'Entities'
-            );
-            
-            if (entitiesLayer) {
-                const playerStart = entitiesLayer.entityInstances.find(
-                    entity => entity.__identifier === 'PlayerStart'
-                );
-                
-                if (playerStart) {
-                    playerStartX = playerStart.px[0];
-                    playerStartY = playerStart.px[1];
-                    console.log('Found LDTK player start position:', { playerStartX, playerStartY });
-                } else {
-                    console.log('No LDTK PlayerStart found, using default position');
-                }
-            }
+        // First load the level
+        this.loadLevelSection(currentLevelData);
+
+        // Then get the spawn point
+        let playerStartX = 64; // default
+        let playerStartY = 256; // default
+
+        const spawn = this.ldtkEntityManager.getPlayerStart(this.currentLevelData);
+        console.log('Spawn point:', spawn);
+        if (spawn) {
+            playerStartX = spawn.x;
+            playerStartY = spawn.y;
         }
 
-        // Always store the spawn point, whether from LDTK or default
         this.playerSpawnPoint = { x: playerStartX, y: playerStartY };
         console.log('Setting player spawn point:', this.playerSpawnPoint);
 
         // Create player at the spawn position
         this.createPlayer(playerStartX, playerStartY);
+
+        // Access CameraManager through ManagerFactory
+        this.cameraManager = ManagerFactory.getCameraManager(this);
+        this.cameraManager.setupCamera(); // Set up the camera
 
         // Add colliders first
         this.physics.add.collider(this.player, this.groundLayer);

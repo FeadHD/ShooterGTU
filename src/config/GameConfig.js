@@ -19,7 +19,7 @@ export const GameConfig = {
         BULLET_DAMAGE: 25,
         INVULNERABLE_DURATION: 2000,
         GROUND_OFFSET: 16,
-        SPAWN_OFFSET_X: 0.1,
+//        SPAWN_OFFSET_X: 0.1,
         MOVEMENT_SPEED: 300,
         HOVER_FORCE: -100
     },
