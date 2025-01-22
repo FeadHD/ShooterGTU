@@ -7,7 +7,7 @@ import { Zapper } from '../../prefabs/enemies/Zapper';
 
 export class WayneWorld extends BaseScene {
     // Constants
-    static ENTITY_ACTIVE_BUFFER = 3; // Number of sections around the player to keep entities active
+    static ENTITY_ACTIVE_BUFFER = 1; // Number of sections around the player to keep entities active
 
     constructor() {
         super({ key: 'WayneWorld' });
@@ -24,7 +24,7 @@ export class WayneWorld extends BaseScene {
         
         // Progressive loading properties
         this.loadedSections = new Set();
-        this.sectionWidth = 640; // Fixed section width of 20 tiles
+        this.sectionWidth = 2048; // Fixed section width
         this.lastLoadedSection = -1; // Track the last loaded section
         this.activeEntities = new Map(); // Store active entities by section
         this.entityBuffer = 2; // Number of sections to keep loaded for entities
