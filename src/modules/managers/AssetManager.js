@@ -76,7 +76,7 @@ export class AssetManager {
             { key: 'player_crouch', file: 'character_Crouch.png' }, // Ducking
             { key: 'player_death', file: 'character_Death.png' },   // Death
             { key: 'player_rollover', file: 'character_Rollover.png' }, // Dodge
-            { key: 'player_walk', file: 'character_Walking.png' }   // Movement
+            { key: 'player_walk', file: 'character_Walk.png' }   // Movement
         ];
 
         // Load each sprite with consistent dimensions

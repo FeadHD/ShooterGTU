@@ -156,8 +156,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
                 repeat: 0
             },
             {
-                key: 'character_Walking',
-                spritesheet: 'character_walking',
+                key: 'character_Walk',
+                spritesheet: 'character_walk',
                 frameRate: 10,
                 start: 0,
                 end: 8,  // 288px wide / 32px per frame = 9 frames (0-8)
@@ -582,7 +582,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
             // Only reset animation if not rolling
             if (!this.isRolling) {
                 if (this.body.velocity.x !== 0) {
-                    this.playAnimation('character_Walking', true);
+                    this.playAnimation('character_Walk', true);
                 } else {
                     this.playAnimation('character_Idle', true);
                 }
@@ -678,7 +678,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
                 // Handle animations
                 if (this.body.onFloor()) {
                     if (this.body.velocity.x !== 0) {
-                        this.playAnimation('character_Walking', true);
+                        this.playAnimation('character_Walk', true);
                     } else {
                         this.playAnimation('character_Idle', true);
                     }

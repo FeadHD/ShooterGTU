@@ -150,7 +150,7 @@ export class Preloader extends Scene {
         // Character animation states
         const characterStates = {
             'idle': { endFrame: 4 },
-            'walking': { endFrame: 6 },
+            'walk': { endFrame: 6 },
             'run': { endFrame: 6 },
             'jump': { endFrame: 1 },
             'death': { endFrame: 8 }
@@ -290,33 +290,38 @@ export class Preloader extends Scene {
      * Handles font loading and game start
      */
     create() {
-        // Initialize WebFont if available
+        // Load custom web fonts or fallback
+        this.loadFont('Retronoid', 'assets/fonts/fonts.css', 'MainMenu', 'Arial', 3000);
+    
+        // Verify critical assets
+        this.verifyAssets();
+    }
+    
+    loadFont(fontFamily, fontUrl, nextScene, fallbackFont, timeout) {
         if (typeof WebFont !== 'undefined') {
             WebFont.load({
                 custom: {
-                    families: ['Retronoid'],
-                    urls: ['assets/fonts/fonts.css']
+                    families: [fontFamily],
+                    urls: [fontUrl]
                 },
                 active: () => {
-                    console.log('Font loaded successfully');
-                    this.scene.start('MainMenu');
+                    console.log(`${fontFamily} loaded successfully`);
+                    this.scene.start(nextScene);
                 },
                 inactive: () => {
-                    console.warn('Font failed to load, using fallback');
-                    this.registry.set('fontFamily', 'Arial');
-                    this.scene.start('MainMenu');
+                    console.warn(`${fontFamily} failed to load, using fallback`);
+                    this.registry.set('fontFamily', fallbackFont);
+                    this.scene.start(nextScene);
                 },
-                timeout: 3000
+                timeout: timeout
             });
         } else {
             console.warn('WebFont not loaded, using fallback');
-            this.registry.set('fontFamily', 'Arial');
-            this.scene.start('MainMenu');
+            this.registry.set('fontFamily', fallbackFont);
+            this.scene.start(nextScene);
         }
-
-        // Verify critical assets loaded
-        this.verifyAssets();
     }
+    
 
     /**
      * ASSET VERIFICATION

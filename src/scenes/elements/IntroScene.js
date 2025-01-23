@@ -44,7 +44,7 @@ export class IntroScene extends Scene {
             frameHeight: 32
         });
 
-        this.load.spritesheet('character_walking', 'assets/character/character_Walking.png', {
+        this.load.spritesheet('character_walk', 'assets/character/character_Walk.png', {
             frameWidth: 32,
             frameHeight: 32
         });
