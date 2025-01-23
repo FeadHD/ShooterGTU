@@ -235,8 +235,7 @@ export class Preloader extends Scene {
     loadProjectiles() {
         // Load bullet sprites and animations
         const bulletConfigs = {
-            'bullet_animation': { endFrame: undefined },
-            'bullet': { endFrame: 3 }
+            'bullet_animation': { endFrame: 4 },
         };
 
         Object.entries(bulletConfigs).forEach(([key, config]) => {
