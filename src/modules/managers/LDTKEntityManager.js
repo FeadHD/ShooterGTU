@@ -33,7 +33,7 @@ export class LDTKEntityManager {
         });
     }
 
-    createEntityInstance(entityData, worldX = 0, worldY = 0, retryCount = 0) {
+    createEntityInstance(entityData, worldX = 0, worldY = 0) {
         const factory = this.entityFactories.get(entityData.__identifier);
         if (!factory) {
             console.warn(`No factory found for entity type: ${entityData.__identifier}`);
@@ -43,19 +43,32 @@ export class LDTKEntityManager {
         const x = entityData.px[0] + worldX;
         const y = entityData.px[1] + worldY;
         const fields = entityData.fieldInstances || [];
-
+    
         console.log(`Creating entity of type ${entityData.__identifier} at (${x}, ${y})`);
     
         const instance = factory(this.scene, x, y, fields);
     
-        // Add to the enemies group if applicable
-        if (this.scene.enemies && instance instanceof Phaser.Physics.Arcade.Sprite) {
-            this.scene.enemies.add(instance);
-            console.log(`Added ${entityData.__identifier} to enemies group`);
+        // Add entities to appropriate groups based on their type
+        if (entityData.__identifier === 'Zapper' || entityData.__identifier === 'Enemy') {
+            if (this.scene.enemies) {
+                this.scene.enemies.add(instance);
+                console.log(`Added ${entityData.__identifier} to enemies group`);
+            }
+        } else if (entityData.__identifier === 'NeutralObject') {
+            if (this.scene.neutralEntities) {
+                this.scene.neutralEntities.add(instance);
+                console.log(`Added ${entityData.__identifier} to neutralEntities group`);
+            }
+        } else if (entityData.__identifier === 'InteractiveObject') {
+            if (this.scene.interactiveEntities) {
+                this.scene.interactiveEntities.add(instance);
+                console.log(`Added ${entityData.__identifier} to interactiveEntities group`);
+            }
         }
     
         return instance;
     }
+    
 
     createEntities(levelData, worldX = 0, worldY = 0) {
         console.log('Creating entities for level data:', levelData);
@@ -64,24 +77,26 @@ export class LDTKEntityManager {
         const createdEntities = [];
       
         layerInstances.forEach(layer => {
-          if (layer.__type === "Entities") {
-            console.log(`Processing layer: ${layer.__identifier}`);
-      
-            // 2) Process all other entities normally
-            const layerEntities = this.processEntityLayer(layer, worldX, worldY);
-            createdEntities.push(...layerEntities);
-          }
+            if (layer.__type === "Entities") {
+                console.log(`Processing layer: ${layer.__identifier}`);
+          
+                // Ensure processing only valid entities in the layer
+                if (layer.entityInstances) {
+                    layer.entityInstances.forEach(entityData => {
+                        const entity = this.createEntityInstance(entityData, worldX, worldY);
+                        if (entity) {
+                            createdEntities.push(entity);
+                        }
+                    });
+                } else {
+                    console.warn(`No entities found in layer ${layer.__identifier}`);
+                }
+            }
         });
       
         console.log('Total entities created:', createdEntities.length);
-      
-        // Return both the array of created entities and the spawn point
-        return {
-          entities: createdEntities,
-        };
-      }
-      
-    
+        return createdEntities;
+    }
     
     processEntityLayer(layer, worldX, worldY) {
         console.log('Processing entity layer:', layer.__identifier);
@@ -161,41 +176,6 @@ export class LDTKEntityManager {
         this.loadedEntityPositions.add(positionKey);
         createdEntities.push(instance);
     }
-
-    createEntityInstance(entityData, worldX = 0, worldY = 0) {
-        const factory = this.entityFactories.get(entityData.__identifier);
-        if (!factory) {
-            console.warn(`No factory found for entity type: ${entityData.__identifier}`);
-            return this.createFallbackEntity(entityData, worldX, worldY);
-        }
-    
-        const x = entityData.px[0] + worldX;
-        const y = entityData.px[1] + worldY;
-        const fields = entityData.fieldInstances || [];
-        const instance = factory(this.scene, x, y, fields);
-    
-        // Categorize entities into different groups
-        if (entityData.__identifier === 'Zapper' || entityData.__identifier === 'Enemy') {
-            if (this.scene.enemies) {
-                this.scene.enemies.add(instance);
-                console.log(`Added ${entityData.__identifier} to enemies group`);
-            }
-        } else if (entityData.__identifier === 'NeutralObject') {
-            if (this.scene.neutralEntities) {
-                this.scene.neutralEntities.add(instance);
-                console.log(`Added ${entityData.__identifier} to neutralEntities group`);
-            }
-        } else if (entityData.__identifier === 'InteractiveObject') {
-            if (this.scene.interactiveEntities) {
-                this.scene.interactiveEntities.add(instance);
-                console.log(`Added ${entityData.__identifier} to interactiveEntities group`);
-            }
-        }
-    
-        return instance;
-    }
-    
-    
 
     createFallbackEntity(entityData, worldX, worldY) {
         console.warn(`Creating fallback entity for ${entityData.__identifier}`);

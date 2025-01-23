@@ -509,34 +509,38 @@ export class WayneWorld extends BaseScene {
 
             const levelStartX = currentLevelIndex * this.singleLevelWidth;
             
-            // Process entities for this level section after tiles are loaded
-            if (this.ldtkEntityManager) {
-                console.log('zzz --------- Starting entity creation ---------');
-                console.log('zzz Level data:', {
-                    levelIndex: currentLevelIndex,
-                    offset: levelStartX,
-                    entityLayers: currentLevel.layerInstances.filter(l => l.__type === "Entities").length
-                });
-                
-                const createdEntities = this.ldtkEntityManager.createEntities(currentLevel, levelStartX, 0);
-                console.log('zzz Created entities count:', createdEntities.length);
-                console.log('zzz --------- Entity creation complete ---------');
-                
-                // Track created entities for this section
-                if (createdEntities && createdEntities.length > 0) {
-                    // Store in active entities map
-                    const sectionEntities = this.activeEntities.get(sectionIndex) || [];
-                    sectionEntities.push(...createdEntities);
-                    this.activeEntities.set(sectionIndex, sectionEntities);
+        // Process entities for this level section after tiles are loaded
+        if (this.ldtkEntityManager) {
+            console.log(`zzz --------- Starting entity creation for section ${sectionIndex} ---------`);
+            console.log(`zzz Level data:`, {
+                levelIndex: currentLevelIndex,
+                offset: levelStartX,
+                entityLayers: currentLevel.layerInstances.filter(l => l.__type === "Entities").length
+            });
 
-                    // Update entity stats
-                    this.entityStats.totalLoaded += createdEntities.length;
-                    const currentCount = this.entityStats.activeBySection.get(sectionIndex) || 0;
-                    this.entityStats.activeBySection.set(sectionIndex, currentCount + createdEntities.length);
+            const createdEntities = this.ldtkEntityManager.createEntities(currentLevel, levelStartX, 0);
+            console.log(`zzz Entities returned from LDTKEntityManager:`, createdEntities);
 
-                    console.log(`Added ${createdEntities.length} entities to section ${sectionIndex}`);
-                }
+            // Track created entities for this section
+            if (createdEntities && createdEntities.length > 0) {
+                console.log(`zzz Adding entities to activeEntities for section ${sectionIndex}:`, createdEntities);
+
+                // Store in active entities map
+                const sectionEntities = this.activeEntities.get(sectionIndex) || [];
+                sectionEntities.push(...createdEntities);
+                this.activeEntities.set(sectionIndex, sectionEntities);
+
+                console.log(`zzz Active entities for section ${sectionIndex}:`, this.activeEntities.get(sectionIndex));
+
+                // Update entity stats
+                this.entityStats.totalLoaded += createdEntities.length;
+                const currentCount = this.entityStats.activeBySection.get(sectionIndex) || 0;
+                this.entityStats.activeBySection.set(sectionIndex, currentCount + createdEntities.length);
+
+                console.log(`zzz Updated entity stats: totalLoaded=${this.entityStats.totalLoaded}, section=${sectionIndex}`);
             }
+        }
+
         }
         
         console.log(`Section ${sectionIndex} loaded successfully`);
@@ -602,12 +606,15 @@ export class WayneWorld extends BaseScene {
             y: entity.y,
             properties: entity.properties || {}, // Additional properties
         }));
+        console.log(`Saving entities for section ${sectionIndex}:`, entityData);
     
         this.sectionEntities.set(sectionIndex, entityData); // Safely save data
-    
+        console.log(`Updated sectionEntities after saving section ${sectionIndex}:`, this.sectionEntities);
+
         // Destroy each entity
         entities.forEach(entity => {
             if (entity && typeof entity.destroy === 'function') {
+                console.log(`Destroying entity:`, entity);
                 entity.destroy();
             }
         });
@@ -617,9 +624,6 @@ export class WayneWorld extends BaseScene {
         console.log(`Entities removed and saved for section ${sectionIndex}`);
     }
     
-    
-    
-
     /****************************
      * ENTITY MANAGEMENT
      ****************************/
