@@ -76,7 +76,7 @@ const PLAYER_CONSTANTS = {
 };
 
 const TILE_CONSTANTS = {
-    COLLIDING_TILES: [257, 260, 261, 641, 642, 643, 644, 645, 705, 706, 707]  // Tile IDs that should have collision
+    COLLIDING_TILES: [257, 258, 259, 260, 261, 641, 642, 643, 644, 645, 705, 706, 707, 708, 709]  // Tile IDs that should have collision
 };
 
 /** Base scene class that handles game initialization, updates, and cleanup. Provides foundation for all game scenes with standardized setup and management of core game systems. */
