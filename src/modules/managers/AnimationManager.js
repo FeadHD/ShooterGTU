@@ -87,10 +87,12 @@ export class AnimationManager {
         // Define animation data
         const animations = [
             { key: 'character_Idle', texture: 'character_idle', frames: { start: 0, end: 3 }, frameRate: 8, repeat: -1 },
-            { key: 'character_Run', texture: 'character_run', frames: { start: 0, end: 5 }, frameRate: 10, repeat: -1 },
+            { key: 'character_Walk', texture: 'character_walk', frames: { start: 0, end: 5 }, frameRate: 10, repeat: -1 },
+            { key: 'character_Crouch', texture: 'character_crouch', frames: { start: 0, end: 2 }, frameRate: 10, repeat: 0 },
+            { key: 'character_Run', texture: 'character_run', frames: { start: 0, end: 5 }, frameRate: 8, repeat: 0 },
+            { key: 'character_Death', texture: 'character_death', frames: { start: 0, end: 5 }, frameRate: 8, repeat: 0 },             
             { key: 'character_Jump', texture: 'character_jump', frames: { start: 0, end: 1 }, frameRate: 10, repeat: 0 },
-            { key: 'character_Fall', texture: 'character_fall', frames: { start: 0, end: 1 }, frameRate: 10, repeat: 0 },
-            { key: 'character_Roll', texture: 'character_roll', frames: { start: 0, end: 6 }, frameRate: 15, repeat: 0 }
+            { key: 'character_Fall', texture: 'character_fall', frames: { start: 0, end: 1 }, frameRate: 10, repeat: 0 }
         ];
     
         // Create animations dynamically
@@ -111,10 +113,8 @@ export class AnimationManager {
                 console.warn(`Texture not found for animation: ${anim.texture}`);
             }
         });
-    
-        console.log('Character animations creation complete.');
-        console.log('Available animations:', Object.keys(this.scene.anims.anims.entries));
     }
+    
     /**
      * Create enemy NPC animations
      * Basic movement and attack sequences

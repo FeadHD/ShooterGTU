@@ -170,7 +170,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
             },
             {
                 key: 'character_Roll',
-                spritesheet: 'character_Roll',
+                spritesheet: 'character_roll',
                 frameRate: 15,
                 start: 0,
                 end: 3,

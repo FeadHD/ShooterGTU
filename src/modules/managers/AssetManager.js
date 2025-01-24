@@ -71,29 +71,33 @@ export class AssetManager {
      */
     loadCharacterSprites() {
         const characterSprites = [
-            { key: 'player_idle', file: 'character_Idle.png', frames: { start: 0, end: 3 }, frameRate: 10, repeat: -1 },
-            { key: 'player_jump', file: 'character_Jump.png', frames: { start: 0, end: 1 }, frameRate: 10, repeat: 0 },
-            { key: 'player_crouch', file: 'character_Crouch.png', frames: { start: 0, end: 1 }, frameRate: 10, repeat: 0 },
-            { key: 'player_death', file: 'character_Death.png', frames: { start: 0, end: 5 }, frameRate: 8, repeat: 0 },
-            { key: 'player_roll', file: 'character_Roll.png', frames: { start: 0, end: 3 }, frameRate: 10, repeat: 0 },
-            { key: 'player_walk', file: 'character_Walk.png', frames: { start: 0, end: 5 }, frameRate: 12, repeat: -1 },
-            { key: 'player_fall', file: 'character_Fall.png', frames: { start: 0, end: 1 }, frameRate: 10, repeat: 0 }
+            { key: 'player_idle', file: 'character_idle.png', frames: { start: 0, end: 3 }, frameRate: 10, repeat: -1 },
+            { key: 'player_jump', file: 'character_jump.png', frames: { start: 0, end: 1 }, frameRate: 10, repeat: 0 },
+            { key: 'player_crouch', file: 'character_crouch.png', frames: { start: 0, end: 2 }, frameRate: 10, repeat: 0 },
+            { key: 'player_death', file: 'character_death.png', frames: { start: 0, end: 5 }, frameRate: 8, repeat: 0 },
+            { key: 'player_roll', file: 'character_roll.png', frames: { start: 0, end: 3 }, frameRate: 10, repeat: 0 },
+            { key: 'player_walk', file: 'character_walk.png', frames: { start: 0, end: 5 }, frameRate: 12, repeat: 0 },
+            { key: 'player_fall', file: 'character_fall.png', frames: { start: 0, end: 1 }, frameRate: 10, repeat: 0 }
         ];
     
-        // Load spritesheets
+        // Validate sprites before loading
         characterSprites.forEach(sprite => {
-            console.log(`zzz Loading character sprite: ${sprite.key}`);
-            this.scene.load.spritesheet(sprite.key, `assets/character/${sprite.file}`, {
-                frameWidth: 32,
-                frameHeight: 48
-            });
+            if (!sprite.key || !sprite.file || !sprite.frames) {
+                console.error('Invalid sprite configuration:', sprite);
+            } else {
+                console.log(`zzz Loading character sprite: ${sprite.key}`);
+                this.scene.load.spritesheet(sprite.key, `assets/character/${sprite.file}`, {
+                    frameWidth: 32,
+                    frameHeight: 48
+                });
+            }
         });
     
         // Listen for load completion
         this.scene.load.once('complete', () => {
             console.log('zzz All character sprites loaded. Creating animations...');
             
-            // Create animations dynamically based on sprite metadata
+            // Create animations dynamically
             characterSprites.forEach(sprite => {
                 if (this.scene.textures.exists(sprite.key)) {
                     this.scene.anims.create({
@@ -111,8 +115,9 @@ export class AssetManager {
             console.log('zzz All animations created successfully.');
         });
     
-        this.scene.load.start(); // Start loading if not done already
+        this.scene.load.start(); // Start loading process
     }
+    
     
 
     /**

@@ -147,7 +147,6 @@ export class Preloader extends Scene {
      * CHARACTER SPRITES
      */
     loadCharacterSprites() {
-        // Character animation states
         const characterStates = {
             'idle': { endFrame: 4 },
             'walk': { endFrame: 6 },
@@ -155,12 +154,12 @@ export class Preloader extends Scene {
             'jump': { endFrame: 1 },
             'death': { endFrame: 8 },
             'fall': { endFrame: 1 },
-            'roll': { endFrame: 3 }
+            'roll': { endFrame: 3 },
+            'crouch': { endFrame: 2 }
         };
-
-        // Load all character states
+    
         Object.entries(characterStates).forEach(([state, config]) => {
-            this.load.spritesheet(`character_${state}`, `./assets/character/character_${state.charAt(0).toUpperCase() + state.slice(1)}.png`, {
+            this.load.spritesheet(`character_${state}`, `./assets/character/character_${state.toLowerCase()}.png`, {
                 frameWidth: 48,
                 frameHeight: 48,
                 startFrame: 0,
@@ -170,6 +169,7 @@ export class Preloader extends Scene {
             });
         });
     }
+    
 
     /**
      * ENEMY SPRITES

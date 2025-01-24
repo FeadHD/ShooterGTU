@@ -57,7 +57,7 @@ export class BaseScene extends Scene {
     /** Load essential game assets (sprites, particles) */
     preload() {
         if (!this.textures.exists('character')) {
-            this.load.spritesheet('character', 'assets/character/character_Idle.png', {
+            this.load.spritesheet('character', 'assets/character/character_idle.png', {
                 frameWidth: GameConfig.SPRITES.CHARACTER.WIDTH,
                 frameHeight: GameConfig.SPRITES.CHARACTER.HEIGHT
             });
