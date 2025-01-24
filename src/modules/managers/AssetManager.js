@@ -318,8 +318,7 @@ export class AssetManager {
      */
     createPlayerHUD(x = 10, y = 10, fixedToCamera = true) {
         // Verify required assets are loaded
-        if (!this.scene.textures.exists('health') || 
-            !this.scene.textures.exists('health_2') || 
+        if (!this.scene.textures.exists('health') ||  
             !this.scene.textures.exists('lifebar') || 
             !this.scene.textures.exists('stamina')) {
             console.error('PlayerHUD assets not loaded. Make sure loadUI() was called first.');

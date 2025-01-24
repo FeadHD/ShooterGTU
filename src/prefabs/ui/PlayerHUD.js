@@ -1,7 +1,6 @@
 export class PlayerHUD {
     static ASSETS = {
         HEALTH: 'assets/PlayerHUD/health.png',
-        HEALTH_2: 'assets/PlayerHUD/health_2.png',
         LIFEBAR: 'assets/PlayerHUD/lifebar.png',
         STAMINA: 'assets/PlayerHUD/stamina.png'
     };
@@ -16,13 +15,6 @@ export class PlayerHUD {
     static preloadAssets(scene) {
         // Load health bar sprites
         scene.load.spritesheet('health', this.ASSETS.HEALTH, {
-            frameWidth: this.SPRITE_CONFIG.frameWidth,
-            frameHeight: this.SPRITE_CONFIG.frameHeight,
-            startFrame: this.SPRITE_CONFIG.startFrame,
-            endFrame: this.SPRITE_CONFIG.endFrame
-        });
-
-        scene.load.spritesheet('health_2', this.ASSETS.HEALTH_2, {
             frameWidth: this.SPRITE_CONFIG.frameWidth,
             frameHeight: this.SPRITE_CONFIG.frameHeight,
             startFrame: this.SPRITE_CONFIG.startFrame,
