@@ -167,16 +167,16 @@ export class UIManager {
         this.timerText = this.scene.add.text(
             LEFT_MARGIN,
             TOP_MARGIN,
-            'FROMAGE: 00:00',
+            'TIME: 00:00',
             this.textStyleManager.styles.timer
-        );
+        ); 
         // Force a unique color or style to see if it's updating
         this.timerText.setColor('#D2B48C'); 
 
         this.bitcoinText = this.scene.add.text(
             LEFT_MARGIN,
             TOP_MARGIN + VERTICAL_SPACING,
-            'Bitcoins: 0',
+            'BITCOINS: 0',
             this.textStyleManager.styles.bitcoin
         );
         this.scoreText = this.scene.add.text(
@@ -463,7 +463,13 @@ export class UIManager {
                 break;
             case 'bitcoins':
                 if (this.bitcoinText) {
-                    this.bitcoinText.setText('Bitcoins: ' + value);
+                    this.bitcoinText.setText('Gray: ' + value);
+                }
+                break;
+                
+            case 'time':
+                if (this.timerText) {
+                    this.timerText.setText('TIME: ' + value);
                 }
                 break;
         }
@@ -474,7 +480,7 @@ export class UIManager {
      */
     animateUIElements() {
         const elements = [
-            { text: this.timerText, finalPos: { x: 50, y: 100 } },
+            { text: this.timerText, finalPos: { x: 25, y: 100 } },
             { text: this.bitcoinText, finalPos: { x: 25, y: 130 } },
             { text: this.scoreText, finalPos: { x: 25, y: 160 } },
             { text: this.livesText, finalPos: { x: 25, y: 190 } }
