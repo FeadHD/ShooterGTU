@@ -52,10 +52,10 @@ export class AnimationManager {
      * Two-frame looping animation
      */
     createBulletAnimation() {
-        if (!this.scene.anims.exists('bullet')) {
+        if (!this.scene.anims.exists('bullet_animation')) {
             this.scene.anims.create({
-                key: 'bullet',
-                frames: this.scene.anims.generateFrameNumbers('bullet', { start: 0, end: 1 }),
+                key: 'bullet_animation',
+                frames: this.scene.anims.generateFrameNumbers('bullet_animation', { start: 0, end: 3 }),
                 frameRate: 10,
                 repeat: -1        // Loop indefinitely
             });

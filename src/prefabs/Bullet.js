@@ -22,7 +22,7 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
         // Visual setup
         this.setScale(1);
         this.setAlpha(1);
-        this.play('bullet_anim');            // Start animation
+        this.play('bullet_animation');            // Start animation
     }
 
     /**
