@@ -1,7 +1,7 @@
 /**
- * Player.js
- * Core player character class that handles all player-related mechanics
- * including movement, combat, stamina, and state management.
+ * Player.js - Main player character class
+ * Handles all player mechanics including movement, combat, and state management.
+ * Core features: jumping, hovering, rolling, shooting, and health/stamina systems.
  */
 
 import Phaser from 'phaser';
@@ -9,10 +9,6 @@ import { PlayerController } from '../modules/controls/PlayerController';
 import { eventBus } from '../modules/events/EventBus';
 import { GameConfig } from '../config/GameConfig';
 
-/**
- * Player class extending Phaser's Arcade Sprite
- * Manages player state, movement, abilities, and interactions
- */
 export class Player extends Phaser.Physics.Arcade.Sprite {
     /**
      * Initialize player with core mechanics and state
@@ -22,104 +18,113 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
      */
     constructor(scene, x, y) {
         super(scene, x, y, 'character_idle');
-        
         this.scene = scene;
-        
-        // Core movement mechanics
-        this.maxJumps = 1;                // Maximum number of jumps
-        this.jumpsAvailable = 1;          // Current jumps available
-        this.isJumping = false;           // Track if currently in jump
-        this.jumpSpeed = -330;            // Jump velocity
-        this.jumpBufferTime = 200;        // Jump buffer timing (200ms)
-        this.lastJumpTime = 0;            // When the last jump occurred
+
+        // ======================
+        // MOVEMENT CORE SYSTEMS
+        // ======================
+        // Jump mechanics
+        this.maxJumps = 1;       // Double jump not enabled (set to 2 for double jump)
+        this.jumpsAvailable = 1; // Resets when touching ground
+        this.isJumping = false;  
+        this.jumpSpeed = -330;   // Negative for upward movement
+        this.jumpBufferTime = 200;  // Grace period for jump input (ms)
+        this.lastJumpTime = 0;   
+
+        // Basic state
         this.isDying = false;
         this.invulnerableUntil = 0;
         this.movementSpeed = 300;
-        
-        // Health system
-        this.playerHP = scene.registry.get('playerHP') || GameConfig.PLAYER.INITIAL_HP;
+
+        // ======================
+        // HEALTH & STAMINA
+        // ======================
+        // Health system - Tracks player HP and manages damage
+        this.playerHP =
+            this.scene.registry.get('playerHP') || GameConfig.PLAYER.INITIAL_HP;
         this.lastDamageTaken = 0;
-        
-        // Stamina system initialization
+
+        // Stamina system - Used for special moves (hover, roll)
         this.maxStamina = 100;
-        this.currentStamina = scene.registry.get('stamina') || this.maxStamina;
-        scene.registry.set('stamina', this.currentStamina); // Initialize registry
-        this.staminaRegenRate = 12;           // base regen per second
-        this.groundRegenBonus = 8;            // additional regen when on ground
-        this.staminaRegenDelay = 500;         // 0.5s delay before regen starts
-        this.lastStaminaUseTime = 0;          // Track when stamina was last used
-        
-        // Roll stamina costs - progressive drain rates
+        this.currentStamina =
+            this.scene.registry.get('stamina') || this.maxStamina;
+        this.scene.registry.set('stamina', this.currentStamina);
+        this.staminaRegenRate = 12;           // Base stamina regen per second
+        this.groundRegenBonus = 8;            // Extra regen when on ground
+        this.staminaRegenDelay = 500;         // Delay before stamina starts recovering
+        this.lastStaminaUseTime = 0;
+
+        // ======================
+        // SPECIAL ABILITIES
+        // ======================
+        // Roll ability - Quick dodge/movement
         this.rollStaminaCosts = [
-            { time: 300, cost: 45 },          // 0-300ms: 45/s
-            { time: 600, cost: 60 },          // 300-600ms: 60/s
-            { time: 900, cost: 85 },          // 600-900ms: 85/s
-            { time: 1200, cost: 120 }         // 900-1200ms: 120/s
+            { time: 300, cost: 45 },  // First 300ms costs 45 stamina/s
+            { time: 600, cost: 60 },  // 300-600ms costs 60 stamina/s
+            { time: 900, cost: 85 },  // 600-900ms costs 85 stamina/s
+            { time: 1200, cost: 120 } // 900-1200ms costs 120 stamina/s
         ];
-        
-        // Rollover mechanics
-        this.isRolling = false;           // Current rolling state
-        this.rollSpeed = 450;             // Speed during roll
-        this.rollStartTime = 0;           // When current roll began
-        this.rollDirection = 1;           // 1 for right, -1 for left
-        
-        // Hover stamina costs - progressive drain rates
+
+        this.isRolling = false;
+        this.rollSpeed = 450;
+        this.rollStartTime = 0;
+        this.rollDirection = 1; // 1 for right, -1 for left
+
+        // Hover ability - Mid-air float
         this.hoverStaminaCosts = [
-            { time: 500, cost: 35 },          // 0-500ms: 35/s
-            { time: 1000, cost: 45 },         // 500-1000ms: 45/s
-            { time: 1500, cost: 65 },         // 1000-1500ms: 65/s
-            { time: 2000, cost: 90 }          // 1500-2000ms: 90/s
+            { time: 500, cost: 35 },   // First 500ms costs 35 stamina/s
+            { time: 1000, cost: 45 },  // 500-1000ms costs 45 stamina/s
+            { time: 1500, cost: 65 },  // 1000-1500ms costs 65 stamina/s
+            { time: 2000, cost: 90 }   // 1500-2000ms costs 90 stamina/s
         ];
-        
-        // Hover mechanics
-        this.isHovering = false;          // Current hover state
-        this.canStartHover = true;        // Whether we can start a new hover
-        this.hoverDuration = 2000;        // Max hover duration (2 seconds)
-        this.hoverCooldown = 1000;        // Time before can hover again (ms)
-        this.hoverForce = -100;           // Base hover force
-        this.hoverStartTime = 0;          // When current hover began
-        this.lastHoverEndTime = 0;        // When last hover ended
-        this.hoverWarningThreshold = 500; // Show warning when 500ms left
 
-        // Coyote Time and Jump Buffer variables
-        this.coyoteTime = 80;     // Standard coyote time for precise platforming
-        this.lastOnGroundTime = 0; // Track when player was last on ground
-        this.lastJumpPressedTime = 0; // Track when jump was last pressed
-        this.hasBufferedJump = false; // Track if we have a buffered jump
+        this.isHovering = false;
+        this.canStartHover = true;
+        this.hoverDuration = 2000;     // Max hover time (2 seconds)
+        this.hoverCooldown = 1000;     // Time before can hover again
+        this.hoverForce = -100;        // Upward force while hovering
+        this.hoverStartTime = 0;
+        this.lastHoverEndTime = 0;
+        this.hoverWarningThreshold = 500;  // Warning when 500ms of hover left
 
-        // Lives system
-        this.lives = scene.registry.get('playerLives') || GameConfig.PLAYER.INITIAL_LIVES;
-        scene.registry.set('playerLives', this.lives);
+        // ======================
+        // PLATFORMING HELPERS
+        // ======================
+        // Coyote time - Short grace period to jump after leaving platform
+        this.coyoteTime = 80;  
+        this.lastOnGroundTime = 0;
+        this.lastJumpPressedTime = 0;
+        this.hasBufferedJump = false;
 
-        // Add sprite to scene and enable physics
-        scene.add.existing(this);
-        scene.physics.add.existing(this);
-        
-        // Set up physics properties
+        // ======================
+        // LIVES SYSTEM
+        // ======================
+        this.playerLives =
+            this.scene.registry.get('playerLives') || GameConfig.PLAYER.INITIAL_LIVES;
+        this.scene.registry.set('playerLives', this.playerLives);
+
+        // ======================
+        // PHYSICS SETUP
+        // ======================
+        this.scene.add.existing(this);
+        this.scene.physics.add.existing(this);
+
         this.setScale(2)
             .setBounce(0.1)
-            .setGravityY(400)  // Match world gravity
-            .setAlpha(1) // Set opacity to 100%
-            .setDepth(1000); // Set a high depth value to render in front of everything
-            
-        this.body.setSize(12, 27); // Set width to 12px, keep height at 27px
-        
-        // Create animations if they don't exist
+            .setGravityY(400)  // Gravity affects player
+            .setAlpha(1)
+            .setDepth(1000);   // Render above most objects
+
+        this.body.setSize(12, 27);  // Collision box size
+
+        // Initialize animations and controls
         this.createAnimations();
-
-        // Start idle animation if it exists
-        if (scene.anims.exists('character_Idle')) {
-            this.playAnimation('character_Idle');
-        }
-
-        // Set up controls
-        this.controller = new PlayerController(scene);
+        this.controller = new PlayerController(this.scene);
         this.controller.setupShootingControls(this);
     }
 
     /**
      * Creates animations for the player character
-     * Includes idle, run, jump, fall, and rollover animations
      */
     createAnimations() {
         const anims = [
@@ -160,15 +165,15 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
                 spritesheet: 'character_walking',
                 frameRate: 10,
                 start: 0,
-                end: 8,  // 288px wide / 32px per frame = 9 frames (0-8)
+                end: 8,
                 repeat: -1
             },
             {
                 key: 'character_Rollover',
-                spritesheet: 'character_Rollover',  // Match the exact case of the loaded asset
+                spritesheet: 'character_Rollover',
                 frameRate: 15,
                 start: 0,
-                end: 3,  // Only 4 frames available (0,1,2,3)
+                end: 3,
                 repeat: 0
             }
         ];
@@ -193,13 +198,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
             }
         });
 
-        console.log('Available animations:', Object.keys(this.scene.anims.anims.entries));
+        console.log(
+            'Available animations:',
+            Object.keys(this.scene.anims.anims.entries)
+        );
     }
 
     /**
      * Plays an animation on the player character
-     * @param {string} key - Animation key to play
-     * @param {boolean} ignoreIfPlaying - Whether to ignore if the animation is already playing
      */
     playAnimation(key, ignoreIfPlaying = true) {
         try {
@@ -220,40 +226,30 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     /**
      * Handles player shooting mechanics
-     * Creates and fires a bullet in the specified direction
-     * @param {string} direction - Direction to fire ('right' or 'left')
      */
     shoot(direction = 'right') {
-        // Get a bullet from the scene's bullets group
         const bullet = this.scene.bullets.get(this.x, this.y);
         if (!bullet) return;
-        
-        // Fire the bullet
+
         bullet.fire(this.x, this.y, direction);
-        
-        // Only play sound if effectsManager exists
-        if (this.scene.effectsManager && this.scene.effectsManager.playSound) {
+
+        if (this.scene.effectsManager?.playSound) {
             this.scene.effectsManager.playSound('laser');
         }
     }
 
     /**
      * Processes damage taken by the player
-     * Handles invulnerability frames and death state
-     * @param {number} amount - Amount of damage to take
      */
     takeDamage(amount = GameConfig.PLAYER.DAMAGE) {
         if (this.isDying) return;
-        
-        // Check invulnerability
+
         if (this.scene.time.now < this.invulnerableUntil) return;
 
-        // Take damage
         this.lastDamageTaken = amount;
-        this.playerHP = Math.max(0, this.playerHP - this.lastDamageTaken);
+        this.playerHP = Math.max(0, this.playerHP - amount);
         this.scene.registry.set('playerHP', this.playerHP);
-        
-        // Emit HP change event
+
         eventBus.emit('playerHPChanged', this.playerHP);
 
         if (this.playerHP <= 0) {
@@ -261,20 +257,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
             return;
         }
 
-        // Set invulnerability period
-        this.invulnerableUntil = this.scene.time.now + GameConfig.PLAYER.INVULNERABLE_DURATION;
+        // Make invulnerable for a brief period
+        this.invulnerableUntil =
+            this.scene.time.now + GameConfig.PLAYER.INVULNERABLE_DURATION;
         this.makeInvulnerable();
     }
 
-    /**
-     * Activates temporary invulnerability with visual feedback
-     * Used after taking damage or during special states
-     */
     makeInvulnerable() {
-        // Set invulnerability for 1000ms
+        // Set invulnerability for 1s
         this.invulnerableUntil = this.scene.time.now + 1000;
-        
-        // Create flashing effect
+
         this.scene.tweens.add({
             targets: this,
             alpha: { from: 0.5, to: 1 },
@@ -285,9 +277,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
                 if (!this.isDying) this.alpha = 1;
             }
         });
-        
-        // Only play sound if effectsManager exists
-        if (this.scene.effectsManager && this.scene.effectsManager.playSound) {
+
+        if (this.scene.effectsManager?.playSound) {
             this.scene.effectsManager.playSound('hit');
         }
     }
@@ -297,34 +288,28 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
      * Manages lives system and triggers game over if needed
      */
     die() {
-        if (this.isDying) return;  // Prevent multiple death calls
-        
+        if (this.isDying) return;
         this.isDying = true;
-        
-        // Decrement lives
-        this.lives--;
-        this.scene.registry.set('playerLives', this.lives);
-        
-        // If no lives left, trigger game over
-        if (this.lives <= 0) {
-            // TODO: Implement game over
+
+        // Decrement playerLives
+        this.playerLives--;
+        this.scene.registry.set('playerLives', this.playerLives);
+
+        if (this.playerLives <= 0) {
             console.log('Game Over');
+            // Optionally trigger a game over scene
             return;
         }
-        
+
         // Disable controls and physics
         this.controller.enabled = false;
         this.body.moves = false;
-        
-        // Play death animation or effects
+
+        // For now, just fade out and respawn
         this.setAlpha(0);
         this.respawn();
     }
 
-    /**
-     * Specialized death handling for falling off the map
-     * Immediately triggers respawn without animation
-     */
     fallDeath() {
         if (this.isDying) return;
 
@@ -333,51 +318,41 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.body.moves = false;
         this.controller.enabled = false;
 
-        // Update lives in registry and UI only if we're in a game scene
+        // If there's a UI for lives
         if (this.scene.gameUI) {
-            const currentLives = this.scene.registry.get('lives');
+            const currentLives = this.scene.registry.get('playerLives');
             if (currentLives > 0) {
-                this.scene.registry.set('lives', currentLives - 1);
+                this.scene.registry.set('playerLives', currentLives - 1);
                 this.scene.gameUI.updateLives(currentLives - 1);
             }
         }
 
-        // Immediately respawn without animation
         this.setAlpha(0);
         this.respawn();
     }
 
     /**
-     * Resets player state and position after death
-     * Restores HP and triggers invulnerability period
+     * Resets player state after death
      */
     respawn() {
-        // Reset player state
         this.isDying = false;
         this.body.moves = true;
         this.setAlpha(1);
-        this.controller.enabled = true;  // Re-enable controls
-        
+        this.controller.enabled = true;
+
         // Reset HP
         this.playerHP = GameConfig.PLAYER.INITIAL_HP;
         this.scene.registry.set('playerHP', this.playerHP);
         eventBus.emit('playerHPChanged', this.playerHP);
-        
-        // Make player temporarily invulnerable
+
         this.makeInvulnerable();
-        
+
         // Use scene's spawn point
         const spawnPoint = this.scene.playerSpawnPoint;
         this.setPosition(spawnPoint.x, spawnPoint.y);
         this.setVelocity(0, 0);
     }
 
-    /**
-     * Calculates stamina cost for rolling based on duration
-     * Uses progressive cost system for balanced gameplay
-     * @param {number} elapsedTime - Time spent rolling in ms
-     * @returns {number} Stamina cost per second
-     */
     getRollStaminaCost(elapsedTime) {
         for (let i = 0; i < this.rollStaminaCosts.length; i++) {
             if (elapsedTime <= this.rollStaminaCosts[i].time) {
@@ -387,12 +362,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         return this.rollStaminaCosts[this.rollStaminaCosts.length - 1].cost;
     }
 
-    /**
-     * Calculates stamina cost for hovering based on duration
-     * Uses progressive cost system for balanced gameplay
-     * @param {number} elapsedTime - Time spent hovering in ms
-     * @returns {number} Stamina cost per second
-     */
     getHoverStaminaCost(elapsedTime) {
         for (let i = 0; i < this.hoverStaminaCosts.length; i++) {
             if (elapsedTime <= this.hoverStaminaCosts[i].time) {
@@ -402,50 +371,39 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         return this.hoverStaminaCosts[this.hoverStaminaCosts.length - 1].cost;
     }
 
-    /**
-     * Manages roll mechanic including:
-     * - Roll activation and direction
-     * - Stamina consumption
-     * - Movement and animation
-     */
     handleRoll() {
         const currentTime = this.scene.time.now;
         const isRollKeyHeld = this.controller.controls.shift.isDown;
-        
-        // Check if we should stop rolling
+
         if (this.isRolling) {
             if (!isRollKeyHeld || this.currentStamina <= 0) {
                 this.isRolling = false;
                 this.lastStaminaUseTime = currentTime;
-                // Stop roll animation
                 this.playAnimation('character_Idle');
                 return;
             }
-            
-            // Calculate roll duration and stamina cost
+
             const rollTimeElapsed = currentTime - this.rollStartTime;
             const currentDrainRate = this.getRollStaminaCost(rollTimeElapsed);
-            const staminaCostThisFrame = currentDrainRate * (this.scene.game.loop.delta / 1000);
-            
-            // Consume stamina
-            this.currentStamina = Math.max(0, this.currentStamina - staminaCostThisFrame);
+            const staminaCostThisFrame =
+                currentDrainRate * (this.scene.game.loop.delta / 1000);
+
+            this.currentStamina = Math.max(
+                0,
+                this.currentStamina - staminaCostThisFrame
+            );
             this.lastStaminaUseTime = currentTime;
             this.scene.registry.set('stamina', this.currentStamina);
-            
-            // Apply roll movement if we have stamina
+
             if (this.currentStamina > 0) {
-                // Set velocity based on roll direction
                 this.setVelocityX(this.rollSpeed * this.rollDirection);
             } else {
                 this.isRolling = false;
-                // Stop roll animation when out of stamina
                 this.playAnimation('character_Idle');
             }
         }
-        
-        // Check if we can start rolling
+
         if (!this.isRolling && isRollKeyHeld && this.currentStamina > 0) {
-            // Determine roll direction based on player's facing direction or movement
             if (this.controller.isMovingLeft()) {
                 this.rollDirection = -1;
             } else if (this.controller.isMovingRight()) {
@@ -453,12 +411,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
             } else {
                 this.rollDirection = this.flipX ? -1 : 1;
             }
-            
+
             this.isRolling = true;
             this.rollStartTime = currentTime;
             this.lastStaminaUseTime = currentTime;
-            
-            // Start roll animation
+
             try {
                 this.playAnimation('character_Rollover');
             } catch (error) {
@@ -468,23 +425,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         }
     }
 
-    /**
-     * Manages hover mechanic including:
-     * - Hover activation and duration
-     * - Stamina consumption
-     * - Vertical movement control
-     */
     handleHover() {
         const currentTime = this.scene.time.now;
         const isHoverKeyHeld = this.controller.controls.jump.isDown;
         const hasReleasedJumpSinceLastJump = !this.controller.controls.jump.isDown;
         const hoverHoldTime = this.controller.controls.jump.getDuration();
-        
+
         if (hasReleasedJumpSinceLastJump) {
             this.canStartHover = true;
         }
-        
-        // Check if we should stop hovering
+
         if (this.isHovering) {
             if (!isHoverKeyHeld || this.currentStamina <= 0 || this.body.onFloor()) {
                 this.isHovering = false;
@@ -493,44 +443,49 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
                 return;
             }
         }
-        
-        // Check if we can start hovering
-        if (!this.isHovering && !this.isJumping && isHoverKeyHeld && this.canStartHover && !this.body.onFloor() && hoverHoldTime > 100) {
-            // Check cooldown and start hover
-            if (currentTime - this.lastHoverEndTime >= this.hoverCooldown && this.currentStamina > 0) {
+
+        if (
+            !this.isHovering &&
+            !this.isJumping &&
+            isHoverKeyHeld &&
+            this.canStartHover &&
+            !this.body.onFloor() &&
+            hoverHoldTime > 100
+        ) {
+            if (
+                currentTime - this.lastHoverEndTime >= this.hoverCooldown &&
+                this.currentStamina > 0
+            ) {
                 this.isHovering = true;
                 this.hoverStartTime = currentTime;
                 this.lastStaminaUseTime = currentTime;
-                
-                // Give a small upward boost when starting hover
+
                 if (this.body.velocity.y > 0) {
                     this.setVelocityY(this.body.velocity.y * 0.5);
                 }
             }
         }
-        
-        // Handle active hover
+
         if (this.isHovering) {
             const hoverTimeElapsed = currentTime - this.hoverStartTime;
-            
-            // Stop hover if max duration reached
             if (hoverTimeElapsed >= this.hoverDuration) {
                 this.isHovering = false;
                 this.lastHoverEndTime = currentTime;
                 this.lastStaminaUseTime = currentTime;
                 return;
             }
-            
-            // Calculate and apply progressive stamina drain
+
             const currentDrainRate = this.getHoverStaminaCost(hoverTimeElapsed);
-            const staminaCostThisFrame = currentDrainRate * (this.scene.game.loop.delta / 1000);
-            
-            // Consume stamina
-            this.currentStamina = Math.max(0, this.currentStamina - staminaCostThisFrame);
+            const staminaCostThisFrame =
+                currentDrainRate * (this.scene.game.loop.delta / 1000);
+
+            this.currentStamina = Math.max(
+                0,
+                this.currentStamina - staminaCostThisFrame
+            );
             this.lastStaminaUseTime = currentTime;
             this.scene.registry.set('stamina', this.currentStamina);
-            
-            // Apply hover physics
+
             if (this.currentStamina > 0) {
                 this.setVelocityY(this.hoverForce);
             } else {
@@ -540,46 +495,36 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         }
     }
 
-    /**
-     * Handles jump mechanics including:
-     * - Jump buffering
-     * - Coyote time
-     * - Multiple jumps
-     * - Animation states
-     */
     handleJump() {
         const currentTime = this.scene.time.now;
-        
-        // Track jump button press timing
+
         if (this.controller.controls.jump.isDown) {
             this.lastJumpPressedTime = currentTime;
         }
-        
-        // Check if we should jump (including during roll)
-        const canJump = (currentTime - this.lastOnGroundTime < this.coyoteTime) && 
-                       (currentTime - this.lastJumpPressedTime < this.jumpBufferTime) &&
-                       this.jumpsAvailable > 0 && !this.isJumping && !this.isHovering;
-        
+
+        const canJump =
+            currentTime - this.lastOnGroundTime < this.coyoteTime &&
+            currentTime - this.lastJumpPressedTime < this.jumpBufferTime &&
+            this.jumpsAvailable > 0 &&
+            !this.isJumping &&
+            !this.isHovering;
+
         if (canJump) {
             this.isJumping = true;
             this.jumpsAvailable--;
             this.setVelocityY(this.jumpSpeed);
-            
-            // Keep roll velocity if rolling
+
             if (!this.isRolling) {
                 this.setVelocityX(0);
             }
-            
-            // Play jump animation only if not rolling
+
             if (!this.isRolling) {
                 this.playAnimation('character_Jump', true);
             }
         }
-        
-        // Reset jump state when landing
+
         if (this.body.onFloor()) {
             this.isJumping = false;
-            // Only reset animation if not rolling
             if (!this.isRolling) {
                 if (this.body.velocity.x !== 0) {
                     this.playAnimation('character_Walking', true);
@@ -590,31 +535,24 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         }
     }
 
-    /**
-     * Main update loop for player
-     * Handles all continuous mechanics:
-     * - Movement and controls
-     * - Stamina regeneration
-     * - State checks and updates
-     * - Animation management
-     */
     update() {
-        if (this.body && !this.isDying) {  
+        if (this.body && !this.isDying) {
             const currentTime = this.scene.time.now;
-            
-            // Handle stamina regeneration
-            if (!this.isHovering && !this.isRolling && currentTime - this.lastStaminaUseTime >= this.staminaRegenDelay) {
+
+            if (
+                !this.isHovering &&
+                !this.isRolling &&
+                currentTime - this.lastStaminaUseTime >= this.staminaRegenDelay
+            ) {
                 let regenRate = this.staminaRegenRate;
-                
-                // Add ground bonus if on ground
                 if (this.body.onFloor()) {
                     regenRate += this.groundRegenBonus;
                 }
-                
-                // Apply regeneration
+
                 this.currentStamina = Math.min(
                     this.maxStamina,
-                    this.currentStamina + (regenRate * (this.scene.game.loop.delta / 1000))
+                    this.currentStamina +
+                        (regenRate * (this.scene.game.loop.delta / 1000))
                 );
                 this.scene.registry.set('stamina', this.currentStamina);
             }
@@ -625,28 +563,25 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
                 return;
             }
 
-            // Update ground time for Coyote Time
+            // Update ground time for coyote time
             if (this.body.onFloor()) {
                 this.lastOnGroundTime = this.scene.time.now;
                 this.jumpsAvailable = this.maxJumps;
-                this.canStartHover = false; // Reset hover when touching ground
+                this.canStartHover = false;
             }
 
-            // Check for wall collision during roll
+            // Wall collision while rolling
             if (this.isRolling && (this.body.blocked.left || this.body.blocked.right)) {
                 this.isRolling = false;
                 this.lastStaminaUseTime = currentTime;
-                // Stop roll animation on wall collision
                 this.playAnimation('character_Idle');
             }
 
-            // Handle roll and jump
             this.handleRoll();
-            this.handleJump();  // Allow jumping during roll
+            this.handleJump();
 
-            // Only handle normal movement if not rolling
             if (!this.isRolling) {
-                // Handle normal movement
+                // Normal movement
                 if (this.controller.isMovingLeft()) {
                     if (this.isHovering) {
                         this.setVelocityX(-this.movementSpeed * 0.8);
@@ -662,7 +597,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
                     }
                     this.setFlipX(false);
                 } else {
-                    // Gradual slowdown
+                    // Slow down
                     if (this.isHovering) {
                         this.setVelocityX(this.body.velocity.x * 0.95);
                     } else {
@@ -670,12 +605,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
                     }
                 }
 
-                // Only try to hover if we're in the air
                 if (!this.body.onFloor()) {
                     this.handleHover();
                 }
 
-                // Handle animations
+                // Animations
                 if (this.body.onFloor()) {
                     if (this.body.velocity.x !== 0) {
                         this.playAnimation('character_Walking', true);
@@ -687,23 +621,17 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
                 }
             }
 
-            // Update bullet group
+            // Clean up bullets if you have a bullet group
             if (this.bulletGroup) {
-                this.bulletGroup.children.iterate((bullet) => {
-                    if (bullet) {
-                        if (bullet.x < 0 || bullet.x > this.scene.game.config.width) {
-                            bullet.destroy();
-                        }
+                this.bulletGroup.children.iterate(bullet => {
+                    if (bullet && (bullet.x < 0 || bullet.x > this.scene.game.config.width)) {
+                        bullet.destroy();
                     }
                 });
             }
         }
     }
 
-    /**
-     * Cleanup method for player instance
-     * Removes event listeners and cleans up resources
-     */
     destroy() {
         if (this.controller) {
             this.controller.destroy();

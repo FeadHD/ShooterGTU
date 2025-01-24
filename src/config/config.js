@@ -12,9 +12,6 @@
  */
 // Core game scenes
 import { GameOver } from '../events/GameOver';
-import { GameScene1 } from '../scenes/levels/GameScene1';
-import { CombinedGtuLevel } from '../scenes/levels/CombinedGtuLevel';
-import { TestingGroundScene } from '../scenes/levels/TestingGroundScene';
 import { WayneWorld } from '../scenes/levels/WayneWorld';
 
 // Menu scenes
@@ -94,11 +91,7 @@ export const config = {
         
         // Game levels
         WayneWorld,
-        CombinedGtuLevel,
-        GameScene1,
-        TestingGroundScene,
 
-        
         // UI overlays
         Leaderboard,
         MissionComplete,

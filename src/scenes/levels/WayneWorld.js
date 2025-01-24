@@ -371,7 +371,6 @@ export class WayneWorld extends BaseScene {
     }
 
     handleSectionManagement(playerSection) {
-        console.log(`Managing sections for player in section: ${playerSection}`);
     
         // First clean up distant sections
         this.cleanUpDistantSections(playerSection);
@@ -634,10 +633,6 @@ export class WayneWorld extends BaseScene {
         const minEntitySection = Math.max(0, playerSection - WayneWorld.ENTITY_ACTIVE_BUFFER);
         const maxEntitySection = playerSection + WayneWorld.ENTITY_ACTIVE_BUFFER;
     
-        console.log(`Player section: ${playerSection}`);
-        console.log(`Active range: ${minEntitySection} to ${maxEntitySection}`);
-        console.log(`Loaded sections: ${Array.from(this.loadedSections)}`);
-    
         // First unload far entities
         for (const [sectionIndex, entities] of this.activeEntities) {
             if (sectionIndex < minEntitySection || sectionIndex > maxEntitySection) {
@@ -648,7 +643,6 @@ export class WayneWorld extends BaseScene {
     
         // Then load new entities for sections in range
         for (let i = minEntitySection; i <= maxEntitySection; i++) {
-            console.log(`Trying to load section ${i}`);
             if (!this.activeEntities.has(i) && this.loadedSections.has(i)) {
                 console.log(`Loading entities for section ${i}`);
                 this.loadSectionEntities(i);
@@ -657,7 +651,6 @@ export class WayneWorld extends BaseScene {
     }
 
     loadSectionEntities(sectionIndex) {
-        console.log(`GRAY Attempting to load entities for section ${sectionIndex}`);
         if (this.activeEntities.has(sectionIndex)) {
             console.log(`Entities for section ${sectionIndex} are already loaded.`);
             return;
@@ -832,20 +825,6 @@ export class WayneWorld extends BaseScene {
             this.gameStarted = true;
             if (this.gameUI) {
                 this.gameUI.hideStartMessage();
-            }
-        }
-    }
-
-    togglePause() {
-        if (this.scene.isPaused('CombinedGtuLevel')) {
-            this.scene.resume('CombinedGtuLevel');
-            if (this.gameUI) {
-                this.gameUI.hidePauseMenu();
-            }
-        } else {
-            this.scene.pause('CombinedGtuLevel');
-            if (this.gameUI) {
-                this.gameUI.showPauseMenu();
             }
         }
     }

@@ -58,9 +58,6 @@
 /home/kdsm/TKU/DECEMBER202024/ShooterGTU/scripts/../src/modules/events/EventBus.js
 /home/kdsm/TKU/DECEMBER202024/ShooterGTU/scripts/../src/scenes/levels/__mocks__/baseScene.mock.js
 /home/kdsm/TKU/DECEMBER202024/ShooterGTU/scripts/../src/scenes/levels/__mocks__/phaser.mock.js
-/home/kdsm/TKU/DECEMBER202024/ShooterGTU/scripts/../src/scenes/levels/TestingGroundScene.js
-/home/kdsm/TKU/DECEMBER202024/ShooterGTU/scripts/../src/scenes/levels/GameScene1.js
-/home/kdsm/TKU/DECEMBER202024/ShooterGTU/scripts/../src/scenes/levels/CombinedGtuLevel.js
 /home/kdsm/TKU/DECEMBER202024/ShooterGTU/scripts/../src/scenes/levels/WayneWorld.js
 /home/kdsm/TKU/DECEMBER202024/ShooterGTU/scripts/../src/scenes/menus/ControlsSettingsScene.js
 /home/kdsm/TKU/DECEMBER202024/ShooterGTU/scripts/../src/scenes/menus/Settings.js

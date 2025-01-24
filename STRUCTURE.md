@@ -38,9 +38,6 @@ src/scenes/
 ├── levels/
 │   ├── BaseScene.js     # Base scene with common functionality
 │   ├── WayneWorld.js    # Main level implementation
-│   ├── GameScene1.js    # First game level
-│   ├── CombinedGtuLevel.js
-│   └── TestingGroundScene.js
 ├── menus/
 │   └── MainMenu.js
 └── elements/
@@ -91,9 +88,7 @@ graph TD
 ```mermaid
 graph TD
     Scene[Phaser.Scene] --> BaseScene
-    BaseScene --> GameScene1
     BaseScene --> WayneWorld
-    BaseScene --> CombinedGtuLevel
 ```
 
 ### Entity Relationships

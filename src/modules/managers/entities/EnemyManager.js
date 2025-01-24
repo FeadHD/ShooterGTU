@@ -16,7 +16,7 @@ import { GameEvents } from '../../../modules/managers/EventManager';
  * Integration Points:
  * - EntityManager: Provides core entity tracking and querying
  * - EffectsManager: Visual/audio feedback on hits
- * - GameState: Score tracking
+ * - GameStateManager: Score tracking via Phaser registry
  * - EventBus: Game-wide event communication
  */
 export class EnemyManager extends EntityManager {
@@ -130,8 +130,13 @@ export class EnemyManager extends EntityManager {
 
         // Award points based on enemy type
         const points = enemy.isBoss ? 50 : 10;
-        if (this.scene.gameState?.increment) {
-            this.scene.gameState.increment('score', points);
+
+        // Add a console log to confirm points awarding
+        console.log(`[EnemyManager] handleEnemyDeath: awarding ${points} points.`);
+
+        // Updated line: Use scene.gameStateManager instead of scene.gameState
+        if (this.scene.gameStateManager?.increment) {
+            this.scene.gameStateManager.increment('score', points);
         }
 
         this.checkLevelComplete();

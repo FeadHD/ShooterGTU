@@ -40,9 +40,6 @@ c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\scenes\elements
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\scenes\elements\Preloader.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\scenes\elements\TitleScene.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\scenes\elements\UIManager.js
-c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\scenes\levels\CombinedGtuLevel.js
-c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\scenes\levels\GameScene1.js
-c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\scenes\levels\TestingGroundScene.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\scenes\levels\WayneWorld.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\scenes\levels\__mocks__\baseScene.mock.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\scenes\levels\__mocks__\gameUI.mock.js

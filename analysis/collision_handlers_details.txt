@@ -17,17 +17,6 @@
 === /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/modules/managers/BoundaryManager.js ===
 12:            this.scene.physics.add.collider(player, leftBoundary);
 
-
-=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/levels/GameScene1.js ===
-173:        this.physics.add.collider(this.enemies, this.platforms);
-176:        this.physics.add.collider(this.enemies, this.enemies, this.handleEnemyCollision, null, this);
-179:        this.physics.add.overlap(this.enemies, this.player, (enemySprite, player) => {
-207:        this.physics.add.overlap(
-438:            this.physics.add.overlap(this.player, bitcoin, () => {
-541:        this.physics.add.overlap(this.player, this.slimes, (player, enemySprite) => {
-548:        this.physics.add.collider(
-
-
 === /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/levels/Matrix640x360.js ===
 99:        this.physics.add.collider(this.player, this.tileLayer);
 100:        this.physics.add.collider(this.player, layer);
