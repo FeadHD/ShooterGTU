@@ -9,6 +9,12 @@ export class CollisionManager {
     constructor(scene) {
         // Store the scene reference for accessing game objects (e.g. enemies, bullets, player, etc.)
         this.scene = scene;
+        
+        // Keep track of which Zappers we've set up collisions for
+        this._processedZappers = new Set();
+        
+        // Add update event to continuously check for new enemies
+        this.scene.events.on('update', this.checkNewEnemies, this);
     }
 
     /**
@@ -291,6 +297,35 @@ export class CollisionManager {
                 enemy
             });
         }
+    }
+
+    /**
+     * ============================
+     * CHECK NEW ENEMIES
+     * ============================
+     * Continuously checks for new enemies and sets up their collisions
+     */
+    checkNewEnemies() {
+        if (!this.scene.player || !this.scene.enemies) return;
+
+        // Check for new Zappers
+        this.scene.enemies.getChildren().forEach(enemy => {
+            if (enemy.type === 'Zapper' && enemy.shockSprite && !this._processedZappers.has(enemy)) {
+                // Set up collision between player and shock sprite
+                this.scene.physics.add.overlap(
+                    this.scene.player,
+                    enemy.shockSprite,
+                    () => {
+                        if (enemy.shockSprite.visible && !this.scene.player.isInvulnerable) {
+                            this.scene.player.takeDamage(enemy.damage);
+                        }
+                    }
+                );
+                
+                // Remember we've processed this Zapper
+                this._processedZappers.add(enemy);
+            }
+        });
     }
 
     /**

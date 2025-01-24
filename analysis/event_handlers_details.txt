@@ -101,66 +101,6 @@
 203:    isValidPosition(x, y) {
 224:        if (!this.isValidPosition(gridStartX, gridStartY) || !this.isValidPosition(gridEndX, gridEndY)) {
 
-
-=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/levels/GameScene1.js ===
-30:        this.load.on('loaderror', (file) => {
-38:        this.load.json('level1', 'assets/levels/Json/G1S1v1f.json');
-94:        this.pauseKey.on('down', () => {
-121:        this.player.setPosition(this.playerSpawnPoint.x, this.playerSpawnPoint.y);
-289:                            placedTile.setCollision(true);
-305:                            placedTile.setCollision(true);
-471:            this.events.on('update', () => {
-513:                this.events.on('update', () => {
-604:    handleEnemyCollision(enemy1, enemy2) {
-610:                enemy1.enemy.reverseDirection();
-615:                enemy2.enemy.reverseDirection();
-
-
-=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/levels/Matrix640x360.js ===
-29:        this.load.json('matrix', '/assets/levels/Json/Matrix_640w_360h.json');
-72:                this.input.keyboard.on('keydown-ESC', () => {
-186:                        tile.setCollision(true);
-363:    handleEnemyCollision(enemy1, enemy2) {
-369:                enemy1.enemy.reverseDirection();
-374:                enemy2.enemy.reverseDirection();
-
-
-=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/levels/BlueTest.js ===
-53:        this.load.json('matrix', '/assets/levels/Json/Bleu_platform.json');
-107:        this.load.on('loaderror', (file) => {
-178:                this.physics.world.setBoundsCollision(true, true, true, true);
-211:                this.player.setPosition(this.playerSpawnPoint.x, this.playerSpawnPoint.y);
-339:                            collisionTile.setCollision(true);
-433:                this.pauseKey.on('down', () => {
-527:                        tile.setCollision(true);
-704:    handleEnemyCollision(enemy1, enemy2) {
-710:                enemy1.enemy.reverseDirection();
-715:                enemy2.enemy.reverseDirection();
-830:                    alarm.debugText.setPosition(bounds.x, bounds.y - 60);
-
-
-=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/levels/GameScene3.js ===
-158:    handleEnemyCollision(enemy1, enemy2) {
-164:                enemy1.enemy.reverseDirection();
-169:                enemy2.enemy.reverseDirection();
-
-
-=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/levels/GameScene4.js ===
-173:    handleEnemyCollision(enemy1, enemy2) {
-179:                enemy1.enemy.reverseDirection();
-184:                enemy2.enemy.reverseDirection();
-
-
-=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/levels/GameScene5.js ===
-94:            this.boss.sprite.body.setFriction(1);
-
-
-=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/levels/GameScene2.js ===
-156:    handleEnemyCollision(enemy1, enemy2) {
-162:                enemy1.enemy.reverseDirection();
-167:                enemy2.enemy.reverseDirection();
-
-
 === /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/menus/ControlsSettingsScene.js ===
 70:            button.on('pointerover', () => {
 75:            button.on('pointerout', () => {

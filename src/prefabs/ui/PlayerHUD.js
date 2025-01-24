@@ -197,7 +197,7 @@ export class PlayerHUD {
         // Check if this is a death update
         if (this.currentHealth === 0 && this.previousHealth > 0) {
             this.isDying = true;
-            return; // Let TestingGroundScene handle the death animation
+            return; 
         }
 
         // If we're already animating, wait for it to finish

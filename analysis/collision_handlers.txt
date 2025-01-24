@@ -18,9 +18,5 @@ c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\prefabs\Slime.j
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\prefabs\Trampoline.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\scenes\elements\BaseScene.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\scenes\elements\Game.js
-c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\scenes\elements\IntroScene.js
-c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\scenes\levels\CombinedGtuLevel.js
-c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\scenes\levels\GameScene1.js
-c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\scenes\levels\TestingGroundScene.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\scenes\levels\WayneWorld.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\scenes\menus\DevHub\DevHub.js

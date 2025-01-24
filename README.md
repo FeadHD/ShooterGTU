@@ -68,6 +68,90 @@ ShooterGTU is a dynamic 2D action platformer built with Phaser 3.87.0. Set in a 
 
 ## Architecture
 
+### Core Components
+
+#### Entry & Setup
+- **main.js**: Entry point for the game application, handling initialization and browser events
+- **Boot.js**: Initial scene for basic setup and global systems initialization
+- **Game.js**: Main gameplay scene managing core mechanics (player movement, shooting, enemies, scoring)
+- **Preloader.js**: Asset loading and initialization with progress tracking
+- **DevHub.js**: Developer tools scene for quick access to levels and testing
+
+#### Configuration
+- **Config.js**: Core Phaser game configuration (engine, rendering, physics, scenes)
+- **Constants.js**: Default entity configurations and fallback values
+- **Settings.js**: Game settings management with pause menu integration
+- **SoundSettings.js**: Audio configuration with interactive volume controls
+- **actions.js**: Redux-style action creators for state management
+- **types.js**: Constants for action types and game states
+
+#### Scene Management
+- **TransitionScreen.js**: Animated scene transitions and UI overlays
+- **ControlsSettingsScene.js**: Key binding customization interface
+
+### Manager System
+
+#### Base Managers
+- **BaseManager.js**: Foundation class for dependency injection
+- **ManagerFactory.js**: Factory for game system instantiation
+- **ServiceContainer.js**: Dependency injection container for game services
+
+#### Gameplay Managers
+- **EnemyManager.js**: Enemy lifecycle and combat interactions
+- **EntityManager.js**: Core entity tracking and lifecycle management
+- **HazardManager.js**: Hazardous elements and damage system
+- **TutorialManager.js**: In-game tutorial with dynamic instructions
+- **Pathfinder.js**: Platform-specific movement and navigation
+
+#### State Management
+- **StateManager.js**: Game state and persistence handling
+- **GameStateManager.js**: Centralized Redux-like state management
+- **Store.js**: State updates and history tracking
+
+#### Specialized Managers
+- **AudioManager.js**: Unified SFX and music management
+- **CollisionManager.js**: Physics and interaction handling
+- **BoundaryManager.js**: Game scene boundaries
+- **CameraManager.js**: Camera control and transitions
+- **BulletManager.js**: Projectile pooling and lifecycle
+- **EffectsManager.js**: Visual and audio effects
+- **AnimationManager.js**: Sprite animation system
+
+#### Asset & Level Management
+- **AssetManager.js**: Game asset loading and initialization
+- **LDTKEntityManager.js**: LDtk level editor integration
+- **LDTKTileManager.js**: Tile-based collision system
+- **LevelLoader.js**: LDtk to Phaser tilemap conversion
+- **GameFlowManager.js**: Game progression and state changes
+
+### Procedural Systems
+- **ProceduralSoundGenerator.js**: Real-time sound synthesis
+- **ProceduralGenerator.js**: Dynamic level generation
+
+### UI System
+- **UIManager.js**: HUD and debug information
+- **TextStyleManager.js**: Consistent UI styling
+- **SoundTester.js**: Sound effect testing tool
+- **ControlsSettings.js**: Control scheme management
+- **ui-helpers.js**: Reusable UI components
+
+### Game Objects
+- **Player.js**: Core player mechanics and states
+- **Enemy.js**: Base enemy functionality
+- **PlayerController.js**: Input handling and controls
+- **ObjectPool.js**: Object reuse system
+- **BulletPool.js**: Projectile pooling
+- **ParticlePool.js**: Visual effect pooling
+- **Bullet.js**: Projectile physics and lifecycle
+
+### Event System
+- **Eventbus.js**: Game-wide pub/sub communication
+- **EventManager.js**: Type-safe event handling
+
+### Build System
+- **webpack/config.js**: Development build configuration
+- **webpack/config.prod.js**: Production optimization settings
+
 ### File Structure
 ```plaintext
 src/

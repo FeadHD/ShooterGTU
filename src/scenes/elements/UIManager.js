@@ -1,14 +1,24 @@
 /**
  * UIManager.js
- * Manages all UI elements, HUD, and debug information in the game
- * Handles UI updates, animations, and camera management for UI layer
+ * Main UI management system for the game that handles:
+ * - HUD elements (health, stamina, score, lives)
+ * - Debug information and FPS counter
+ * - Camera management for UI layer
+ * - Transitions and animations
+ * - Event handling for game state changes
  */
+
 import { Scene } from 'phaser';
 import { TextStyleManager } from '../../modules/managers/TextStyleManager';
 import { eventBus } from '../../modules/events/EventBus';
 import { GameConfig } from '../../config/GameConfig';
 import { PlayerHUD } from '../../prefabs/ui/PlayerHUD';
 
+/**
+ * UIManager class
+ * Manages all UI elements, HUD, and debug information in the game
+ * Handles UI updates, animations, and camera management for UI layer
+ */
 export class UIManager {
     /**
      * Initialize UI manager and set up core components
@@ -18,40 +28,43 @@ export class UIManager {
         console.log('UIManager: Starting initialization...');
         this.scene = scene;
         
-        // Core UI setup
+        // === Core UI Setup ===
         this.textStyleManager = new TextStyleManager(scene);
         this.container = this.scene.add.container(0, 0);
         this.container.setDepth(100);
         this.lastFpsUpdate = 0;
         this.pendingUpdates = new Map();
         
-        // Create dedicated UI camera that stays fixed
+        // === Camera Configuration ===
+        // Create dedicated UI camera that stays fixed and doesn't move with game world
         const { width, height } = scene.scale;
         this.uiCamera = scene.cameras.add(0, 0, width, height);
         this.uiCamera.setScroll(0, 0);
         this.container.setScrollFactor(0);
 
-        // Initialize HUD when assets are ready
+        // === HUD Initialization ===
+        // Initialize HUD once lifebar texture is available
         if (this.scene.textures.exists('lifebar')) {
             this.initializePlayerHUD();
         } else {
             this.scene.load.once('complete', () => this.initializePlayerHUD());
         }
 
-        // Set up UI components and event listeners
+        // === UI Components & Event Setup ===
         this.setupUI();
         this.createStartMessage();
         this.createDebugInfo();
         this.updateCameraIgnoreList();
 
-        // Register event handlers
+        // === Event Listeners ===
+        // Register scene-level event handlers
         this.scene.registry.events.on('changedata', this.handleRegistryChange, this);
         this.scene.events.on('create', this.updateCameraIgnoreList, this);
         this.scene.events.on('wake', this.updateCameraIgnoreList, this);
         this.scene.events.on('resume', this.updateCameraIgnoreList, this);
         this.scene.events.on('addedtoscene', this.handleNewObject, this);
         
-        // Listen for player health changes
+        // Register game event handlers
         eventBus.on('playerHPChanged', this.updateHP.bind(this));
         
         this.debugMode = true;
@@ -98,9 +111,11 @@ export class UIManager {
 
             // Make UI camera ignore game world objects
             this.scene.children.list.forEach(child => {
-                if (child && 
-                    child !== this.container && 
-                    child !== this.playerHUD?.container) {
+                if (
+                    child &&
+                    child !== this.container &&
+                    child !== this.playerHUD?.container
+                ) {
                     this.uiCamera.ignore(child);
                 }
             });
@@ -133,7 +148,7 @@ export class UIManager {
 
     /**
      * Creates and positions all UI elements
-     * Includes score, timer, lives, and bitcoin display
+     * Includes score, timer, bitcoins, and player lives
      */
     setupUI() {
         const { width, height } = this.scene.scale;
@@ -149,13 +164,41 @@ export class UIManager {
         }
 
         // Create UI elements with consistent positioning
-        this.timerText = this.scene.add.text(LEFT_MARGIN, TOP_MARGIN, 'Time: 00:00', this.textStyleManager.styles.timer);
-        this.bitcoinText = this.scene.add.text(LEFT_MARGIN, TOP_MARGIN + VERTICAL_SPACING, 'Bitcoins: 0', this.textStyleManager.styles.bitcoin);
-        this.scoreText = this.scene.add.text(LEFT_MARGIN, TOP_MARGIN + VERTICAL_SPACING * 2, 'Score: 0', this.textStyleManager.styles.score);
-        this.livesText = this.scene.add.text(LEFT_MARGIN, TOP_MARGIN + VERTICAL_SPACING * 3, 'Lives: 3', this.textStyleManager.styles.lives);
+        this.timerText = this.scene.add.text(
+            LEFT_MARGIN,
+            TOP_MARGIN,
+            'FROMAGE: 00:00',
+            this.textStyleManager.styles.timer
+        );
+        // Force a unique color or style to see if it's updating
+        this.timerText.setColor('#D2B48C'); 
+
+        this.bitcoinText = this.scene.add.text(
+            LEFT_MARGIN,
+            TOP_MARGIN + VERTICAL_SPACING,
+            'Bitcoins: 0',
+            this.textStyleManager.styles.bitcoin
+        );
+        this.scoreText = this.scene.add.text(
+            LEFT_MARGIN,
+            TOP_MARGIN + VERTICAL_SPACING * 2,
+            'Score: 0',
+            this.textStyleManager.styles.score
+        );
+        this.livesText = this.scene.add.text(
+            LEFT_MARGIN,
+            TOP_MARGIN + VERTICAL_SPACING * 3,
+            'Lives: 3',
+            this.textStyleManager.styles.lives
+        );
         
         // Add all elements to container
-        [this.timerText, this.bitcoinText, this.scoreText, this.livesText].forEach(element => {
+        [
+            this.timerText,
+            this.bitcoinText,
+            this.scoreText,
+            this.livesText
+        ].forEach(element => {
             this.container.add(element);
         });
 
@@ -167,7 +210,8 @@ export class UIManager {
 
     /**
      * Updates the game state every frame
-     * Handles FPS counter, player HUD updates, and timer updates
+     * - Updates FPS counter (every 100ms)
+     * - Updates PlayerHUD with current health and stamina
      * @param {number} time - Current time in milliseconds
      * @param {number} delta - Time difference since last frame
      */
@@ -180,16 +224,14 @@ export class UIManager {
             this.lastFpsUpdate = time;
         }
 
-        // Only update PlayerHUD if it's initialized
+        // If we have a PlayerHUD, update it with current values
         if (this.playerHUD) {
-            // Update stamina and health through PlayerHUD
             const currentStamina = this.scene.registry.get('stamina');
             const currentHealth = this.scene.registry.get('playerHP');
             
             if (currentStamina !== undefined) {
                 this.playerHUD.updateStamina(currentStamina);
             }
-            
             if (currentHealth !== undefined) {
                 this.playerHUD.updateHealth(currentHealth);
             }
@@ -203,12 +245,18 @@ export class UIManager {
         const duration = 500;
         const ease = 'Power1';
         
-        [this.timerText, this.bitcoinText, this.scoreText, this.livesText].forEach(element => {
+        [
+            this.timerText,
+            this.bitcoinText,
+            this.scoreText,
+            this.livesText
+        ].forEach(element => {
             if (element) {
                 this.scene.tweens.add({
                     targets: element,
                     alpha: 1,
                     duration: duration,
+                    delay: 0,
                     ease: ease
                 });
             }
@@ -244,8 +292,8 @@ export class UIManager {
     }
 
     /**
-     * Updates lives display with new lives value
-     * @param {number} lives - New lives value
+     * Updates the UI "lives" text label
+     * @param {number} lives - New player lives
      */
     updateLives(lives) {
         if (this.livesText) {
@@ -267,11 +315,21 @@ export class UIManager {
      * Updates timer display with current elapsed time
      */
     updateTimer() {
+        console.log('[UIManager] updateTimer() called, elapsedSeconds:', this.elapsedSeconds);
         if (!this.isTimerRunning || !this.timerText) return;
         
         const minutes = Math.floor(this.elapsedSeconds / 60);
         const seconds = this.elapsedSeconds % 60;
-        this.timerText.setText(`Time: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+    
+        // Build the final string
+        const timeString = `Time: ${minutes.toString().padStart(2, '0')}:${seconds
+            .toString()
+            .padStart(2, '0')}`;
+    
+        // Log it out before setting
+        console.log('[UIManager] Updating timerText to:', timeString);
+    
+        this.timerText.setText(timeString);
     }
 
     /**
@@ -295,12 +353,10 @@ export class UIManager {
 
     /**
      * Creates skip intro message with background
-     * Appears at bottom of screen with pulsing animation
      */
     createStartMessage() {
         const { width, height } = this.scene.scale;
         
-        // Semi-transparent background
         this.startMessageBg = this.scene.add.rectangle(
             width - 120,
             height - 30,
@@ -314,7 +370,6 @@ export class UIManager {
         this.startMessageBg.setScrollFactor(0);
         this.startMessageBg.setVisible(false);
         
-        // Message text
         this.startMessage = this.scene.add.text(
             width - 120,
             height - 30,
@@ -327,7 +382,6 @@ export class UIManager {
         this.startMessage.setVisible(false);
         this.startMessage.setColor('#ffffff');
         
-        // Add pulsing animation
         this.scene.tweens.add({
             targets: [this.startMessage, this.startMessageBg],
             alpha: 0.7,
@@ -362,21 +416,21 @@ export class UIManager {
      * Updates UI elements when registry data changes
      */
     setupRegistryListeners() {
-        // Listen for registry changes
         this.scene.registry.events.on('changedata', this.handleRegistryChange, this);
-        
-        // Initial update from registry
+
+        // Initialize UI from current registry values
         this.updateScore(this.scene.registry.get('score') || 0);
-        this.updateLives(this.scene.registry.get('lives') || 3);
+        this.updateLives(this.scene.registry.get('playerLives') || 3);
         this.updateHP(this.scene.registry.get('playerHP') || 100);
         this.updateBitcoins(this.scene.registry.get('bitcoins') || 0);
     }
 
     /**
      * Handles registry changes and updates UI elements accordingly
-     * @param {string} parent - Parent key of changed data
-     * @param {string} key - Key of changed data
-     * @param {*} value - New value of changed data
+     * Stores updates in pendingUpdates if PlayerHUD isn't ready
+     * @param {object} parent - Registry parent object
+     * @param {string} key - Registry key that changed
+     * @param {any} value - New value for the registry key
      */
     handleRegistryChange(parent, key, value) {
         // If PlayerHUD isn't ready yet, store the update for later
@@ -384,25 +438,23 @@ export class UIManager {
             if (!this.pendingUpdates) {
                 this.pendingUpdates = new Map();
             }
-            console.log('UIManager: Storing pending update for', key, value);
             this.pendingUpdates.set(key, value);
             return;
         }
 
-        console.log('UIManager: Handling registry change', key, value);
         switch (key) {
             case 'score':
                 if (this.scoreText) {
                     this.scoreText.setText('Score: ' + value);
                 }
                 break;
-            case 'lives':
+            case 'playerHP':
+                this.updateHP(value);
+                break;
+            case 'playerLives':
                 if (this.livesText) {
                     this.livesText.setText('Lives: ' + value);
                 }
-                break;
-            case 'playerHP':
-                this.updateHP(value);
                 break;
             case 'stamina':
                 if (this.playerHUD) {
@@ -419,11 +471,10 @@ export class UIManager {
 
     /**
      * Animates UI elements from center to final positions
-     * Creates smooth transition when UI is first shown
      */
     animateUIElements() {
         const elements = [
-            { text: this.timerText, finalPos: { x: 25, y: 100 } },
+            { text: this.timerText, finalPos: { x: 50, y: 100 } },
             { text: this.bitcoinText, finalPos: { x: 25, y: 130 } },
             { text: this.scoreText, finalPos: { x: 25, y: 160 } },
             { text: this.livesText, finalPos: { x: 25, y: 190 } }
@@ -435,14 +486,12 @@ export class UIManager {
         elements.forEach(({ text, finalPos }) => {
             if (text) {
                 text.setVisible(true);
-                // Fade in centered
                 this.scene.tweens.add({
                     targets: text,
                     alpha: 1,
                     duration: 500,
                     delay: delay,
                     onComplete: () => {
-                        // Move to position
                         this.scene.tweens.add({
                             targets: text,
                             x: finalPos.x,
@@ -467,19 +516,20 @@ export class UIManager {
      * Starts the game timer
      */
     startTimer() {
+        console.log('[UIManager] startTimer() called');
         this.isTimerRunning = true;
         this.elapsedSeconds = 0;
         
-        // Create timer event if it doesn't exist
         if (!this.timerEvent) {
             this.timerEvent = this.scene.time.addEvent({
                 delay: 1000,  // 1 second
                 callback: () => {
                     if (this.isTimerRunning) {
                         this.elapsedSeconds++;
+                        console.log('[UIManager] Timer tick:', this.elapsedSeconds);
                         this.updateTimer();
                         
-                        // Update registry with current time
+                        // Store the new time in the registry if you like
                         this.scene.registry.set('time', this.elapsedSeconds);
                     }
                 },
@@ -488,7 +538,6 @@ export class UIManager {
             });
         }
         
-        // Force initial update
         this.updateTimer();
     }
 
@@ -511,7 +560,6 @@ export class UIManager {
         this.elapsedSeconds = 0;
         this.isTimerRunning = true;
         
-        // Create new timer event
         this.timerEvent = this.scene.time.addEvent({
             delay: 1000,
             callback: () => {
@@ -529,7 +577,6 @@ export class UIManager {
 
     /**
      * Cleans up UI resources when scene changes
-     * Removes cameras, containers and event listeners
      */
     destroy() {
         if (this.playerHUD) {
@@ -556,54 +603,66 @@ export class UIManager {
 
     /**
      * Creates debug overlay with game state information
-     * Only visible when debug mode is enabled
+     * Displays a semi-transparent background with debug text
+     * Position: Top-right corner of the screen
      */
     createDebugInfo() {
         const { width } = this.scene.scale;
         
-        // Semi-transparent background
         this.debugBackground = this.scene.add.rectangle(
-            width - 200, 10, 190, 120,
-            0x000000, 0.8
+            width - 200,
+            10,
+            190,
+            120,
+            0x000000,
+            0.8
         );
         this.debugBackground.setOrigin(0, 0);
         this.debugBackground.setScrollFactor(0);
         this.container.add(this.debugBackground);
 
-        // Debug text display
         this.debugInfo = this.scene.add.text(
-            width - 190, 15,
-            'Debug Info', {
-            fontSize: '16px',
-            fontFamily: 'Arial',
-            fill: '#ffffff',
-            padding: { x: 5, y: 5 }
-        });
+            width - 190,
+            15,
+            'Debug Info',
+            {
+                fontSize: '16px',
+                fontFamily: 'Arial',
+                fill: '#ffffff',
+                padding: { x: 5, y: 5 }
+            }
+        );
         this.debugInfo.setScrollFactor(0);
         this.container.add(this.debugInfo);
 
-        // Update every frame
         this.scene.events.on('update', this.updateDebugInfo, this);
     }
 
     /**
      * Updates debug overlay with current game state
-     * Shows section info, tile counts, and player position
      */
     updateDebugInfo() {
         if (!this.debugInfo || !this.scene.player) return;
 
         const player = this.scene.player;
         const currentSection = Math.floor(player.x / this.scene.sectionWidth);
-        const loadedSections = this.scene.loadedSections ? this.scene.loadedSections.size : 0;
-        const activeTiles = this.scene.groundLayer ? 
-            this.scene.groundLayer.getTilesWithin().filter(t => t.index !== -1).length +
-            this.scene.platformLayer.getTilesWithin().filter(t => t.index !== -1).length : 0;
+        const loadedSections = this.scene.loadedSections
+            ? this.scene.loadedSections.size
+            : 0;
+        const activeTiles = this.scene.groundLayer
+            ? this.scene.groundLayer.getTilesWithin().filter(t => t.index !== -1).length +
+              this.scene.platformLayer.getTilesWithin().filter(t => t.index !== -1).length
+            : 0;
 
-        // Get entity stats
-        const entityStats = this.scene.entityStats || { totalLoaded: 0, totalUnloaded: 0, activeBySection: new Map() };
+        const entityStats = this.scene.entityStats || {
+            totalLoaded: 0,
+            totalUnloaded: 0,
+            activeBySection: new Map()
+        };
         let totalCurrentEntities = 0;
-        entityStats.activeBySection.forEach(count => totalCurrentEntities += count);
+        entityStats.activeBySection.forEach(count => {
+            totalCurrentEntities += count;
+        });
 
         const debugText = [
             `Section: ${currentSection}`,
@@ -613,18 +672,17 @@ export class UIManager {
             `Entities Unloaded: ${entityStats.totalUnloaded}`,
             `Active Entities: ${totalCurrentEntities}`,
             `Entities/Section: ${Array.from(entityStats.activeBySection.entries())
-                .map(([section, count]) => `[${section}:${count}]`).join(' ')}`
+                .map(([section, count]) => `[${section}:${count}]`)
+                .join(' ')}`
         ].join('\n');
 
         this.debugInfo.setText(debugText);
-        
-        // Adjust background height based on content
+
         const lineCount = debugText.split('\n').length;
-        const lineHeight = 20; // Approximate line height
-        const padding = 20; // Extra padding
+        const lineHeight = 20;
+        const padding = 20;
         this.debugBackground.height = lineCount * lineHeight + padding;
-        
-        // Update position when window is resized
+
         this.debugBackground.x = this.scene.scale.width - 200;
         this.debugInfo.x = this.scene.scale.width - 190;
     }

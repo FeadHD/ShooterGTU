@@ -5,7 +5,6 @@
  */
 
 import { TextStyleManager } from '../../modules/managers/TextStyleManager';
-import { UIManager } from './UIManager';
 import { ManagerFactory } from '../../modules/di/ManagerFactory';
 
 export class TransitionScreen {
@@ -135,7 +134,7 @@ export class TransitionScreen {
                 this.scene.managers = ManagerFactory.createManagers(this.scene);
             }
             this.scene.gameUI = this.scene.managers.ui;
-        }
+        } 
 
         // Animate fade in
         this.scene.tweens.add({

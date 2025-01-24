@@ -168,21 +168,28 @@ export class WayneWorld extends BaseScene {
         // Create managers first
         this.managers = ManagerFactory.createManagers(this);
 
-        // Create animations before initializing entities
-        console.log('Creating  animations...');
-        const animationManager = ManagerFactory.getAnimationManager();
-        animationManager.createZapperAnimations(this);
-        animationManager.createBulletAnimations(this);
-
-        console.log('animations created:', this.anims.exists('zapper_idle'));
-        // Create animations
-        this.anims.create({
-            key: 'zapper_wake',
-            frames: this.anims.generateFrameNumbers('zapper_spritesheet', { start: 0, end: 3 }), // Update the frame range
-            frameRate: 10,
-            repeat: 0,
-        });
+        // Initialize animations through AnimationManager
+        console.log('Initializing animations through AnimationManager...');
+        const animationManager = this.managers.animations;
+        if (!animationManager) {
+            console.error('Animation manager not initialized');
+            return;
+        }
         
+        // Create all animations including Zapper animations
+        animationManager.createAllAnimations();
+        
+        // Verify all Zapper animations are created
+        const zapperAnimations = {
+            idle: this.anims.exists('zapper_idle'),
+            wake: this.anims.exists('zapper_wake'),
+            walk: this.anims.exists('zapper_walk'),
+            attack: this.anims.exists('zapper_attack'),
+            shock: this.anims.exists('zapper_shock'),
+            death: this.anims.exists('zapper_death')
+        };
+        
+        console.log('Zapper animations:', zapperAnimations);
 
         // Get managers from container
         this.ldtkEntityManager = this.managers.ldtkEntityManager;
@@ -345,11 +352,6 @@ export class WayneWorld extends BaseScene {
             });
         }
     
-    // Log LDTKEntityManager details outside the loop
-    console.log('LDTKEntityManager instance in WayneWorld:', this.ldtkEntityManager);
-    console.log('Available methods on LDTKEntityManager:', Object.keys(this.ldtkEntityManager));
-    console.log('Zapper.update called', { time, delta });
-
         // Update debug graphics if enabled
         this.updateDebugGraphics();
     }
@@ -369,7 +371,6 @@ export class WayneWorld extends BaseScene {
     }
 
     handleSectionManagement(playerSection) {
-        console.log(`Managing sections for player in section: ${playerSection}`);
     
         // First clean up distant sections
         this.cleanUpDistantSections(playerSection);
@@ -632,10 +633,6 @@ export class WayneWorld extends BaseScene {
         const minEntitySection = Math.max(0, playerSection - WayneWorld.ENTITY_ACTIVE_BUFFER);
         const maxEntitySection = playerSection + WayneWorld.ENTITY_ACTIVE_BUFFER;
     
-        console.log(`Player section: ${playerSection}`);
-        console.log(`Active range: ${minEntitySection} to ${maxEntitySection}`);
-        console.log(`Loaded sections: ${Array.from(this.loadedSections)}`);
-    
         // First unload far entities
         for (const [sectionIndex, entities] of this.activeEntities) {
             if (sectionIndex < minEntitySection || sectionIndex > maxEntitySection) {
@@ -646,7 +643,6 @@ export class WayneWorld extends BaseScene {
     
         // Then load new entities for sections in range
         for (let i = minEntitySection; i <= maxEntitySection; i++) {
-            console.log(`Trying to load section ${i}`);
             if (!this.activeEntities.has(i) && this.loadedSections.has(i)) {
                 console.log(`Loading entities for section ${i}`);
                 this.loadSectionEntities(i);
@@ -655,7 +651,6 @@ export class WayneWorld extends BaseScene {
     }
 
     loadSectionEntities(sectionIndex) {
-        console.log(`GRAY Attempting to load entities for section ${sectionIndex}`);
         if (this.activeEntities.has(sectionIndex)) {
             console.log(`Entities for section ${sectionIndex} are already loaded.`);
             return;
@@ -775,15 +770,6 @@ export class WayneWorld extends BaseScene {
     setupUI() {
         console.log("WayneWorld: Starting UI setup...");
 
-        // Retrieve UIManager via ManagerFactory
-        this.gameUI = ManagerFactory.getUIManager(this);
-    
-        if (this.gameUI) {
-            console.log('WayneWorld: UIManager initialized successfully');
-        } else {
-            console.error('WayneWorld: Failed to initialize UIManager');
-        }
-
         // Add level indicator text
         console.log('WayneWorld: Creating level indicator text');
         this.levelIndicatorText = this.add.text(this.scale.width / 2, 50, '', {
@@ -830,20 +816,6 @@ export class WayneWorld extends BaseScene {
             this.gameStarted = true;
             if (this.gameUI) {
                 this.gameUI.hideStartMessage();
-            }
-        }
-    }
-
-    togglePause() {
-        if (this.scene.isPaused('CombinedGtuLevel')) {
-            this.scene.resume('CombinedGtuLevel');
-            if (this.gameUI) {
-                this.gameUI.hidePauseMenu();
-            }
-        } else {
-            this.scene.pause('CombinedGtuLevel');
-            if (this.gameUI) {
-                this.gameUI.showPauseMenu();
             }
         }
     }

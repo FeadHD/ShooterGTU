@@ -107,11 +107,6 @@
 2:    constructor(x, y, walkable = true) {
 18:    constructor(scene, gridSize = 32) {
 
-
-=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/levels/GameScene1.js ===
-12:    constructor() {
-
-
 === /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/levels/Matrix640x360.js ===
 15:    constructor() {
 

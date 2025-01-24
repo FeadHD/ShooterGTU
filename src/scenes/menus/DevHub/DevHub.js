@@ -86,9 +86,6 @@ export class DevHub extends Scene {
 
         // Level selection dropdown
         this.createDropdown('Select Level...', [
-            { key: 'GameScene1', title: 'Game Scene 1' },
-            { key: 'CombinedGtuLevel', title: 'Combined GTU Level' },
-            { key: 'TestingGroundScene', title: 'Testing Ground' },
             { key: 'WayneWorld', title: 'Wayne World' }
         ]);
     }
