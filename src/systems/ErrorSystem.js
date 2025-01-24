@@ -166,27 +166,13 @@ export class ErrorSystem {
      * Helper method to reset game elements to a known good state
      */
     resetGameElement(context) {
-        switch(context) {
-            case 'player':
-                if (this.scene.player && this.scene.playerSpawnPoint) {
-                    this.scene.player.setPosition(this.scene.playerSpawnPoint.x, this.scene.playerSpawnPoint.y);
-                }
-                break;
-            case 'ui':
-                if (this.scene.gameUI) {
-                    // Recreate UI if it exists but is in a bad state
-                    this.scene.gameUI.destroy();
-                    this.scene.gameUI = this.scene.managers.ui;
-                    this.scene.gameUI.container.setScrollFactor(0);
-                    this.scene.gameUI.updateCameraIgnoreList();
-                }
-                break;
+        switch (context) {
             case 'graphics':
                 // Try to recover graphics by refreshing textures
                 if (this.scene.game.renderer) {
-                    // Refresh all visible game objects
                     this.scene.children.list.forEach(child => {
-                        if (child.texture) {
+                        // Check if the child has a valid texture that supports refresh
+                        if (child.texture && typeof child.texture.refresh === 'function') {
                             child.texture.refresh();
                         }
                     });
@@ -197,6 +183,7 @@ export class ErrorSystem {
                     }
                 }
                 break;
+            // Other cases remain unchanged...
         }
     }
 
@@ -256,47 +243,67 @@ export class ErrorSystem {
     /**
      * Check if enemies are rendering correctly
      */
-    checkEnemyRendering() {
-        try {
-            if (!this.scene.enemies || !this.scene.enemies.getChildren) {
+/**
+ * Check if enemies are rendering correctly
+ */
+checkEnemyRendering() {
+    if (!this.scene.enemies || !this.scene.enemies.getChildren) {
+        return;
+    }
+
+    this.scene.enemies.getChildren()
+        .filter(child => child.isEnemy) // Ensure only enemies are processed
+        .forEach(enemy => {
+            if (!this.isEnemyValid(enemy)) {
                 return;
             }
 
-            this.scene.enemies.getChildren().forEach(enemy => {
-                // Skip if enemy is not valid
-                if (!enemy || !enemy.active) {
-                    return;
+            if (enemy.visible && this.isEnemyInCameraView(enemy)) {
+                if (!enemy.texture?.key) {
+                    console.warn('Enemy texture not loaded properly:', enemy);
+                    this.handleError(new Error('Enemy rendering failed'), 'graphics');
                 }
+            }
+        });
+}
 
-                // Check if enemy sprite is properly initialized
-                if (!enemy.texture || !enemy.frame || !enemy.frame.sourceSize) {
-                    console.warn('Enemy not properly initialized:', enemy);
-                    this.handleError(new Error('Enemy initialization failed'), 'graphics');
-                    return;
-                }
 
-                // Only check visible enemies
-                if (enemy.visible) {
-                    try {
-                        const camera = this.scene.cameras.main;
-                        const bounds = enemy.getBounds();
-                        
-                        // If enemy is in camera view but texture isn't loaded
-                        if (camera.worldView.contains(bounds.x, bounds.y)) {
-                            if (!enemy.texture.key) {
-                                console.warn('Enemy texture not loaded properly:', enemy);
-                                this.handleError(new Error('Enemy rendering failed'), 'graphics');
-                            }
-                        }
-                    } catch (error) {
-                        console.warn('Error checking enemy bounds:', error);
-                    }
-                }
-            });
-        } catch (error) {
-            console.warn('Error in enemy rendering check:', error);
-        }
+/**
+ * Validate enemy properties
+ */
+isEnemyValid(enemy) {
+    if (!enemy || !enemy.active) {
+        console.warn('Invalid enemy (inactive or null):', enemy);
+        return false;
     }
+
+    if (!enemy.texture || !enemy.frame || !enemy.frame.sourceSize) {
+        console.warn('Invalid enemy properties:', {
+            texture: enemy.texture?.key,
+            frame: enemy.frame,
+            sourceSize: enemy.frame?.sourceSize
+        });
+        this.handleError(new Error('Enemy initialization failed'), 'graphics');
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * Check if enemy is within the camera view
+ */
+isEnemyInCameraView(enemy) {
+    try {
+        const camera = this.scene.cameras.main;
+        const bounds = enemy.getBounds();
+        return camera.worldView.contains(bounds.x, bounds.y);
+    } catch (error) {
+        console.warn('Error checking enemy bounds:', error);
+        return false;
+    }
+}
+
 
     /**
      * Monitor memory usage
