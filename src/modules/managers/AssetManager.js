@@ -132,9 +132,6 @@ export class AssetManager {
      * Multiple enemy types with states
      */
     loadEnemySprites() {
-        // Basic enemy sprite
-        this.scene.load.image('enemy', 'assets/enemy.png');
-
         // Melee warrior with combat states
         const warriorActions = [
             'idle', 'attack1', 'attack2', 'attack3', 'death',
@@ -178,7 +175,6 @@ export class AssetManager {
      */
     loadEffects() {
         this.scene.load.image('particle', 'assets/particles/particle.png');
-        this.scene.load.image('spark', 'assets/effects/spark.png');
     }
 
     /**
