@@ -153,7 +153,9 @@ export class Preloader extends Scene {
             'walk': { endFrame: 6 },
             'run': { endFrame: 6 },
             'jump': { endFrame: 1 },
-            'death': { endFrame: 8 }
+            'death': { endFrame: 8 },
+            'fall': { endFrame: 1 },
+            'roll': { endFrame: 3 }
         };
 
         // Load all character states

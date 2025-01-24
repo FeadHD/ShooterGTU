@@ -149,7 +149,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
                 spritesheet: 'character_jump',
                 frameRate: 10,
                 start: 0,
-                end: 2,
+                end: 1,
                 repeat: 0
             },
             {
@@ -157,7 +157,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
                 spritesheet: 'character_fall',
                 frameRate: 10,
                 start: 0,
-                end: 2,
+                end: 1,
                 repeat: 0
             },
             {
@@ -169,8 +169,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
                 repeat: -1
             },
             {
-                key: 'character_Rollover',
-                spritesheet: 'character_Rollover',
+                key: 'character_Roll',
+                spritesheet: 'character_Roll',
                 frameRate: 15,
                 start: 0,
                 end: 3,
@@ -417,7 +417,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
             this.lastStaminaUseTime = currentTime;
 
             try {
-                this.playAnimation('character_Rollover');
+                this.playAnimation('character_Roll');
             } catch (error) {
                 console.error('Error playing rollover animation:', error);
                 this.isRolling = false;

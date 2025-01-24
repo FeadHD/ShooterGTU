@@ -71,61 +71,49 @@ export class AssetManager {
      */
     loadCharacterSprites() {
         const characterSprites = [
-            { key: 'player_idle', file: 'character_Idle.png' },     // Standing
-            { key: 'player_jump', file: 'character_Jump.png' },     // Jumping
-            { key: 'player_crouch', file: 'character_Crouch.png' }, // Ducking
-            { key: 'player_death', file: 'character_Death.png' },   // Death
-            { key: 'player_rollover', file: 'character_Rollover.png' }, // Dodge
-            { key: 'player_walk', file: 'character_Walk.png' }   // Movement
+            { key: 'player_idle', file: 'character_Idle.png', frames: { start: 0, end: 3 }, frameRate: 10, repeat: -1 },
+            { key: 'player_jump', file: 'character_Jump.png', frames: { start: 0, end: 1 }, frameRate: 10, repeat: 0 },
+            { key: 'player_crouch', file: 'character_Crouch.png', frames: { start: 0, end: 1 }, frameRate: 10, repeat: 0 },
+            { key: 'player_death', file: 'character_Death.png', frames: { start: 0, end: 5 }, frameRate: 8, repeat: 0 },
+            { key: 'player_roll', file: 'character_Roll.png', frames: { start: 0, end: 3 }, frameRate: 10, repeat: 0 },
+            { key: 'player_walk', file: 'character_Walk.png', frames: { start: 0, end: 5 }, frameRate: 12, repeat: -1 },
+            { key: 'player_fall', file: 'character_Fall.png', frames: { start: 0, end: 1 }, frameRate: 10, repeat: 0 }
         ];
-
-        // Load each sprite with consistent dimensions
+    
+        // Load spritesheets
         characterSprites.forEach(sprite => {
-            console.log('zzz Loading character sprite:', sprite.key);
+            console.log(`zzz Loading character sprite: ${sprite.key}`);
             this.scene.load.spritesheet(sprite.key, `assets/character/${sprite.file}`, {
                 frameWidth: 32,
                 frameHeight: 48
             });
         });
-
-        // Create character animations
+    
+        // Listen for load completion
         this.scene.load.once('complete', () => {
-            console.log('zzz Creating character animations...');
+            console.log('zzz All character sprites loaded. Creating animations...');
             
-            // Idle animation
-            if (this.scene.textures.exists('player_idle')) {
-                this.scene.anims.create({
-                    key: 'player_idle',
-                    frames: this.scene.anims.generateFrameNumbers('player_idle', { start: 0, end: 3 }),
-                    frameRate: 10,
-                    repeat: -1
-                });
-                console.log('zzz Animation player_idle created');
-            }
-
-            // Walk animation
-            if (this.scene.textures.exists('player_walk')) {
-                this.scene.anims.create({
-                    key: 'player_walk',
-                    frames: this.scene.anims.generateFrameNumbers('player_walk', { start: 0, end: 5 }),
-                    frameRate: 12,
-                    repeat: -1
-                });
-                console.log('zzz Animation player_walk created');
-            }
-
-            // Jump animation
-            if (this.scene.textures.exists('player_jump')) {
-                this.scene.anims.create({
-                    key: 'player_jump',
-                    frames: this.scene.anims.generateFrameNumbers('player_jump', { start: 0, end: 1 }),
-                    frameRate: 10,
-                    repeat: 0
-                });
-                console.log('zzz Animation player_jump created');
-            }
+            // Create animations dynamically based on sprite metadata
+            characterSprites.forEach(sprite => {
+                if (this.scene.textures.exists(sprite.key)) {
+                    this.scene.anims.create({
+                        key: sprite.key,
+                        frames: this.scene.anims.generateFrameNumbers(sprite.key, sprite.frames),
+                        frameRate: sprite.frameRate,
+                        repeat: sprite.repeat
+                    });
+                    console.log(`zzz Animation ${sprite.key} created`);
+                } else {
+                    console.warn(`zzz Sprite not found for animation: ${sprite.key}`);
+                }
+            });
+    
+            console.log('zzz All animations created successfully.');
         });
+    
+        this.scene.load.start(); // Start loading if not done already
     }
+    
 
     /**
      * Load enemy sprite variations

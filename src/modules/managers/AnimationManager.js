@@ -66,16 +66,16 @@ export class AnimationManager {
      * Create hit impact effect animation
      * Quick five-frame sequence
      */
-    createHitEffectAnimation() {
-        if (!this.scene.anims.exists('hit-effect')) {
-            this.scene.anims.create({
-                key: 'hit-effect',
-                frames: this.scene.anims.generateFrameNumbers('hit-effect', { start: 0, end: 4 }),
-                frameRate: 15,
-                repeat: 0         // Play once
-            });
-        }
-    }
+    // createHitEffectAnimation() {
+    //     if (!this.scene.anims.exists('hit-effect')) {
+    //         this.scene.anims.create({
+    //             key: 'hit-effect',
+    //             frames: this.scene.anims.generateFrameNumbers('hit-effect', { start: 0, end: 4 }),
+    //             frameRate: 15,
+    //             repeat: 0         // Play once
+    //         });
+    //     }
+    // }
 
     /**
      * Create player character animations
@@ -83,61 +83,38 @@ export class AnimationManager {
      */
     createCharacterAnimations() {
         console.log('Creating character animations...');
-
-        // Idle animation - Continuous loop
-        if (!this.scene.anims.exists('character_Idle')) {
-            this.scene.anims.create({
-                key: 'character_Idle',
-                frames: this.scene.anims.generateFrameNumbers('character_idle', { start: 0, end: 3 }),
-                frameRate: 8,
-                repeat: -1
-            });
-        }
-
-        // Run animation - Continuous movement
-        if (!this.scene.anims.exists('character_Run')) {
-            this.scene.anims.create({
-                key: 'character_Run',
-                frames: this.scene.anims.generateFrameNumbers('character_run', { start: 0, end: 5 }),
-                frameRate: 10,
-                repeat: -1
-            });
-        }
-
-        // Jump animation - Single upward motion
-        if (!this.scene.anims.exists('character_Jump')) {
-            this.scene.anims.create({
-                key: 'character_Jump',
-                frames: this.scene.anims.generateFrameNumbers('character_jump', { start: 0, end: 1 }),
-                frameRate: 10,
-                repeat: 0
-            });
-        }
-
-        // Fall animation - Single downward motion
-        if (!this.scene.anims.exists('character_Fall')) {
-            this.scene.anims.create({
-                key: 'character_Fall',
-                frames: this.scene.anims.generateFrameNumbers('character_fall', { start: 0, end: 2 }),
-                frameRate: 10,
-                repeat: 0
-            });
-        }
-
-        // Rollover animation - Evasive maneuver
-        if (!this.scene.anims.exists('character_Rollover')) {
-            this.scene.anims.create({
-                key: 'character_Rollover',
-                frames: this.scene.anims.generateFrameNumbers('character_rollover', { start: 0, end: 6 }),
-                frameRate: 15,
-                repeat: 0
-            });
-        }
-
-        console.log('Character animations created');
+    
+        // Define animation data
+        const animations = [
+            { key: 'character_Idle', texture: 'character_idle', frames: { start: 0, end: 3 }, frameRate: 8, repeat: -1 },
+            { key: 'character_Run', texture: 'character_run', frames: { start: 0, end: 5 }, frameRate: 10, repeat: -1 },
+            { key: 'character_Jump', texture: 'character_jump', frames: { start: 0, end: 1 }, frameRate: 10, repeat: 0 },
+            { key: 'character_Fall', texture: 'character_fall', frames: { start: 0, end: 1 }, frameRate: 10, repeat: 0 },
+            { key: 'character_Roll', texture: 'character_roll', frames: { start: 0, end: 6 }, frameRate: 15, repeat: 0 }
+        ];
+    
+        // Create animations dynamically
+        animations.forEach(anim => {
+            if (this.scene.textures.exists(anim.texture)) {
+                if (!this.scene.anims.exists(anim.key)) {
+                    this.scene.anims.create({
+                        key: anim.key,
+                        frames: this.scene.anims.generateFrameNumbers(anim.texture, anim.frames),
+                        frameRate: anim.frameRate,
+                        repeat: anim.repeat
+                    });
+                    console.log(`Animation created: ${anim.key}`);
+                } else {
+                    console.warn(`Animation key already exists: ${anim.key}`);
+                }
+            } else {
+                console.warn(`Texture not found for animation: ${anim.texture}`);
+            }
+        });
+    
+        console.log('Character animations creation complete.');
         console.log('Available animations:', Object.keys(this.scene.anims.anims.entries));
     }
-
     /**
      * Create enemy NPC animations
      * Basic movement and attack sequences
@@ -294,7 +271,7 @@ export class AnimationManager {
     createAllAnimations() {
         console.log('Creating all game animations...');
         this.createBulletAnimation();
-        this.createHitEffectAnimation();
+        // this.createHitEffectAnimation();
         this.createCharacterAnimations();
         this.createEnemyAnimations();
         this.createWarriorAnimations();
