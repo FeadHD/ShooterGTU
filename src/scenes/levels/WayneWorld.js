@@ -168,21 +168,28 @@ export class WayneWorld extends BaseScene {
         // Create managers first
         this.managers = ManagerFactory.createManagers(this);
 
-        // Create animations before initializing entities
-        console.log('Creating  animations...');
-        const animationManager = ManagerFactory.getAnimationManager();
-        animationManager.createZapperAnimations(this);
-        animationManager.createBulletAnimations(this);
-
-        console.log('animations created:', this.anims.exists('zapper_idle'));
-        // Create animations
-        this.anims.create({
-            key: 'zapper_wake',
-            frames: this.anims.generateFrameNumbers('zapper_spritesheet', { start: 0, end: 3 }), // Update the frame range
-            frameRate: 10,
-            repeat: 0,
-        });
+        // Initialize animations through AnimationManager
+        console.log('Initializing animations through AnimationManager...');
+        const animationManager = this.managers.animations;
+        if (!animationManager) {
+            console.error('Animation manager not initialized');
+            return;
+        }
         
+        // Create all animations including Zapper animations
+        animationManager.createAllAnimations();
+        
+        // Verify all Zapper animations are created
+        const zapperAnimations = {
+            idle: this.anims.exists('zapper_idle'),
+            wake: this.anims.exists('zapper_wake'),
+            walk: this.anims.exists('zapper_walk'),
+            attack: this.anims.exists('zapper_attack'),
+            shock: this.anims.exists('zapper_shock'),
+            death: this.anims.exists('zapper_death')
+        };
+        
+        console.log('Zapper animations:', zapperAnimations);
 
         // Get managers from container
         this.ldtkEntityManager = this.managers.ldtkEntityManager;
@@ -345,11 +352,6 @@ export class WayneWorld extends BaseScene {
             });
         }
     
-    // Log LDTKEntityManager details outside the loop
-    console.log('LDTKEntityManager instance in WayneWorld:', this.ldtkEntityManager);
-    console.log('Available methods on LDTKEntityManager:', Object.keys(this.ldtkEntityManager));
-    console.log('Zapper.update called', { time, delta });
-
         // Update debug graphics if enabled
         this.updateDebugGraphics();
     }

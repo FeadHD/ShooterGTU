@@ -211,58 +211,67 @@ export class AnimationManager {
 
     /**
      * Create zapper enemy animations
-     * Electrical attack patterns
+     * Electrical attack patterns and states
+     * @param {Phaser.Scene} scene - Scene to create animations in
      */
     createZapperAnimations(scene) {
-        // Idle animation
-        scene.anims.create({
-            key: 'zapper_idle',
-            frames: scene.anims.generateFrameNumbers('zapper_idle', { start: 0, end: 3 }),
-            frameRate: 8,
-            repeat: -1,
-        });
-    
-        // Wake animation
-        scene.anims.create({
-            key: 'zapper_wake',
-            frames: scene.anims.generateFrameNumbers('zapper_wake', { start: 0, end: 5 }),
-            frameRate: 10,
-            repeat: 0,
-        });
-    
-        // Walk animation
-        scene.anims.create({
-            key: 'zapper_walk',
-            frames: scene.anims.generateFrameNumbers('zapper_walk', { start: 0, end: 7 }),
-            frameRate: 12,
-            repeat: -1,
-        });
-    
-        // Shock animation
-        scene.anims.create({
-            key: 'zapper_shock',
-            frames: scene.anims.generateFrameNumbers('zapper_shock', { start: 0, end: 5 }),
-            frameRate: 15,
-            repeat: 0,
-        });
-    
-        // Death animation
-        scene.anims.create({
-            key: 'zapper_death',
-            frames: scene.anims.generateFrameNumbers('zapper_death', { start: 0, end: 4 }),
-            frameRate: 10,
-            repeat: 0,
+        console.log('Creating Zapper animations...');
+
+        const zapperAnims = {
+            'idle': {
+                key: 'zapper_idle',
+                frames: { start: 0, end: 3 },
+                frameRate: 8,
+                repeat: -1
+            },
+            'wake': {
+                key: 'zapper_wake',
+                frames: { start: 0, end: 5 },
+                frameRate: 10,
+                repeat: 0
+            },
+            'walk': {
+                key: 'zapper_walk',
+                frames: { start: 0, end: 7 },
+                frameRate: 12,
+                repeat: -1
+            },
+            'attack': {
+                key: 'zapper_attack',
+                frames: { start: 0, end: 5 },
+                frameRate: 15,
+                repeat: 0
+            },
+            'shock': {
+                key: 'zapper_shock',
+                frames: { start: 0, end: 5 },
+                frameRate: 15,
+                repeat: 0
+            },
+            'death': {
+                key: 'zapper_death',
+                frames: { start: 0, end: 4 },
+                frameRate: 10,
+                repeat: 0
+            }
+        };
+
+        // Create each animation if it doesn't exist
+        Object.values(zapperAnims).forEach(config => {
+            if (!scene.anims.exists(config.key)) {
+                const spriteKey = config.key.split('_')[1]; // Get the state name (idle, wake, etc.)
+                scene.anims.create({
+                    key: config.key,
+                    frames: scene.anims.generateFrameNumbers(`zapper_${spriteKey}`, config.frames),
+                    frameRate: config.frameRate,
+                    repeat: config.repeat
+                });
+                console.log(`Created Zapper animation: ${config.key}`);
+            }
         });
 
-        // Attack animation
-        scene.anims.create({
-            key: 'zapper_attack',
-            frames: scene.anims.generateFrameNumbers('zapper_attack', { start: 0, end: 5 }),
-            frameRate: 15,
-            repeat: 0,
-        });
-    
         console.log('Zapper animations created successfully');
+        return zapperAnims; // Return config for reference
     }
 
     /**
@@ -289,6 +298,7 @@ export class AnimationManager {
         this.createCharacterAnimations();
         this.createEnemyAnimations();
         this.createWarriorAnimations();
+        this.createZapperAnimations(this.scene);  // Add Zapper animations
         console.log('All animations created successfully');
     }
 }

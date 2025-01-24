@@ -239,6 +239,11 @@ export class AssetManager {
             frameWidth: 32,
             frameHeight: 32,
         });
+
+        this.scene.load.spritesheet('zapper_death', 'assets/zapper/zapper_death.png', {
+            frameWidth: 32,
+            frameHeight: 32,
+        });
     }
 
     getTextureKeyForEntity(entityType) {
@@ -249,7 +254,7 @@ export class AssetManager {
             zapper: {
                 spritesheet: 'zapper_idle',
                 defaultAnim: 'zapper_idle',
-                animations: ['zapper_idle', 'zapper_attack', 'zapper_walk'],
+                animations: ['zapper_idle', 'zapper_attack', 'zapper_walk', 'zapper_death'],
                 width: 32,
                 height: 32
             },

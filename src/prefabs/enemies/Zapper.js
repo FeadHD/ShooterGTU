@@ -70,15 +70,6 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
         this.shockSprite.body.immovable = true;
         this.shockSprite.body.enable = false;
 
-        // Add collision between shock and player
-        if (scene.player) {
-            scene.physics.add.overlap(scene.player, this.shockSprite, () => {
-                if (this.shockSprite.visible && !scene.player.isInvulnerable) {
-                    scene.player.takeDamage(this.damage);
-                }
-            });
-        }
-
         // Create health bar
         this.healthBar = scene.add.graphics();
         this.healthBar.setDepth(5);
@@ -185,8 +176,6 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
     }
 
     preUpdate(time, delta) {
-
-        console.log('Zapper preUpdate called:', { time, delta });
         // Don't update if destroyed
         if (!this.scene || this.isDead) return;
 
