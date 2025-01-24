@@ -108,7 +108,7 @@ export class AnimationManager {
         if (!this.scene.anims.exists('character_Jump')) {
             this.scene.anims.create({
                 key: 'character_Jump',
-                frames: this.scene.anims.generateFrameNumbers('character_jump', { start: 0, end: 2 }),
+                frames: this.scene.anims.generateFrameNumbers('character_jump', { start: 0, end: 1 }),
                 frameRate: 10,
                 repeat: 0
             });

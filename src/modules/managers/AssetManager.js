@@ -118,7 +118,7 @@ export class AssetManager {
             if (this.scene.textures.exists('player_jump')) {
                 this.scene.anims.create({
                     key: 'player_jump',
-                    frames: this.scene.anims.generateFrameNumbers('player_jump', { start: 0, end: 3 }),
+                    frames: this.scene.anims.generateFrameNumbers('player_jump', { start: 0, end: 1 }),
                     frameRate: 10,
                     repeat: 0
                 });
