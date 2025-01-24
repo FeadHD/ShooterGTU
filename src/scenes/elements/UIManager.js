@@ -167,11 +167,11 @@ export class UIManager {
         this.timerText = this.scene.add.text(
             LEFT_MARGIN,
             TOP_MARGIN,
-            'Fromage: 00:00',
+            'FROMAGE: 00:00',
             this.textStyleManager.styles.timer
         );
         // Force a unique color or style to see if it's updating
-        this.timerText.setColor('#D2B48C'); // bright green
+        this.timerText.setColor('#D2B48C'); 
 
         this.bitcoinText = this.scene.add.text(
             LEFT_MARGIN,

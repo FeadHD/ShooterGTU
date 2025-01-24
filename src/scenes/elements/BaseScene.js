@@ -360,6 +360,30 @@ export class BaseScene extends Scene {
     update(time, delta) {
         try {
             super.update(time, delta);
+    
+            // Log all text objects once
+            if (!this.loggedTextObjects) {
+                console.log('Listing all text objects in BaseScene:');
+                this.children.list.forEach(obj => {
+                    if (obj.type === 'Text') {
+                        console.log('Text found:', obj.text, 'at', obj.x, obj.y);
+                    }
+                });
+    
+                // Also check the UI container, if that’s where your timer is
+                if (this.gameUI && this.gameUI.container) {
+                    console.log('Listing text objects in gameUI.container:');
+                    this.gameUI.container.list.forEach(child => {
+                        if (child.type === 'Text') {
+                            console.log('Child text found:', child.text, 'at', child.x, child.y);
+                        }
+                    });
+                }
+    
+                this.loggedTextObjects = true; // Only log once
+            }
+    
+            // Existing update logic...
             if (this.player) {
                 this.player.update();
             }
@@ -367,16 +391,8 @@ export class BaseScene extends Scene {
                 this.debug.update();
             }
             this.updateSceneState();
-
-            // If gameOver, check input to restart or go to menu
-            if (this.gameOver && this.controller && this.controller.controls.jump.isDown) {
-                this.cleanup();
-                this.registry.set('playerLives', PLAYER_CONSTANTS.INITIAL_LIVES);
-                this.registry.set('playerHP', PLAYER_CONSTANTS.INITIAL_HP);
-                this.registry.set('score', 0);
-                this.registry.set('bitcoins', 0);
-                this.scene.start('MainMenu');
-            }
+    
+            // etc...
         } catch (error) {
             this.errorSystem.handleError(error, 'update');
         }

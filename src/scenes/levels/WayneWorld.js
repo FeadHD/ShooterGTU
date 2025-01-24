@@ -770,15 +770,6 @@ export class WayneWorld extends BaseScene {
     setupUI() {
         console.log("WayneWorld: Starting UI setup...");
 
-        // Retrieve UIManager via ManagerFactory
-        this.gameUI = ManagerFactory.getUIManager(this);
-    
-        if (this.gameUI) {
-            console.log('WayneWorld: UIManager initialized successfully');
-        } else {
-            console.error('WayneWorld: Failed to initialize UIManager');
-        }
-
         // Add level indicator text
         console.log('WayneWorld: Creating level indicator text');
         this.levelIndicatorText = this.add.text(this.scale.width / 2, 50, '', {
