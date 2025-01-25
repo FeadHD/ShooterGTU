@@ -190,45 +190,49 @@ export class Preloader extends Scene {
     
             // Zapper assets
             zapper: [
-                { key: 'zapper_idle', path: 'assets/zapper/zapper_idle.png', frameWidth: 32, frameHeight: 32, endFrame: 3 },
-                { key: 'zapper_attack', path: 'assets/zapper/zapper_attack.png', frameWidth: 32, frameHeight: 32, endFrame: 3 },
-                { key: 'zapper_walk', path: 'assets/zapper/zapper_walk.png', frameWidth: 32, frameHeight: 32, endFrame: 5 },
-                { key: 'zapper_hit', path: 'assets/zapper/zapper_hit.png', frameWidth: 32, frameHeight: 32, endFrame: 2 },
-                { key: 'zapper_death', path: 'assets/zapper/zapper_death.png', frameWidth: 32, frameHeight: 32, endFrame: 7 },
-                { key: 'zapper_shock', path: 'assets/zapper/zapper_shock.png', frameWidth: 32, frameHeight: 32, endFrame: 6 }
+                { key: 'zapper_idle', path: 'assets/enemys/zapper/zapper_idle.png', frameWidth: 32, frameHeight: 32, endFrame: 3 },
+                { key: 'zapper_attack', path: 'assets/enemys/zapper/zapper_attack.png', frameWidth: 32, frameHeight: 32, endFrame: 3 },
+                { key: 'zapper_walk', path: 'assets/enemys/zapper/zapper_walk.png', frameWidth: 32, frameHeight: 32, endFrame: 5 },
+                { key: 'zapper_hit', path: 'assets/enemys/zapper/zapper_hit.png', frameWidth: 32, frameHeight: 32, endFrame: 2 },
+                { key: 'zapper_death', path: 'assets/enemys/zapper/zapper_death.png', frameWidth: 32, frameHeight: 32, endFrame: 7 },
+                { key: 'zapper_shock', path: 'assets/enemys/zapper/zapper_shock.png', frameWidth: 32, frameHeight: 32, endFrame: 6 },
+                { key: 'zapper_wake', path: 'assets/enemys/zapper/zapper_wake.png', frameWidth: 32, frameHeight: 32, endFrame: 2 }
+            ],
+    
+            // Melee animations
+            melee: [
+                { key: 'melee_attack1', path: './assets/enemys/melee_warrior/melee_warrior_attack1.png', frameWidth: 64, frameHeight: 64, endFrame: 5 },
+                { key: 'melee_attack2', path: './assets/enemys/melee_warrior/melee_warrior_attack2.png', frameWidth: 64, frameHeight: 64, endFrame: 5 },
+                { key: 'melee_attack3', path: './assets/enemys/melee_warrior/melee_warrior_attack3.png', frameWidth: 64, frameHeight: 64, endFrame: 5 },
+                { key: 'melee_death', path: './assets/enemys/melee_warrior/melee_warrior_death.png', frameWidth: 64, frameHeight: 64, endFrame: 11 },
+                { key: 'melee_defend', path: './assets/enemys/melee_warrior/melee_warrior_defend.png', frameWidth: 64, frameHeight: 64, endFrame: 5 },
+                { key: 'melee_hurt', path: './assets/enemys/melee_warrior/melee_warrior_hurt.png', frameWidth: 64, frameHeight: 64, endFrame: 3 },
+                { key: 'melee_idle', path: './assets/enemys/melee_warrior/melee_warrior_idle.png', frameWidth: 64, frameHeight: 64, endFrame: 5 },
+                { key: 'melee_jump', path: './assets/enemys/melee_warrior/melee_warrior_jump.png', frameWidth: 64, frameHeight: 64, endFrame: 5 },
+                { key: 'melee_run', path: './assets/enemys/melee_warrior/melee_warrior_run.png', frameWidth: 64, frameHeight: 64, endFrame: 5 },
+                { key: 'melee_walk', path: './assets/enemys/melee_warrior/melee_warrior_walk.png', frameWidth: 64, frameHeight: 64, endFrame: 5 }
             ]
         };
     
-        // Load drone assets
-        enemyAssets.drone.forEach(asset => {
-            if (asset.type === 'image') {
-                this.load.image(asset.key, asset.path);
-                console.log(`Loading drone asset: ${asset.key}`);
-            }
-        });
-    
-        // Load slime animations
-        enemyAssets.slime.forEach(slime => {
-            this.load.spritesheet(slime.key, slime.path, {
-                frameWidth: slime.frameWidth,
-                frameHeight: slime.frameHeight,
-                startFrame: 0,
-                endFrame: slime.endFrame
+        // Load all assets
+        Object.entries(enemyAssets).forEach(([enemyType, assets]) => {
+            assets.forEach(asset => {
+                if (asset.type === 'image') {
+                    this.load.image(asset.key, asset.path);
+                } else {
+                    this.load.spritesheet(asset.key, asset.path, {
+                        frameWidth: asset.frameWidth,
+                        frameHeight: asset.frameHeight,
+                        startFrame: 0,
+                        endFrame: asset.endFrame,
+                        spacing: 0,
+                        margin: 0
+                    });
+                }
             });
-            console.log(`Loading slime animation: ${slime.key}`);
-        });
-    
-        // Load zapper animations
-        enemyAssets.zapper.forEach(zapper => {
-            this.load.spritesheet(zapper.key, zapper.path, {
-                frameWidth: zapper.frameWidth,
-                frameHeight: zapper.frameHeight,
-                startFrame: 0,
-                endFrame: zapper.endFrame
-            });
-            console.log(`Loading zapper animation: ${zapper.key}`);
         });
     }
+    
     
 
     /**
