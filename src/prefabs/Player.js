@@ -6,7 +6,7 @@
 
 import Phaser from 'phaser';
 import { PlayerController } from '../modules/controls/PlayerController';
-import { eventBus } from '../modules/events/EventBus';
+import { GameEvents } from '../modules/managers/EventManager';
 import { GameConfig } from '../config/GameConfig';
 
 export class Player extends Phaser.Physics.Arcade.Sprite {
@@ -250,7 +250,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.playerHP = Math.max(0, this.playerHP - amount);
         this.scene.registry.set('playerHP', this.playerHP);
 
-        eventBus.emit('playerHPChanged', this.playerHP);
+        this.scene.eventManager.emit(GameEvents.PLAYER_HP_CHANGED, this.playerHP);
 
         if (this.playerHP <= 0) {
             this.die();
@@ -343,7 +343,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         // Reset HP
         this.playerHP = GameConfig.PLAYER.INITIAL_HP;
         this.scene.registry.set('playerHP', this.playerHP);
-        eventBus.emit('playerHPChanged', this.playerHP);
+        this.scene.eventManager.emit(GameEvents.PLAYER_HP_CHANGED, this.playerHP);
 
         this.makeInvulnerable();
 

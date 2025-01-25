@@ -17,7 +17,6 @@ import { GameEvents } from '../../../modules/managers/EventManager';
  * - EntityManager: Provides core entity tracking and querying
  * - EffectsManager: Visual/audio feedback on hits
  * - GameStateManager: Score tracking via Phaser registry
- * - EventBus: Game-wide event communication
  */
 export class EnemyManager extends EntityManager {
     /**
@@ -110,7 +109,7 @@ export class EnemyManager extends EntityManager {
      * @param {Object} enemy - Enemy with changed health
      */
     handleEnemyHealthChanged(enemy) {
-        this.eventBus.emit('enemyHealthChanged', { enemy });
+        this.eventManager.emit(GameEvents.ENEMY_HEALTH_CHANGED, { enemy });
     }
 
     /** 
@@ -139,7 +138,6 @@ export class EnemyManager extends EntityManager {
             this.scene.gameStateManager.increment('score', points);
         }
 
-        this.checkLevelComplete();
     }
 
     /** 
@@ -153,13 +151,4 @@ export class EnemyManager extends EntityManager {
         return this.getAll('enemy').find(enemy => enemy.sprite === sprite);
     }
 
-    /** 
-     * Check and handle level completion
-     * Emits 'levelComplete' when all enemies are defeated
-     */
-    checkLevelComplete() {
-        if (this.remainingEnemies <= 0) {
-            this.eventBus.emit('levelComplete');
-        }
-    }
 }

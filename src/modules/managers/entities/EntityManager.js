@@ -5,6 +5,7 @@
  */
 
 import { BaseManager } from '../../di/BaseManager';
+import { GameEvents } from '../../managers/EventManager';
 
 export class EntityManager extends BaseManager {
     /**
@@ -15,7 +16,7 @@ export class EntityManager extends BaseManager {
         super();
         this.scene = scene;
         this.entities = new Map();  // Type-based entity storage
-        this.eventBus = this.container.get('eventBus');
+        this.eventManager = this.container.get('events');
     }
 
     /**
@@ -29,7 +30,7 @@ export class EntityManager extends BaseManager {
         this.entities.get(type).add(entity);
         
         // Notify systems of new entity
-        this.eventBus.emit('entityAdded', { entity, type });
+        this.eventManager.emit(GameEvents.ENTITY_ADDED, { entity, type });
     }
 
     /**
@@ -41,7 +42,7 @@ export class EntityManager extends BaseManager {
         if (entities) {
             entities.delete(entity);
             // Notify systems of removal
-            this.eventBus.emit('entityRemoved', { entity, type });
+            this.eventManager.emit(GameEvents.ENTITY_REMOVED, { entity, type });
         }
     }
 

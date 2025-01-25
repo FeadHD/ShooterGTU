@@ -20,7 +20,6 @@ import { CollisionManager } from '../managers/CollisionManager';
 import { EventManager } from '../managers/EventManager';
 import { AssetManager } from '../managers/AssetManager';
 import { container } from './ServiceContainer';
-import { eventBus } from '../events/EventBus';
 import { UIManager } from '../../scenes/elements/UIManager';
 
 // Entity prefabs
@@ -41,6 +40,7 @@ import { Zapper } from '../../prefabs/enemies/Zapper';
 import { BulletManager } from '../../modules/managers/BulletManager';
 import { BulletPool } from '../../modules/managers/pools/BulletPool';
 import { CameraManager } from '../../modules/managers/CameraManager';
+
 export class ManagerFactory {
     /**
      * Creates and initializes all game managers for a scene
@@ -49,36 +49,54 @@ export class ManagerFactory {
      */
     static createManagers(scene) {
         console.log('Initializing managers for scene:', scene);
-
-        // Register dependencies in the service container
+    
+        // 1) Register the scene in DI
         container.register('scene', scene);
-        container.register('eventBus', eventBus);
+    
+        // 2) Create a scene-based EventManager FIRST
+        let events;
+        if (container.services.has('events')) {
+            events = container.get('events');
+        } else {
+            events = new EventManager(scene);
+            container.register('events', events);
+        }
+    
+        // 3) Now initialize it (so events are ready for other managers)
+        events.initialize();
 
-        // Asset management
+        // 4) Make sure the scene has a reference to it
+        scene.eventManager = events;   // <-- IMPORTANT!
+    
+        // 5) Local DI container
+        const localContainer = scene.container || {};
+        container.register('container', localContainer);
+    
+        // 6) Asset management
         const assets = new AssetManager(scene);
         container.register('assets', assets);
-
-        // State management
+    
+        // 6) State management
         const gameState = new GameStateManager(scene);
         const persistence = new PersistenceManager(gameState);
-
-        // Audio system
+    
+        // 7) Audio system
         let audio = container.services.has('audio')
             ? container.get('audio')
             : new AudioManager(scene);
+    
         if (!container.services.has('audio')) {
             container.register('audio', audio);
         }
-
-        // Entity management
+    
+        // 8) Entity + gameplay managers
+        // (Now it's safe to do these, as events is registered)
         const entityManager = new EntityManager(scene);
         const ldtkEntityManager = new LDTKEntityManager(scene);
         console.log('LDTKEntityManager created:', ldtkEntityManager);
         container.register('ldtkEntityManager', ldtkEntityManager);
-
-        // Entity factories
+    
         console.log('Registering entity factories...');
-
         ldtkEntityManager.registerEntityFactories({
             Enemy: (scene, x, y, fields) => {
                 console.log(`Factory invoked for Enemy at (${x}, ${y}) with fields:`, fields);
@@ -88,53 +106,13 @@ export class ManagerFactory {
                 console.log(`Factory invoked for Bitcoin at (${x}, ${y}) with fields:`, fields);
                 return new Bitcoin(scene, x, y);
             },
-            Slime: (scene, x, y, fields) => {
-                console.log(`Factory invoked for Slime at (${x}, ${y}) with fields:`, fields);
-                return new Slime(scene, x, y);
-            },
-            Drone: (scene, x, y, fields) => {
-                console.log(`Factory invoked for Drone at (${x}, ${y}) with fields:`, fields);
-                return new Drone(scene, x, y);
-            },
-            Trampoline: (scene, x, y, fields) => {
-                console.log(`Factory invoked for Trampoline at (${x}, ${y}) with fields:`, fields);
-                return new Trampoline(scene, x, y);
-            },
-            Trap: (scene, x, y, fields) => {
-                console.log(`Factory invoked for Trap at (${x}, ${y}) with fields:`, fields);
-                return new Trap(scene, x, y);
-            },
-            DestructibleBlock: (scene, x, y, fields) => {
-                console.log(`Factory invoked for DestructibleBlock at (${x}, ${y}) with fields:`, fields);
-                return new DestructibleBlock(scene, x, y);
-            },
-            FallingDestructibleBlock: (scene, x, y, fields) => {
-                console.log(`Factory invoked for FallingDestructibleBlock at (${x}, ${y}) with fields:`, fields);
-                return new FallingDestructibleBlock(scene, x, y);
-            },
-            DisappearingPlatform: (scene, x, y, fields) => {
-                console.log(`Factory invoked for DisappearingPlatform at (${x}, ${y}) with fields:`, fields);
-                return new DisappearingPlatform(scene, x, y);
-            },
-            Turret: (scene, x, y, fields) => {
-                console.log(`Factory invoked for Turret at (${x}, ${y}) with fields:`, fields);
-                return new Turret(scene, x, y);
-            },
-            MeleeWarrior: (scene, x, y, fields) => {
-                console.log(`Factory invoked for MeleeWarrior at (${x}, ${y}) with fields:`, fields);
-                return new MeleeWarrior(scene, x, y);
-            },
-            Zapper: (scene, x, y, fields) => {
-                console.log(`Factory invoked for Zapper at (${x}, ${y}) with fields:`, fields);
-                return new Zapper(scene, x, y, fields);
-            },
+            // ... other entity factories
             PlayerStart: (scene, x, y, fields) => {
                 console.log(`Factory invoked for PlayerStart at (${x}, ${y}) with fields:`, fields);
                 return { x, y, type: 'PlayerStart' };
             },
         });
-
-        // Gameplay systems
+    
         const enemies = new EnemyManager(scene);
         const hazards = new HazardManager(scene);
         const animations = new AnimationManager(scene);
@@ -142,21 +120,17 @@ export class ManagerFactory {
         const boundaries = new SceneBoundaryManager(scene);
         const debug = new DebugSystem(scene);
         const collision = new CollisionManager(scene);
-        const ui = new UIManager(scene);
-
-        // Event system
-        const events = container.services.has('events')
-            ? container.get('events')
-            : new EventManager(scene);
-        if (!container.services.has('events')) {
-            container.register('events', events);
+    
+        // 9) Skip UI if MainMenu
+        let ui = null;
+        if (scene.scene.key !== 'MainMenu') {
+            ui = new UIManager(scene);  
         }
-
-        // Initialize services
-        events.initialize();
+    
+        // 10) Initialize assets
         assets.initialize();
-
-        // Register all managers in the container
+    
+        // 11) Register all these managers
         container.register('gameState', gameState);
         container.register('persistence', persistence);
         container.register('entityManager', entityManager);
@@ -168,10 +142,14 @@ export class ManagerFactory {
         container.register('boundaries', boundaries);
         container.register('debug', debug);
         container.register('collision', collision);
-        container.register('ui', ui);
-
-        // Return references
+    
+        if (ui) {
+            container.register('ui', ui);
+        }
+    
+        // 12) Return references
         return {
+            events,
             assets,
             gameState,
             persistence,
@@ -185,7 +163,6 @@ export class ManagerFactory {
             boundaries,
             debug,
             collision,
-            events,
             ui,
         };
     }
@@ -200,13 +177,6 @@ export class ManagerFactory {
             this.animationManager = new AnimationManager();
         }
         return this.animationManager;
-    }
-
-    static getEventManager() {
-        if (!this.eventManager) {
-            this.eventManager = new EventManager();
-        }
-        return this.eventManager;
     }
 
     static getBulletManager(scene) {

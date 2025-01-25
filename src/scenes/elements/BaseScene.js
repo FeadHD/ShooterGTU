@@ -87,7 +87,6 @@ export class BaseScene extends Scene {
 
         // Initialize systems
         this.animations.initialize();
-        this.eventManager.initialize();
         this.input.mouse.disableContextMenu();
         this.input.keyboard.enabled = true;
 
