@@ -263,13 +263,11 @@ export class UIManager {
 
     // Timer logic (UI-managed)
     updateTimer() {
-        console.log('[UIManager] updateTimer() called, elapsedSeconds:', this.elapsedSeconds);
         if (!this.isTimerRunning || !this.timerText) return;
         
         const minutes = Math.floor(this.elapsedSeconds / 60);
         const seconds = this.elapsedSeconds % 60;
         const timeString = `TIME: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        console.log('[UIManager] Updating timerText to:', timeString);
 
         this.timerText.setText(timeString);
     }
@@ -464,7 +462,6 @@ export class UIManager {
                 callback: () => {
                     if (this.isTimerRunning) {
                         this.elapsedSeconds++;
-                        console.log('[UIManager] Timer tick:', this.elapsedSeconds);
                         this.updateTimer();
                         
                         // If you want the registry to reflect the time:
