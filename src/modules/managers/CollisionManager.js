@@ -248,55 +248,16 @@ export class CollisionManager {
      * We reference scene data (gameState, gameUI) via "this.scene".
      */
     handlePlayerEnemyOverlap(player, enemy) {
-        // 1) Don't process damage if player is already dying or HP <= 0
-        if (player.isDying || this.scene.gameState.get('playerHP') <= 0) {
-            if (!this.scene.isDying) {
-                // Trigger a player death event if not already marked dying
-                this.scene.eventManager.emit(GameEvents.PLAYER_DEATH, {
-                    position: { x: player.x, y: player.y },
-                    cause: 'enemy_collision'
-                });
-            }
+        // If the player is already dying, skip
+        if (player.isDying) {
             return;
         }
-
-        // 2) Retrieve current HP
-        const currentHP = this.scene.gameState.get('playerHP');
-
-        // 3) Calculate damage (default = 25 if no enemy.damageAmount)
+    
+        // Calculate how much damage to inflict
         const damage = enemy.enemy ? enemy.enemy.damageAmount : 25;
-
-        // 4) Compute new HP, clamping at 0
-        const newHP = Math.max(0, currentHP - damage);
-
-        // 5) Update the HP in gameState
-        this.scene.gameState.set('playerHP', newHP);
-
-        // 6) Update the UI's HP display
-        this.scene.gameUI.updateHP(newHP);
-
-        // 7) Emit a "health change" event, if you track these
-        this.scene.eventManager.emit(GameEvents.HEALTH_CHANGE, {
-            oldHealth: currentHP,
-            newHealth: newHP,
-            damage,
-            source: enemy
-        });
-
-        // 8) Add temporary invulnerability or "iFrames"
-        this.scene.invulnerableUntil = this.scene.time.now + 2000; // e.g. 2 seconds
-
-        // 9) Visual feedback, e.g., a flash effect around the player
-        this.scene.effects.createFlashEffect(player);
-
-        // 10) Check if newHP <= 0 and not already dying => emit DEATH event
-        if (newHP <= 0 && !this.scene.isDying) {
-            this.scene.eventManager.emit(GameEvents.PLAYER_DEATH, {
-                position: { x: player.x, y: player.y },
-                cause: 'enemy_damage',
-                enemy
-            });
-        }
+    
+        // Just call player.takeDamage(...)
+        player.takeDamage(damage);
     }
 
     /**

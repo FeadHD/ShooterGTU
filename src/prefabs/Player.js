@@ -243,23 +243,23 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
      */
     takeDamage(amount = GameConfig.PLAYER.DAMAGE) {
         if (this.isDying) return;
-
         if (this.scene.time.now < this.invulnerableUntil) return;
-
+    
         this.lastDamageTaken = amount;
         this.playerHP = Math.max(0, this.playerHP - amount);
         this.scene.registry.set('playerHP', this.playerHP);
-
+    
+        // Announce "player HP changed"
         this.scene.eventManager.emit(GameEvents.PLAYER_HP_CHANGED, this.playerHP);
-
+    
+        // If HP is 0, call die()
         if (this.playerHP <= 0) {
             this.die();
             return;
         }
-
-        // Make invulnerable for a brief period
-        this.invulnerableUntil =
-            this.scene.time.now + GameConfig.PLAYER.INVULNERABLE_DURATION;
+    
+        // Make invulnerable
+        this.invulnerableUntil = this.scene.time.now + GameConfig.PLAYER.INVULNERABLE_DURATION;
         this.makeInvulnerable();
     }
 
@@ -290,22 +290,29 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     die() {
         if (this.isDying) return;
         this.isDying = true;
-
+    
         // Decrement playerLives
         this.playerLives--;
         this.scene.registry.set('playerLives', this.playerLives);
-
+    
         if (this.playerLives <= 0) {
-            console.log('Game Over');
-            // Optionally trigger a game over scene
+            // Emit PLAYER_DEATH only on final death
+            this.scene.eventManager.emit(GameEvents.PLAYER_DEATH, {
+                position: { x: this.x, y: this.y },
+                cause: 'noLives'
+            });
+            
+            // Disable controls and physics
+            this.controller.enabled = false;
+            this.body.moves = false;
+            
+            console.log('Game Over - No Lives Remaining');
             return;
         }
-
-        // Disable controls and physics
+    
+        // If we still have lives, respawn
         this.controller.enabled = false;
         this.body.moves = false;
-
-        // For now, just fade out and respawn
         this.setAlpha(0);
         this.respawn();
     }
