@@ -138,7 +138,6 @@ ShooterGTU is a dynamic 2D action platformer built with Phaser 3.87.0. Set in a 
 - **Bullet.js**: Projectile physics and lifecycle
 
 ### Event System
-- **Eventbus.js**: Game-wide pub/sub communication
 - **EventManager.js**: Type-safe event handling
 
 ### Build System

@@ -1,6 +1,5 @@
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\main.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\controls\PlayerController.js
-c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\events\EventBus.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\managers\AnimationManager.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\managers\audio\MusicManager.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\managers\audio\SoundManager.js

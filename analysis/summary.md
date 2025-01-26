@@ -61,7 +61,6 @@ c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\manager
 ```
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\main.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\controls\PlayerController.js
-c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\events\EventBus.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\managers\AnimationManager.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\managers\audio\MusicManager.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\managers\audio\SoundManager.js
@@ -204,7 +203,6 @@ c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\events\GameOver
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\controls\PlayerController.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\di\BaseManager.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\di\ServiceContainer.js
-c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\events\EventBus.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\managers\AnimationManager.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\managers\audio\MusicManager.js
 c:\Users\laber\Downloads\ShooterGTU-master\ShooterGTU-master\src\modules\managers\audio\SoundManager.js
