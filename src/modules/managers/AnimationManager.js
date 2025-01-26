@@ -121,19 +121,19 @@ export class AnimationManager {
         }
     }
 
-    /**
-     * Additional bullet/travel anim
-     */
-    createAdditionalBulletAnimations() {
-        if (!this.scene.anims.exists('bullet-travel')) {
-            this.scene.anims.create({
-                key: 'bullet-travel',
-                frames: this.scene.anims.generateFrameNumbers('bullet', { start: 0, end: 7 }),
-                frameRate: 16,
-                repeat: -1
-            });
-        }
-    }
+    // /**
+    //  * Additional bullet/travel anim
+    //  */
+    // createAdditionalBulletAnimations() {
+    //     if (!this.scene.anims.exists('bullet-travel')) {
+    //         this.scene.anims.create({
+    //             key: 'bullet-travel',
+    //             frames: this.scene.anims.generateFrameNumbers('bullet', { start: 0, end: 7 }),
+    //             frameRate: 16,
+    //             repeat: -1
+    //         });
+    //     }
+    // }
 
     /**
      * Player character animations
@@ -209,23 +209,23 @@ export class AnimationManager {
     
         const enemyAnimations = [
             // Melee Warrior Animations
-            { key: 'meleewarrior_attack1', texture: 'meleewarrior_attack1', frames: { start: 0, end: 6 }, frameRate: 8, repeat: 0 },
-            { key: 'meleewarrior_attack2', texture: 'meleewarrior_attack2', frames: { start: 0, end: 6 }, frameRate: 8, repeat: 0 },
-            { key: 'meleewarrior_attack3', texture: 'meleewarrior_attack3', frames: { start: 0, end: 6 }, frameRate: 8, repeat: 0 },
-            { key: 'meleewarrior_death', texture: 'meleewarrior_death', frames: { start: 0, end: 8 }, frameRate: 8, repeat: 0 },
-            { key: 'meleewarrior_defend', texture: 'meleewarrior_defend', frames: { start: 0, end: 3 }, frameRate: 8, repeat: 0 },
-            { key: 'meleewarrior_walk', texture: 'meleewarrior_walk', frames: { start: 0, end: 7 }, frameRate: 8, repeat: -1 },
-            { key: 'meleewarrior_hurt', texture: 'meleewarrior_hurt', frames: { start: 0, end: 3 }, frameRate: 8, repeat: 0 },
-            { key: 'meleewarrior_jump', texture: 'meleewarrior_jump', frames: { start: 0, end: 3 }, frameRate: 8, repeat: 0 },
-            { key: 'meleewarrior_idle', texture: 'meleewarrior_idle', frames: { start: 0, end: 5 }, frameRate: 8, repeat: -1 },
+            { key: 'meleewarrior_attack1', texture: 'melee_warrior_attack1', frames: { start: 0, end: 6 }, frameRate: 8, repeat: 0 },
+            { key: 'meleewarrior_attack2', texture: 'melee_warrior_attack2', frames: { start: 0, end: 6 }, frameRate: 8, repeat: 0 },
+            { key: 'meleewarrior_attack3', texture: 'melee_warrior_attack3', frames: { start: 0, end: 6 }, frameRate: 8, repeat: 0 },
+            { key: 'meleewarrior_death', texture: 'melee_warrior_death', frames: { start: 0, end: 8 }, frameRate: 8, repeat: 0 },
+            { key: 'meleewarrior_defend', texture: 'melee_warrior_defend', frames: { start: 0, end: 3 }, frameRate: 8, repeat: 0 },
+            { key: 'meleewarrior_walk', texture: 'melee_warrior_walk', frames: { start: 0, end: 7 }, frameRate: 8, repeat: -1 },
+            { key: 'meleewarrior_hurt', texture: 'melee_warrior_hurt', frames: { start: 0, end: 3 }, frameRate: 8, repeat: 0 },
+            { key: 'meleewarrior_jump', texture: 'melee_warrior_jump', frames: { start: 0, end: 3 }, frameRate: 8, repeat: 0 },
+            { key: 'meleewarrior_idle', texture: 'melee_warrior_idle', frames: { start: 0, end: 5 }, frameRate: 8, repeat: -1 },
     
             // Zapper Animations
             { key: 'zapper_idle', texture: 'zapper_idle', frames: { start: 0, end: 0 }, frameRate: 8, repeat: -1 },
-            { key: 'zapper_wake', texture: 'zapper_wake', frames: { start: 0, end: 7 }, frameRate: 8, repeat: 0 },
-            { key: 'zapper_walk', texture: 'zapper_walk', frames: { start: 0, end: 7 }, frameRate: 8, repeat: -1 },
-            { key: 'zapper_attack', texture: 'zapper_attack', frames: { start: 0, end: 5 }, frameRate: 15, repeat: 0 },
+            { key: 'zapper_wake', texture: 'zapper_wake', frames: { start: 0, end: 5 }, frameRate: 8, repeat: 0 },
+            { key: 'zapper_walk', texture: 'zapper_walk', frames: { start: 0, end: 5 }, frameRate: 8, repeat: -1 },
+            { key: 'zapper_attack', texture: 'zapper_attack', frames: { start: 0, end: 9 }, frameRate: 15, repeat: 0 },
             { key: 'zapper_shock', texture: 'zapper_shock', frames: { start: 0, end: 3 }, frameRate: 8, repeat: 0 },
-            { key: 'zapper_death', texture: 'zapper_death', frames: { start: 0, end: 8 }, frameRate: 8, repeat: 0 },
+            { key: 'zapper_death', texture: 'zapper_death', frames: { start: 0, end: 7 }, frameRate: 8, repeat: 0 },
         ];
     
         // Loop through animations and dynamically create them
@@ -338,7 +338,7 @@ export class AnimationManager {
     //         wake:   { key: 'zapper_wake',   frames: { start: 0, end: 5 },  frameRate: 10, repeat: 0 },
     //         walk:   { key: 'zapper_walk',   frames: { start: 0, end: 7 },  frameRate: 12, repeat: -1 },
     //         attack: { key: 'zapper_attack', frames: { start: 0, end: 5 },  frameRate: 15, repeat: 0 },
-    //         shock:  { key: 'zapper_shock',  frames: { start: 0, end: 5 },  frameRate: 15, repeat: 0 },
+    //         shock:  { key: 'zapper_shock',  frames: { start: 0, end: 9 },  frameRate: 15, repeat: 0 },
     //         death:  { key: 'zapper_death',  frames: { start: 0, end: 4 },  frameRate: 10, repeat: 0 }
     //     };
 
@@ -436,7 +436,7 @@ export class AnimationManager {
 
         // Projectiles
         this.createBulletAnimation();
-        this.createAdditionalBulletAnimations();
+        //this.createAdditionalBulletAnimations();
         // (Optional) this.createHitEffectAnimation();
 
         // Characters
