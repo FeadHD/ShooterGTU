@@ -2,8 +2,6 @@ import { BaseScene } from '../elements/BaseScene';
 import { GameConfig } from '../../config/GameConfig';
 import { Player } from '../../prefabs/Player';
 import { ManagerFactory } from '../../modules/di/ManagerFactory';
-import { AssetManager } from '../../modules/managers/AssetManager';
-import { Zapper } from '../../prefabs/enemies/Zapper';
 
 export class WayneWorld extends BaseScene {
     // Constants
@@ -51,31 +49,28 @@ export class WayneWorld extends BaseScene {
 
     preload() {
         super.preload();
+
+        // 1) Create all managers
+        this.managers = ManagerFactory.createManagers(this);
     
-        // Initialize AssetManager and attach it to the scene
-        const assets = new AssetManager(this);
-    
-        // Initialize ManagerFactory
-        const managerFactory = new ManagerFactory();
-        console.log('ManagerFactory initialized:', managerFactory);
-    
-        // Create LDTK Entity Manager first
+        // 2) Create LDTK Entity Manager first
         const ldtkEntityManager = ManagerFactory.createEntityManager(this);
     
-        // Now register entity factories
+        // 3) Now register entity factories
         ldtkEntityManager.registerEntityFactories({
             Enemy: (scene, x, y, fields) => new Enemy(scene, x, y),
             Bitcoin: (scene, x, y, fields) => new Bitcoin(scene, x, y),
-            Zapper: (scene, x, y, fields) => new Zapper(scene, x, y, fields),
+            Zapper: (scene, x, y, fields) => ManagerFactory.getZapper(scene, x, y, fields),
             PlayerStart: (scene, x, y, fields) => new PlayerStart(scene, x, y),
+            Drone: (scene, x, y, fields) => new Drone(scene, x, y),
+            meleeWarrior: (scene, x, y, fields) => new MeleeWarrior(scene, x, y),
             // Add other entities here
         });
-    
-        // Assign AssetManager to the scene
-        this.assetManager = assets;
-        console.log('AssetManager assigned to scene:', this.assetManager);
-    
-        // Load assets via AssetManager
+
+        // 4) Retrieve the shared AssetManager from the container
+        this.assetManager = this.managers.assets;
+
+        // 5) Load assets
         this.assetManager.loadAssets();
     }
     
@@ -670,7 +665,7 @@ export class WayneWorld extends BaseScene {
                 let entity;
             
                 if (data.type === 'Zapper') {
-                    entity = new Zapper(this, data.x, data.y);
+                    entity = ManagerFactory.getZapper(this, data.x, data.y, data.properties);
                     console.log('Zapper created:', entity);
                 } else {
                     entity = this.ldtkEntityManager.createEntityInstance(

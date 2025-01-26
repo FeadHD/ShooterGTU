@@ -109,11 +109,18 @@ export class ManagerFactory {
                 console.log(`Factory invoked for Zapper at (${x}, ${y}) with fields:`, fields);
                 return new Zapper(scene, x, y, fields);
             },
-            // ... other entity factories
             PlayerStart: (scene, x, y, fields) => {
                 console.log(`Factory invoked for PlayerStart at (${x}, ${y}) with fields:`, fields);
                 return { x, y, type: 'PlayerStart' };
             },
+            Drone: (scene, x, y, fields) => {
+                console.log(`Factory invoked for Drone at (${x}, ${y}) with fields:`, fields);
+                return new Drone(scene, x, y);
+            },
+            meleeWarrior: (scene, x, y, fields) => {    
+                console.log(`Factory invoked for meleeWarrior at (${x}, ${y}) with fields:`, fields);
+                return new MeleeWarrior(scene, x, y);
+            }
         });
     
         const enemies = new EnemyManager(scene);
@@ -149,6 +156,8 @@ export class ManagerFactory {
         container.register('boundaries', boundaries);
         container.register('debug', debug);
         container.register('collision', collision);
+    
+        // 11) Register asset manager
     
         if (ui) {
             container.register('ui', ui);
@@ -226,6 +235,20 @@ export class ManagerFactory {
             this.uiManager = new UIManager(scene);
         }
         return this.uiManager;
+    }
+
+    static getAssetManager(scene) {
+        if (!this.assetManager) {
+            this.assetManager = new AssetManager(scene);
+        }
+        return this.assetManager;
+    }
+
+    static getZapper(scene, x, y, fields) {
+        if (!this.zapper) {
+            this.zapper = new Zapper(scene, x, y, fields);
+        }
+        return this.zapper;
     }
 }
 
