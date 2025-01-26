@@ -12,16 +12,20 @@ ShooterGTU is a dynamic 2D action platformer built with Phaser 3.87.0. Set in a 
   - Sound effects for actions
   - Volume controls for both music and SFX
 - **Responsive Controls**:
-  - Smooth player movement
-  - Precise jumping mechanics
+  - Smooth player movement with walk animation
+  - Advanced jump mechanics with coyote time
+  - Roll ability for quick dodging
+  - Hover ability for air control
   - Combat system with shooting mechanics
 - **Modern UI**:
   - Clean, cyberpunk-themed menus
+  - Dynamic health and stamina displays
   - Interactive settings panel
   - Volume and control customization
   - Leaderboard system
 - **Game Systems**:
-  - Health and lives management
+  - Health and lives management with visual feedback
+  - Stamina system for special abilities
   - Score tracking
   - Checkpoint system
   - Enemy AI with various behaviors
@@ -30,8 +34,10 @@ ShooterGTU is a dynamic 2D action platformer built with Phaser 3.87.0. Set in a 
 ## Controls
 
 - **Movement**: Arrow Keys / WASD
-  - Left/Right: Move horizontally
-  - Up/Space: Jump
+  - Left/Right: Walk
+  - Up/Space: Jump (with coyote time)
+  - Shift: Roll (uses stamina)
+  - Hold Jump in air: Hover (uses stamina)
 - **Combat**:
   - Mouse Click / Space: Shoot
 - **Menu**:
@@ -129,13 +135,20 @@ ShooterGTU is a dynamic 2D action platformer built with Phaser 3.87.0. Set in a 
 - **ui-helpers.js**: Reusable UI components
 
 ### Game Objects
-- **Player.js**: Core player mechanics and states
+- **Player.js**: Core player mechanics including:
+  - Movement with walk animation
+  - Jump system with coyote time
+  - Roll ability for quick dodging
+  - Hover ability for air control
+  - Health and stamina management
+  - Combat mechanics
 - **Enemy.js**: Base enemy functionality
 - **PlayerController.js**: Input handling and controls
 - **ObjectPool.js**: Object reuse system
 - **BulletPool.js**: Projectile pooling
 - **ParticlePool.js**: Visual effect pooling
 - **Bullet.js**: Projectile physics and lifecycle
+- **Zapper.js**: Environmental hazard with electrical damage
 
 ### Event System
 - **EventManager.js**: Type-safe event handling

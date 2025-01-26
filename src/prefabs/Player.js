@@ -142,14 +142,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
                 repeat: -1
             },
             {
-                key: 'character_Run',
-                spritesheet: 'character_run',
-                frameRate: 10,
-                start: 0,
-                end: 5,
-                repeat: -1
-            },
-            {
                 key: 'character_Jump',
                 spritesheet: 'character_jump',
                 frameRate: 10,

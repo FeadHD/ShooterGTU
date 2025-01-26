@@ -333,7 +333,7 @@ export class Preloader extends Scene {
      * ASSET VERIFICATION
      */
     verifyAssets() {
-        const textureKeys = ['character_idle', 'character_run', 'character_walk', 'character_jump', 'character_death'];
+        const textureKeys = ['character_idle', 'character_walk', 'character_jump', 'character_death'];
         textureKeys.forEach(key => {
             if (this.textures.exists(key)) {
                 console.log(`${key} texture loaded successfully`);

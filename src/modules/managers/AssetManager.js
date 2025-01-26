@@ -73,7 +73,6 @@ export class AssetManager {
         const characterSprites = [
             { key: 'player_idle', file: 'character_idle.png', frames: { start: 0, end: 3 }, frameRate: 10, repeat: -1 },
             { key: 'player_jump', file: 'character_jump.png', frames: { start: 0, end: 1 }, frameRate: 10, repeat: 0 },
-            { key: 'player_crouch', file: 'character_crouch.png', frames: { start: 0, end: 2 }, frameRate: 10, repeat: 0 },
             { key: 'player_death', file: 'character_death.png', frames: { start: 0, end: 5 }, frameRate: 8, repeat: 0 },
             { key: 'player_roll', file: 'character_roll.png', frames: { start: 0, end: 3 }, frameRate: 10, repeat: 0 },
             { key: 'player_walk', file: 'character_walk.png', frames: { start: 0, end: 5 }, frameRate: 12, repeat: 0 },
