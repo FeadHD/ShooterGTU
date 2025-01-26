@@ -122,63 +122,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.body.setSize(12, 27);    // Collision box size
 
         // Initialize core systems
-        this.createAnimations();
         this.controller = new PlayerController(this.scene);
         this.controller.setupShootingControls(this);
-    }
-
-    /**
-     * Creates and initializes all player character animations
-     * Includes idle, walking, jumping, and special ability animations
-     */
-    createAnimations() {
-        const anims = [
-            {
-                key: 'character_Idle',
-                spritesheet: 'character_idle',
-                frameRate: 8,
-                start: 0,
-                end: 3,
-                repeat: -1
-            },
-            {
-                key: 'character_Jump',
-                spritesheet: 'character_jump',
-                frameRate: 10,
-                start: 0,
-                end: 1,
-                repeat: 0
-            },
-            {
-                key: 'character_Fall',
-                spritesheet: 'character_fall',
-                frameRate: 10,
-                start: 0,
-                end: 1,
-                repeat: 0
-            },
-            {
-                key: 'character_Walk',
-                spritesheet: 'character_walk',
-                frameRate: 10,
-                start: 0,
-                end: 8,
-                repeat: -1
-            },
-            {
-                key: 'character_Roll',
-                spritesheet: 'character_roll',
-                frameRate: 15,
-                start: 0,
-                end: 3,
-                repeat: 0
-            }
-        ];
-
-        console.log(
-            'Available animations:',
-            Object.keys(this.scene.anims.anims.entries)
-        );
     }
 
     /**

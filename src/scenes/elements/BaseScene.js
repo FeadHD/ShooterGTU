@@ -470,8 +470,4 @@ export class BaseScene extends Scene {
         }
     }
 
-    /** Calculate appropriate spawn height from ground */
-    getSpawnHeight() {
-        return this.groundTop - 16;
-    }
 }
