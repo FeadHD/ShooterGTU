@@ -117,23 +117,30 @@ export class ManagerFactory {
                 console.log(`Factory invoked for Drone at (${x}, ${y}) with fields:`, fields);
                 return new Drone(scene, x, y);
             },
-            meleeWarrior: (scene, x, y, fields) => {    
+            MeleeWarrior: (scene, x, y, fields) => {    
                 console.log(`Factory invoked for meleeWarrior at (${x}, ${y}) with fields:`, fields);
-                return new MeleeWarrior(scene, x, y);
+                return new MeleeWarrior(scene, x, y, fields);
             }
         });
     
         const enemies = new EnemyManager(scene);
         const hazards = new HazardManager(scene);
-        const animations = new AnimationManager(scene);
+
         const effects = new EffectsManager(scene);
         const boundaries = new SceneBoundaryManager(scene);
         const debug = new DebugSystem(scene);
         const collision = new CollisionManager(scene);
 
         // 8) Initialize animation manager
-        scene.animations = animations;
-        animations.initialize();
+        const animations = new AnimationManager(scene);
+        scene.animations = animations; // Attach it to the scene
+    
+        // Delay animation initialization until assets are loaded
+        scene.load.once('complete', () => {
+            animations.initialize();
+            console.log('AnimationManager initialized after textures loaded.');
+        });
+    
     
         // 9) Skip UI if MainMenu
         let ui = null;
@@ -249,6 +256,13 @@ export class ManagerFactory {
             this.zapper = new Zapper(scene, x, y, fields);
         }
         return this.zapper;
+    }
+
+    static getMeleeWarrior(scene, x, y, fields) {
+        if (!this.meleeWarrior) {
+            this.meleeWarrior = new MeleeWarrior(scene, x, y);
+        }
+        return this.meleeWarrior;
     }
 }
 

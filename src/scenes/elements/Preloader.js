@@ -75,7 +75,6 @@ export class Preloader extends Scene {
         // Load game assets by category
         this.loadBackgrounds();
         this.loadCharacterSprites();
-        this.loadEnemySprites();
         this.loadProjectiles();
         this.loadAudio();
         this.loadCollectibles();
@@ -168,64 +167,6 @@ export class Preloader extends Scene {
         });
     }
     
-
-    /**
-     * ENEMY SPRITES
-     */
-    loadEnemySprites() {
-        const enemyAssets = {
-            // Drone assets
-            drone: [
-                { key: 'Bot1v1', path: 'assets/enemys/drone/Bot1v1.png', type: 'image' }
-            ],
-    
-            // Zapper assets
-            zapper: [
-                { key: 'zapper_idle', path: 'assets/enemys/zapper/zapper_idle.png', frameWidth: 32, frameHeight: 32, endFrame: 3 },
-                { key: 'zapper_attack', path: 'assets/enemys/zapper/zapper_attack.png', frameWidth: 32, frameHeight: 32, endFrame: 3 },
-                { key: 'zapper_walk', path: 'assets/enemys/zapper/zapper_walk.png', frameWidth: 32, frameHeight: 32, endFrame: 5 },
-                { key: 'zapper_hit', path: 'assets/enemys/zapper/zapper_hit.png', frameWidth: 32, frameHeight: 32, endFrame: 2 },
-                { key: 'zapper_death', path: 'assets/enemys/zapper/zapper_death.png', frameWidth: 32, frameHeight: 32, endFrame: 7 },
-                { key: 'zapper_shock', path: 'assets/enemys/zapper/zapper_shock.png', frameWidth: 32, frameHeight: 32, endFrame: 6 },
-                { key: 'zapper_wake', path: 'assets/enemys/zapper/zapper_wake.png', frameWidth: 32, frameHeight: 32, endFrame: 2 }
-            ],
-    
-            // Melee animations
-            melee: [
-                { key: 'melee_attack1', path: './assets/enemys/melee_warrior/melee_warrior_attack1.png', frameWidth: 64, frameHeight: 64, endFrame: 5 },
-                { key: 'melee_attack2', path: './assets/enemys/melee_warrior/melee_warrior_attack2.png', frameWidth: 64, frameHeight: 64, endFrame: 5 },
-                { key: 'melee_attack3', path: './assets/enemys/melee_warrior/melee_warrior_attack3.png', frameWidth: 64, frameHeight: 64, endFrame: 5 },
-                { key: 'melee_death', path: './assets/enemys/melee_warrior/melee_warrior_death.png', frameWidth: 64, frameHeight: 64, endFrame: 11 },
-                { key: 'melee_defend', path: './assets/enemys/melee_warrior/melee_warrior_defend.png', frameWidth: 64, frameHeight: 64, endFrame: 5 },
-                { key: 'melee_hurt', path: './assets/enemys/melee_warrior/melee_warrior_hurt.png', frameWidth: 64, frameHeight: 64, endFrame: 3 },
-                { key: 'melee_idle', path: './assets/enemys/melee_warrior/melee_warrior_idle.png', frameWidth: 64, frameHeight: 64, endFrame: 5 },
-                { key: 'melee_jump', path: './assets/enemys/melee_warrior/melee_warrior_jump.png', frameWidth: 64, frameHeight: 64, endFrame: 5 },
-                { key: 'melee_run', path: './assets/enemys/melee_warrior/melee_warrior_run.png', frameWidth: 64, frameHeight: 64, endFrame: 5 },
-                { key: 'melee_walk', path: './assets/enemys/melee_warrior/melee_warrior_walk.png', frameWidth: 64, frameHeight: 64, endFrame: 5 }
-            ]
-        };
-    
-        // Load all assets
-        Object.entries(enemyAssets).forEach(([enemyType, assets]) => {
-            assets.forEach(asset => {
-                if (asset.type === 'image') {
-                    this.load.image(asset.key, asset.path);
-                } else {
-                    this.load.spritesheet(asset.key, asset.path, {
-                        frameWidth: asset.frameWidth,
-                        frameHeight: asset.frameHeight,
-                        startFrame: 0,
-                        endFrame: asset.endFrame,
-                        spacing: 0,
-                        margin: 0
-                    });
-                }
-            });
-        });
-    }
-    
-    
-
     /**
      * PROJECTILES AND EFFECTS
      */
@@ -289,9 +230,6 @@ export class Preloader extends Scene {
     create() {
         // Load custom web fonts or fallback
         this.loadFont('Retronoid', 'assets/fonts/fonts.css', 'MainMenu', 'Arial', 3000);
-    
-        // Verify critical assets
-        this.verifyAssets();
     }
     
     loadFont(fontFamily, fontUrl, nextScene, fallbackFont, timeout) {
@@ -317,23 +255,5 @@ export class Preloader extends Scene {
             this.registry.set('fontFamily', fallbackFont);
             this.scene.start(nextScene);
         }
-    }
-    
-
-    /**
-     * ASSET VERIFICATION
-     */
-    verifyAssets() {
-        const textureKeys = ['character_idle', 'character_walk', 'character_jump', 'character_death'];
-        textureKeys.forEach(key => {
-            if (this.textures.exists(key)) {
-                console.log(`${key} texture loaded successfully`);
-                const texture = this.textures.get(key);
-                console.log(`${key} dimensions:`, texture.source[0].width, 'x', texture.source[0].height);
-                console.log(`${key} frames:`, texture.frameTotal);
-            } else {
-                console.error(`${key} texture failed to load`);
-            }
-        });
     }
 }

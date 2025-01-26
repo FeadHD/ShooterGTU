@@ -202,102 +202,161 @@ export class AnimationManager {
     }
 
     /**
-     * Basic enemy animations
-     */
+ * Dynamically creates animations for enemies based on loaded assets.
+ */
     createEnemyAnimations() {
-        // enemy-idle
-        if (!this.scene.anims.exists('enemy-idle')) {
-            this.scene.anims.create({
-                key: 'enemy-idle',
-                frames: this.scene.anims.generateFrameNumbers('enemy', { start: 0, end: 3 }),
-                frameRate: 8,
-                repeat: -1
-            });
-        }
-        // enemy-run
-        if (!this.scene.anims.exists('enemy-run')) {
-            this.scene.anims.create({
-                key: 'enemy-run',
-                frames: this.scene.anims.generateFrameNumbers('enemy', { start: 8, end: 13 }),
-                frameRate: 10,
-                repeat: -1
-            });
-        }
-        // enemy-attack
-        if (!this.scene.anims.exists('enemy-attack')) {
-            this.scene.anims.create({
-                key: 'enemy-attack',
-                frames: this.scene.anims.generateFrameNumbers('enemy', { start: 16, end: 19 }),
-                frameRate: 12,
-                repeat: 0
-            });
-        }
-    }
+        console.log('Creating enemy animations dynamically...');
+    
+        const enemyAnimations = [
+            // Melee Warrior Animations
+            { key: 'meleewarrior_attack1', texture: 'meleewarrior_attack1', frames: { start: 0, end: 6 }, frameRate: 8, repeat: 0 },
+            { key: 'meleewarrior_attack2', texture: 'meleewarrior_attack2', frames: { start: 0, end: 6 }, frameRate: 8, repeat: 0 },
+            { key: 'meleewarrior_attack3', texture: 'meleewarrior_attack3', frames: { start: 0, end: 6 }, frameRate: 8, repeat: 0 },
+            { key: 'meleewarrior_death', texture: 'meleewarrior_death', frames: { start: 0, end: 8 }, frameRate: 8, repeat: 0 },
+            { key: 'meleewarrior_defend', texture: 'meleewarrior_defend', frames: { start: 0, end: 3 }, frameRate: 8, repeat: 0 },
+            { key: 'meleewarrior_walk', texture: 'meleewarrior_walk', frames: { start: 0, end: 7 }, frameRate: 8, repeat: -1 },
+            { key: 'meleewarrior_hurt', texture: 'meleewarrior_hurt', frames: { start: 0, end: 3 }, frameRate: 8, repeat: 0 },
+            { key: 'meleewarrior_jump', texture: 'meleewarrior_jump', frames: { start: 0, end: 3 }, frameRate: 8, repeat: 0 },
+            { key: 'meleewarrior_idle', texture: 'meleewarrior_idle', frames: { start: 0, end: 5 }, frameRate: 8, repeat: -1 },
+    
+            // Zapper Animations
+            { key: 'zapper_idle', texture: 'zapper_idle', frames: { start: 0, end: 0 }, frameRate: 8, repeat: -1 },
+            { key: 'zapper_wake', texture: 'zapper_wake', frames: { start: 0, end: 7 }, frameRate: 8, repeat: 0 },
+            { key: 'zapper_walk', texture: 'zapper_walk', frames: { start: 0, end: 7 }, frameRate: 8, repeat: -1 },
+            { key: 'zapper_attack', texture: 'zapper_attack', frames: { start: 0, end: 5 }, frameRate: 15, repeat: 0 },
+            { key: 'zapper_shock', texture: 'zapper_shock', frames: { start: 0, end: 3 }, frameRate: 8, repeat: 0 },
+            { key: 'zapper_death', texture: 'zapper_death', frames: { start: 0, end: 8 }, frameRate: 8, repeat: 0 },
+        ];
+    
+        // Loop through animations and dynamically create them
+        enemyAnimations.forEach(anim => {
+            if (!this.scene.textures.exists(anim.texture)) {
+                console.warn(`Texture not found for animation: ${anim.texture}`);
+                return; // Skip if texture is not loaded
+            }
 
-    /**
-     * Warrior enemy animations
-     */
-    createWarriorAnimations() {
-        const animConfigs = {
-            IDLE:   { endFrame: 5, repeat: -1, frameRate: 8 },
-            WALK:   { endFrame: 7, repeat: -1, frameRate: 8 },
-            ATTACK: { endFrame: 6, repeat: 0, frameRate: 12, spriteKey: 'enemymeleewarrior_ATTACK 1' },
-            DEATH:  { endFrame: 8, repeat: 0, frameRate: 8 },
-            HURT:   { endFrame: 3, repeat: 0, frameRate: 10 },
-            DEFEND: { endFrame: 3, repeat: 0, frameRate: 8 },
-            RUN:    { endFrame: 7, repeat: -1, frameRate: 12 },
-            JUMP:   { endFrame: 3, repeat: 0, frameRate: 8 }
-        };
+            if (!this.scene.anims.exists(anim.key)) {
+                const frames = this.scene.anims.generateFrameNumbers(anim.texture, anim.frames);
+                if (!frames || frames.length === 0) {
+                    console.warn(`No valid frames found for animation: ${anim.key}`);
+                    return; // Skip if no valid frames are generated
+                }
 
-        Object.entries(animConfigs).forEach(([key, config]) => {
-            const spriteKey = config.spriteKey || `enemymeleewarrior_${key}`;
-            const animKey = `enemymeleewarrior-${key.toLowerCase()}`;
-
-            if (!this.scene.anims.exists(animKey)) {
                 this.scene.anims.create({
-                    key: animKey,
-                    frames: this.scene.anims.generateFrameNumbers(spriteKey, {
-                        start: 0,
-                        end: config.endFrame
-                    }),
-                    frameRate: config.frameRate,
-                    repeat: config.repeat
+                    key: anim.key,
+                    frames,
+                    frameRate: anim.frameRate,
+                    repeat: anim.repeat,
                 });
-                console.log(`Created warrior animation: ${animKey}`);
+                console.log(`Created animation: ${anim.key}`);
             }
         });
     }
+    
+    
 
-    /**
-     * Zapper enemy animations
-     */
-    createZapperAnimations() {
-        console.log('Creating Zapper animations...');
 
-        const zapperAnims = {
-            idle:   { key: 'zapper_idle',   frames: { start: 0, end: 3 },  frameRate: 8,  repeat: -1 },
-            wake:   { key: 'zapper_wake',   frames: { start: 0, end: 5 },  frameRate: 10, repeat: 0 },
-            walk:   { key: 'zapper_walk',   frames: { start: 0, end: 7 },  frameRate: 12, repeat: -1 },
-            attack: { key: 'zapper_attack', frames: { start: 0, end: 5 },  frameRate: 15, repeat: 0 },
-            shock:  { key: 'zapper_shock',  frames: { start: 0, end: 5 },  frameRate: 15, repeat: 0 },
-            death:  { key: 'zapper_death',  frames: { start: 0, end: 4 },  frameRate: 10, repeat: 0 }
-        };
 
-        Object.values(zapperAnims).forEach(config => {
-            if (!this.scene.anims.exists(config.key)) {
-                const spriteKey = config.key.split('_')[1]; // e.g. "idle"
-                this.scene.anims.create({
-                    key: config.key,
-                    frames: this.scene.anims.generateFrameNumbers(`zapper_${spriteKey}`, config.frames),
-                    frameRate: config.frameRate,
-                    repeat: config.repeat
-                });
-                console.log(`Created Zapper animation: ${config.key}`);
-            }
-        });
 
-        console.log('Zapper animations created successfully');
-    }
+
+
+    // /**
+    //  * Basic enemy animations
+    //  */
+    // createEnemyAnimations() {
+    //     // enemy-idle
+    //     if (!this.scene.anims.exists('enemy-idle')) {
+    //         this.scene.anims.create({
+    //             key: 'enemy-idle',
+    //             frames: this.scene.anims.generateFrameNumbers('enemy', { start: 0, end: 3 }),
+    //             frameRate: 8,
+    //             repeat: -1
+    //         });
+    //     }
+    //     // enemy-run
+    //     if (!this.scene.anims.exists('enemy-run')) {
+    //         this.scene.anims.create({
+    //             key: 'enemy-run',
+    //             frames: this.scene.anims.generateFrameNumbers('enemy', { start: 8, end: 13 }),
+    //             frameRate: 10,
+    //             repeat: -1
+    //         });
+    //     }
+    //     // enemy-attack
+    //     if (!this.scene.anims.exists('enemy-attack')) {
+    //         this.scene.anims.create({
+    //             key: 'enemy-attack',
+    //             frames: this.scene.anims.generateFrameNumbers('enemy', { start: 16, end: 19 }),
+    //             frameRate: 12,
+    //             repeat: 0
+    //         });
+    //     }
+    // }
+
+    // /**
+    //  * Warrior enemy animations
+    //  */
+    // createWarriorAnimations() {
+    //     const animConfigs = {
+    //         IDLE:   { endFrame: 5, repeat: -1, frameRate: 8 },
+    //         WALK:   { endFrame: 7, repeat: -1, frameRate: 8 },
+    //         ATTACK: { endFrame: 6, repeat: 0, frameRate: 12, spriteKey: 'enemymeleewarrior_ATTACK 1' },
+    //         DEATH:  { endFrame: 8, repeat: 0, frameRate: 8 },
+    //         HURT:   { endFrame: 3, repeat: 0, frameRate: 10 },
+    //         DEFEND: { endFrame: 3, repeat: 0, frameRate: 8 },
+    //         RUN:    { endFrame: 7, repeat: -1, frameRate: 12 },
+    //         JUMP:   { endFrame: 3, repeat: 0, frameRate: 8 }
+    //     };
+
+    //     Object.entries(animConfigs).forEach(([key, config]) => {
+    //         const spriteKey = config.spriteKey || `enemymeleewarrior_${key}`;
+    //         const animKey = `enemymeleewarrior-${key.toLowerCase()}`;
+
+    //         if (!this.scene.anims.exists(animKey)) {
+    //             this.scene.anims.create({
+    //                 key: animKey,
+    //                 frames: this.scene.anims.generateFrameNumbers(spriteKey, {
+    //                     start: 0,
+    //                     end: config.endFrame
+    //                 }),
+    //                 frameRate: config.frameRate,
+    //                 repeat: config.repeat
+    //             });
+    //             console.log(`Created warrior animation: ${animKey}`);
+    //         }
+    //     });
+    // }
+
+    // /**
+    //  * Zapper enemy animations
+    //  */
+    // createZapperAnimations() {
+    //     console.log('Creating Zapper animations...');
+
+    //     const zapperAnims = {
+    //         idle:   { key: 'zapper_idle',   frames: { start: 0, end: 3 },  frameRate: 8,  repeat: -1 },
+    //         wake:   { key: 'zapper_wake',   frames: { start: 0, end: 5 },  frameRate: 10, repeat: 0 },
+    //         walk:   { key: 'zapper_walk',   frames: { start: 0, end: 7 },  frameRate: 12, repeat: -1 },
+    //         attack: { key: 'zapper_attack', frames: { start: 0, end: 5 },  frameRate: 15, repeat: 0 },
+    //         shock:  { key: 'zapper_shock',  frames: { start: 0, end: 5 },  frameRate: 15, repeat: 0 },
+    //         death:  { key: 'zapper_death',  frames: { start: 0, end: 4 },  frameRate: 10, repeat: 0 }
+    //     };
+
+    //     Object.values(zapperAnims).forEach(config => {
+    //         if (!this.scene.anims.exists(config.key)) {
+    //             const spriteKey = config.key.split('_')[1]; // e.g. "idle"
+    //             this.scene.anims.create({
+    //                 key: config.key,
+    //                 frames: this.scene.anims.generateFrameNumbers(`zapper_${spriteKey}`, config.frames),
+    //                 frameRate: config.frameRate,
+    //                 repeat: config.repeat
+    //             });
+    //             console.log(`Created Zapper animation: ${config.key}`);
+    //         }
+    //     });
+
+    //     console.log('Zapper animations created successfully');
+    // }
 
     // ------------------------------------------------------------------------
     //  NON-CHARACTER (UI / OBJECTS / ETC.)
@@ -383,8 +442,8 @@ export class AnimationManager {
         // Characters
         this.createCharacterAnimations();
         this.createEnemyAnimations();
-        this.createWarriorAnimations();
-        this.createZapperAnimations();
+        // this.createWarriorAnimations();
+        // this.createZapperAnimations();
 
         // Objects / HUD / Preloader
         this.createBitcoinAnimations();

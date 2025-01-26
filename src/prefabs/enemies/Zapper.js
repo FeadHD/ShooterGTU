@@ -76,7 +76,7 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
         // Wait for scene to be ready before playing animations
         if (scene.events) {
             scene.events.once('create', () => {
-                this.playAnimationIfValid('zapper_idle');
+                this.playAnimationIfValid('zapper_idle'); // Start with idle animation
             });
         }
     }
@@ -212,14 +212,14 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
         console.log('Zapper waking up!');
         this.isWakingUp = true;
         this.healthBar.visible = true;
-
+    
         if (!this.scene?.anims) {
             console.warn('Scene or animations not available');
             this.isWakingUp = false;
             this.isAwake = true;
             return;
         }
-
+    
         if (this.scene.anims.exists('zapper_wake')) {
             console.log('Playing zapper wake animation');
             this.playAnimationIfValid('zapper_wake');
@@ -229,7 +229,7 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
                 this.isWakingUp = false;
                 this.isAwake = true;
                 if (this.scene.anims.exists('zapper_walk')) {
-                    this.playAnimationIfValid('zapper_walk', false);
+                    this.playAnimationIfValid('zapper_walk', false); // Transition to walk animation
                 }
             });
         } else {
@@ -244,45 +244,46 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
 
     moveTowardsPlayer(player) {
         if (this.isDying || this.isDead || !this.body?.enable || this.isAttacking) return;
-
+    
         const directionX = player.x - this.x;
         const speed = 100;
         this.setVelocityX(directionX > 0 ? speed : -speed);
-
+    
         this.facingRight = directionX > 0;
         this.setFlipX(!this.facingRight);
-
+    
         if (!this.isAttacking) {
-            this.playAnimationIfValid('zapper_walk');
+            this.playAnimationIfValid('zapper_walk'); // Play walking animation
         }
     }
+    
 
     attack() {
         if (this.isDying || this.isDead || this.isAttacking) return;
         console.log('Zapper attacking');
         this.isAttacking = true;
-        
+    
         if (this.body && this.body.enable) {
-            this.setVelocityX(0);
+            this.setVelocityX(0); // Stop movement while attacking
         }
-        
+    
         if (this.scene?.anims.exists('zapper_attack')) {
             console.log('Playing attack and shock animations');
             this.playAnimationIfValid('zapper_attack');
-            
+    
             if (this.scene.anims.exists('zapper_shock')) {
                 this.shockSprite.setVisible(true);
                 this.shockSprite.body.enable = true;
                 this.shockSprite.setPosition(this.x + (this.facingRight ? 32 : -32), this.y);
                 this.shockSprite.setFlipX(!this.facingRight);
-                
+    
                 this.shockSprite.play('zapper_shock').once('animationcomplete', () => {
                     this.shockSprite.setVisible(false);
                     this.shockSprite.body.enable = false;
                 });
             }
-
-            this.anims.play('zapper_attack').once('animationcomplete', () => {
+    
+            this.once('animationcomplete', () => {
                 console.log('Attack animation complete');
                 this.isAttacking = false;
                 if (this.scene && this.scene.anims.exists('zapper_walk')) {
@@ -290,50 +291,48 @@ export class Zapper extends Phaser.Physics.Arcade.Sprite {
                 }
             });
         } else {
-            // If no animation, just set a timer
+            console.warn('Attack animation not found');
             this.scene.time.delayedCall(500, () => {
                 if (!this.isDead) {
                     this.isAttacking = false;
                 }
             });
         }
-
+    
         this.lastAttackTime = this.scene.time.now;
     }
-
+    
     die() {
         if (this.isDead || this.isDying) return;
         console.log('Zapper health reached 0, dying...');
         this.isDying = true;
-        
+    
         if (this.body) {
             this.body.enable = false;
             this.setVelocity(0, 0);
             this.setAcceleration(0, 0);
             this.setImmovable(true);
         }
-        
+    
         if (this.scene?.anims.exists('zapper_death')) {
             console.log('Playing death animation');
-            this.play('zapper_death').once('animationcomplete', () => {
+            this.playAnimationIfValid('zapper_death').once('animationcomplete', () => {
                 console.log('Death animation complete, destroying Zapper');
-
-                // **** Emit 'died' so EnemyManager can award points ****
+    
+                // Emit 'died' so EnemyManager can award points
                 this.emit('died', this);
-
+    
                 this.isDead = true;
                 this.destroy();
             });
         } else {
             console.warn('Death animation not found, destroying immediately');
-            
-            // Emit 'died' even if no animation
             this.emit('died', this);
-
             this.isDead = true;
             this.destroy();
         }
     }
+    
 
     destroy(fromScene) {
         if (this.shockSprite) {

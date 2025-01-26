@@ -63,7 +63,7 @@ export class WayneWorld extends BaseScene {
             Zapper: (scene, x, y, fields) => ManagerFactory.getZapper(scene, x, y, fields),
             PlayerStart: (scene, x, y, fields) => new PlayerStart(scene, x, y),
             Drone: (scene, x, y, fields) => new Drone(scene, x, y),
-            meleeWarrior: (scene, x, y, fields) => new MeleeWarrior(scene, x, y),
+            MeleeWarrior: (scene, x, y, fields) => ManagerFactory.getMeleeWarrior(scene, x, y, fields),
             // Add other entities here
         });
 
@@ -72,6 +72,7 @@ export class WayneWorld extends BaseScene {
 
         // 5) Load assets
         this.assetManager.loadAssets();
+        this.assetManager.loadEnemySprites(); // Fix: Call loadEnemySprites() on the correct instance
     }
     
     create() {
