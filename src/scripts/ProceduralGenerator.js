@@ -172,7 +172,7 @@ export class ProceduralGenerator {
      * @returns {string} Enemy identifier
      */
     getRandomEnemyType() {
-        const types = ['slime', 'drone', 'warrior'];
+        const types = ['drone', 'warrior'];
         return types[Math.floor(Math.random() * types.length)];
     }
 

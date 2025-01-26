@@ -1,13 +1,13 @@
 /**
  * AnimationManager.js
- * Manages sprite animations for all game entities
- * Handles creation, playback, and validation of animations
+ * Manages sprite animations for all game entities, UI, and objects.
+ * Consolidates all anims in one place so they're easy to maintain.
  */
 
 export class AnimationManager {
     /**
      * Initialize animation system
-     * @param {Phaser.Scene} scene - Scene to attach animations to
+     * @param {Phaser.Scene} scene - The scene for anim creation
      */
     constructor(scene) {
         this.scene = scene;
@@ -15,8 +15,7 @@ export class AnimationManager {
     }
 
     /**
-     * Initialize all game animations if not already done
-     * Called once at scene startup
+     * Called once at scene startup (in create())
      */
     initialize() {
         if (!this.initialized) {
@@ -26,18 +25,14 @@ export class AnimationManager {
     }
 
     /**
-     * Check if animation exists in scene
-     * @param {string} key - Animation identifier
+     * Check if an animation with the given key exists
      */
     hasAnimation(key) {
         return this.scene.anims.exists(key);
     }
 
     /**
-     * Play animation on game object
-     * @param {Phaser.GameObjects.Sprite} gameObject - Target sprite
-     * @param {string} key - Animation to play
-     * @param {boolean} ignoreIfPlaying - Skip if already playing
+     * Play an existing animation on a sprite
      */
     play(gameObject, key, ignoreIfPlaying = true) {
         if (this.hasAnimation(key)) {
@@ -47,9 +42,73 @@ export class AnimationManager {
         return false;
     }
 
+    // ------------------------------------------------------------------------
+    //  DYNAMIC / EPHEMERAL ANIMATIONS
+    // ------------------------------------------------------------------------
+
     /**
-     * Create bullet projectile animation
-     * Two-frame looping animation
+     * Example: If the HUD wants partial-step transitions between frames,
+     * we can create a temporary animation, then remove it after playing.
+     * The PlayerHUD will call this instead of creating its own anims.
+     *
+     * @param {Phaser.GameObjects.Sprite} sprite - The health sprite
+     * @param {number} prevFrame - Frame index currently displayed
+     * @param {number} targetFrame - Frame index we want to get to
+     * @param {function} [onComplete] - Optional callback after finishing
+     */
+    playHealthTransition(sprite, prevFrame, targetFrame, onComplete = null) {
+        // If frames are the same, just set it and exit
+        if (prevFrame === targetFrame) {
+            sprite.setFrame(targetFrame);
+            if (onComplete) onComplete();
+            return;
+        }
+
+        // Build ascending or descending frames
+        const frames = [];
+        if (targetFrame > prevFrame) {
+            for (let i = prevFrame; i <= targetFrame; i++) {
+                frames.push({ key: 'health', frame: i });
+            }
+        } else {
+            for (let i = prevFrame; i >= targetFrame; i--) {
+                frames.push({ key: 'health', frame: i });
+            }
+        }
+
+        // If there's only 1 or 0 frames, just setFrame and exit
+        if (frames.length <= 1) {
+            sprite.setFrame(targetFrame);
+            if (onComplete) onComplete();
+            return;
+        }
+
+        // Create a unique key
+        const animKey = `health_change_${Date.now()}`;
+
+        // Create ephemeral animation
+        this.scene.anims.create({
+            key: animKey,
+            frames,
+            frameRate: 8,
+            repeat: 0
+        });
+
+        // Play and remove the anim key after it's done
+        sprite.play(animKey);
+        sprite.once('animationcomplete', () => {
+            this.scene.anims.remove(animKey);
+            sprite.setFrame(targetFrame);
+            if (onComplete) onComplete();
+        });
+    }
+
+    // ------------------------------------------------------------------------
+    //  CORE ANIMATIONS
+    // ------------------------------------------------------------------------
+
+    /**
+     * Example bullet animation
      */
     createBulletAnimation() {
         if (!this.scene.anims.exists('bullet_animation')) {
@@ -57,68 +116,96 @@ export class AnimationManager {
                 key: 'bullet_animation',
                 frames: this.scene.anims.generateFrameNumbers('bullet_animation', { start: 0, end: 3 }),
                 frameRate: 10,
-                repeat: -1        // Loop indefinitely
+                repeat: -1 // Loop indefinitely
             });
         }
     }
 
     /**
-     * Create hit impact effect animation
-     * Quick five-frame sequence
+     * Additional bullet/travel anim
      */
-    // createHitEffectAnimation() {
-    //     if (!this.scene.anims.exists('hit-effect')) {
-    //         this.scene.anims.create({
-    //             key: 'hit-effect',
-    //             frames: this.scene.anims.generateFrameNumbers('hit-effect', { start: 0, end: 4 }),
-    //             frameRate: 15,
-    //             repeat: 0         // Play once
-    //         });
-    //     }
-    // }
+    createAdditionalBulletAnimations() {
+        if (!this.scene.anims.exists('bullet-travel')) {
+            this.scene.anims.create({
+                key: 'bullet-travel',
+                frames: this.scene.anims.generateFrameNumbers('bullet', { start: 0, end: 7 }),
+                frameRate: 16,
+                repeat: -1
+            });
+        }
+    }
 
     /**
-     * Create player character animations
-     * Includes idle, run, jump, fall, and roll states
+     * Player character animations
      */
     createCharacterAnimations() {
-        console.log('Creating character animations...');
-    
-        // Define animation data
         const animations = [
-            { key: 'character_Idle', texture: 'character_idle', frames: { start: 0, end: 3 }, frameRate: 8, repeat: -1 },
-            { key: 'character_Walk', texture: 'character_walk', frames: { start: 0, end: 5 }, frameRate: 10, repeat: -1 },
-            { key: 'character_Death', texture: 'character_death', frames: { start: 0, end: 5 }, frameRate: 8, repeat: 0 },             
-            { key: 'character_Jump', texture: 'character_jump', frames: { start: 0, end: 1 }, frameRate: 10, repeat: 0 },
-            { key: 'character_Fall', texture: 'character_fall', frames: { start: 0, end: 1 }, frameRate: 10, repeat: 0 }
+            {
+                key: 'character_Idle',
+                texture: 'character_idle',
+                frames: { start: 0, end: 3 },
+                frameRate: 8,
+                repeat: -1
+            },
+            {
+                key: 'character_Walk',
+                texture: 'character_walk',
+                frames: { start: 0, end: 5 },
+                frameRate: 10,
+                repeat: -1
+            },
+            {
+                key: 'character_Death',
+                texture: 'character_death',
+                frames: { start: 0, end: 5 },
+                frameRate: 8,
+                repeat: 0
+            },
+            {
+                key: 'character_Jump',
+                texture: 'character_jump',
+                frames: { start: 0, end: 1 },
+                frameRate: 10,
+                repeat: 0
+            },
+            {
+                key: 'character_Fall',
+                texture: 'character_fall',
+                frames: { start: 0, end: 1 },
+                frameRate: 10,
+                repeat: 0
+            },
+            {
+                key: 'character_Roll',
+                texture: 'character_roll',
+                frames: { start: 0, end: 3 },
+                frameRate: 15,
+                repeat: 0
+            }
         ];
-    
-        // Create animations dynamically
+
         animations.forEach(anim => {
-            if (this.scene.textures.exists(anim.texture)) {
-                if (!this.scene.anims.exists(anim.key)) {
-                    this.scene.anims.create({
-                        key: anim.key,
-                        frames: this.scene.anims.generateFrameNumbers(anim.texture, anim.frames),
-                        frameRate: anim.frameRate,
-                        repeat: anim.repeat
-                    });
-                    console.log(`Animation created: ${anim.key}`);
-                } else {
-                    console.warn(`Animation key already exists: ${anim.key}`);
-                }
-            } else {
+            if (!this.scene.textures.exists(anim.texture)) {
                 console.warn(`Texture not found for animation: ${anim.texture}`);
+                return;
+            }
+            if (!this.scene.anims.exists(anim.key)) {
+                this.scene.anims.create({
+                    key: anim.key,
+                    frames: this.scene.anims.generateFrameNumbers(anim.texture, anim.frames),
+                    frameRate: anim.frameRate,
+                    repeat: anim.repeat
+                });
+                console.log(`Created animation: ${anim.key}`);
             }
         });
     }
-    
+
     /**
-     * Create enemy NPC animations
-     * Basic movement and attack sequences
+     * Basic enemy animations
      */
     createEnemyAnimations() {
-        // Idle state - Continuous patrol
+        // enemy-idle
         if (!this.scene.anims.exists('enemy-idle')) {
             this.scene.anims.create({
                 key: 'enemy-idle',
@@ -127,8 +214,7 @@ export class AnimationManager {
                 repeat: -1
             });
         }
-
-        // Chase state - Faster movement
+        // enemy-run
         if (!this.scene.anims.exists('enemy-run')) {
             this.scene.anims.create({
                 key: 'enemy-run',
@@ -137,8 +223,7 @@ export class AnimationManager {
                 repeat: -1
             });
         }
-
-        // Attack sequence - Single strike
+        // enemy-attack
         if (!this.scene.anims.exists('enemy-attack')) {
             this.scene.anims.create({
                 key: 'enemy-attack',
@@ -150,19 +235,18 @@ export class AnimationManager {
     }
 
     /**
-     * Create warrior enemy animations
-     * Complex state machine with multiple actions
+     * Warrior enemy animations
      */
     createWarriorAnimations() {
         const animConfigs = {
-            'IDLE': { endFrame: 5, repeat: -1, frameRate: 8 },      // Patrol state
-            'WALK': { endFrame: 7, repeat: -1, frameRate: 8 },      // Slow movement
-            'ATTACK': { endFrame: 6, repeat: 0, frameRate: 12, spriteKey: 'enemymeleewarrior_ATTACK 1' },
-            'DEATH': { endFrame: 8, repeat: 0, frameRate: 8 },      // Defeat sequence
-            'HURT': { endFrame: 3, repeat: 0, frameRate: 10 },      // Damage reaction
-            'DEFEND': { endFrame: 3, repeat: 0, frameRate: 8 },     // Block stance
-            'RUN': { endFrame: 7, repeat: -1, frameRate: 12 },      // Chase state
-            'JUMP': { endFrame: 3, repeat: 0, frameRate: 8 }        // Leap attack
+            IDLE:   { endFrame: 5, repeat: -1, frameRate: 8 },
+            WALK:   { endFrame: 7, repeat: -1, frameRate: 8 },
+            ATTACK: { endFrame: 6, repeat: 0, frameRate: 12, spriteKey: 'enemymeleewarrior_ATTACK 1' },
+            DEATH:  { endFrame: 8, repeat: 0, frameRate: 8 },
+            HURT:   { endFrame: 3, repeat: 0, frameRate: 10 },
+            DEFEND: { endFrame: 3, repeat: 0, frameRate: 8 },
+            RUN:    { endFrame: 7, repeat: -1, frameRate: 12 },
+            JUMP:   { endFrame: 3, repeat: 0, frameRate: 8 }
         };
 
         Object.entries(animConfigs).forEach(([key, config]) => {
@@ -185,59 +269,26 @@ export class AnimationManager {
     }
 
     /**
-     * Create zapper enemy animations
-     * Electrical attack patterns and states
-     * @param {Phaser.Scene} scene - Scene to create animations in
+     * Zapper enemy animations
      */
-    createZapperAnimations(scene) {
+    createZapperAnimations() {
         console.log('Creating Zapper animations...');
 
         const zapperAnims = {
-            'idle': {
-                key: 'zapper_idle',
-                frames: { start: 0, end: 3 },
-                frameRate: 8,
-                repeat: -1
-            },
-            'wake': {
-                key: 'zapper_wake',
-                frames: { start: 0, end: 5 },
-                frameRate: 10,
-                repeat: 0
-            },
-            'walk': {
-                key: 'zapper_walk',
-                frames: { start: 0, end: 7 },
-                frameRate: 12,
-                repeat: -1
-            },
-            'attack': {
-                key: 'zapper_attack',
-                frames: { start: 0, end: 5 },
-                frameRate: 15,
-                repeat: 0
-            },
-            'shock': {
-                key: 'zapper_shock',
-                frames: { start: 0, end: 5 },
-                frameRate: 15,
-                repeat: 0
-            },
-            'death': {
-                key: 'zapper_death',
-                frames: { start: 0, end: 4 },
-                frameRate: 10,
-                repeat: 0
-            }
+            idle:   { key: 'zapper_idle',   frames: { start: 0, end: 3 },  frameRate: 8,  repeat: -1 },
+            wake:   { key: 'zapper_wake',   frames: { start: 0, end: 5 },  frameRate: 10, repeat: 0 },
+            walk:   { key: 'zapper_walk',   frames: { start: 0, end: 7 },  frameRate: 12, repeat: -1 },
+            attack: { key: 'zapper_attack', frames: { start: 0, end: 5 },  frameRate: 15, repeat: 0 },
+            shock:  { key: 'zapper_shock',  frames: { start: 0, end: 5 },  frameRate: 15, repeat: 0 },
+            death:  { key: 'zapper_death',  frames: { start: 0, end: 4 },  frameRate: 10, repeat: 0 }
         };
 
-        // Create each animation if it doesn't exist
         Object.values(zapperAnims).forEach(config => {
-            if (!scene.anims.exists(config.key)) {
-                const spriteKey = config.key.split('_')[1]; // Get the state name (idle, wake, etc.)
-                scene.anims.create({
+            if (!this.scene.anims.exists(config.key)) {
+                const spriteKey = config.key.split('_')[1]; // e.g. "idle"
+                this.scene.anims.create({
                     key: config.key,
-                    frames: scene.anims.generateFrameNumbers(`zapper_${spriteKey}`, config.frames),
+                    frames: this.scene.anims.generateFrameNumbers(`zapper_${spriteKey}`, config.frames),
                     frameRate: config.frameRate,
                     repeat: config.repeat
                 });
@@ -246,34 +297,100 @@ export class AnimationManager {
         });
 
         console.log('Zapper animations created successfully');
-        return zapperAnims; // Return config for reference
+    }
+
+    // ------------------------------------------------------------------------
+    //  NON-CHARACTER (UI / OBJECTS / ETC.)
+    // ------------------------------------------------------------------------
+
+    /**
+     * Bitcoin spin
+     */
+    createBitcoinAnimations() {
+        if (!this.scene.anims.exists('bitcoin_spin')) {
+            this.scene.anims.create({
+                key: 'bitcoin_spin',
+                frames: [
+                    { key: 'bitcoin_1' },
+                    { key: 'bitcoin_2' },
+                    { key: 'bitcoin_3' },
+                    { key: 'bitcoin_4' },
+                    { key: 'bitcoin_5' },
+                    { key: 'bitcoin_6' },
+                    { key: 'bitcoin_7' },
+                    { key: 'bitcoin_8' }
+                ],
+                frameRate: 10,
+                repeat: -1
+            });
+        }
     }
 
     /**
-     * Create projectile animations
-     * Bullet travel effects
+     * HUD animations (simple frame-based)
      */
-    createBulletAnimations(scene) {
-        scene.anims.create({
-            key: 'bullet-travel',
-            frames: scene.anims.generateFrameNumbers('bullet', { start: 0, end: 7 }),
-            frameRate: 16,
-            repeat: -1           // Continuous motion
-        });
+    createHUDAnimations() {
+        // Health frames
+        if (!this.scene.anims.exists('health_0')) {
+            for (let i = 0; i <= 9; i++) {
+                this.scene.anims.create({
+                    key: `health_${i}`,
+                    frames: [{ key: 'health', frame: i }],
+                    frameRate: 0,
+                    repeat: 0
+                });
+            }
+        }
+
+        // Stamina frames
+        if (!this.scene.anims.exists('stamina_0')) {
+            for (let i = 0; i <= 9; i++) {
+                this.scene.anims.create({
+                    key: `stamina_${i}`,
+                    frames: [{ key: 'stamina', frame: i }],
+                    frameRate: 0,
+                    repeat: 0
+                });
+            }
+        }
     }
 
     /**
-     * Initialize all game animations
-     * Called once during scene setup
+     * Preloader "loading" animation
      */
+    createPreloaderAnimations() {
+        if (!this.scene.anims.exists('loading')) {
+            this.scene.anims.create({
+                key: 'loading',
+                frames: this.scene.anims.generateFrameNumbers('preloader', { start: 0, end: 15 }),
+                frameRate: 12,
+                repeat: -1
+            });
+        }
+    }
+
+    // ------------------------------------------------------------------------
+    //  MASTER CREATION CALL
+    // ------------------------------------------------------------------------
     createAllAnimations() {
         console.log('Creating all game animations...');
+
+        // Projectiles
         this.createBulletAnimation();
-        // this.createHitEffectAnimation();
+        this.createAdditionalBulletAnimations();
+        // (Optional) this.createHitEffectAnimation();
+
+        // Characters
         this.createCharacterAnimations();
         this.createEnemyAnimations();
         this.createWarriorAnimations();
-        this.createZapperAnimations(this.scene);  // Add Zapper animations
-        console.log('All animations created successfully');
+        this.createZapperAnimations();
+
+        // Objects / HUD / Preloader
+        this.createBitcoinAnimations();
+        this.createHUDAnimations();
+        this.createPreloaderAnimations();
+
+        console.log('All animations created successfully.');
     }
 }

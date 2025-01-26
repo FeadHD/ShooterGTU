@@ -35,26 +35,11 @@ export class CollisionManager {
      * ============================
      * ENEMY COLLISIONS
      * ============================
-     * Sets up collisions involving enemy objects (like slimes, drones, etc.).
+     * Sets up collisions involving enemy objects
      */
     setupEnemyCollisions() {
-        // If we have a group of slimes, we make them collide with themselves
-        if (this.scene.slimes) {
-            this.scene.physics.add.collider(
-                this.scene.slimes,
-                this.scene.slimes,
-                this.handleEnemyCollision,
-                null,
-                this.scene
-            );
-        }
-
         // If we have layers (like mapLayer/platforms), let enemies collide with them
         if (this.scene.mapLayer) {
-            if (this.scene.slimes) {
-                this.scene.physics.add.collider(this.scene.slimes, this.scene.mapLayer);
-                this.scene.physics.add.collider(this.scene.slimes, this.scene.platforms);
-            }
             if (this.scene.drones) {
                 this.scene.physics.add.collider(this.scene.drones, this.scene.mapLayer);
                 this.scene.physics.add.collider(this.scene.drones, this.scene.platforms);
@@ -105,21 +90,6 @@ export class CollisionManager {
                 bulletGroup,
                 this.scene.platforms,
                 this.handleBulletCollision,
-                null,
-                this
-            );
-        }
-
-        // Overlaps with slimes
-        if (this.scene.slimes) {
-            this.scene.physics.add.overlap(
-                bulletGroup,
-                this.scene.slimes,
-                (bullet, enemySprite) => {
-                    if (this.scene.enemyManager) {
-                        this.scene.enemyManager.handleBulletHit(bullet, enemySprite);
-                    }
-                },
                 null,
                 this
             );
@@ -214,17 +184,6 @@ export class CollisionManager {
             );
         }
 
-        // Player vs. slimes
-        if (this.scene.slimes) {
-            this.scene.physics.add.overlap(
-                this.scene.player,
-                this.scene.slimes,
-                this.handlePlayerEnemyOverlap, // We'll define this method below
-                null,
-                this
-            );
-        }
-
         // Player vs. drones
         if (this.scene.drones) {
             this.scene.physics.add.overlap(
@@ -235,8 +194,6 @@ export class CollisionManager {
                 this
             );
         }
-
-        // (Feel free to add more for other enemy groups, e.g., meleeWarriors, etc.)
     }
 
     /**
@@ -244,7 +201,7 @@ export class CollisionManager {
      * handlePlayerEnemyOverlap
      * ============================
      * This method replaces "hitEnemy()" from BaseScene.
-     * It's called when the player overlaps with an enemy (like slimes, drones).
+     * It's called when the player overlaps with an enemy (like drones).
      * We reference scene data (gameState, gameUI) via "this.scene".
      */
     handlePlayerEnemyOverlap(player, enemy) {
@@ -314,9 +271,6 @@ export class CollisionManager {
 
         // Additional tile collisions with enemies or bullets
         if (this.scene.mapLayer) {
-            if (this.scene.slimes) {
-                this.scene.physics.add.collider(this.scene.slimes, layer);
-            }
             if (this.scene.drones) {
                 this.scene.physics.add.collider(this.scene.drones, layer);
             }
@@ -347,7 +301,7 @@ export class CollisionManager {
     }
 
     /**
-     * Called when two enemies collide with each other (e.g., slimes).
+     * Called when two enemies collide with each other (e.g., drones).
      * Reverses direction or bounces them off one another.
      */
     handleEnemyCollision(enemy1, enemy2) {

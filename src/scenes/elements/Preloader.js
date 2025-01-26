@@ -150,12 +150,10 @@ export class Preloader extends Scene {
         const characterStates = {
             'idle': { endFrame: 4 },
             'walk': { endFrame: 6 },
-            'run': { endFrame: 6 },
             'jump': { endFrame: 1 },
             'death': { endFrame: 8 },
             'fall': { endFrame: 1 },
             'roll': { endFrame: 3 },
-            'crouch': { endFrame: 2 }
         };
     
         Object.entries(characterStates).forEach(([state, config]) => {
@@ -179,13 +177,6 @@ export class Preloader extends Scene {
             // Drone assets
             drone: [
                 { key: 'Bot1v1', path: 'assets/enemys/drone/Bot1v1.png', type: 'image' }
-            ],
-    
-            // Slime assets
-            slime: [
-                { key: 'slime_idle', path: './assets/enemys/slime/slime_idle.png', frameWidth: 32, frameHeight: 32, endFrame: 3 },
-                { key: 'slime_jump', path: './assets/enemys/slime/slime_jump.png', frameWidth: 32, frameHeight: 32, endFrame: 3 },
-                { key: 'slime_death', path: './assets/enemys/slime/slime_death.png', frameWidth: 32, frameHeight: 32, endFrame: 4 }
             ],
     
             // Zapper assets

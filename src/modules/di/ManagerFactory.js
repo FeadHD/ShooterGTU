@@ -25,7 +25,6 @@ import { UIManager } from '../../scenes/elements/UIManager';
 // Entity prefabs
 import Enemy from '../../prefabs/Enemy';
 import { Bitcoin } from '../../prefabs/Bitcoin';
-import { Slime } from '../../prefabs/Slime';
 import { Drone } from '../../prefabs/Drone';
 import Trampoline from '../../prefabs/Trampoline';
 import { Trap } from '../../prefabs/Trap';
@@ -124,6 +123,10 @@ export class ManagerFactory {
         const boundaries = new SceneBoundaryManager(scene);
         const debug = new DebugSystem(scene);
         const collision = new CollisionManager(scene);
+
+        // 8) Initialize animation manager
+        scene.animations = animations;
+        animations.initialize();
     
         // 9) Skip UI if MainMenu
         let ui = null;

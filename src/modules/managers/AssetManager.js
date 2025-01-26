@@ -95,21 +95,6 @@ export class AssetManager {
         // Listen for load completion
         this.scene.load.once('complete', () => {
             console.log('zzz All character sprites loaded. Creating animations...');
-            
-            // Create animations dynamically
-            characterSprites.forEach(sprite => {
-                if (this.scene.textures.exists(sprite.key)) {
-                    this.scene.anims.create({
-                        key: sprite.key,
-                        frames: this.scene.anims.generateFrameNumbers(sprite.key, sprite.frames),
-                        frameRate: sprite.frameRate,
-                        repeat: sprite.repeat
-                    });
-                    console.log(`zzz Animation ${sprite.key} created`);
-                } else {
-                    console.warn(`zzz Sprite not found for animation: ${sprite.key}`);
-                }
-            });
     
             console.log('zzz All animations created successfully.');
         });
@@ -133,12 +118,6 @@ export class AssetManager {
             const key = action === 'idle' ? 'warrior_idle' : `warrior_${action}`;
             const file = action === 'idle' ? 'IDLE.png' : `${action.toUpperCase()}.png`;
             this.scene.load.image(key, `assets/enemys/warrior/${file}`);
-        });
-
-        // Basic slime enemy states
-        const slimeActions = ['idle', 'jump', 'death'];
-        slimeActions.forEach(action => {
-            this.scene.load.image(`slime_${action}`, `assets/enemys/slime/slime_${action}.png`);
         });
 
         // Flying drone enemy

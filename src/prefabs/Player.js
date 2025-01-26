@@ -129,7 +129,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     /**
      * Creates and initializes all player character animations
-     * Includes idle, running, jumping, and special ability animations
+     * Includes idle, walking, jumping, and special ability animations
      */
     createAnimations() {
         const anims = [
@@ -174,26 +174,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
                 repeat: 0
             }
         ];
-
-        console.log('Creating player animations...');
-        anims.forEach(anim => {
-            if (!this.scene.anims.exists(anim.key)) {
-                try {
-                    this.scene.anims.create({
-                        key: anim.key,
-                        frames: this.scene.anims.generateFrameNumbers(anim.spritesheet, {
-                            start: anim.start,
-                            end: anim.end
-                        }),
-                        frameRate: anim.frameRate,
-                        repeat: anim.repeat
-                    });
-                    console.log(`Created animation: ${anim.key}`);
-                } catch (error) {
-                    console.error(`Failed to create animation ${anim.key}:`, error);
-                }
-            }
-        });
 
         console.log(
             'Available animations:',

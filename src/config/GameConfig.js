@@ -33,11 +33,6 @@ export const GameConfig = {
             SPEED: 150,
             PATROL_SPEED: 100
         },
-        SLIME: {
-            HEALTH: 50,
-            DAMAGE: 15,
-            SPEED: 100
-        },
         DRONE: {
             HEALTH: 75,
             DAMAGE: 20,

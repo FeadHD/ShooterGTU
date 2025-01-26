@@ -5,7 +5,6 @@ export class DebugSystem {
         this.graphics.setDepth(999);
         this.enabled = false;
         this.showDebug = false;
-        this.slimePathHistory = new Map(); // Store slime movement history
         this.enemyIds = new Map(); // Store unique IDs for enemies
         this.nextEnemyId = 1; // Counter for generating unique IDs
         this.debugTexts = []; // Initialize debugTexts array
@@ -205,103 +204,6 @@ export class DebugSystem {
         });
     }
 
-    drawSlimeDebug(slime) {
-        if (!this.enabled || !slime || !slime.sprite) return;
-        console.log('Drawing slime debug for:', slime);
-        console.log('Slime ID:', this.getEnemyId(slime));
-
-        const sprite = slime.sprite;
-
-        // Draw stats first (including ID)
-        const stats = [
-            `Slime #${this.getEnemyId(slime)}`,
-            `Health: ${slime.health}/${slime.maxHealth}`,
-            `Jump Cooldown: ${Math.max(0, slime.jumpCooldown - (this.scene.time.now - slime.lastJumpTime))}ms`,
-            `Speed: ${Math.round(sprite.body.velocity.x)}, ${Math.round(sprite.body.velocity.y)}`
-        ];
-        
-        stats.forEach((text, i) => {
-            const debugText = this.scene.add.text(
-                sprite.x - 50,
-                sprite.y - 90 - (i * 15),
-                text,
-                { 
-                    fontSize: '12px',
-                    fill: '#ffffff',
-                    backgroundColor: '#000000',
-                    padding: { x: 3, y: 3 }
-                }
-            );
-            debugText.setDepth(1000);
-            this.debugTexts.push(debugText);
-        });
-
-        // Draw detection range (outer circle)
-        this.graphics.lineStyle(1, 0x00ff00, 0.3);
-        this.graphics.strokeCircle(sprite.x, sprite.y, slime.detectionRange);
-
-        // Draw aggro range (inner circle)
-        this.graphics.lineStyle(1, 0xff0000, 0.3);
-        this.graphics.strokeCircle(sprite.x, sprite.y, slime.aggroRange);
-
-        // Draw movement direction
-        const directionLength = 30;
-        this.graphics.lineStyle(2, 0xffff00);
-        this.graphics.lineBetween(
-            sprite.x,
-            sprite.y,
-            sprite.x + (slime.direction * directionLength),
-            sprite.y
-        );
-
-        // Store and draw path history
-        if (!this.slimePathHistory.has(sprite)) {
-            this.slimePathHistory.set(sprite, []);
-        }
-        
-        const history = this.slimePathHistory.get(sprite);
-        history.push({ x: sprite.x, y: sprite.y });
-        
-        // Keep only last 50 positions
-        if (history.length > 50) {
-            history.shift();
-        }
-
-        // Draw path
-        if (history.length > 1) {
-            this.graphics.lineStyle(1, 0x00ffff, 0.5);
-            for (let i = 1; i < history.length; i++) {
-                this.graphics.lineBetween(
-                    history[i-1].x,
-                    history[i-1].y,
-                    history[i].x,
-                    history[i].y
-                );
-            }
-        }
-
-        // Draw jump info if slime is jumping
-        if (sprite.body && sprite.body.velocity.y < 0) {
-            this.graphics.lineStyle(1, 0xff00ff);
-            // Draw jump arc
-            const jumpDuration = Math.abs(2 * sprite.body.velocity.y / sprite.body.gravity.y);
-            const points = [];
-            for (let t = 0; t < jumpDuration; t += jumpDuration/10) {
-                const x = sprite.x + (sprite.body.velocity.x * t);
-                const y = sprite.y + (sprite.body.velocity.y * t) + (0.5 * sprite.body.gravity.y * t * t);
-                points.push({ x, y });
-            }
-            for (let i = 1; i < points.length; i++) {
-                this.graphics.lineBetween(
-                    points[i-1].x,
-                    points[i-1].y,
-                    points[i].x,
-                    points[i].y
-                );
-            }
-        }
-    }
-
     drawWarriorDebug(sprite) {
         if (!this.enabled || !sprite) return;
         console.log('Drawing warrior debug for:', sprite);
@@ -323,7 +225,7 @@ export class DebugSystem {
             `Speed: ${Math.round(sprite.body.velocity.x)}, ${Math.round(sprite.body.velocity.y)}`
         ];
 
-        // Draw stats with same style as slime
+        // Draw stats 
         stats.forEach((text, i) => {
             const debugText = this.scene.add.text(
                 sprite.x - 50,
@@ -449,8 +351,6 @@ export class DebugSystem {
                 if (enemy) {
                     if (enemy.getData('type') === 'drone') {
                         this.drawDroneDebug(enemy);
-                    } else if (enemy.getData('type') === 'slime') {
-                        this.drawSlimeDebug(enemy);
                     } else if (enemy.getData('type') === 'warrior') {
                         this.drawWarriorDebug(enemy);
                     }
@@ -512,18 +412,6 @@ export class DebugSystem {
             this.scene.enemies.getChildren().forEach(enemySprite => {
                 if (enemySprite && enemySprite.active && enemySprite.getData('type') === 'warrior') {
                     this.drawWarriorDebug(enemySprite);
-                }
-            });
-        }
-
-        // Draw slime debug info
-        if (this.scene.slimes && this.scene.slimes.children) {
-            this.scene.slimes.children.entries.forEach(slimeSprite => {
-                if (slimeSprite && slimeSprite.active) {
-                    this.drawPhysicsBounds(slimeSprite);
-                    if (slimeSprite.enemy) {
-                        this.drawSlimeDebug(slimeSprite.enemy);
-                    }
                 }
             });
         }

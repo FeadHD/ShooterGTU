@@ -20,25 +20,6 @@ export class Bitcoin extends Phaser.Physics.Arcade.Sprite {
         this.setScale(1.7);
         this.setDepth(1000); // Match player's depth to ensure visibility
 
-        // Create the bitcoin animation if it doesn't exist
-        if (!scene.anims.exists('bitcoin_spin')) {
-            scene.anims.create({
-                key: 'bitcoin_spin',
-                frames: [
-                    { key: 'bitcoin_1' },
-                    { key: 'bitcoin_2' },
-                    { key: 'bitcoin_3' },
-                    { key: 'bitcoin_4' },
-                    { key: 'bitcoin_5' },
-                    { key: 'bitcoin_6' },
-                    { key: 'bitcoin_7' },
-                    { key: 'bitcoin_8' }
-                ],
-                frameRate: 10,
-                repeat: -1
-            });
-        }
-
         // Start spinning animation
         this.play('bitcoin_spin');
 
