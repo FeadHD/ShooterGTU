@@ -106,6 +106,10 @@ export class ManagerFactory {
                 console.log(`Factory invoked for Bitcoin at (${x}, ${y}) with fields:`, fields);
                 return new Bitcoin(scene, x, y);
             },
+            Zapper: (scene, x, y, fields) => {
+                console.log(`Factory invoked for Zapper at (${x}, ${y}) with fields:`, fields);
+                return new Zapper(scene, x, y, fields);
+            },
             // ... other entity factories
             PlayerStart: (scene, x, y, fields) => {
                 console.log(`Factory invoked for PlayerStart at (${x}, ${y}) with fields:`, fields);
