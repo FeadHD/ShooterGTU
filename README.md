@@ -82,8 +82,6 @@ ShooterGTU is a dynamic 2D action platformer built with Phaser 3.87.0. Set in a 
 - **Constants.js**: Default entity configurations and fallback values
 - **Settings.js**: Game settings management with pause menu integration
 - **SoundSettings.js**: Audio configuration with interactive volume controls
-- **actions.js**: Redux-style action creators for state management
-- **types.js**: Constants for action types and game states
 
 #### Scene Management
 - **TransitionScreen.js**: Animated scene transitions and UI overlays
@@ -102,11 +100,6 @@ ShooterGTU is a dynamic 2D action platformer built with Phaser 3.87.0. Set in a 
 - **HazardManager.js**: Hazardous elements and damage system
 - **TutorialManager.js**: In-game tutorial with dynamic instructions
 - **Pathfinder.js**: Platform-specific movement and navigation
-
-#### State Management
-- **StateManager.js**: Game state and persistence handling
-- **GameStateManager.js**: Centralized Redux-like state management
-- **Store.js**: State updates and history tracking
 
 #### Specialized Managers
 - **AudioManager.js**: Unified SFX and music management
@@ -145,7 +138,6 @@ ShooterGTU is a dynamic 2D action platformer built with Phaser 3.87.0. Set in a 
 - **Bullet.js**: Projectile physics and lifecycle
 
 ### Event System
-- **Eventbus.js**: Game-wide pub/sub communication
 - **EventManager.js**: Type-safe event handling
 
 ### Build System
@@ -169,7 +161,6 @@ src/
 │   │   ├── AnimationManager.js    # Animations
 │   │   ├── AudioManager.js        # Sound system
 │   │   └── UIManager.js           # Interface
-│   ├── state/        # Global state management
 │   └── di/           # Dependency injection
 └── systems/          # Core game systems
 ```
@@ -188,13 +179,7 @@ src/
    - Platform interactions
    - Projectile management
 
-3. **State Management**:
-   - Redux-like pattern
-   - Global game state
-   - Scene-specific states
-   - Persistent settings
-
-4. **Level System**:
+3. **Level System**:
    - LDtk integration
    - Progressive loading
    - Dynamic enemy spawning

@@ -55,7 +55,6 @@
 /home/kdsm/TKU/DECEMBER202024/ShooterGTU/scripts/../src/modules/pathfinding/PathFinder.js
 /home/kdsm/TKU/DECEMBER202024/ShooterGTU/scripts/../src/modules/di/ServiceContainer.js
 /home/kdsm/TKU/DECEMBER202024/ShooterGTU/scripts/../src/modules/di/BaseManager.js
-/home/kdsm/TKU/DECEMBER202024/ShooterGTU/scripts/../src/modules/events/EventBus.js
 /home/kdsm/TKU/DECEMBER202024/ShooterGTU/scripts/../src/scenes/levels/__mocks__/baseScene.mock.js
 /home/kdsm/TKU/DECEMBER202024/ShooterGTU/scripts/../src/scenes/levels/__mocks__/phaser.mock.js
 /home/kdsm/TKU/DECEMBER202024/ShooterGTU/scripts/../src/scenes/levels/WayneWorld.js

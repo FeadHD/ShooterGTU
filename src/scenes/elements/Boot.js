@@ -1,15 +1,13 @@
 /**
  * Boot.js
  * Initial scene that runs when the game starts.
- * Responsible for basic setup and global systems initialization.
+ * Responsible for basic setup and minimal global configuration.
  */
 
 import { Scene } from 'phaser';
-import { EventManager } from '../../modules/managers/EventManager';
 
 export class Boot extends Scene {
     constructor() {
-        // Register this scene with Phaser as 'Boot'
         super('Boot');
     }
 
@@ -19,7 +17,6 @@ export class Boot extends Scene {
      */
     preload() {
         // Configure asset loading to use the current URL as base
-        // This ensures assets are loaded relative to the game's location
         this.load.setBaseURL(window.location.href);
         
         // Load preloader animation sprite
@@ -31,16 +28,10 @@ export class Boot extends Scene {
 
     /**
      * SCENE INITIALIZATION
-     * Set up global systems and transition to preloader
+     * Just transitions to 'Preloader' after minimal setup
      */
     create() {
-        // Initialize global event system
-        // Must be done first as other systems depend on it
-        this.game.globalEventManager = new EventManager(this);
-        this.game.globalEventManager.initialize();
-        
-        // Transition to preloader scene
-        // This scene will handle loading all game assets
+        // Move straight to the Preloader scene
         this.scene.start('Preloader');
     }
 }

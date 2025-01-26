@@ -4,6 +4,7 @@
  * Handles damage application, collision detection, and spawn point management.
  */
 
+import { GameEvents } from '../../managers/EventManager';
 import { EntityManager } from './EntityManager';
 import { GameConfig } from '../../../config/GameConfig';
 import { AlarmTrigger } from '../../../prefabs/AlarmTrigger';
@@ -70,9 +71,10 @@ export class HazardManager extends EntityManager {
             this.lastDamageTime.set(hazard, now);
 
             // Emit an event if you have an event bus
-            if (this.eventBus) {
-                this.eventBus.emit('hazardCollision', { hazard, damage });
-            }
+            this.eventManager.emit(GameEvents.HAZARD_COLLISION, {
+                hazard,
+                damage
+            });
         }
     }
 

@@ -9,7 +9,7 @@ export class PlayerHUD {
         frameWidth: 103,
         frameHeight: 32,
         startFrame: 0,
-        endFrame: 10
+        endFrame: 9,
     };
 
     static preloadAssets(scene) {
@@ -63,9 +63,9 @@ export class PlayerHUD {
         this.healthSprite.isUIElement = true;
 
         // Create health frames if they don't exist
-        if (!scene.anims.exists('health_100')) {
-            // Create individual frame animations for each health range
-            for (let i = 0; i <= 10; i++) {
+        if (!scene.anims.exists('health_0')) {
+            // Create individual frame animations for each health frame (0..9)
+            for (let i = 0; i <= 9; i++) {
                 scene.anims.create({
                     key: `health_${i}`,
                     frames: [{ key: 'health', frame: i }],
@@ -82,9 +82,8 @@ export class PlayerHUD {
         this.staminaSprite.isUIElement = true;
 
         // Create stamina frames if they don't exist
-        if (!scene.anims.exists('stamina_100')) {
-            // Create individual frame animations for each stamina range
-            for (let i = 0; i <= 10; i++) {
+        if (!scene.anims.exists('stamina_0')) {
+            for (let i = 0; i <= 9; i++) {
                 scene.anims.create({
                     key: `stamina_${i}`,
                     frames: [{ key: 'stamina', frame: i }],
@@ -105,7 +104,7 @@ export class PlayerHUD {
         // Set depth to ensure it's on top
         this.container.setDepth(1000);
 
-        // Listen for player respawn event
+        // Listen for player respawn event (optional if you dispatch it)
         scene.events.on('player-respawn', this.handleRespawn, this);
 
         // Update initial displays
@@ -134,7 +133,7 @@ export class PlayerHUD {
         this.previousStamina = this.maxStamina;
         this.currentFrame = 0;
 
-        // Clean up any existing animations
+        // Clean up any existing "health_change_*" animations
         const existingAnims = this.scene.anims.anims.entries;
         Object.keys(existingAnims).forEach(key => {
             if (key.startsWith('health_change_')) {
@@ -144,18 +143,17 @@ export class PlayerHUD {
     }
 
     getHealthFrame(health) {
-        // Calculate frame based on health percentage (0-10 frames)
+        // Calculate frame based on health percentage (0..9 frames)
         const healthPercent = (health / this.maxHealth) * 100;
-        if (healthPercent <= 0) return 10;
-        if (healthPercent <= 10) return 9;
-        if (healthPercent <= 20) return 8;
-        if (healthPercent <= 30) return 7;
-        if (healthPercent <= 40) return 6;
-        if (healthPercent <= 50) return 5;
-        if (healthPercent <= 60) return 4;
-        if (healthPercent <= 70) return 3;
-        if (healthPercent <= 80) return 2;
-        if (healthPercent <= 90) return 1;
+        if (healthPercent <= 0) return 9;
+        if (healthPercent <= 10) return 8;
+        if (healthPercent <= 20) return 7;
+        if (healthPercent <= 30) return 6;
+        if (healthPercent <= 40) return 5;
+        if (healthPercent <= 50) return 4;
+        if (healthPercent <= 60) return 3;
+        if (healthPercent <= 70) return 2;
+        if (healthPercent <= 80) return 1;
         return 0;
     }
 
@@ -164,11 +162,9 @@ export class PlayerHUD {
         this.previousHealth = this.currentHealth;
         this.currentHealth = Phaser.Math.Clamp(health, 0, this.maxHealth);
 
-        // Calculate frames based on actual health values
         const prevFrame = this.getHealthFrame(this.previousHealth);
         const targetFrame = this.getHealthFrame(this.currentHealth);
 
-        // Debug log
         console.log('Health Update:', {
             health,
             currentHealth: this.currentHealth,
@@ -180,36 +176,43 @@ export class PlayerHUD {
             currentSpriteFrame: this.healthSprite.frame.name
         });
 
-        // If no change in frames, just set directly
+        // If no change, set frame directly
         if (prevFrame === targetFrame) {
             this.healthSprite.setFrame(targetFrame);
             return;
         }
 
-        // Check if this is a death update
+        // If we just died
         if (this.currentHealth === 0 && this.previousHealth > 0) {
             this.isDying = true;
+            // Just set frame to 9 (empty) or targetFrame
+            this.healthSprite.setFrame(targetFrame);
             return; 
         }
 
-        // If we're already animating, wait for it to finish
+        // If we're already animating, skip
         if (this.isAnimating) {
             return;
         }
 
-        // Calculate how many frames we need to animate through
+        // Build frames array
         const frames = [];
-
-        if (this.currentHealth < this.previousHealth) {
-            // Health decreasing
+        if (targetFrame > prevFrame) {
+            // Ascending frames
             for (let i = prevFrame; i <= targetFrame; i++) {
                 frames.push({ key: 'health', frame: i });
             }
         } else {
-            // Health increasing
+            // Descending frames
             for (let i = prevFrame; i >= targetFrame; i--) {
                 frames.push({ key: 'health', frame: i });
             }
+        }
+
+        // If frames ended up empty, set the frame directly
+        if (frames.length === 0) {
+            this.healthSprite.setFrame(targetFrame);
+            return;
         }
 
         // Create and play the animation
@@ -235,19 +238,17 @@ export class PlayerHUD {
         this.previousStamina = this.currentStamina;
         this.currentStamina = Phaser.Math.Clamp(stamina, 0, this.maxStamina);
         
-        // Calculate which frame to show based on stamina (10 frames, each representing 10% of max stamina)
-        const frame = Math.min(10, Math.floor((this.maxStamina - this.currentStamina) / 10));
-        
-        // Set the frame directly without animation
+        // 10 frames: 0 => full, 9 => empty
+        // But we do a direct setFrame
+        const frame = Math.min(9, Math.floor((this.maxStamina - this.currentStamina) / 10));
         this.staminaSprite.setFrame(frame);
     }
 
     handleRespawn() {
         console.log('Player respawned, animating health back to full');
-        // Get the current frame the sprite is showing
-        const currentFrame = parseInt(this.healthSprite.frame.name);
-        
-        // Create frames array from current frame back to 0
+        const currentFrame = parseInt(this.healthSprite.frame.name, 10);
+
+        // Animate from current frame to 0
         const frames = [];
         for (let i = currentFrame; i >= 0; i--) {
             frames.push({ key: 'health', frame: i });
@@ -256,7 +257,6 @@ export class PlayerHUD {
         const animKey = `health_respawn_${Date.now()}`;
         this.isAnimating = true;
 
-        // Create and play respawn animation
         this.scene.anims.create({
             key: animKey,
             frames: frames,
@@ -276,9 +276,8 @@ export class PlayerHUD {
     }
 
     contains(gameObject) {
-        // Check if the object is part of this HUD
         if (!this.container) return false;
-        return this.container.list.includes(gameObject) || 
+        return this.container.list.includes(gameObject) ||
                gameObject === this.container ||
                gameObject === this.lifebar ||
                gameObject === this.healthSprite ||

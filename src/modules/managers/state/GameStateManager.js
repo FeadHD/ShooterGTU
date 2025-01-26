@@ -1,6 +1,7 @@
 // GameStateManager.js
 import { GameConfig } from '../../../config/GameConfig';
 import { BaseManager } from '../../di/BaseManager';
+import { GameEvents } from '../../managers/EventManager';
 
 /**
  * GameStateManager.js
@@ -16,7 +17,7 @@ export class GameStateManager extends BaseManager {
         this.scene = scene;
         this.registry = scene.registry;
         this.events = scene.events;
-        this.eventBus = this.container.get('eventBus');
+        this.eventManager = scene.eventManager;
     }
 
     /**
@@ -42,7 +43,7 @@ export class GameStateManager extends BaseManager {
         });
 
         // Emit initial state
-        this.eventBus.emit('gameStateInitialized', defaults);
+        this.eventManager.emit(GameEvents.GAME_STATE_INITIALIZED, defaults);
     }
 
     /**
@@ -62,7 +63,7 @@ export class GameStateManager extends BaseManager {
     set(key, value) {
         console.log(`\n[GameStateManager] set(): Updating ${key} to`, value);
         this.registry.set(key, value);
-        this.eventBus.emit('stateChanged', { key, value });
+        this.eventManager.emit(GameEvents.STATE_CHANGED, { key, value });
     }
 
     /**
@@ -175,6 +176,6 @@ export class GameStateManager extends BaseManager {
      */
     handleGameOver() {
         console.log('\n[GameStateManager] handleGameOver(): Game Over triggered');
-        this.eventBus.emit('gameOver');
+        this.eventManager.emit(GameEvents.GAME_OVER);
     }
 }

@@ -24,9 +24,17 @@ export const GameEvents = {
     // Core gameplay state changes
     SCORE_CHANGE: 'gameplay:scoreChange',         // Score updates
     HEALTH_CHANGE: 'gameplay:healthChange',       // Health modifications
-    LEVEL_COMPLETE: 'gameplay:levelComplete',     // Level completion
     CHECKPOINT_REACHED: 'gameplay:checkpointReached', // Checkpoint activation
     GAME_OVER: 'gameplay:gameOver',               // Game over state
+    HAZARD_COLLISION: 'hazardCollision',          // Collision with hazard
+    GAME_STATE_INITIALIZED: 'gameStateInitialized', // Game state initialization
+    GAME_STATE_CHANGED: 'stateChanged',           // Game state changes
+    PLAYER_HP_CHANGED: 'playerHPChanged',         // Player health changes
+
+    // Entity events
+    ENEMY_HEALTH_CHANGED: 'enemyHealthChanged',   // Enemy health changes
+    ENTITY_ADDED: 'entityAdded',                  // Entity added to game
+    ENTITY_REMOVED: 'entityRemoved',              // Entity removed from game
 
     // Item and power-up events
     ITEM_PICKUP: 'item:pickup',            // Item collection
