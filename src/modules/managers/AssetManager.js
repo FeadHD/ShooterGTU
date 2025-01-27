@@ -88,14 +88,6 @@ export class AssetManager {
     }
 
     /**
-     * Load UI elements and HUD
-     * Player status display
-     */
-    loadUI() {
-        PlayerHUD.preloadAssets(this.scene);
-    }
-
-    /**
      * Set up asset loading error handlers
      * Logs failed asset loads
      */
