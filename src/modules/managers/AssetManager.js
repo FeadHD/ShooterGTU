@@ -32,30 +32,10 @@ export class AssetManager {
      * Called during scene preload phase
      */
     loadAssets() {
-        this.loadDefaultSprite();
-        this.loadTilesets();        // Level tiles
-        this.loadLevelData();       // Level layout
-        this.loadCharacterSprites();// Player animations
-        this.loadEnemySprites();    // Enemy types
-        this.loadObjectSprites();   // Interactive objects
-        this.loadEffects();         // Particles and FX
-        this.loadUI();             // HUD elements
-        this.loadAudio();          // Sound effects
-        //this.loadZapperAssets();   // Special enemy
-        this.setupErrorHandling(); // Error tracking
-    }
-
-    loadDefaultSprite() {
-        // Load default sprite from public assets
-        this.scene.load.image('default_sprite', 'assets/default.png');
-    }
-
-    /**
-     * Load level tileset images
-     * Used for building game world
-     */
-    loadTilesets() {
-        this.scene.load.image('GtuTileset', 'assets/levels/image/GtuTileset.png');
+        // Most assets are now loaded in Preloader.js
+        this.loadLevelData();       // Level layout data
+        this.loadEnemySprites();    // Enemy types (dynamic loading)
+        this.setupErrorHandling();  // Error tracking
     }
 
     /**
@@ -67,49 +47,9 @@ export class AssetManager {
     }
 
     /**
-     * Load player character sprites
-     * All animations and states
-     */
-    loadCharacterSprites() {
-        const characterSprites = [
-            { key: 'player_idle', file: 'character_idle.png', frames: { start: 0, end: 3 }, frameRate: 10, repeat: -1 },
-            { key: 'player_jump', file: 'character_jump.png', frames: { start: 0, end: 1 }, frameRate: 10, repeat: 0 },
-            { key: 'player_death', file: 'character_death.png', frames: { start: 0, end: 5 }, frameRate: 8, repeat: 0 },
-            { key: 'player_roll', file: 'character_roll.png', frames: { start: 0, end: 3 }, frameRate: 10, repeat: 0 },
-            { key: 'player_walk', file: 'character_walk.png', frames: { start: 0, end: 5 }, frameRate: 12, repeat: 0 },
-            { key: 'player_fall', file: 'character_fall.png', frames: { start: 0, end: 1 }, frameRate: 10, repeat: 0 }
-        ];
-    
-        // Validate sprites before loading
-        characterSprites.forEach(sprite => {
-            if (!sprite.key || !sprite.file || !sprite.frames) {
-                console.error('Invalid sprite configuration:', sprite);
-            } else {
-                console.log(`zzz Loading character sprite: ${sprite.key}`);
-                this.scene.load.spritesheet(sprite.key, `assets/character/${sprite.file}`, {
-                    frameWidth: 32,
-                    frameHeight: 48
-                });
-            }
-        });
-    
-        // Listen for load completion
-        this.scene.load.once('complete', () => {
-            console.log('zzz All character sprites loaded. Creating animations...');
-    
-            console.log('zzz All animations created successfully.');
-        });
-    
-        this.scene.load.start(); // Start loading process
-    }
-    
-    
-
-    /**
      * Load enemy sprite variations
      * Multiple enemy types with states
      */
-
     loadEnemySprites() {
         console.log('loadEnemySprites called');
     
@@ -121,21 +61,18 @@ export class AssetManager {
                 const key = `${folder}_${action}`;
                 const path = `${fullPath}${folder}_${action}.png`;
     
-                // Define frame dimensions for spritesheets (modify as needed)
-                const frameWidth = 32;  // Replace with the correct frame width
-                const frameHeight = 32; // Replace with the correct frame height
+                // Define frame dimensions for spritesheets
+                const frameWidth = 32;
+                const frameHeight = 32;
     
                 // Dynamically check if the file exists
                 fetch(path, { method: 'HEAD' })
                 .then(response => {
                     if (response.ok) {
-                        // Assume it's a spritesheet unless it's explicitly single-frame (like non-animated assets)
                         if (action === 'image') {
-                            // Use `load.image` for non-animated assets
                             this.scene.load.image(key, path);
                             console.log(`Image queued for loading: ${key} -> ${path}`);
                         } else {
-                            // Default to spritesheet for animated actions
                             this.scene.load.spritesheet(key, path, { frameWidth, frameHeight });
                             console.log(`Spritesheet queued for loading: ${key} -> ${path}`);
                         }
@@ -146,34 +83,8 @@ export class AssetManager {
                 .catch(error => {
                     console.warn(`Error checking file existence: ${path}`, error);
                 });
-            
             });
         });
-    }
-
-    
-    /**
-     * Load interactive object sprites
-     * Projectiles and collectibles
-     */
-    loadObjectSprites() {
-        // Bullet projectile animation
-        this.scene.load.spritesheet('bullet_animation', 'assets/sprites/bullet.png', {
-            frameWidth: 24,
-            frameHeight: 24
-        });
-        
-        // Interactive objects
-        this.scene.load.image('trampoline', 'assets/Objects/Trampoline/Trampoline.png');
-        this.scene.load.image('bitcoin', 'assets/bitcoin/Bitcoin_1.png');
-    }
-
-    /**
-     * Load particle and effect sprites
-     * Visual feedback elements
-     */
-    loadEffects() {
-        this.scene.load.image('particle', 'assets/particles/particle.png');
     }
 
     /**
@@ -185,61 +96,14 @@ export class AssetManager {
     }
 
     /**
-     * Load game audio assets
-     * Sound effects and music
+     * Set up asset loading error handlers
+     * Logs failed asset loads
      */
-    loadAudio() {
-        const audioAssets = [
-            { key: 'turretLaser', file: 'laser.wav' },  // Weapon fire
-            { key: 'laser', file: 'laser.wav' },        // Projectile
-            { key: 'hit', file: 'hit.wav' },           // Impact
-            { key: 'alarm', file: 'alarm.wav' },       // Alert
-            { key: 'bgMusic', file: 'thezucc.wav' }    // Background
-        ];
-
-        audioAssets.forEach(audio => {
-            this.scene.load.audio(audio.key, `assets/sounds/${audio.file}`);
+    setupErrorHandling() {
+        this.scene.load.on('loaderror', (fileObj) => {
+            console.error('Error loading file:', fileObj.key, fileObj.src);
         });
     }
-
-    /**
-     * Load zapper enemy assets
-     * Special enemy with electrical attacks
-     */
-    // loadZapperAssets() {
-    //     console.log('zzz Loading Zapper assets...');
-        
-    //     // Load all Zapper spritesheets
-    //     this.scene.load.spritesheet('zapper_idle', 'assets/zapper/zapper_idle.png', {
-    //         frameWidth: 32,
-    //         frameHeight: 32,
-    //     });
-    
-    //     this.scene.load.spritesheet('zapper_walk', 'assets/zapper/zapper_walk.png', {
-    //         frameWidth: 32,
-    //         frameHeight: 32,
-    //     });
-    
-    //     this.scene.load.spritesheet('zapper_attack', 'assets/zapper/zapper_attack.png', {
-    //         frameWidth: 32,
-    //         frameHeight: 32,
-    //     });
-    
-    //     this.scene.load.spritesheet('zapper_wake', 'assets/zapper/zapper_wake.png', {
-    //         frameWidth: 32,
-    //         frameHeight: 32,
-    //     });
-    
-    //     this.scene.load.spritesheet('zapper_shock', 'assets/zapper/zapper_shock.png', {
-    //         frameWidth: 32,
-    //         frameHeight: 32,
-    //     });
-
-    //     this.scene.load.spritesheet('zapper_death', 'assets/zapper/zapper_death.png', {
-    //         frameWidth: 32,
-    //         frameHeight: 32,
-    //     });
-    // }
 
     getTextureKeyForEntity(entityType) {
         console.log('zzz Asset Manager - Got Entity Type:', entityType);
@@ -308,50 +172,12 @@ export class AssetManager {
         return assetConfig;
     }
     
-    
-    //     const assetConfig = entityAssets[type];
-    //     if (!assetConfig) {
-    //         console.warn(`No asset configuration found for entity type: ${entityType}`);
-    //         return {
-    //             spritesheet: 'default_sprite',
-    //             defaultAnim: null,
-    //             animations: [],
-    //             width: 32,
-    //             height: 32
-    //         };
-    //     }
-    
-    //     if (!this.scene.textures.exists(assetConfig.spritesheet)) {
-    //         console.warn(`Spritesheet ${assetConfig.spritesheet} not found in Phaser textures for entity type: ${entityType}`);
-    //         return {
-    //             spritesheet: 'default_sprite',
-    //             defaultAnim: null,
-    //             animations: [],
-    //             width: assetConfig.width,
-    //             height: assetConfig.height
-    //         };
-    //     }
-    
-    //     return assetConfig;
-    // }
-    
-     
     validateTexture(textureKey) {
         return this.scene.textures.exists(textureKey);
     }
 
     getDefaultTexture() {
         return 'default_sprite';
-    }
-
-    /**
-     * Set up asset loading error handlers
-     * Logs failed asset loads
-     */
-    setupErrorHandling() {
-        this.scene.load.on('loaderror', (fileObj) => {
-            console.error('Error loading file:', fileObj.key, fileObj.src);
-        });
     }
 
     /**

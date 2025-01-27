@@ -23,26 +23,24 @@ export class Preloader extends Scene {
         this.anims.create({
             key: 'loading',
             frames: this.anims.generateFrameNumbers('preloader', { start: 0, end: 15 }), // 16 frames total
-            frameRate: 12, // We'll show each frame for about 0.083 seconds (1/12)
+            frameRate: 12, // We'll show each frame for ~0.083s
             repeat: -1
         });
 
         // Create and play the preloader sprite
-        this.preloaderSprite = this.add.sprite(this.scale.width/2, this.scale.height/2, 'preloader')
+        this.preloaderSprite = this.add.sprite(this.scale.width / 2, this.scale.height / 2, 'preloader')
             .setOrigin(0.5)
-            .setScale(1.5) // Adjusted scale since we have the correct frame size now
+            .setScale(1.5)
             .play('loading');
 
         // Track load progress
         this.load.on('progress', (value) => {
-            // Calculate how long we've been loading
-            const timeElapsed = (Date.now() - this.loadStartTime) / 1000; // in seconds
+            const timeElapsed = (Date.now() - this.loadStartTime) / 1000; 
             console.log(`Loading progress: ${Math.round(value * 100)}% after ${timeElapsed.toFixed(2)} seconds`);
-            
+
             // Adjust animation speed based on progress
-            // Start slower and speed up as we progress
             const baseSpeed = 1;
-            const speedMultiplier = 1 + value; // Will go from 1x to 2x speed
+            const speedMultiplier = 1 + value; 
             this.preloaderSprite.anims.timeScale = baseSpeed * speedMultiplier;
         });
 
@@ -63,21 +61,45 @@ export class Preloader extends Scene {
      * Loads all game assets including sprites, audio, and fonts
      */
     preload() {
-        // Load font dependencies
+        // 1) Font scripts & CSS
         this.setupFonts();
-        
-        // Setup debug logging for asset loading
+
+        // 2) Debug logging
         this.setupLoadingDebug();
-        
-        // Create particle texture for effects
+
+        // 3) Custom particle shape
         this.createParticleTexture();
-        
-        // Load game assets by category
+
+        // 4) Load everything (images, sprites, audio, fonts):
         this.loadBackgrounds();
         this.loadCharacterSprites();
         this.loadProjectiles();
-        this.loadAudio();
         this.loadCollectibles();
+        this.loadAudio();
+
+        // 5) Additional UI or menu assets
+        this.loadSceneSpecificAssets();
+        this.loadPlayerHUD();
+    }
+
+    /**
+     * Player HUD ASSET LOADING
+     */
+    loadPlayerHUD() {
+        // 1) Health bar frames
+        this.load.spritesheet('health', 'assets/PlayerHUD/health.png', {
+            frameWidth: 103,
+            frameHeight: 32
+        });
+    
+        // 2) Lifebar background
+        this.load.image('lifebar', 'assets/PlayerHUD/lifebar.png');
+    
+        // 3) Stamina bar frames
+        this.load.spritesheet('stamina', 'assets/PlayerHUD/stamina.png', {
+            frameWidth: 103,
+            frameHeight: 32
+        });
     }
 
     /**
@@ -94,12 +116,12 @@ export class Preloader extends Scene {
      */
     setupLoadingDebug() {
         // Track individual asset loading progress
-        this.load.on('filecomplete', (key, type, data) => {
+        this.load.on('filecomplete', (key, type) => {
             console.log('Loaded:', key, type);
             if (type === 'spritesheet') {
                 const texture = this.textures.get(key);
-                console.log(`Spritesheet ${key} dimensions:`, texture.source[0].width, 'x', texture.source[0].height);
-                console.log(`Frame config:`, this.textures.get(key).customData);
+                console.log(`Spritesheet ${key} dimensions:`,
+                    texture.source[0].width, 'x', texture.source[0].height);
             }
         });
 
@@ -114,10 +136,10 @@ export class Preloader extends Scene {
      * PARTICLE EFFECTS
      */
     createParticleTexture() {
-        // Create white circle for particle effects
+        // Creates a 'particle' texture: small white circle
         const particleTexture = this.make.graphics({ x: 0, y: 0, add: false });
-        particleTexture.lineStyle(1, 0xFFFFFF);
-        particleTexture.fillStyle(0xFFFFFF);
+        particleTexture.lineStyle(1, 0xffffff);
+        particleTexture.fillStyle(0xffffff);
         particleTexture.beginPath();
         particleTexture.arc(4, 4, 4, 0, Math.PI * 2);
         particleTexture.closePath();
@@ -135,9 +157,10 @@ export class Preloader extends Scene {
         
         // Parallax background layers
         for (let i = 1; i <= 9; i++) {
-            this.load.image(`bg-${i}`, `./assets/backgrounds/${i}${i === 3 || i === 6 || i === 8 ? 'fx' : ''}.png`);
+            const fxSuffix = (i === 3 || i === 6 || i === 8) ? 'fx' : '';
+            this.load.image(`bg-${i}`, `./assets/backgrounds/${i}${fxSuffix}.png`);
         }
-        
+
         // Level tileset
         this.load.image('GtuTileset', 'assets/levels/image/GtuTileset.png');
     }
@@ -146,70 +169,44 @@ export class Preloader extends Scene {
      * CHARACTER SPRITES
      */
     loadCharacterSprites() {
+        // e.g. multiple states: idle, walk, jump, etc.
         const characterStates = {
-            'idle': { endFrame: 4 },
-            'walk': { endFrame: 6 },
-            'jump': { endFrame: 1 },
-            'death': { endFrame: 8 },
-            'fall': { endFrame: 1 },
-            'roll': { endFrame: 3 },
+            idle: { endFrame: 4 },
+            walk: { endFrame: 6 },
+            jump: { endFrame: 1 },
+            death: { endFrame: 8 },
+            fall: { endFrame: 1 },
+            roll: { endFrame: 3 }
         };
-    
+
         Object.entries(characterStates).forEach(([state, config]) => {
-            this.load.spritesheet(`character_${state}`, `./assets/character/character_${state.toLowerCase()}.png`, {
-                frameWidth: 48,
-                frameHeight: 48,
-                startFrame: 0,
-                endFrame: config.endFrame,
-                spacing: 0,
-                margin: 0
-            });
+            this.load.spritesheet(
+                `character_${state}`,
+                `./assets/character/character_${state}.png`, 
+                {
+                    frameWidth: 48,
+                    frameHeight: 48,
+                    endFrame: config.endFrame
+                }
+            );
         });
     }
-    
+
     /**
      * PROJECTILES AND EFFECTS
      */
     loadProjectiles() {
-        // Load bullet sprites and animations
+        // Example bullet anim
         const bulletConfigs = {
-            'bullet_animation': { endFrame: 4 },
+            bullet_animation: { endFrame: 4 }
         };
 
-        Object.entries(bulletConfigs).forEach(([key, config]) => {
+        Object.entries(bulletConfigs).forEach(([key, cfg]) => {
             this.load.spritesheet(key, `./assets/${key}.png`, {
                 frameWidth: 32,
                 frameHeight: 32,
-                startFrame: 0,
-                endFrame: config.endFrame,
-                spacing: 0,
-                margin: 0
+                endFrame: cfg.endFrame
             });
-        });
-    }
-
-    /**
-     * AUDIO ASSETS
-     */
-    loadAudio() {
-        // Load sound effects and music
-        const audioFiles = {
-            'laser': './assets/sounds/laser.wav',
-            'bgMusic': './assets/sounds/mainmenumusic.mp3',
-            'hit': './assets/sounds/hit.wav',
-            'bitcoin_collect': './assets/sounds/bitcoin_collect.mp3',
-            'thezucc': './assets/sounds/thezucc.wav'
-        };
-
-        Object.entries(audioFiles).forEach(([key, path]) => {
-            this.load.audio(key, path);
-        });
-
-        // Audio loading error handling
-        this.load.on('loaderror', (file) => {
-            if (file.type === 'audio') {
-                console.error('Preloader - Error loading audio file:', file.key, file.url);
-            }
         });
     }
 
@@ -217,10 +214,49 @@ export class Preloader extends Scene {
      * COLLECTIBLES
      */
     loadCollectibles() {
-        // Load bitcoin animation frames
+        // Bitcoin frames
         for (let i = 1; i <= 8; i++) {
             this.load.image(`bitcoin_${i}`, `assets/bitcoin/Bitcoin_${i}.png`);
         }
+    }
+
+    /**
+     * AUDIO ASSETS
+     */
+    loadAudio() {
+        // Example audio mapping
+        const audioFiles = {
+            laser: './assets/sounds/laser.wav',
+            bgMusic: './assets/sounds/mainmenumusic.mp3',
+            hit: './assets/sounds/hit.wav',
+            bitcoin_collect: './assets/sounds/bitcoin_collect.mp3',
+            thezucc: './assets/sounds/thezucc.wav',
+
+            // Additional sounds from your code
+            confirmSound: './assets/sounds/confirmation.mp3',   
+            victoryMusic: './assets/sounds/congratulations.mp3' 
+        };
+
+        Object.entries(audioFiles).forEach(([key, path]) => {
+            this.load.audio(key, path);
+        });
+    }
+
+    /**
+     * Menu/UI/Scene-Specific Assets
+     */
+    loadSceneSpecificAssets() {
+        // e.g. "settingsBackground"
+        this.load.image('settingsBackground', 'assets/settings/settings.png');
+
+        // If needed: pauseBackground, or they are the same asset
+        // this.load.image('pauseBackground', 'assets/settings/settings.png'); // if it differs
+
+        // If you have unique fonts for multiple scenes (like 'Gameplay'):
+        // Typically, we use the same webfont approach or keep the .ttf in "fonts" folder
+        // and load it like 'this.load.font()' if supported. 
+        // For now, here's the 'Gameplay' font from various menus:
+        this.load.font('Gameplay', 'assets/fonts/retronoid/Gameplay.ttf');
     }
 
     /**
@@ -228,17 +264,14 @@ export class Preloader extends Scene {
      * Handles font loading and game start
      */
     create() {
-        // Load custom web fonts or fallback
+        // Then load custom web font or fallback
         this.loadFont('Retronoid', 'assets/fonts/fonts.css', 'MainMenu', 'Arial', 3000);
     }
-    
+
     loadFont(fontFamily, fontUrl, nextScene, fallbackFont, timeout) {
         if (typeof WebFont !== 'undefined') {
             WebFont.load({
-                custom: {
-                    families: [fontFamily],
-                    urls: [fontUrl]
-                },
+                custom: { families: [fontFamily], urls: [fontUrl] },
                 active: () => {
                     console.log(`${fontFamily} loaded successfully`);
                     this.scene.start(nextScene);
@@ -248,7 +281,7 @@ export class Preloader extends Scene {
                     this.registry.set('fontFamily', fallbackFont);
                     this.scene.start(nextScene);
                 },
-                timeout: timeout
+                timeout
             });
         } else {
             console.warn('WebFont not loaded, using fallback');

@@ -78,10 +78,6 @@ export class WayneWorld extends BaseScene {
     create() {
         super.create();
 
-        // Initialize managers
-        this.managers = ManagerFactory.createManagers(this);
-        this.ldtkManager = ManagerFactory.getLDTKTileManager(this);
-
         if (!this.audioManager) {
             this.audioManager = this.managers.audio;
             this.initializeAudioSystem();
@@ -163,29 +159,6 @@ export class WayneWorld extends BaseScene {
 
         // Create managers first
         this.managers = ManagerFactory.createManagers(this);
-
-        // Initialize animations through AnimationManager
-        console.log('Initializing animations through AnimationManager...');
-        const animationManager = this.managers.animations;
-        if (!animationManager) {
-            console.error('Animation manager not initialized');
-            return;
-        }
-        
-        // Create all animations including Zapper animations
-        animationManager.createAllAnimations();
-        
-        // Verify all Zapper animations are created
-        const zapperAnimations = {
-            idle: this.anims.exists('zapper_idle'),
-            wake: this.anims.exists('zapper_wake'),
-            walk: this.anims.exists('zapper_walk'),
-            attack: this.anims.exists('zapper_attack'),
-            shock: this.anims.exists('zapper_shock'),
-            death: this.anims.exists('zapper_death')
-        };
-        
-        console.log('Zapper animations:', zapperAnimations);
 
         // Get managers from container
         this.ldtkEntityManager = this.managers.ldtkEntityManager;
