@@ -18,13 +18,13 @@ export class Preloader extends Scene {
     init() {
         // Track loading start time
         this.loadStartTime = Date.now();
-        
+
         // Create preloader animation
         this.anims.create({
             key: 'loading',
             frames: this.anims.generateFrameNumbers('preloader', { start: 0, end: 15 }), // 16 frames total
             frameRate: 12, // We'll show each frame for ~0.083s
-            repeat: -1
+            repeat: -1,
         });
 
         // Create and play the preloader sprite
@@ -35,13 +35,9 @@ export class Preloader extends Scene {
 
         // Track load progress
         this.load.on('progress', (value) => {
-            const timeElapsed = (Date.now() - this.loadStartTime) / 1000; 
+            const timeElapsed = (Date.now() - this.loadStartTime) / 1000;
             console.log(`Loading progress: ${Math.round(value * 100)}% after ${timeElapsed.toFixed(2)} seconds`);
-
-            // Adjust animation speed based on progress
-            const baseSpeed = 1;
-            const speedMultiplier = 1 + value; 
-            this.preloaderSprite.anims.timeScale = baseSpeed * speedMultiplier;
+            this.preloaderSprite.anims.timeScale = 1 + value;
         });
 
         // Log when loading completes
@@ -83,22 +79,89 @@ export class Preloader extends Scene {
     }
 
     /**
+     * Retrieves the texture configuration for an entity type
+     * @param {string} entityType - The type of entity
+     * @returns {Object} - Configuration for the entity's texture, animations, etc.
+     */
+    getTextureKeyForEntity(entityType) {
+        console.log('Preloader - Got Entity Type:', entityType);
+        const type = entityType.toLowerCase();
+
+        // Entity-to-texture mapping
+        const entityAssets = {
+            zapper: {
+                spritesheet: 'zapper_idle',
+                defaultAnim: 'zapper_idle',
+                animations: ['zapper_idle', 'zapper_attack', 'zapper_walk', 'zapper_death'],
+                width: 32,
+                height: 32,
+            },
+            playerstart: {
+                spritesheet: 'player_idle',
+                defaultAnim: 'player_idle',
+                animations: ['player_idle'],
+                width: 48,
+                height: 48,
+            },
+            meleewarrior: {
+                spritesheet: 'meleewarrior_idle',
+                defaultAnim: 'meleewarrior_idle',
+                animations: [
+                    'meleewarrior_idle',
+                    'meleewarrior_walk',
+                    'meleewarrior_attack1',
+                    'meleewarrior_attack2',
+                    'meleewarrior_attack3',
+                    'meleewarrior_hurt',
+                    'meleewarrior_death',
+                ],
+                width: 48,
+                height: 48,
+            },
+            // Add more entities here as needed
+        };
+
+        const assetConfig = entityAssets[type];
+
+        // Handle missing entity configurations
+        if (!assetConfig) {
+            console.warn(`No asset configuration found for entity type: ${entityType}`);
+            return {
+                spritesheet: 'default_sprite',
+                defaultAnim: null,
+                animations: [],
+                width: 32,
+                height: 32,
+            };
+        }
+
+        // Check if texture exists in Phaser cache
+        if (!this.textures.exists(assetConfig.spritesheet)) {
+            console.warn(`Spritesheet ${assetConfig.spritesheet} not found for entity type: ${entityType}`);
+            return {
+                spritesheet: 'default_sprite',
+                defaultAnim: null,
+                animations: [],
+                width: assetConfig.width,
+                height: assetConfig.height,
+            };
+        }
+
+        return assetConfig;
+    }
+
+    /**
      * Player HUD ASSET LOADING
      */
     loadPlayerHUD() {
-        // 1) Health bar frames
         this.load.spritesheet('health', 'assets/PlayerHUD/health.png', {
             frameWidth: 103,
-            frameHeight: 32
+            frameHeight: 32,
         });
-    
-        // 2) Lifebar background
         this.load.image('lifebar', 'assets/PlayerHUD/lifebar.png');
-    
-        // 3) Stamina bar frames
         this.load.spritesheet('stamina', 'assets/PlayerHUD/stamina.png', {
             frameWidth: 103,
-            frameHeight: 32
+            frameHeight: 32,
         });
     }
 
@@ -106,7 +169,6 @@ export class Preloader extends Scene {
      * FONT SETUP
      */
     setupFonts() {
-        // Load WebFont library and CSS
         this.load.script('webfont', 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js');
         this.load.css('fonts', 'assets/fonts/fonts.css');
     }
@@ -115,13 +177,11 @@ export class Preloader extends Scene {
      * LOADING DEBUG
      */
     setupLoadingDebug() {
-        // Track individual asset loading progress
         this.load.on('filecomplete', (key, type) => {
             console.log('Loaded:', key, type);
             if (type === 'spritesheet') {
                 const texture = this.textures.get(key);
-                console.log(`Spritesheet ${key} dimensions:`,
-                    texture.source[0].width, 'x', texture.source[0].height);
+                console.log(`Spritesheet ${key} dimensions:`, texture.source[0].width, 'x', texture.source[0].height);
             }
         });
 
@@ -136,7 +196,6 @@ export class Preloader extends Scene {
      * PARTICLE EFFECTS
      */
     createParticleTexture() {
-        // Creates a 'particle' texture: small white circle
         const particleTexture = this.make.graphics({ x: 0, y: 0, add: false });
         particleTexture.lineStyle(1, 0xffffff);
         particleTexture.fillStyle(0xffffff);
@@ -152,16 +211,11 @@ export class Preloader extends Scene {
      * BACKGROUND ASSETS
      */
     loadBackgrounds() {
-        // Main menu background
         this.load.image('mainbg', './assets/mainbg.png');
-        
-        // Parallax background layers
         for (let i = 1; i <= 9; i++) {
-            const fxSuffix = (i === 3 || i === 6 || i === 8) ? 'fx' : '';
+            const fxSuffix = i === 3 || i === 6 || i === 8 ? 'fx' : '';
             this.load.image(`bg-${i}`, `./assets/backgrounds/${i}${fxSuffix}.png`);
         }
-
-        // Level tileset
         this.load.image('GtuTileset', 'assets/levels/image/GtuTileset.png');
     }
 
@@ -169,24 +223,23 @@ export class Preloader extends Scene {
      * CHARACTER SPRITES
      */
     loadCharacterSprites() {
-        // e.g. multiple states: idle, walk, jump, etc.
         const characterStates = {
             idle: { endFrame: 4 },
             walk: { endFrame: 6 },
             jump: { endFrame: 1 },
             death: { endFrame: 8 },
             fall: { endFrame: 1 },
-            roll: { endFrame: 3 }
+            roll: { endFrame: 3 },
         };
 
         Object.entries(characterStates).forEach(([state, config]) => {
             this.load.spritesheet(
                 `character_${state}`,
-                `./assets/character/character_${state}.png`, 
+                `./assets/character/character_${state}.png`,
                 {
                     frameWidth: 48,
                     frameHeight: 48,
-                    endFrame: config.endFrame
+                    endFrame: config.endFrame,
                 }
             );
         });
@@ -196,16 +249,15 @@ export class Preloader extends Scene {
      * PROJECTILES AND EFFECTS
      */
     loadProjectiles() {
-        // Example bullet anim
         const bulletConfigs = {
-            bullet_animation: { endFrame: 4 }
+            bullet_animation: { endFrame: 4 },
         };
 
         Object.entries(bulletConfigs).forEach(([key, cfg]) => {
             this.load.spritesheet(key, `./assets/${key}.png`, {
                 frameWidth: 32,
                 frameHeight: 32,
-                endFrame: cfg.endFrame
+                endFrame: cfg.endFrame,
             });
         });
     }
@@ -214,7 +266,6 @@ export class Preloader extends Scene {
      * COLLECTIBLES
      */
     loadCollectibles() {
-        // Bitcoin frames
         for (let i = 1; i <= 8; i++) {
             this.load.image(`bitcoin_${i}`, `assets/bitcoin/Bitcoin_${i}.png`);
         }
@@ -224,17 +275,14 @@ export class Preloader extends Scene {
      * AUDIO ASSETS
      */
     loadAudio() {
-        // Example audio mapping
         const audioFiles = {
             laser: './assets/sounds/laser.wav',
             bgMusic: './assets/sounds/mainmenumusic.mp3',
             hit: './assets/sounds/hit.wav',
             bitcoin_collect: './assets/sounds/bitcoin_collect.mp3',
             thezucc: './assets/sounds/thezucc.wav',
-
-            // Additional sounds from your code
-            confirmSound: './assets/sounds/confirmation.mp3',   
-            victoryMusic: './assets/sounds/congratulations.mp3' 
+            confirmSound: './assets/sounds/confirmation.mp3',
+            victoryMusic: './assets/sounds/congratulations.mp3',
         };
 
         Object.entries(audioFiles).forEach(([key, path]) => {
@@ -246,25 +294,14 @@ export class Preloader extends Scene {
      * Menu/UI/Scene-Specific Assets
      */
     loadSceneSpecificAssets() {
-        // e.g. "settingsBackground"
         this.load.image('settingsBackground', 'assets/settings/settings.png');
-
-        // If needed: pauseBackground, or they are the same asset
-        // this.load.image('pauseBackground', 'assets/settings/settings.png'); // if it differs
-
-        // If you have unique fonts for multiple scenes (like 'Gameplay'):
-        // Typically, we use the same webfont approach or keep the .ttf in "fonts" folder
-        // and load it like 'this.load.font()' if supported. 
-        // For now, here's the 'Gameplay' font from various menus:
         this.load.font('Gameplay', 'assets/fonts/retronoid/Gameplay.ttf');
     }
 
     /**
      * SCENE TRANSITION
-     * Handles font loading and game start
      */
     create() {
-        // Then load custom web font or fallback
         this.loadFont('Retronoid', 'assets/fonts/fonts.css', 'MainMenu', 'Arial', 3000);
     }
 
@@ -281,7 +318,7 @@ export class Preloader extends Scene {
                     this.registry.set('fontFamily', fallbackFont);
                     this.scene.start(nextScene);
                 },
-                timeout
+                timeout,
             });
         } else {
             console.warn('WebFont not loaded, using fallback');
