@@ -1,0 +1,95 @@
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/modules/managers/CollisionManager.js ===
+15:            this.scene.physics.add.collider(
+27:                this.scene.physics.add.collider(this.scene.slimes, this.scene.mapLayer);
+28:                this.scene.physics.add.collider(this.scene.slimes, this.scene.platforms);
+31:                this.scene.physics.add.collider(this.scene.drones, this.scene.mapLayer);
+32:                this.scene.physics.add.collider(this.scene.drones, this.scene.platforms);
+40:            this.scene.physics.add.collider(
+56:                this.scene.physics.add.overlap(
+67:                this.scene.physics.add.overlap(
+78:                this.scene.physics.add.overlap(
+93:                this.scene.physics.add.collider(this.scene.player, this.scene.mapLayer);
+94:                this.scene.physics.add.collider(this.scene.player, this.scene.platforms);
+105:                this.scene.physics.add.overlap(
+119:                this.scene.physics.add.overlap(
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/modules/managers/BoundaryManager.js ===
+12:            this.scene.physics.add.collider(player, leftBoundary);
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/levels/Matrix640x360.js ===
+99:        this.physics.add.collider(this.player, this.tileLayer);
+100:        this.physics.add.collider(this.player, layer);
+103:        this.physics.add.collider(this.enemies, this.tileLayer);
+104:        this.physics.add.collider(this.enemies, layer);
+107:        this.physics.add.collider(this.bullets, this.tileLayer, (bullet) => bullet.destroy());
+108:        this.physics.add.collider(this.bullets, layer, (bullet) => bullet.destroy());
+221:            this.physics.add.collider(this.player, layer);
+222:            this.physics.add.collider(this.enemies, layer);
+223:            this.physics.add.collider(this.enemies, this.enemies);
+226:            this.physics.add.overlap(this.player, this.enemies, (player, enemy) => {
+233:            this.physics.add.overlap(this.bullets, this.enemies, (bullet, enemySprite) => {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/levels/BlueTest.js ===
+274:                this.physics.add.overlap(
+351:                            this.physics.add.overlap(this.player, this.enemies, (player, enemy) => {
+385:                this.physics.add.collider(this.player, layer);
+419:                this.physics.add.collider(this.enemies, layer);
+422:                this.physics.add.collider(this.enemies, this.enemies, this.handleEnemyCollision, null, this);
+425:                this.physics.add.overlap(this.enemies, this.player, (enemySprite, player) => {
+562:            this.physics.add.collider(this.player, layer);
+563:            this.physics.add.collider(this.enemies, layer);
+564:            this.physics.add.collider(this.enemies, this.enemies);
+567:            this.physics.add.overlap(this.player, this.enemies, (player, enemy) => {
+574:            this.physics.add.overlap(this.bullets, this.enemies, (bullet, enemySprite) => {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/levels/GameScene3.js ===
+66:            this.physics.add.overlap(this.player, bitcoin, () => {
+89:            this.physics.add.collider(this.enemies, this.platforms);
+90:            this.physics.add.collider(this.player, this.enemies, this.hitEnemy, null, this);
+93:            this.physics.add.collider(
+102:            this.physics.add.collider(
+113:            this.physics.add.collider(this.bullets, this.platforms);
+118:            this.physics.add.collider(this.player, wall);
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/levels/GameScene4.js ===
+72:            this.physics.add.overlap(this.player, bitcoin, () => {
+97:            this.physics.add.collider(this.enemies, this.platforms);
+98:            this.physics.add.collider(this.player, this.enemies, this.hitEnemy, null, this);
+101:            this.physics.add.collider(
+110:            this.physics.add.collider(
+121:            this.physics.add.collider(this.bullets, this.platforms);
+126:            this.physics.add.collider(this.player, wall);
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/levels/GameScene5.js ===
+67:            this.physics.add.collider(this.enemies, this.platforms);
+68:            this.physics.add.collider(this.player, this.enemies, this.hitEnemy, null, this);
+71:            this.physics.add.collider(
+82:            this.physics.add.collider(this.bullets, this.platforms);
+87:            this.physics.add.collider(this.player, wall);
+113:                this.physics.add.overlap(this.player, bitcoin, () => {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/levels/GameScene2.js ===
+64:            this.physics.add.overlap(this.player, bitcoin, () => {
+85:            this.physics.add.collider(this.enemies, this.platforms);
+88:            this.physics.add.collider(this.player, this.enemies, this.hitEnemy, null, this);
+91:            this.physics.add.collider(
+100:            this.physics.add.collider(
+111:            this.physics.add.collider(this.bullets, this.platforms);
+116:            this.physics.add.collider(this.player, wall);
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/elements/BaseScene.js ===
+74:        this.physics.add.collider(this.bullets, this.platforms, (bullet) => {
+118:        this.physics.add.collider(this.player, this.platforms);
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/elements/Game.js ===
+67:        this.physics.add.overlap(
+76:        this.physics.add.overlap(
+

@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TestGTU LDtk Documentation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        .layer-info {
+            margin-left: 20px;
+        }
+        code {
+            background-color: #f0f0f0;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .property {
+            margin-left: 20px;
+            margin-bottom: 10px;
+        }
+        .tag {
+            display: inline-block;
+            background-color: #3498db;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 3px;
+            margin: 2px;
+        }
+        .tileset-image {
+            max-width: 100%;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .tile-preview {
+            display: inline-block;
+            margin: 5px;
+            border: 1px solid #ccc;
+            padding: 5px;
+            border-radius: 3px;
+            background-color: white;
+        }
+        .tile-preview img {
+            width: 32px;
+            height: 32px;
+            image-rendering: pixelated;
+        }
+        .tile-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .intgrid-details {
+            margin-top: 20px;
+        }
+        .value-details {
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+        .value-details p {
+            margin: 5px 0;
+        }
+        .technical-details {
+            margin-top: 20px;
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .usage-example {
+            margin-top: 20px;
+        }
+        .usage-example pre {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .description {
+            background-color: #e8f4f8;
+            padding: 10px;
+            border-left: 4px solid #3498db;
+            margin: 10px 0;
+        }
+        .implementation-details {
+            margin: 20px 0;
+        }
+        .code-example {
+            background-color: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .code-example pre {
+            background-color: #1e1e1e;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .code-example code {
+            color: #d4d4d4;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .code-example .comment { color: #6a9955; }
+        .code-example .keyword { color: #569cd6; }
+        .code-example .string { color: #ce9178; }
+        .code-example .function { color: #dcdcaa; }
+        .code-example .number { color: #b5cea8; }
+        .properties-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .property-section {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .visual-example {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .spawn-point-preview {
+            display: inline-block;
+            padding: 20px;
+            background-color: #f0f4f8;
+            border-radius: 5px;
+        }
+        .spawn-marker {
+            width: 32px;
+            height: 32px;
+            border: 2px dashed #3498db;
+            margin: 10px auto;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <h1>TestGTU LDtk Project Documentation</h1>
+    
+    <div class="section">
+        <h2>Project Overview</h2>
+        <div class="property">
+            <strong>Version:</strong> LDtk 1.5.3<br>
+            <strong>Default Grid Size:</strong> 32x32 pixels<br>
+            <strong>Default Level Size:</strong> 256x16 pixels<br>
+            <strong>Background Color:</strong> #40465B<br>
+            <strong>Level Background Color:</strong> #696A79
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Layers</h2>
+        
+        <h3>1. Solid Layer (IntGrid)</h3>
+        <div class="layer-info">
+            <p>This is the main collision layer that defines the level's solid geometry.</p>
+            <strong>Properties:</strong>
+            <ul>
+                <li>Type: IntGrid</li>
+                <li>Grid Size: 32x32 pixels</li>
+                <li>Color: #FBE703</li>
+            </ul>
+            
+            <strong>IntGrid Values:</strong>
+            <p class="description">
+                IntGrid layers are specialized layers that store integer values in a grid. Each cell can contain one of the
+                predefined values below. These values are used for collision detection, gameplay mechanics, and can be automatically
+                rendered using Auto-Layer rules.
+            </p>
+            
+            <div class="intgrid-details">
+                <h4>Value Definitions</h4>
+                <div class="tile-grid">
+                    <div class="tile-preview">
+                        <h5>GroundCover (1)</h5>
+                        <img src="../public/assets/levels/image/GtuTileset.png" alt="Ground Cover Tile"
+                             style="object-fit: none; object-position: -32px -32px;">
+                        <div style="background-color: #000000; width: 20px; height: 20px; margin: 5px auto;"></div>
+                        <div class="value-details">
+                            <p><strong>Usage:</strong> Main ground collision</p>
+                            <p><strong>Value:</strong> 1</p>
+                            <p><strong>Color:</strong> #000000</p>
+                        </div>
+                    </div>
+                    <div class="tile-preview">
+                        <h5>Platform (2)</h5>
+                        <img src="../public/assets/levels/image/GtuTileset.png" alt="Platform Tile"
+                             style="object-fit: none; object-position: -64px -32px;">
+                        <div style="background-color: #56BE2F; width: 20px; height: 20px; margin: 5px auto;"></div>
+                        <div class="value-details">
+                            <p><strong>Usage:</strong> Jump-through platforms</p>
+                            <p><strong>Value:</strong> 2</p>
+                            <p><strong>Color:</strong> #56BE2F</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="technical-details">
+                    <h4>Technical Implementation</h4>
+                    <ul>
+                        <li><strong>Data Structure:</strong> Values are stored as integers in a 2D array</li>
+                        <li><strong>Default Value:</strong> 0 (empty/air)</li>
+                        <li><strong>Access in Code:</strong> Can be accessed through LDtk's API as <code>layer.intGrid[x,y]</code></li>
+                        <li><strong>Auto-Tiling:</strong> These values trigger auto-layer rules for visual representation</li>
+                    </ul>
+
+                    <h4>Common Use Cases</h4>
+                    <ul>
+                        <li><strong>Collision Detection:</strong> Different values can represent different types of collision (solid, one-way platforms)</li>
+                        <li><strong>Game Mechanics:</strong> Values can be used to define special areas (damage zones, boost pads)</li>
+                        <li><strong>Visual Mapping:</strong> Through auto-layer rules, values are automatically mapped to corresponding tiles</li>
+                        <li><strong>Level Generation:</strong> Values can be used as markers for procedural generation or level validation</li>
+                    </ul>
+                </div>
+
+                <div class="usage-example">
+                    <h4>Usage in Game Code</h4>
+                    <div class="code-example">
+                        <pre><code><span class="comment">// Example of how to check collision with IntGrid values</span>
+<span class="keyword">function</span> <span class="function">checkCollision</span>(x, y) {
+    <span class="keyword">const</span> gridValue = level.getIntGrid(x, y);
+    <span class="keyword">switch</span>(gridValue) {
+        <span class="keyword">case</span> <span class="number">1</span>: <span class="comment">// GroundCover</span>
+            <span class="keyword">return</span> <span class="string">"solid"</span>;
+        <span class="keyword">case</span> <span class="number">2</span>: <span class="comment">// Platform</span>
+            <span class="keyword">return</span> <span class="string">"platform"</span>;
+        <span class="keyword">default</span>:
+            <span class="keyword">return</span> <span class="string">"air"</span>;
+    }
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h3>2. PlayerStart Layer (Entities)</h3>
+        <div class="layer-info">
+            <p>Defines the starting position for the player character.</p>
+            <div class="properties-grid">
+                <div class="property-section">
+                    <strong>Properties:</strong>
+                    <ul>
+                        <li>Type: Entities</li>
+                        <li>Contains player spawn points</li>
+                        <li>Used to position the player at level start</li>
+                    </ul>
+                </div>
+                <div class="property-section">
+                    <strong>Implementation:</strong>
+                    <pre><code><span class="comment">// Example of using PlayerStart entity</span>
+<span class="keyword">const</span> playerStart = levelData.layerInstances
+    .find(layer => layer.__identifier === <span class="string">'PlayerStart'</span>)
+    ?.entityInstances[<span class="number">0</span>];
+
+<span class="keyword">if</span> (playerStart) {
+    player.setPosition(
+        playerStart.px[<span class="number">0</span>],
+        playerStart.px[<span class="number">1</span>]
+    );
+}</code></pre>
+                </div>
+            </div>
+            <div class="visual-example">
+                <div class="spawn-point-preview">
+                    <h5>Player Spawn Point Visual</h5>
+                    <div class="spawn-marker"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Tilesets</h2>
+        <div class="property">
+            <h3>GtuTileset</h3>
+            <ul>
+                <li>Grid Size: 64x64</li>
+                <li>Used for visual representation of the level</li>
+            </ul>
+            <h4>Full Tileset Preview:</h4>
+            <img src="../public/assets/levels/image/GtuTileset.png" alt="GTU Tileset" class="tileset-image">
+            
+            <h4>Common Tiles:</h4>
+            <div class="tile-grid">
+                <div class="tile-preview">
+                    <h5>Ground</h5>
+                    <img src="../public/assets/levels/image/GtuTileset.png" alt="Ground Tile" 
+                         style="object-fit: none; object-position: -32px -32px;">
+                </div>
+                <div class="tile-preview">
+                    <h5>Platform</h5>
+                    <img src="../public/assets/levels/image/GtuTileset.png" alt="Platform Tile"
+                         style="object-fit: none; object-position: -64px -32px;">
+                </div>
+                <div class="tile-preview">
+                    <h5>Corner</h5>
+                    <img src="../public/assets/levels/image/GtuTileset.png" alt="Corner Tile"
+                         style="object-fit: none; object-position: -96px -32px;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Usage in Game</h2>
+        <p>The TestGTU LDtk project is structured to support a 2D platformer game with the following key features:</p>
+        <ul>
+            <li>Solid collision layers for platforms and ground</li>
+            <li>Designated player spawn points</li>
+            <li>Tileset-based visual representation</li>
+        </ul>
+        <p>When loading this level in the game:</p>
+        <ol>
+            <li>The IntGrid layer "Solid" is used for collision detection</li>
+            <li>The PlayerStart entity defines where the player character should spawn</li>
+            <li>The visual elements are rendered using the GtuTileset</li>
+        </ol>
+    </div>
+
+    <div class="section">
+        <h2>Auto-Layer Rules</h2>
+        <p>The project includes auto-tiling rules for:</p>
+        <ul>
+            <li><strong>Platform Rules:</strong> Automatically handles platform visuals based on surrounding tiles</li>
+            <li><strong>Test Rules:</strong> Additional rules for special cases</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>Code Implementation</h2>
+        <p class="description">
+            The game uses two main classes to handle LDtk level data: <code>LevelLoader</code> and <code>LDTKTileManager</code>.
+            These classes work together to load, parse, and create the game world from LDtk files.
+        </p>
+
+        <div class="implementation-details">
+            <h3>LevelLoader Class</h3>
+            <p>Responsible for loading and converting LDtk level data into Phaser tilemaps.</p>
+            
+            <div class="code-example">
+                <h4>Key Features:</h4>
+                <ul>
+                    <li>Loads JSON level data from game cache</li>
+                    <li>Creates Phaser tilemaps from LDtk data</li>
+                    <li>Handles tile placement and collision setup</li>
+                </ul>
+
+                <pre><code><span class="comment">// Example of loading a level</span>
+<span class="keyword">const</span> levelLoader = <span class="keyword">new</span> LevelLoader(scene);
+<span class="keyword">const</span> { map, layer } = levelLoader.loadLevel(<span class="string">'levelKey'</span>);
+
+<span class="comment">// Set up collisions</span>
+scene.physics.add.collider(player, layer);</code></pre>
+            </div>
+
+            <div class="code-example">
+                <h4>Tile Processing:</h4>
+                <pre><code><span class="comment">// Converting LDtk coordinates to Phaser tiles</span>
+tileLayer.gridTiles.forEach(tile => {
+    <span class="keyword">const</span> tileX = <span class="keyword">Math</span>.floor(tile.px[<span class="number">0</span>] / tileLayer.__gridSize);
+    <span class="keyword">const</span> tileY = <span class="keyword">Math</span>.floor(tile.px[<span class="number">1</span>] / tileLayer.__gridSize);
+    layer.putTileAt(tileIndex, tileX, tileY);
+});</code></pre>
+            </div>
+
+            <h3>LDTKTileManager Class</h3>
+            <p>Handles the creation and management of collision hitboxes from LDtk level data.</p>
+            
+            <div class="code-example">
+                <h4>Key Features:</h4>
+                <ul>
+                    <li>Processes both Auto-Layer and IntGrid layers</li>
+                    <li>Creates physics-enabled hitboxes for solid tiles</li>
+                    <li>Supports progressive level loading with sections</li>
+                </ul>
+
+                <pre><code><span class="comment">// Example of creating hitboxes</span>
+<span class="keyword">const</span> tileManager = <span class="keyword">new</span> LDTKTileManager(scene);
+tileManager.createTileHitboxes(levelData, worldX, worldY, sectionWidth);</code></pre>
+            </div>
+
+            <div class="code-example">
+                <h4>Layer Processing:</h4>
+                <pre><code><span class="comment">// Processing IntGrid tiles</span>
+processIntGridTiles(layer, worldX, worldY, sectionWidth, sectionHitboxes) {
+    <span class="keyword">const</span> tileSize = <span class="number">32</span>;
+    <span class="keyword">for</span> (<span class="keyword">let</span> x = startTile; x < endTile; x++) {
+        <span class="keyword">for</span> (<span class="keyword">let</span> y = <span class="number">0</span>; y < layer.__cHei; y++) {
+            <span class="keyword">const</span> value = layer.intGridCsv[y * layer.__cWid + x];
+            <span class="keyword">if</span> (value > <span class="number">0</span>) {
+                <span class="comment">// Create collision hitbox for solid tiles</span>
+                <span class="keyword">this</span>.createHitbox(x * tileSize + worldX, y * tileSize + worldY);
+            }
+        }
+    }
+}</code></pre>
+            </div>
+        </div>
+
+        <div class="workflow">
+            <h3>Level Loading Workflow</h3>
+            <ol>
+                <li><strong>Load Level Data:</strong>
+                    <ul>
+                        <li>Level data is loaded as JSON from the game's asset cache</li>
+                        <li>The data includes layer information, tile positions, and properties</li>
+                    </ul>
+                </li>
+                <li><strong>Create Tilemap:</strong>
+                    <ul>
+                        <li>Phaser tilemap is created with dimensions from LDtk data</li>
+                        <li>Tiles are placed according to their positions in the LDtk file</li>
+                        <li>Collision properties are set based on tile types</li>
+                    </ul>
+                </li>
+                <li><strong>Setup Hitboxes:</strong>
+                    <ul>
+                        <li>IntGrid values are processed to create collision bodies</li>
+                        <li>Auto-layer tiles are converted to physics-enabled objects</li>
+                        <li>Hitboxes are organized by sections for efficient memory management</li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>

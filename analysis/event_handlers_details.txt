@@ -1,0 +1,222 @@
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scripts/ProceduralGenerator.js ===
+204:    checkCollision(x, y) {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/main.js ===
+15:        e.stopPropagation();
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/prefabs/Slime.js ===
+30:            this.sprite.body.setFriction(1);
+121:            this.healthBarBackground.setPosition(this.sprite.x, healthBarY);
+122:            this.healthBar.setPosition(this.sprite.x, healthBarY);
+163:        this.createDeathAnimation();
+166:    createDeathAnimation() {
+181:    playAnimation(type) {
+193:            this.createDeathAnimation();
+208:            this.playAnimation('idle');
+213:            this.sprite.body.world.on('worldbounds', this.worldBoundsListener, this);
+221:            this.reverseDirection();
+225:    reverseDirection() {
+284:                                this.createDeathAnimation();
+292:                            this.sprite.on('animationcomplete', (animation) => {
+360:        this.playAnimation('death');
+363:        this.sprite.on('animationcomplete', (animation) => {
+446:        this.playAnimation('jump');
+465:        this.playAnimation('jump');
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/prefabs/Drone.js ===
+60:            this.sprite.setPosition(this.sprite.x, this.flyingHeight);
+363:    lineIntersection(x1, y1, x2, y2, x3, y3, x4, y4) {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/prefabs/Bullet.js ===
+25:        this.setPosition(x, y);
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/prefabs/MeleeWarrior.js ===
+287:                        this.reverseDirection();
+301:                            this.reverseDirection();
+499:    reverseDirection() {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/prefabs/Player.js ===
+137:        this.setPosition(spawnPoint.x, spawnPoint.y);
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/prefabs/EnemyTypes.js ===
+27:            this.sprite.body.setFriction(1);
+140:    reverseDirection() {
+179:                this.reverseDirection();
+181:                this.reverseDirection();
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/_Debug/DebugSystem.js ===
+19:        this.debugKey.on('down', () => {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/modules/controls/PlayerController.js ===
+120:        this.scene.input.on('pointerdown', (pointer) => {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/modules/managers/StateManager.js ===
+74:        this.registry.events.on('changedata', callback);
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/modules/managers/AnimationManager.js ===
+6:    createBulletAnimation() {
+17:    createHitEffectAnimation() {
+134:        this.createBulletAnimation();
+135:        this.createHitEffectAnimation();
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/modules/managers/LevelLoader.js ===
+66:                    collisionTile.setCollision(true);
+73:        layer.setCollision(0, true); // Enable collision for all tiles
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/modules/managers/SceneInitializer.js ===
+48:        this.scene.physics.world.setBoundsCollision(true, true, true, true);
+70:        this.scene.player.setPosition(spawnX, spawnY);
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/modules/managers/CollisionManager.js ===
+156:    handleEnemyCollision(enemy1, enemy2) {
+162:                enemy1.enemy.reverseDirection();
+166:                enemy2.enemy.reverseDirection();
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/modules/managers/TextStyleManager.js ===
+261:            .on('pointerover', () => {
+265:            .on('pointerout', () => {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/modules/pathfinding/PathFinder.js ===
+115:            if (this.isValidPosition(newX, newY)) {
+146:                if (!this.isValidPosition(jumpX, jumpY)) continue;
+169:                if (!this.isValidPosition(fallX, fallY)) continue;
+190:            if (!this.isValidPosition(x, y) || !this.grid[y][x].walkable) {
+203:    isValidPosition(x, y) {
+224:        if (!this.isValidPosition(gridStartX, gridStartY) || !this.isValidPosition(gridEndX, gridEndY)) {
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/menus/ControlsSettingsScene.js ===
+70:            button.on('pointerover', () => {
+75:            button.on('pointerout', () => {
+94:            button.on('pointerdown', () => {
+114:                this.input.keyboard.on('keydown', keyHandler);
+122:        const resetButton = createButton('RESET TO DEFAULT', controls.length * 100 + 50);
+123:        resetButton.on('pointerdown', () => {
+134:        const backButton = createButton('BACK', controls.length * 100 + 150);
+135:        backButton.on('pointerdown', () => {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/menus/TheZucc/TheZucc.js ===
+31:        this.createBackButton();
+72:            yOffset = this.createCategorySection(category, config, yOffset);
+76:    createCategorySection(category, config, yOffset) {
+91:            yOffset = this.createConfigSection(yOffset);
+96:            yOffset = this.createProceduralSection(yOffset);
+117:            button.on('pointerdown', () => {
+141:    createBackButton() {
+154:    createConfigSection(yOffset) {
+239:    createProceduralSection(yOffset) {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/menus/Settings.js ===
+27:            .on('pointerover', () => musicText.setStyle({ fill: '#ff0' }))
+28:            .on('pointerout', () => musicText.setStyle({ fill: '#fff' }))
+29:            .on('pointerdown', () => {
+50:            .on('pointerover', () => backButton.setStyle({ fill: '#ff0' }))
+51:            .on('pointerout', () => backButton.setStyle({ fill: '#fff' }))
+52:            .on('pointerdown', () => {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/menus/MissionComplete.js ===
+114:            .on('pointerover', () => musicButton.setStyle({ fill: '#ff0' }))
+115:            .on('pointerout', () => musicButton.setStyle({ fill: '#fff' }))
+116:            .on('pointerdown', () => {
+220:        this.input.keyboard.on('keydown-SPACE', () => {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/menus/ui-helpers.js ===
+3:export function createRetroButton(scene, x, y, text, callback) {
+6:        .on('pointerdown', callback)
+7:        .on('pointerover', () => button.setStyle({ fill: '#f39c12' }))
+8:        .on('pointerout', () => button.setStyle({ fill: '#fff' }));
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/menus/MainMenu.js ===
+245:        startButton.on('pointerdown', () => {
+271:        controlsButton.on('pointerdown', () => {
+274:        settingsButton.on('pointerdown', () => {
+277:        leaderboardButton.on('pointerdown', () => {
+280:        rulesButton.on('pointerdown', () => {
+283:        theZuccButton.on('pointerdown', () => {
+343:                    window.ethereum.on('accountsChanged', async (accounts) => {
+359:                    window.ethereum.on('chainChanged', () => {
+369:                .on('pointerover', () => {
+375:                .on('pointerout', () => {
+381:                .on('pointerdown', async () => {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/menus/Leaderboard.js ===
+69:        backButton.on('pointerover', () => {
+74:        backButton.on('pointerout', () => {
+79:        backButton.on('pointerdown', () => {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/elements/BaseScene.js ===
+104:        this.events.on('wake', this.onSceneWake, this);
+105:        this.events.on('resume', this.onSceneResume, this);
+106:        this.events.on('shutdown', this.cleanup, this);
+107:        this.events.on('sleep', this.cleanup, this);
+211:        this.player.setPosition(spawnPoint.x, spawnPoint.y);
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/elements/TitleScene.js ===
+34:        skipButton.on('pointerover', () => {
+37:        skipButton.on('pointerout', () => {
+42:        skipButton.on('pointerdown', () => {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/elements/GameUI.js ===
+31:        this.scene.events.on('create', this.updateCameraIgnoreList, this);
+32:        this.scene.events.on('wake', this.updateCameraIgnoreList, this);
+33:        this.scene.events.on('resume', this.updateCameraIgnoreList, this);
+36:        this.scene.events.on('addedtoscene', this.handleNewObject, this);
+223:        this.walletText.on('pointerdown', (pointer, localX, localY, event) => {
+224:            event.stopPropagation();
+276:                .on('pointerdown', () => {
+536:    updateInstruction(text) {
+540:    showShootingInstruction() {
+544:    showDefeatInstruction() {
+548:    hideInstruction() {
+552:    showInstruction() {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/elements/PauseMenu.js ===
+33:            this.createMenuButton(text, yOffset, callback);
+37:        this.input.keyboard.on('keydown-ESC', () => this.resumeGame());
+40:    createMenuButton(text, yOffset, callback) {
+48:            .on('pointerover', () => {
+52:            .on('pointerout', () => {
+56:            .on('pointerdown', callback);
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/elements/Game.js ===
+59:        this.input.keyboard.on('keydown-SPACE', () => {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/elements/Preloader.js ===
+22:        this.load.on('progress', (value) => {
+29:        this.load.on('loaderror', (file) => {
+42:        this.load.on('filecomplete', (key, type, data) => {
+51:        this.load.on('loaderror', (file) => {
+68:        this.load.on('filecomplete-image-particle', () => {
+223:            this.load.on(`filecomplete-spritesheet-enemymeleewarrior_${animation}`, (key) => {
+242:        this.load.on('loaderror', (file) => {
+249:        this.load.on('filecomplete', (key, type) => {
+261:        this.load.on('complete', () => {
+

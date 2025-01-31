@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base Scene Documentation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        h1, h2, h3 {
+            color: #2c3e50;
+            margin-top: 30px;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .code-example {
+            background-color: #1e1e1e;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        .code-example code {
+            color: #d4d4d4;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .comment { color: #6a9955; }
+        .keyword { color: #569cd6; }
+        .string { color: #ce9178; }
+        .function { color: #dcdcaa; }
+        .number { color: #b5cea8; }
+
+        .initializer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .initializer-card {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .feature-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .feature-list li {
+            margin-bottom: 10px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .feature-list li:before {
+            content: "•";
+            color: #2c3e50;
+            position: absolute;
+            left: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Base Scene Documentation</h1>
+        
+        <section>
+            <h2>Overview</h2>
+            <p>
+                The BaseScene class is the foundational scene class in ShooterGTU, providing essential game functionality and 
+                structure for all derived scenes. It serves as a robust foundation with standardized setup and management 
+                of core game systems, ensuring consistent behavior across all game scenes.
+            </p>
+
+            <h3>Key Features</h3>
+            <ul class="feature-list">
+                <li>Automatic manager initialization through ManagerFactory</li>
+                <li>Centralized collision handling via CollisionManager</li>
+                <li>Event-driven communication between game components</li>
+                <li>Flexible state management for game progression</li>
+                <li>Built-in error handling and recovery</li>
+                <li>Configurable physics and world boundaries</li>
+                <li>Integrated audio system with volume control</li>
+                <li>Parallax background support</li>
+                <li>Debug mode with visual helpers</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Core Systems</h2>
+
+            <h3>Manager System</h3>
+            <div class="code-example">
+                <pre><code><span class="comment">// Manager initialization in create()</span>
+this.managers = ManagerFactory.createManagers(this);
+this.gameState = this.managers.gameState;
+this.persistence = this.managers.persistence;
+this.soundManager = this.managers.sound;
+this.musicManager = this.managers.music;
+this.entityManager = this.managers.entityManager;
+this.enemies = this.managers.enemies;
+this.hazards = this.managers.hazards;
+this.animations = this.managers.animations;
+this.effects = this.managers.effects;
+this.boundaries = this.managers.boundaries;
+this.debug = this.managers.debug;
+this.collisionManager = this.managers.collision;</code></pre>
+            </div>
+
+            <h3>Physics System</h3>
+            <div class="code-example">
+                <pre><code><span class="comment">// Physics world setup</span>
+this.physics.world.setBounds(0, 0, width, height);
+
+<span class="comment">// Platform creation</span>
+this.platforms = this.physics.add.staticGroup();
+
+<span class="comment">// Bullet group setup</span>
+this.bullets = this.physics.add.group({
+    classType: Bullet,
+    maxSize: -1,
+    runChildUpdate: true,
+    allowGravity: false,
+    immovable: true
+});</code></pre>
+            </div>
+
+            <h3>State Management</h3>
+            <div class="code-example">
+                <pre><code><span class="comment">// Scene state structure</span>
+this.sceneState = {
+    isReady: false,
+    isPlaying: false,
+    isLoading: true,
+    startTime: Date.now(),
+    levelData: {
+        currentScore: 0,
+        enemiesDefeated: 0,
+        timeElapsed: 0,
+        checkpoints: []
+    }
+};</code></pre>
+            </div>
+        </section>
+
+        <section>
+            <h2>Player Management</h2>
+            <p>
+                The BaseScene provides comprehensive player management including creation, 
+                respawning, death handling, and state management.
+            </p>
+
+            <h3>Player Creation</h3>
+            <div class="code-example">
+                <pre><code><span class="comment">// Player creation with physics</span>
+createPlayer(width) {
+    this.player = new Player(
+        this, 
+        width * GameConfig.PLAYER.SPAWN_OFFSET_X, 
+        this.playerSpawnPoint.y
+    );
+    this.physics.add.collider(this.player, this.platforms);
+    return this.player;
+}</code></pre>
+            </div>
+
+            <h3>Death and Respawn</h3>
+            <div class="code-example">
+                <pre><code><span class="comment">// Player death handling</span>
+handlePlayerDeath() {
+    if (this.player && !this.isDying) {
+        this.isDying = true;
+        this.player.disableBody();
+        this.player.setVelocity(0);
+        
+        if (this.animations.hasAnimation('character_Death')) {
+            this.animations.play(this.player, 'character_Death');
+        }
+        
+        // Life system management
+        const lives = this.registry.get('lives') - 1;
+        this.registry.set('lives', lives);
+        
+        // Handle game over or respawn
+        this.time.delayedCall(2000, () => {
+            if (lives <= 0) {
+                this.handleGameOver();
+            } else {
+                this.handleRespawn();
+            }
+        });
+    }
+}</code></pre>
+            </div>
+        </section>
+
+        <section>
+            <h2>Audio System</h2>
+            <p>
+                The BaseScene includes a robust audio system with background music 
+                and sound effect support, including volume control and persistence.
+            </p>
+
+            <div class="code-example">
+                <pre><code><span class="comment">// Audio system setup</span>
+#setupMusic() {
+    const bgMusic = this.sound.add('bgMusic', { loop: true });
+    const musicVolume = this.registry.get('musicVolume') || 1;
+    bgMusic.setVolume(musicVolume);
+    this.musicManager.setCurrentMusic(bgMusic);
+    this.musicManager.play();
+}</code></pre>
+            </div>
+        </section>
+
+        <section>
+            <h2>Error Handling</h2>
+            <p>
+                Comprehensive error handling is implemented throughout the BaseScene, 
+                with specific error recovery strategies for different components.
+            </p>
+
+            <div class="code-example">
+                <pre><code><span class="comment">// Error handling in state updates</span>
+handleStoreUpdate(state, action) {
+    try {
+        // State update logic
+    } catch (error) {
+        this.errorSystem.handleError(error, 'storeUpdate');
+    }
+}</code></pre>
+            </div>
+        </section>
+
+        <section>
+            <h2>Cleanup and Resource Management</h2>
+            <p>
+                The BaseScene implements thorough cleanup procedures to prevent memory 
+                leaks and ensure proper resource management.
+            </p>
+
+            <div class="code-example">
+                <pre><code><span class="comment">// Cleanup implementation</span>
+cleanup() {
+    // Clean up managers
+    if (this.eventManager) {
+        this.eventManager.destroy();
+    }
+
+    // Clean up input
+    if (this.input) {
+        this.input.keyboard.enabled = false;
+        this.input.keyboard.removeAllKeys();
+        this.input.removeAllListeners();
+    }
+
+    // Clean up game objects
+    if (this.player) {
+        this.player.destroy();
+        this.player = null;
+    }
+
+    // Additional cleanup...
+}</code></pre>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

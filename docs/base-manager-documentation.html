@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base Manager Documentation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        h1, h2, h3 {
+            color: #2c3e50;
+            margin-top: 30px;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .code-example {
+            background-color: #1e1e1e;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        .code-example code {
+            color: #d4d4d4;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .comment { color: #6a9955; }
+        .keyword { color: #569cd6; }
+        .string { color: #ce9178; }
+        .function { color: #dcdcaa; }
+        .number { color: #b5cea8; }
+
+        .initializer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .initializer-card {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            border: 1px solid #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Base Manager Documentation</h1>
+        
+        <section>
+            <h2>Overview</h2>
+            <p>
+                The BaseManager is a fundamental component of the game's dependency injection (DI) system. It serves as the base class for all manager classes in the game, providing a standardized way to access services and other managers through a centralized service container.
+            </p>
+        </section>
+
+        <section>
+            <h2>Purpose</h2>
+            <div class="initializer-grid">
+                <div class="initializer-card">
+                    <h3>Dependency Injection</h3>
+                    <p>Facilitates loose coupling between different parts of the game by providing a centralized way to access services and managers.</p>
+                </div>
+                <div class="initializer-card">
+                    <h3>Service Access</h3>
+                    <p>Provides standardized methods to access the game scene and other managers through the service container.</p>
+                </div>
+                <div class="initializer-card">
+                    <h3>Code Organization</h3>
+                    <p>Creates a consistent structure for all manager classes in the game, promoting maintainable and scalable code.</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Core Methods</h2>
+            <div class="initializer-grid">
+                <div class="initializer-card">
+                    <h3>constructor()</h3>
+                    <p>Initializes the manager with access to the global service container.</p>
+                    <div class="code-example">
+                        <pre><code><span class="keyword">constructor</span>() {
+    this.container = container;
+}</code></pre>
+                    </div>
+                </div>
+                <div class="initializer-card">
+                    <h3>getScene()</h3>
+                    <p>Retrieves the current game scene from the service container.</p>
+                    <div class="code-example">
+                        <pre><code><span class="function">getScene</span>() {
+    <span class="keyword">return</span> this.container.<span class="function">get</span>(<span class="string">'scene'</span>);
+}</code></pre>
+                    </div>
+                </div>
+                <div class="initializer-card">
+                    <h3>getManager(managerKey)</h3>
+                    <p>Retrieves a specific manager instance from the service container.</p>
+                    <div class="code-example">
+                        <pre><code><span class="function">getManager</span>(managerKey) {
+    <span class="keyword">return</span> this.container.<span class="function">get</span>(managerKey);
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Usage Example</h2>
+            <div class="code-example">
+                <pre><code><span class="comment">// Create a custom manager</span>
+<span class="keyword">class</span> <span class="function">CustomManager</span> <span class="keyword">extends</span> BaseManager {
+    <span class="function">constructor</span>(scene) {
+        <span class="keyword">super</span>();
+        <span class="comment">// Register this manager in the container</span>
+        this.container.<span class="function">register</span>(<span class="string">'customManager'</span>, this);
+    }
+
+    <span class="function">doSomething</span>() {
+        <span class="comment">// Access the scene</span>
+        <span class="keyword">const</span> scene = this.<span class="function">getScene</span>();
+        
+        <span class="comment">// Access another manager</span>
+        <span class="keyword">const</span> eventManager = this.<span class="function">getManager</span>(<span class="string">'events'</span>);
+    }
+}</code></pre>
+            </div>
+        </section>
+
+        <section>
+            <h2>File Dependencies</h2>
+            <div class="initializer-grid">
+                <div class="initializer-card">
+                    <h3>Required Files</h3>
+                    <ul>
+                        <li><code>src/modules/di/ServiceContainer.js</code> - Provides the dependency injection container</li>
+                        <li><code>src/modules/di/BaseManager.js</code> - The base manager implementation</li>
+                    </ul>
+                </div>
+                <div class="initializer-card">
+                    <h3>Import Structure</h3>
+                    <div class="code-example">
+                        <pre><code><span class="keyword">import</span> { container } <span class="keyword">from</span> <span class="string">'./ServiceContainer'</span>;
+<span class="keyword">import</span> { BaseManager } <span class="keyword">from</span> <span class="string">'./BaseManager'</span>;</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Best Practices</h2>
+            <div class="initializer-grid">
+                <div class="initializer-card">
+                    <h3>Manager Registration</h3>
+                    <p>Always register your manager in the container using a unique key during initialization.</p>
+                </div>
+                <div class="initializer-card">
+                    <h3>Service Access</h3>
+                    <p>Use getManager() instead of direct container access to maintain encapsulation.</p>
+                </div>
+                <div class="initializer-card">
+                    <h3>Error Handling</h3>
+                    <p>Handle potential service not found errors when using getManager() or getScene().</p>
+                </div>
+                <div class="initializer-card">
+                    <h3>Inheritance</h3>
+                    <p>Always call super() in the constructor when extending BaseManager.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

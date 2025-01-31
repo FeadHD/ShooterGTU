@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enemy Manager Documentation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        h1, h2, h3 {
+            color: #2c3e50;
+            margin-top: 30px;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .code-example {
+            background-color: #1e1e1e;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        .code-example code {
+            color: #d4d4d4;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .comment { color: #6a9955; }
+        .keyword { color: #569cd6; }
+        .string { color: #ce9178; }
+        .function { color: #dcdcaa; }
+        .number { color: #b5cea8; }
+
+        .method-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .method-card {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        .note {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Enemy Manager</h1>
+        
+        <section>
+            <h2>Overview</h2>
+            <p>
+                The Enemy Manager is responsible for handling all enemy-related operations in the game, including enemy health tracking, damage handling, and level completion logic. It provides a centralized system for managing enemy states and interactions.
+            </p>
+        </section>
+
+        <section>
+            <h2>Key Features</h2>
+            <ul>
+                <li>Enemy health management</li>
+                <li>Bullet collision handling</li>
+                <li>Special handling for different enemy types (e.g., warriors)</li>
+                <li>Level completion detection</li>
+                <li>Score management for defeated enemies</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Usage Example</h2>
+            <div class="code-example">
+                <pre><code><span class="comment">// Initialize enemy manager in a scene</span>
+<span class="keyword">class</span> <span class="function">GameScene</span> <span class="keyword">extends</span> Phaser.Scene {
+    <span class="function">create</span>() {
+        this.enemyManager = <span class="keyword">new</span> <span class="function">EnemyManager</span>(this);
+        
+        <span class="comment">// Add an enemy</span>
+        <span class="keyword">const</span> enemy = <span class="keyword">new</span> <span class="function">Enemy</span>(this, x, y);
+        this.enemyManager.<span class="function">addEnemy</span>(enemy, enemy.sprite, 3);
+        
+        <span class="comment">// Handle bullet collision</span>
+        this.physics.add.collider(
+            bullets,
+            enemySprite,
+            (bullet, enemy) => {
+                this.enemyManager.<span class="function">handleBulletHit</span>(bullet, enemy);
+            }
+        );
+    }
+}</code></pre>
+            </div>
+        </section>
+
+        <section>
+            <h2>Core Methods</h2>
+            <div class="method-grid">
+                <div class="method-card">
+                    <h3>constructor(scene)</h3>
+                    <p>Creates a new enemy manager instance.</p>
+                    <ul>
+                        <li><strong>scene:</strong> The game scene context</li>
+                    </ul>
+                </div>
+
+                <div class="method-card">
+                    <h3>addEnemy(enemy, sprite, health)</h3>
+                    <p>Adds a new enemy to the manager.</p>
+                    <ul>
+                        <li><strong>enemy:</strong> Enemy instance</li>
+                        <li><strong>sprite:</strong> Enemy's sprite object</li>
+                        <li><strong>health:</strong> Initial health value</li>
+                    </ul>
+                </div>
+
+                <div class="method-card">
+                    <h3>handleBulletHit(bullet, enemySprite)</h3>
+                    <p>Handles bullet collision with enemies.</p>
+                    <ul>
+                        <li><strong>bullet:</strong> The bullet object</li>
+                        <li><strong>enemySprite:</strong> The enemy's sprite that was hit</li>
+                    </ul>
+                </div>
+
+                <div class="method-card">
+                    <h3>cleanup()</h3>
+                    <p>Cleans up all enemy references and resets the counter.</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>System Dependencies</h2>
+            <table>
+                <tr>
+                    <th>Dependency</th>
+                    <th>Purpose</th>
+                    <th>Required Version</th>
+                </tr>
+                <tr>
+                    <td>Phaser</td>
+                    <td>Game framework for physics and sprite management</td>
+                    <td>3.x</td>
+                </tr>
+                <tr>
+                    <td>EffectsManager</td>
+                    <td>Handles visual and sound effects for hits</td>
+                    <td>Internal</td>
+                </tr>
+                <tr>
+                    <td>GameState</td>
+                    <td>Manages game state and scoring</td>
+                    <td>Internal</td>
+                </tr>
+            </table>
+        </section>
+
+        <section>
+            <h2>File Dependencies</h2>
+            <div class="note">
+                <p>The EnemyManager is a core component used across various game scenes and levels.</p>
+            </div>
+            <h3>Files Using EnemyManager:</h3>
+            <table>
+                <tr>
+                    <th>File</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td>Main game level implementation</td>
+                </tr>
+                <tr>
+                    <td>Combined level management</td>
+                </tr>
+                <tr>
+                    <td>modules/di/ManagerFactory.js</td>
+                    <td>Dependency injection for managers</td>
+                </tr>
+                <tr>
+                    <td>modules/managers/SceneInitializer.js</td>
+                    <td>Scene setup and initialization</td>
+                </tr>
+                <tr>
+                    <td>scenes/levels/GtuTestLevel0.js</td>
+                    <td>Test level implementation</td>
+                </tr>
+            </table>
+            <div class="warning">
+                <p>The EnemyManager requires proper scene initialization and must be created before adding any enemies to the scene.</p>
+            </div>
+        </section>
+
+        <section>
+            <h2>Properties</h2>
+            <table>
+                <tr>
+                    <th>Property</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td>enemies</td>
+                    <td>Map</td>
+                    <td>Stores enemy instances and their health data</td>
+                </tr>
+                <tr>
+                    <td>remainingEnemies</td>
+                    <td>Number</td>
+                    <td>Counter for remaining enemies in the level</td>
+                </tr>
+                <tr>
+                    <td>scene</td>
+                    <td>Phaser.Scene</td>
+                    <td>Reference to the current game scene</td>
+                </tr>
+            </table>
+        </section>
+
+        <section>
+            <h2>Best Practices</h2>
+            <ul>
+                <li>Always use addEnemy() to register new enemies with the manager</li>
+                <li>Set up proper collision detection between bullets and enemy sprites</li>
+                <li>Call cleanup() when transitioning between scenes</li>
+                <li>Ensure enemy sprites have proper 'type' data set for special enemy handling</li>
+                <li>Implement proper health bar updates in enemy classes if using health bars</li>
+            </ul>
+        </section>
+    </div>
+</body>
+</html>

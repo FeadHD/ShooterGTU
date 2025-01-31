@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Container Documentation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        h1, h2, h3 {
+            color: #2c3e50;
+            margin-top: 30px;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .code-example {
+            background-color: #1e1e1e;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        .code-example code {
+            color: #d4d4d4;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .comment { color: #6a9955; }
+        .keyword { color: #569cd6; }
+        .string { color: #ce9178; }
+        .function { color: #dcdcaa; }
+        .number { color: #b5cea8; }
+
+        .initializer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .initializer-card {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            border: 1px solid #e9ecef;
+        }
+
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border: 1px solid #ffeeba;
+        }
+
+        .note {
+            background-color: #e7f5ff;
+            color: #004085;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border: 1px solid #b8daff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Service Container Documentation</h1>
+        
+        <section>
+            <h2>Overview</h2>
+            <p>
+                The ServiceContainer is the core dependency injection container for the game engine. It provides a centralized
+                registry for all game services and managers, enabling loose coupling and easier testing through dependency injection.
+            </p>
+            <div class="note">
+                The ServiceContainer is implemented as a singleton to ensure a single source of truth for all service references
+                across the game.
+            </div>
+        </section>
+
+        <section>
+            <h2>Singleton Pattern</h2>
+            <p>
+                A Singleton is a design pattern that ensures a class has only one instance throughout the entire application's lifecycle.
+                This is particularly important for the ServiceContainer because:
+            </p>
+            <div class="initializer-grid">
+                <div class="initializer-card">
+                    <h3>Single Source of Truth</h3>
+                    <p>Having multiple service containers would lead to service duplication and inconsistent state.</p>
+                    <div class="code-example">
+                        <pre><code><span class="comment">// Bad: Creating multiple containers</span>
+<span class="keyword">const</span> container1 = <span class="keyword">new</span> <span class="function">ServiceContainer</span>();
+<span class="keyword">const</span> container2 = <span class="keyword">new</span> <span class="function">ServiceContainer</span>();
+
+<span class="comment">// Good: Using the singleton instance</span>
+<span class="keyword">import</span> { container } <span class="keyword">from</span> <span class="string">'./ServiceContainer'</span>;</code></pre>
+                    </div>
+                </div>
+                <div class="initializer-card">
+                    <h3>Global Access</h3>
+                    <p>The singleton pattern provides a global access point to the container without passing it through constructors.</p>
+                    <div class="code-example">
+                        <pre><code><span class="comment">// Access anywhere in the code</span>
+<span class="keyword">import</span> { container } <span class="keyword">from</span> <span class="string">'./ServiceContainer'</span>;
+
+<span class="keyword">class</span> <span class="function">AnyClass</span> {
+    <span class="function">method</span>() {
+        <span class="keyword">const</span> service = container.<span class="function">get</span>(<span class="string">'service'</span>);
+    }
+}</code></pre>
+                    </div>
+                </div>
+                <div class="initializer-card">
+                    <h3>Implementation</h3>
+                    <p>Our singleton is implemented by exporting a single instance of the ServiceContainer:</p>
+                    <div class="code-example">
+                        <pre><code><span class="keyword">export class</span> <span class="function">ServiceContainer</span> { ... }
+
+<span class="comment">// Create and export the singleton instance</span>
+<span class="keyword">export const</span> container = <span class="keyword">new</span> <span class="function">ServiceContainer</span>();
+
+<span class="comment">// Now no one else can create new instances</span></code></pre>
+                    </div>
+                </div>
+                <div class="initializer-card">
+                    <h3>Benefits</h3>
+                    <ul>
+                        <li>Ensures consistent state across the application</li>
+                        <li>Prevents duplicate service registrations</li>
+                        <li>Simplifies dependency management</li>
+                        <li>Reduces memory usage</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="warning">
+                <strong>Note on Testing:</strong> When unit testing with a singleton ServiceContainer, remember to clear or reset
+                the container between tests to prevent test pollution. Consider providing a <code>clear()</code> method for testing purposes.
+            </div>
+        </section>
+
+        <section>
+            <h2>Core Features</h2>
+            <div class="initializer-grid">
+                <div class="initializer-card">
+                    <h3>Service Registration</h3>
+                    <p>Register services with unique keys for later retrieval</p>
+                    <div class="code-example">
+                        <pre><code><span class="keyword">const</span> container = <span class="keyword">new</span> <span class="function">ServiceContainer</span>();
+container.<span class="function">register</span>(<span class="string">'events'</span>, eventManager);</code></pre>
+                    </div>
+                </div>
+                <div class="initializer-card">
+                    <h3>Service Resolution</h3>
+                    <p>Retrieve registered services by their keys</p>
+                    <div class="code-example">
+                        <pre><code><span class="keyword">const</span> eventManager = container.<span class="function">get</span>(<span class="string">'events'</span>);</code></pre>
+                    </div>
+                </div>
+                <div class="initializer-card">
+                    <h3>Error Handling</h3>
+                    <p>Throws descriptive errors for missing services</p>
+                    <div class="code-example">
+                        <pre><code><span class="comment">// Throws: "Service invalid-key not found in container"</span>
+container.<span class="function">get</span>(<span class="string">'invalid-key'</span>);</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Implementation Details</h2>
+            <div class="code-example">
+                <pre><code><span class="keyword">export class</span> <span class="function">ServiceContainer</span> {
+    <span class="function">constructor</span>() {
+        <span class="comment">// Use Map for efficient key-value storage</span>
+        this.services = <span class="keyword">new</span> <span class="function">Map</span>();
+    }
+
+    <span class="function">register</span>(key, service) {
+        this.services.<span class="function">set</span>(key, service);
+    }
+
+    <span class="function">get</span>(key) {
+        <span class="keyword">if</span> (!this.services.<span class="function">has</span>(key)) {
+            <span class="keyword">throw new</span> <span class="function">Error</span>(<span class="string">`Service ${key} not found in container`</span>);
+        }
+        <span class="keyword">return</span> this.services.<span class="function">get</span>(key);
+    }
+}</code></pre>
+            </div>
+        </section>
+
+        <section>
+            <h2>Common Service Keys</h2>
+            <div class="initializer-grid">
+                <div class="initializer-card">
+                    <h3>Core Services</h3>
+                    <ul>
+                        <li><code>'scene'</code> - Current game scene</li>
+                        <li><code>'events'</code> - Event manager</li>
+                        <li><code>'eventBus'</code> - Event bus system</li>
+                    </ul>
+                </div>
+                <div class="initializer-card">
+                    <h3>Game Managers</h3>
+                    <ul>
+                        <li><code>'gameState'</code> - Game state manager</li>
+                        <li><code>'sound'</code> - Sound manager</li>
+                        <li><code>'music'</code> - Music manager</li>
+                        <li><code>'effects'</code> - Effects manager</li>
+                    </ul>
+                </div>
+                <div class="initializer-card">
+                    <h3>Entity Managers</h3>
+                    <ul>
+                        <li><code>'entityManager'</code> - Entity manager</li>
+                        <li><code>'enemies'</code> - Enemy manager</li>
+                        <li><code>'hazards'</code> - Hazard manager</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Usage Examples</h2>
+            <div class="initializer-grid">
+                <div class="initializer-card">
+                    <h3>Basic Usage</h3>
+                    <div class="code-example">
+                        <pre><code><span class="keyword">import</span> { container } <span class="keyword">from</span> <span class="string">'./ServiceContainer'</span>;
+
+<span class="comment">// Register a service</span>
+container.<span class="function">register</span>(<span class="string">'myService'</span>, <span class="keyword">new</span> <span class="function">MyService</span>());
+
+<span class="comment">// Get the service</span>
+<span class="keyword">const</span> service = container.<span class="function">get</span>(<span class="string">'myService'</span>);</code></pre>
+                    </div>
+                </div>
+                <div class="initializer-card">
+                    <h3>In Manager Classes</h3>
+                    <div class="code-example">
+                        <pre><code><span class="keyword">class</span> <span class="function">CustomManager</span> <span class="keyword">extends</span> BaseManager {
+    <span class="function">doSomething</span>() {
+        <span class="keyword">const</span> events = this.<span class="function">getManager</span>(<span class="string">'events'</span>);
+        <span class="keyword">const</span> sound = this.<span class="function">getManager</span>(<span class="string">'sound'</span>);
+        
+        events.<span class="function">emit</span>(<span class="string">'event'</span>);
+        sound.<span class="function">play</span>(<span class="string">'effect'</span>);
+    }
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Best Practices</h2>
+            <div class="initializer-grid">
+                <div class="initializer-card">
+                    <h3>Service Keys</h3>
+                    <p>Use consistent, lowercase keys for services. Consider creating a constants file for service keys.</p>
+                </div>
+                <div class="initializer-card">
+                    <h3>Error Handling</h3>
+                    <p>Always handle potential service resolution errors, especially for optional dependencies.</p>
+                </div>
+                <div class="initializer-card">
+                    <h3>Registration Timing</h3>
+                    <p>Register core services before dependent services to avoid resolution errors.</p>
+                </div>
+                <div class="initializer-card">
+                    <h3>Service Access</h3>
+                    <p>Prefer using BaseManager's getManager() method over direct container access.</p>
+                </div>
+            </div>
+            <div class="warning">
+                <strong>Important:</strong> The ServiceContainer is a singleton. Avoid creating new instances and always use the exported
+                'container' instance.
+            </div>
+        </section>
+    </div>
+</body>
+</html>

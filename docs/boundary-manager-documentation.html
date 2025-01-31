@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scene Boundary Manager Documentation</title>
+    <link rel="stylesheet" href="styles/documentation.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Scene Boundary Manager Documentation</h1>
+        
+        <section>
+            <h2>Overview</h2>
+            <p>
+                The <code>SceneBoundaryManager</code> class is responsible for creating and managing physical boundaries 
+                in game scenes. It prevents players and other entities from moving beyond the intended play area by 
+                creating invisible collision barriers.
+            </p>
+        </section>
+
+        <section>
+            <h2>Core Features</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>Boundary Creation</h3>
+                    <ul>
+                        <li>Creates invisible physical barriers</li>
+                        <li>Automatically sizes to scene dimensions</li>
+                        <li>Supports player collision detection</li>
+                        <li>Uses Phaser's physics system</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>Implementation Details</h3>
+                    <ul>
+                        <li>Uses rectangle shapes for boundaries</li>
+                        <li>Implements static physics bodies</li>
+                        <li>Transparent visual representation</li>
+                        <li>Dynamic height calculation</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Constructor</h2>
+            <div class="code-example">
+                <pre><code><span class="keyword">constructor</span>(<span class="function">scene</span>) {
+    this.scene = scene;
+}</code></pre>
+            </div>
+            <p>
+                Initializes the boundary manager with a reference to the current Phaser scene.
+            </p>
+            <div class="note">
+                <strong>Parameters:</strong>
+                <ul>
+                    <li><code>scene</code>: The Phaser scene instance where boundaries will be created</li>
+                </ul>
+            </div>
+        </section>
+
+        <section>
+            <h2>Key Methods</h2>
+            
+            <div class="card">
+                <h3>createBoundaries(player)</h3>
+                <div class="code-example">
+                    <pre><code><span class="comment">// Create scene boundaries and set up player collision</span>
+boundaryManager.<span class="function">createBoundaries</span>(player);
+
+<span class="comment">// Internal implementation</span>
+<span class="keyword">const</span> { width, height } = this.scene.scale;
+<span class="keyword">const</span> leftBoundary = this.scene.add.rectangle(
+    <span class="number">0</span>,           <span class="comment">// x position</span>
+    height/<span class="number">2</span>,     <span class="comment">// y position</span>
+    <span class="number">10</span>,          <span class="comment">// width</span>
+    height,        <span class="comment">// height</span>
+    <span class="number">0x000000</span>,    <span class="comment">// color</span>
+    <span class="number">0</span>            <span class="comment">// alpha (transparent)</span>
+);</code></pre>
+                </div>
+                <p><strong>Parameters:</strong></p>
+                <ul>
+                    <li><code>player</code> (optional): The player object to set up collision with boundaries</li>
+                </ul>
+                <p><strong>Functionality:</strong></p>
+                <ul>
+                    <li>Creates an invisible left boundary wall</li>
+                    <li>Sets up static physics body for the boundary</li>
+                    <li>Configures collision between player and boundary if player is provided</li>
+                    <li>Automatically sizes boundary height to match scene dimensions</li>
+                </ul>
+            </div>
+        </section>
+
+        <section>
+            <h2>File Dependencies</h2>
+            <div class="card">
+                <h3>Location</h3>
+                <code>src/modules/managers/BoundaryManager.js</code>
+                
+                <h3>Dependencies</h3>
+                <p>This class has no direct imports but requires:</p>
+                <ul>
+                    <li>Phaser.js framework for:
+                        <ul>
+                            <li>Scene management</li>
+                            <li>Physics system</li>
+                            <li>Game object creation</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <section>
+            <h2>Usage Example</h2>
+            <div class="code-example">
+                <pre><code><span class="keyword">class</span> <span class="function">GameScene</span> <span class="keyword">extends</span> Phaser.Scene {
+    <span class="function">create</span>() {
+        <span class="comment">// Create player</span>
+        this.player = <span class="keyword">new</span> <span class="function">Player</span>(this, <span class="number">100</span>, <span class="number">100</span>);
+        
+        <span class="comment">// Initialize boundary manager</span>
+        this.boundaryManager = <span class="keyword">new</span> <span class="function">SceneBoundaryManager</span>(this);
+        
+        <span class="comment">// Create boundaries with player collision</span>
+        this.boundaryManager.<span class="function">createBoundaries</span>(this.player);
+    }
+}</code></pre>
+            </div>
+        </section>
+
+        <section>
+            <h2>System Architecture</h2>
+            <div class="diagram">
+Boundary Management System
+├── Scene Integration
+│   └── Scene reference and scaling
+├── Physics Setup
+│   ├── Static body creation
+│   └── Collision detection
+└── Boundary Objects
+    ├── Invisible rectangles
+    └── Dynamic sizing</div>
+        </section>
+
+        <div class="warning">
+            <strong>Warning:</strong> Ensure that the scene's physics system is properly initialized before creating boundaries.
+        </div>
+
+        <div class="note">
+            <strong>Note:</strong> Currently implements left boundary only. Extend the class to add right, top, or bottom boundaries as needed.
+        </div>
+    </div>
+</body>
+</html>

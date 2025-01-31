@@ -1,0 +1,95 @@
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/prefabs/Enemy.js ===
+63:        this.updateHealthBar();
+66:    updateHealthBar() {
+102:        this.updateHealthBar();
+147:    update(time, delta) {
+150:            this.updateHealthBar();
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/prefabs/ParallaxBackground.js ===
+70:    update() {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/prefabs/Slime.js ===
+117:    updateHealthBar() {
+235:        this.updateHealthBar();
+379:    update() {
+437:        this.updateHealthBar();
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/prefabs/Bitcoin.js ===
+68:            this.scene.gameUI.updateBitcoins(currentBitcoins + 1);
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/prefabs/Drone.js ===
+78:    updateDebugPath() {
+119:    update() {
+123:        this.updateHealthBar();
+126:        this.updateDebugPath();
+386:        this.updateDebugPath();
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/prefabs/AlarmTrigger.js ===
+33:    update() {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/prefabs/MeleeWarrior.js ===
+108:    update(time, delta) {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/prefabs/Player.js ===
+62:        this.scene.gameUI.updateHP(this.playerHP);
+102:        this.scene.gameUI.updateLives(lives);
+150:        this.scene.gameUI.updateHP(this.playerHP);
+153:    update() {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/prefabs/EnemyTypes.js ===
+145:    update() {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/_Debug/DebugSystem.js ===
+481:    update(time) {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/modules/managers/CameraManager.js ===
+32:            this.scene.gameUI.updateCameraIgnoreList();
+78:                    this.scene.gameUI.updateCameraIgnoreList();
+103:                                    this.scene.gameUI.updateCameraIgnoreList();
+116:    update() {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/modules/managers/EnemyManager.js ===
+34:                enemy.updateHealthBar();
+50:            enemyData.instance.updateHealthBar();
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/elements/BaseScene.js ===
+127:        this.gameUI.updateCameraIgnoreList();
+158:        this.gameUI.updateHP(newHP);
+181:        this.gameUI.updateLives(lives);
+221:        this.gameUI.updateHP(100);
+244:    update() {
+246:            this.player.update();
+250:            this.debugSystem.update();
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/elements/GameUI.js ===
+28:        this.updateCameraIgnoreList();
+57:    updateCameraIgnoreList() {
+232:        this.updateCameraIgnoreList();
+355:                        this.updateTimer();
+364:    updateTimer() {
+391:                    this.updateTimer();
+398:        this.updateTimer();
+401:    update(time) {
+419:    updateScore(points) {
+425:    updateLives(lives) {
+431:    updateHP(hp) {
+437:    updateBitcoins(bitcoins) {
+536:    updateInstruction(text) {
+
+
+=== /home/kdsm/TKU/DECEMBER202024/ShooterGTU/src/scenes/elements/Game.js ===
+85:    update() {
+

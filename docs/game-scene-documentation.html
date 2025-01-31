@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Scene Documentation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        h1, h2, h3 {
+            color: #2c3e50;
+            margin-top: 30px;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .code-example {
+            background-color: #1e1e1e;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        .code-example code {
+            color: #d4d4d4;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .comment { color: #6a9955; }
+        .keyword { color: #569cd6; }
+        .string { color: #ce9178; }
+        .function { color: #dcdcaa; }
+        .number { color: #b5cea8; }
+
+        .initializer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .initializer-card {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            border: 1px solid #e9ecef;
+        }
+
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border: 1px solid #ffeeba;
+        }
+
+        .note {
+            background-color: #e7f5ff;
+            color: #004085;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border: 1px solid #b8daff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Game Scene Documentation</h1>
+        
+        <section>
+            <h2>Overview</h2>
+            <p>
+                The Game scene is the main gameplay scene where the core game mechanics take place. It handles player movement,
+                shooting mechanics, enemy spawning, collision detection, and score tracking.
+            </p>
+            <div class="note">
+                This scene serves as the primary gameplay loop and manages all real-time game interactions.
+            </div>
+        </section>
+
+        <section>
+            <h2>Core Components</h2>
+            <div class="initializer-grid">
+                <div class="initializer-card">
+                    <h3>Player</h3>
+                    <p>A physics-enabled sprite that can move and shoot</p>
+                    <ul>
+                        <li>Collides with world bounds</li>
+                        <li>Controlled via cursor keys</li>
+                        <li>Can shoot bullets</li>
+                    </ul>
+                </div>
+                <div class="initializer-card">
+                    <h3>Enemies</h3>
+                    <p>Physics group containing enemy sprites</p>
+                    <ul>
+                        <li>Spawned at random X positions</li>
+                        <li>Move downward at constant speed</li>
+                        <li>Collide with player and bullets</li>
+                    </ul>
+                </div>
+                <div class="initializer-card">
+                    <h3>Bullets</h3>
+                    <p>Physics group for player projectiles</p>
+                    <ul>
+                        <li>Limited to 10 active bullets</li>
+                        <li>Auto-destroyed when out of bounds</li>
+                        <li>Collide with enemies</li>
+                    </ul>
+                </div>
+                <div class="initializer-card">
+                    <h3>UI Elements</h3>
+                    <p>Visual indicators and score display</p>
+                    <ul>
+                        <li>Score text with arcade style</li>
+                        <li>Energy bar indicator</li>
+                        <li>Dynamic HP tracking</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Game State Management</h2>
+            <div class="initializer-grid">
+                <div class="initializer-card">
+                    <h3>Registry Values</h3>
+                    <div class="code-example">
+                        <pre><code><span class="comment">// Initialize game state</span>
+this.registry.<span class="function">set</span>(<span class="string">'score'</span>, <span class="number">0</span>);
+this.registry.<span class="function">set</span>(<span class="string">'playerHP'</span>, <span class="number">100</span>);
+this.registry.<span class="function">set</span>(<span class="string">'musicEnabled'</span>, <span class="keyword">true</span>);</code></pre>
+                    </div>
+                </div>
+                <div class="initializer-card">
+                    <h3>Scene Management</h3>
+                    <div class="code-example">
+                        <pre><code><span class="comment">// Add related scenes</span>
+this.scene.<span class="function">add</span>(<span class="string">'MainMenu'</span>, MainMenu);
+this.scene.<span class="function">add</span>(<span class="string">'DevHub'</span>, DevHub);
+this.scene.<span class="function">add</span>(<span class="string">'Credits'</span>, Credits);</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Core Mechanics</h2>
+            <div class="initializer-grid">
+                <div class="initializer-card">
+                    <h3>Player Movement</h3>
+                    <div class="code-example">
+                        <pre><code><span class="function">handlePlayerMovement</span>() {
+    <span class="keyword">if</span> (this.cursors.left.isDown) {
+        this.player.<span class="function">setVelocityX</span>(-<span class="number">300</span>);
+    }
+    <span class="comment">// Similar for right, up, down</span>
+}</code></pre>
+                    </div>
+                </div>
+                <div class="initializer-card">
+                    <h3>Shooting System</h3>
+                    <div class="code-example">
+                        <pre><code><span class="function">shoot</span>() {
+    <span class="keyword">const</span> bullet = this.bullets.<span class="function">get</span>(
+        this.player.x,
+        this.player.y - <span class="number">20</span>
+    );
+    bullet.<span class="function">setVelocityY</span>(-<span class="number">400</span>);
+}</code></pre>
+                    </div>
+                </div>
+                <div class="initializer-card">
+                    <h3>Enemy Spawning</h3>
+                    <div class="code-example">
+                        <pre><code><span class="function">spawnEnemies</span>() {
+    this.time.<span class="function">addEvent</span>({
+        delay: <span class="number">1000</span>,
+        callback: () => {
+            <span class="keyword">const</span> x = Phaser.Math.<span class="function">Between</span>(<span class="number">50</span>, <span class="number">974</span>);
+            <span class="keyword">const</span> enemy = this.enemies.<span class="function">create</span>(x, -<span class="number">20</span>, <span class="string">'enemy'</span>);
+        },
+        loop: <span class="keyword">true</span>
+    });
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Collision Handling</h2>
+            <div class="initializer-grid">
+                <div class="initializer-card">
+                    <h3>Enemy Hits</h3>
+                    <div class="code-example">
+                        <pre><code><span class="function">hitEnemy</span>(bullet, enemy) {
+    bullet.<span class="function">destroy</span>();
+    enemy.<span class="function">destroy</span>();
+    this.score += <span class="number">10</span>;
+    this.energyBar.width += <span class="number">20</span>;
+}</code></pre>
+                    </div>
+                </div>
+                <div class="initializer-card">
+                    <h3>Player Damage</h3>
+                    <div class="code-example">
+                        <pre><code><span class="function">hitPlayer</span>(player, enemy) {
+    enemy.<span class="function">destroy</span>();
+    <span class="keyword">const</span> newHP = currentHP - <span class="number">10</span>;
+    <span class="keyword">if</span> (newHP <= <span class="number">0</span>) {
+        this.<span class="function">gameOver</span>();
+    }
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Audio Management</h2>
+            <div class="note">
+                The scene respects global audio settings and adjusts music volume based on registry values.
+            </div>
+            <div class="code-example">
+                <pre><code><span class="comment">// Apply volume to game music</span>
+<span class="keyword">const</span> musicVolume = this.registry.<span class="function">get</span>(<span class="string">'musicVolume'</span>) || <span class="number">1</span>;
+this.sound.<span class="function">getAll</span>().<span class="function">forEach</span>(sound => {
+    <span class="keyword">if</span> (sound.key.toLowerCase().<span class="function">includes</span>(<span class="string">'music'</span>)) {
+        sound.<span class="function">setVolume</span>(musicVolume);
+    }
+});</code></pre>
+            </div>
+        </section>
+
+        <section>
+            <h2>Best Practices</h2>
+            <div class="initializer-grid">
+                <div class="initializer-card">
+                    <h3>Scene Initialization</h3>
+                    <p>Always initialize game state in the init() method to ensure proper reset between scene restarts.</p>
+                </div>
+                <div class="initializer-card">
+                    <h3>Resource Management</h3>
+                    <p>Use object pools (like bullet group) to manage frequently created/destroyed objects.</p>
+                </div>
+                <div class="initializer-card">
+                    <h3>State Management</h3>
+                    <p>Use the registry for global state that needs to persist between scenes.</p>
+                </div>
+            </div>
+            <div class="warning">
+                <strong>Important:</strong> Always clean up resources and event listeners when transitioning away from this scene
+                to prevent memory leaks.
+            </div>
+        </section>
+    </div>
+</body>
+</html>

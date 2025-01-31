@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player Class Documentation</title>
+    <link rel="stylesheet" href="styles/documentation.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Player Class Documentation</h1>
+        
+        <section>
+            <h2>Overview</h2>
+            <p>
+                The Player class extends Phaser.Physics.Arcade.Sprite and implements a versatile character controller
+                with advanced movement mechanics, including jumping, rolling, hovering, and stamina management.
+            </p>
+        </section>
+
+        <section>
+            <h2>Core Mechanics</h2>
+            <div class="mechanics-grid">
+                <div class="mechanics-card">
+                    <h3>Movement</h3>
+                    <ul>
+                        <li>Base movement speed: 300</li>
+                        <li>Directional control with left/right</li>
+                        <li>Smooth acceleration and deceleration</li>
+                        <li>Animation states for walking/idle</li>
+                    </ul>
+                </div>
+                <div class="mechanics-card">
+                    <h3>Jumping System</h3>
+                    <ul>
+                        <li>Jump velocity: -330</li>
+                        <li>Coyote time: 80ms</li>
+                        <li>Jump buffer: 200ms</li>
+                        <li>Single jump with reset on ground</li>
+                    </ul>
+                </div>
+                <div class="mechanics-card">
+                    <h3>Combat</h3>
+                    <ul>
+                        <li>Directional shooting</li>
+                        <li>HP system with damage handling</li>
+                        <li>Invulnerability frames</li>
+                        <li>Death and respawn mechanics</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Advanced Movement Systems</h2>
+            
+            <h3>Roll Mechanic</h3>
+            <table class="stat-table">
+                <tr>
+                    <th>Property</th>
+                    <th>Value</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td>Roll Speed</td>
+                    <td>450</td>
+                    <td>Movement speed during roll</td>
+                </tr>
+                <tr>
+                    <td>Progressive Stamina Cost</td>
+                    <td>
+                        0-300ms: 45/s<br>
+                        300-600ms: 60/s<br>
+                        600-900ms: 85/s<br>
+                        900-1200ms: 120/s
+                    </td>
+                    <td>Increasing stamina drain over roll duration</td>
+                </tr>
+            </table>
+
+            <div class="code-example">
+                <pre><code><span class="comment">// Example of roll implementation</span>
+<span class="keyword">if</span> (!this.isRolling && isRollKeyHeld && this.currentStamina > <span class="number">0</span>) {
+    this.isRolling = <span class="keyword">true</span>;
+    this.rollStartTime = currentTime;
+    this.play(<span class="string">'character_Rollover'</span>);
+}</code></pre>
+            </div>
+
+            <h3>Hover Mechanic</h3>
+            <table class="stat-table">
+                <tr>
+                    <th>Property</th>
+                    <th>Value</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td>Hover Duration</td>
+                    <td>2000ms</td>
+                    <td>Maximum hover time</td>
+                </tr>
+                <tr>
+                    <td>Hover Force</td>
+                    <td>-100</td>
+                    <td>Upward force during hover</td>
+                </tr>
+                <tr>
+                    <td>Progressive Stamina Cost</td>
+                    <td>
+                        0-500ms: 35/s<br>
+                        500-1000ms: 45/s<br>
+                        1000-1500ms: 65/s<br>
+                        1500-2000ms: 90/s
+                    </td>
+                    <td>Increasing stamina drain over hover duration</td>
+                </tr>
+            </table>
+        </section>
+
+        <section>
+            <h2>Stamina System</h2>
+            <div class="mechanics-card">
+                <h3>Core Properties</h3>
+                <ul>
+                    <li>Maximum Stamina: 100</li>
+                    <li>Base Regeneration Rate: 12/s</li>
+                    <li>Ground Bonus Regeneration: +8/s</li>
+                    <li>Regeneration Delay: 500ms</li>
+                </ul>
+            </div>
+
+            <div class="note">
+                <strong>Note:</strong> Stamina regenerates faster when the player is on the ground and only begins regenerating after a brief delay from the last stamina use.
+            </div>
+        </section>
+
+        <section>
+            <h2>Combat System</h2>
+            <div class="mechanics-grid">
+                <div class="mechanics-card">
+                    <h3>Health System</h3>
+                    <ul>
+                        <li>HP tracked in scene registry</li>
+                        <li>Invulnerability frames on damage</li>
+                        <li>Visual feedback with alpha tweens</li>
+                        <li>Death and respawn handling</li>
+                    </ul>
+                </div>
+                <div class="mechanics-card">
+                    <h3>Shooting Mechanic</h3>
+                    <ul>
+                        <li>Bullet pool system</li>
+                        <li>Directional shooting</li>
+                        <li>Sound effects integration</li>
+                        <li>Automatic bullet cleanup</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Animation States</h2>
+            <table>
+                <tr>
+                    <th>State</th>
+                    <th>Trigger Condition</th>
+                </tr>
+                <tr>
+                    <td>character_Idle</td>
+                    <td>No movement on ground</td>
+                </tr>
+                <tr>
+                    <td>character_Walking</td>
+                    <td>Moving on ground</td>
+                </tr>
+                <tr>
+                    <td>character_Jump</td>
+                    <td>In air or jumping</td>
+                </tr>
+                <tr>
+                    <td>character_Rollover</td>
+                    <td>During roll action</td>
+                </tr>
+                <tr>
+                    <td>character_Death</td>
+                    <td>On taking fatal damage</td>
+                </tr>
+            </table>
+        </section>
+
+        <section>
+            <h2>Physics Properties</h2>
+            <div class="code-example">
+                <pre><code><span class="comment">// Physics configuration</span>
+this.setScale(<span class="number">2</span>)
+    .setBounce(<span class="number">0.1</span>)
+    .setGravityY(<span class="number">400</span>)
+    .setDepth(<span class="number">1000</span>);
+    
+this.body.setSize(<span class="number">12</span>, <span class="number">27</span>); <span class="comment">// Hitbox dimensions</span></code></pre>
+            </div>
+        </section>
+
+        <section>
+            <h2>Controls</h2>
+            <div class="controls-section">
+                <h3>Basic Movement</h3>
+                <ul>
+                    <li>Left/Right: Directional movement</li>
+                    <li>Jump: Space bar (with buffer system)</li>
+                    <li>Shift: Roll activation</li>
+                    <li>Hold Jump: Hover activation</li>
+                </ul>
+            </div>
+        </section>
+
+        <section>
+            <h2>File Dependencies</h2>
+            <div class="card">
+                <h3>Location</h3>
+                <code>src/prefabs/Player.js</code>
+                
+                <h3>Dependencies</h3>
+                <ul>
+                    <li>Phaser.Physics.Arcade.Sprite - Base class for player entity</li>
+                    <li>Bullet class - For shooting mechanics</li>
+                    <li>Animation system - For player sprite animations</li>
+                    <li>Input system - For player controls</li>
+                    <li>State system - For player state management</li>
+                </ul>
+            </div>
+        </section>
+
+        <section>
+            <h2>Best Practices</h2>
+            <div class="warning">
+                <strong>Important Considerations:</strong>
+                <ul>
+                    <li>Always check stamina levels before performing stamina-consuming actions</li>
+                    <li>Handle cleanup properly using the destroy() method</li>
+                    <li>Monitor performance with bullet pooling</li>
+                    <li>Consider frame delta time for smooth movement</li>
+                </ul>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

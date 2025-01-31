@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scene Initializer Documentation</title>
+    <link rel="stylesheet" href="styles/documentation.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Scene Initializer Documentation</h1>
+        
+        <section>
+            <h2>Overview</h2>
+            <p>
+                The SceneInitializer class is responsible for setting up and configuring all essential components of a game scene
+                in the ShooterGTU game. It provides a structured approach to scene initialization, handling everything from camera
+                setup to manager instantiation.
+            </p>
+        </section>
+
+        <section>
+            <h2>Core Initialization Systems</h2>
+            <div class="initializer-grid">
+                <div class="initializer-card">
+                    <h3>Camera Setup</h3>
+                    <div class="code-example">
+                        <pre><code><span class="comment">// Camera configuration</span>
+<span class="keyword">const</span> mainCam = this.scene.cameras.main;
+mainCam.setViewport(<span class="number">0</span>, <span class="number">0</span>, <span class="number">1920</span>, <span class="number">1080</span>);
+mainCam.setBounds(<span class="number">0</span>, <span class="number">0</span>, 
+    this.scene.ROOM_WIDTH, 
+    this.scene.ROOM_HEIGHT
+);
+
+<span class="comment">// Calculate and set zoom</span>
+<span class="keyword">const</span> zoomX = <span class="number">1920</span> / this.scene.ROOM_WIDTH;
+<span class="keyword">const</span> zoomY = <span class="number">1080</span> / this.scene.ROOM_HEIGHT;
+mainCam.setZoom(Math.min(zoomX, zoomY));</code></pre>
+                    </div>
+                </div>
+
+                <div class="initializer-card">
+                    <h3>Physics Configuration</h3>
+                    <div class="code-example">
+                        <pre><code><span class="comment">// Physics world setup</span>
+this.scene.physics.world.setBoundsCollision(
+    <span class="keyword">true</span>, <span class="keyword">true</span>, 
+    <span class="keyword">true</span>, <span class="keyword">true</span>
+);
+this.scene.physics.world.setBounds(
+    <span class="number">0</span>, <span class="number">0</span>,
+    this.scene.ROOM_WIDTH,
+    this.scene.ROOM_HEIGHT
+);</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Game Object Groups</h2>
+            <table>
+                <tr>
+                    <th>Group Name</th>
+                    <th>Type</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td>enemies</td>
+                    <td>Physics Group</td>
+                    <td>Contains all enemy entities</td>
+                </tr>
+                <tr>
+                    <td>slimes</td>
+                    <td>Physics Group</td>
+                    <td>Specific group for slime enemies</td>
+                </tr>
+                <tr>
+                    <td>drones</td>
+                    <td>Physics Group</td>
+                    <td>Specific group for drone enemies</td>
+                </tr>
+                <tr>
+                    <td>bullets</td>
+                    <td>Physics Group</td>
+                    <td>Manages projectiles (max 10)</td>
+                </tr>
+                <tr>
+                    <td>platforms</td>
+                    <td>Static Physics Group</td>
+                    <td>Contains static platform objects</td>
+                </tr>
+            </table>
+        </section>
+
+        <section>
+            <h2>Manager Integration</h2>
+            <div class="initializer-grid">
+                <div class="initializer-card">
+                    <h3>Core Managers</h3>
+                    <ul>
+                        <li>StateManager - Game state handling</li>
+                        <li>EffectsManager - Visual effects</li>
+                        <li>EnemyManager - Enemy behavior</li>
+                        <li>CollisionManager - Physics interactions</li>
+                        <li>BoundaryManager - Scene boundaries</li>
+                        <li>AnimationManager - Sprite animations</li>
+                    </ul>
+                </div>
+
+                <div class="initializer-card">
+                    <h3>Debug Tools</h3>
+                    <div class="code-example">
+                        <pre><code><span class="comment">// Debug system setup</span>
+this.scene.debugGraphics = this.scene.add.graphics();
+this.scene.debugSystem = <span class="keyword">new</span> <span class="function">DebugSystem</span>(
+    this.scene
+);</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Usage Example</h2>
+            <div class="code-example">
+                <pre><code><span class="keyword">class</span> <span class="function">GameScene</span> <span class="keyword">extends</span> Phaser.Scene {
+    <span class="function">create</span>() {
+        <span class="comment">// Initialize the scene</span>
+        <span class="keyword">const</span> sceneInitializer = <span class="keyword">new</span> <span class="function">SceneInitializer</span>(this);
+        
+        <span class="comment">// Get all managers</span>
+        <span class="keyword">const</span> managers = sceneInitializer.<span class="function">initializeScene</span>();
+        
+        <span class="comment">// Access specific managers</span>
+        this.stateManager = managers.stateManager;
+        this.enemyManager = managers.enemyManager;
+        <span class="comment">// etc...</span>
+    }
+}</code></pre>
+            </div>
+        </section>
+
+        <section>
+            <h2>System Dependencies</h2>
+            <div class="diagram">
+Scene Initialization Flow
+├── Camera Setup
+│   └── Viewport and bounds configuration
+├── Physics System
+│   └── World bounds and collision setup
+├── Game Objects
+│   ├── Player creation
+│   └── Group initialization
+└── Managers
+    ├── State Management
+    ├── Effects System
+    ├── Enemy Control
+    ├── Collision Handling
+    ├── Boundary Management
+    └── Animation System</div>
+        </section>
+
+        <section>
+            <h2>File Dependencies</h2>
+            <div class="card">
+                <h3>Location</h3>
+                <code>src/modules/managers/SceneInitializer.js</code>
+                
+                <h3>Imports</h3>
+                <ul>
+                    <li><code>../../prefabs/Player</code>: Player class</li>
+                    <li><code>../../prefabs/Bullet</code>: Bullet class</li>
+                    <li><code>./StateManager</code>: Game state management</li>
+                    <li><code>./EffectsManager</code>: Visual effects handling</li>
+                    <li><code>./EnemyManager</code>: Enemy behavior and spawning</li>
+                    <li><code>./CollisionManager</code>: Physics collision handling</li>
+                    <li><code>./BoundaryManager</code>: Scene boundaries management</li>
+                    <li><code>./AnimationManager</code>: Sprite animation control</li>
+                    <li><code>../../_Debug/DebugSystem</code>: Debugging utilities</li>
+                </ul>
+            </div>
+        </section>
+
+        <div class="note">
+            <strong>Note:</strong> The SceneInitializer should be instantiated in the scene's create() method before any other game logic is implemented.
+        </div>
+
+        <div class="warning">
+            <strong>Warning:</strong> Ensure all required assets and configurations are loaded before initializing the scene to prevent undefined references.
+        </div>
+    </div>
+</body>
+</html>
