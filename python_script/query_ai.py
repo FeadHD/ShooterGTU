@@ -24,7 +24,7 @@ def search_game_knowledge(query, top_k=3):
     if not os.path.exists(index_path):
         return "❌ FAISS index not found! Run `store_game_knowledge.py` first."
 
-    query_embedding = get_embedding(query).reshape(1, -1)
+    query_embedding = get_embedding(f"[Search Topic: {query}] This is a technical question about ShooterGTU's Phaser 3 game structure.").reshape(1, -1)
 
     # Load FAISS index and filenames
     index = faiss.read_index(index_path)
@@ -35,6 +35,9 @@ def search_game_knowledge(query, top_k=3):
     
     # Return most relevant files
     results = [filenames[i] for i in indices[0] if i < len(filenames)]
+    print("\n🔎 FAISS Retrieved These Files for Your Query:")
+    for file in results:
+        print(f"  - {file}")
     return results
 
 # Function to ask GPT-4 Turbo (O1) using retrieved game files

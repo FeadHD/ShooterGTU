@@ -2,6 +2,7 @@ import os
 import faiss
 import openai
 import numpy as np
+import re   
 
 # Load API key from environment variable
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -24,15 +25,35 @@ def store_game_knowledge(directory="src/"):
 
     print("📂 Scanning game files...")
 
+    # Function to remove comments from JavaScript files
+    def remove_comments(js_code):
+        js_code = re.sub(r"//.*", "", js_code)  # Remove single-line comments
+        js_code = re.sub(r"/\*[\s\S]*?\*/", "", js_code)  # Remove multi-line comments
+        return js_code.strip()
+
     for root, _, files in os.walk(directory):
         for file in files:
             if file.endswith(".js"):  
                 file_path = os.path.join(root, file)
+                print(f"📄 Processing: {file_path} ...")
+                
                 with open(file_path, "r", encoding="utf-8") as f:
                     content = f.read()
-                    print(f"📄 Processing: {file_path} ...")
-                    vector_data.append(get_embedding(content))
-                    file_paths.append(file_path)
+                    cleaned_content = remove_comments(content)  # Remove comments before embedding
+                    
+                    # Automatically categorize files based on name
+                    category = "general"
+                    if "EventManager" in file or "event" in file.lower():
+                        category = "event_system"
+                    elif "Player" in file or "movement" in file.lower():
+                        category = "player_movement"
+                    elif "collision" in file.lower():
+                        category = "collision_system"
+
+                    # Create embedding with category context
+                    embedding_text = f"[Category: {category}] {cleaned_content}"
+                    vector_data.append(get_embedding(embedding_text))
+                    file_paths.append(f"{file_path} (Category: {category})")
 
     if not vector_data:
         print("❌ No game files found! Ensure your game files are inside 'src/'.")
