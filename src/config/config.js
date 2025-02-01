@@ -28,9 +28,9 @@ import SoundSettings from '../scenes/menus/SoundSettings';
 import { SoundTester } from '../scenes/menus/DevHub/SoundTester';
 
 // Core engine scenes
-import { Boot } from '../scenes/elements/Boot';
-import { Preloader } from '../scenes/elements/Preloader';
-import { PauseMenu } from '../scenes/elements/PauseMenu';
+import { Boot } from '../scenes/base/Boot';
+import { Preloader } from '../scenes/base/Preloader';
+import { PauseMenu } from '../scenes/base/PauseMenu';
 
 /**
  * GAME CONFIGURATION

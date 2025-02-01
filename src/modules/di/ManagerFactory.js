@@ -20,7 +20,7 @@ import { CollisionManager } from '../managers/CollisionManager';
 import { EventManager } from '../managers/EventManager';
 import { AssetManager } from '../managers/AssetManager';
 import { container } from './ServiceContainer';
-import { UIManager } from '../../scenes/elements/UIManager';
+import { UIManager } from '../../scenes/base/UIManager';
 
 // Entity prefabs
 import Enemy from '../../prefabs/Enemy';

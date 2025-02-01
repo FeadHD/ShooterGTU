@@ -1,4 +1,4 @@
-import { BaseScene } from '../elements/BaseScene';
+import { BaseScene } from '../base/BaseScene';
 import { GameConfig } from '../../config/GameConfig';
 import { Player } from '../../prefabs/Player';
 import { ManagerFactory } from '../../modules/di/ManagerFactory';
