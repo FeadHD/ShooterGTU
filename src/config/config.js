@@ -30,7 +30,7 @@ import { SoundTester } from '../scenes/menus/DevHub/SoundTester';
 // Core engine scenes
 import { Boot } from '../scenes/base/Boot';
 import { Preloader } from '../scenes/base/Preloader';
-import { PauseMenu } from '../scenes/base/PauseMenu';
+import { PauseMenu } from '../scenes/menus/PauseMenu';
 
 /**
  * GAME CONFIGURATION
