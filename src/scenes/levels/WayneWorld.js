@@ -1,7 +1,7 @@
 import { BaseScene } from '../base/BaseScene';
 import { GameConfig } from '../../config/GameConfig';
 import { Player } from '../../prefabs/Player';
-import { ManagerFactory } from '../../modules/di/ManagerFactory';
+import { ManagerFactory } from '../../managers/core/ManagerFactory';
 
 export class WayneWorld extends BaseScene {
     // Constants

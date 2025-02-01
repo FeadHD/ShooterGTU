@@ -3,7 +3,7 @@
  * Manages reusable particle objects for visual effects
  * Uses circle shapes with tweens for particle animations
  */
-import { ObjectPool } from '../ObjectPool';
+import { ObjectPool } from '../core/ObjectPool';
 
 export class ParticlePool extends ObjectPool {
     /**

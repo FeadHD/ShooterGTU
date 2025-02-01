@@ -6,12 +6,12 @@
 
 // Import core dependencies
 import { Scene } from 'phaser';
-import { ManagerFactory } from '../../modules/di/ManagerFactory';
+import { ManagerFactory } from '../../managers/core/ManagerFactory';
 import { Bullet } from '../../prefabs/Bullet';
 import { ParallaxBackground } from '../../prefabs/ParallaxBackground';
 import { Player } from '../../prefabs/Player';
 import { GameConfig, getGroundTop } from '../../config/GameConfig';
-import { GameEvents } from '../../modules/managers/EventManager';
+import { GameEvents } from '../../managers/core/EventManager';
 import { ErrorSystem } from '../../systems/ErrorSystem';
 
 // Constants for player and tile properties

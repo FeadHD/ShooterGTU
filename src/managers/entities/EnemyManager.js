@@ -5,8 +5,8 @@
  */
 
 import { EntityManager } from './EntityManager';
-import { GameConfig } from '../../../config/GameConfig';
-import { GameEvents } from '../../../modules/managers/EventManager';
+import { GameConfig } from '../../config/GameConfig';
+import { GameEvents } from '../core/EventManager';
 
 /**
  * Manages enemy entities in the game with dual support for:

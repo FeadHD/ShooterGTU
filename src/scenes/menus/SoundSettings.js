@@ -5,7 +5,7 @@
  */
 
 import 'phaser';
-import AudioManager from '../../modules/managers/AudioManager';
+import AudioManager from '../../managers/audio/AudioManager';
 
 export default class SoundSettings extends Phaser.Scene {
     constructor() {

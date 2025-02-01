@@ -1,5 +1,5 @@
 import { Scene } from 'phaser';
-import { ManagerFactory } from '../../modules/di/ManagerFactory';
+import { ManagerFactory } from '../../managers/core/ManagerFactory';
 
 export class MissionComplete extends Scene {
     constructor() {

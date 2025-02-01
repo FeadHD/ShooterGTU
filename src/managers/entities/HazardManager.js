@@ -4,11 +4,11 @@
  * Handles damage application, collision detection, and spawn point management.
  */
 
-import { GameEvents } from '../../managers/EventManager';
+import { GameEvents } from '../core/EventManager';
 import { EntityManager } from './EntityManager';
-import { GameConfig } from '../../../config/GameConfig';
-import { AlarmTrigger } from '../../../prefabs/AlarmTrigger';
-import { Trap } from '../../../prefabs/Trap';
+import { GameConfig } from '../../config/GameConfig';
+import { AlarmTrigger } from '../../prefabs/AlarmTrigger';
+import { Trap } from '../../prefabs/Trap';
 
 /**
  * HazardManager

@@ -1,7 +1,7 @@
 // GameStateManager.js
-import { GameConfig } from '../../../config/GameConfig';
-import { BaseManager } from '../../di/BaseManager';
-import { GameEvents } from '../../managers/EventManager';
+import { GameConfig } from '../../config/GameConfig';
+import { BaseManager } from '../core/BaseManager';
+import { GameEvents } from '../core/EventManager';
 
 /**
  * GameStateManager.js

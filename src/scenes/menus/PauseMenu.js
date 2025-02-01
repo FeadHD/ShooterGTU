@@ -1,4 +1,4 @@
-import { TextStyleManager } from '../../modules/managers/TextStyleManager';
+import { TextStyleManager } from '../../managers/graphics/TextStyleManager';
 
 export class PauseMenu extends Phaser.Scene {
     constructor() {

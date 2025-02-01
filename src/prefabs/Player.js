@@ -9,7 +9,7 @@
 
 import Phaser from 'phaser';
 import { PlayerController } from '../modules/controls/PlayerController';
-import { GameEvents } from '../modules/managers/EventManager';
+import { GameEvents } from '../managers/core/EventManager';
 import { GameConfig } from '../config/GameConfig';
 
 export class Player extends Phaser.Physics.Arcade.Sprite {

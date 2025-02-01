@@ -5,7 +5,7 @@
  * Extends BaseManager for dependency injection support
  */
 
-import { BaseManager } from '../di/BaseManager';
+import { BaseManager } from './BaseManager';
 
 /**
  * Game-wide event constants

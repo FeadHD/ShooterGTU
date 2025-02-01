@@ -5,7 +5,7 @@
  */
 
 import { Scene } from 'phaser';
-import { createRetroButton } from '../ui-helpers';
+import { createRetroButton } from './ui-helpers';
 
 export class DevHub extends Scene {
     constructor() {

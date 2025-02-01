@@ -8,9 +8,9 @@
  * - Event handling for game state changes
  */
 
-import { GameEvents } from '../../modules/managers/EventManager';
+import { GameEvents } from '../core/EventManager';
 import { Scene } from 'phaser';
-import { TextStyleManager } from '../../modules/managers/TextStyleManager';
+import { TextStyleManager } from '../graphics/TextStyleManager';
 import { PlayerHUD } from '../../prefabs/ui/PlayerHUD';
 
 export class UIManager {

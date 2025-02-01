@@ -4,8 +4,8 @@
  * Provides smooth visual transitions between different game states.
  */
 
-import { TextStyleManager } from '../../modules/managers/TextStyleManager';
-import { ManagerFactory } from '../../modules/di/ManagerFactory';
+import { TextStyleManager } from '../../managers/graphics/TextStyleManager';
+import { ManagerFactory } from '../../managers/core/ManagerFactory';
 
 export class TransitionScreen {
     /**

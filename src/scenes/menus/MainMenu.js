@@ -25,8 +25,8 @@
  */
 
 import { Scene } from 'phaser';
-import { TextStyleManager } from '../../modules/managers/TextStyleManager';
-import { ManagerFactory } from '../../modules/di/ManagerFactory';
+import { TextStyleManager } from '../../managers/graphics/TextStyleManager';
+import { ManagerFactory } from '../../managers/core/ManagerFactory';
 
 export class MainMenu extends Scene {
     /**

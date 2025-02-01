@@ -4,7 +4,7 @@
  * Allows real-time adjustment of sound parameters and stereo positioning
  */
 import { Scene } from 'phaser';
-import ProceduralSoundGenerator from '../../../modules/managers/ProceduralSoundGenerator';
+import ProceduralSoundGenerator from '../../../managers/audio/ProceduralSoundGenerator';
 
 export class SoundTester extends Scene {
     /**

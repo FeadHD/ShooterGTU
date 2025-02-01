@@ -4,23 +4,23 @@
  * Handles dependency injection and ensures proper initialization order.
  */
 
-import { GameStateManager } from '../managers/state/GameStateManager';
-import { PersistenceManager } from '../managers/state/PersistenceManager';
-import AudioManager from '../managers/AudioManager';
-import { EntityManager } from '../managers/entities/EntityManager';
-import { EnemyManager } from '../managers/entities/EnemyManager';
-import { HazardManager } from '../managers/entities/HazardManager';
-import { LDTKEntityManager } from '../managers/LDTKEntityManager';
-import { LDTKTileManager } from '../managers/LDTKTileManager';
-import { AnimationManager } from '../managers/AnimationManager';
-import { EffectsManager } from '../managers/EffectsManager';
-import { SceneBoundaryManager } from '../managers/BoundaryManager';
+import { GameStateManager } from '../level/GameStateManager';
+import { PersistenceManager } from '../level/PersistenceManager';
+import AudioManager from '../audio/AudioManager';
+import { EntityManager } from '../entities/EntityManager';
+import { EnemyManager } from '../entities/EnemyManager';
+import { HazardManager } from '../entities/HazardManager';
+import { LDTKEntityManager } from '../ldtk/LDTKEntityManager';
+import { LDTKTileManager } from '../ldtk/LDTKTileManager';
+import { AnimationManager } from '../graphics/AnimationManager';
+import { EffectsManager } from '../graphics/EffectsManager';
+import { SceneBoundaryManager } from '../physics/BoundaryManager';
 import { DebugSystem } from '../../_Debug/DebugSystem';
-import { CollisionManager } from '../managers/CollisionManager';
-import { EventManager } from '../managers/EventManager';
-import { AssetManager } from '../managers/AssetManager';
+import { CollisionManager } from '../physics/CollisionManager';
+import { EventManager } from './EventManager';
+import { AssetManager } from '../graphics/AssetManager';
 import { container } from './ServiceContainer';
-import { UIManager } from '../managers/UIManager';
+import { UIManager } from '../ui/UIManager';
 
 // Entity prefabs
 import Enemy from '../../prefabs/Enemy';
@@ -36,9 +36,9 @@ import MeleeWarrior from '../../prefabs/MeleeWarrior';
 import { Zapper } from '../../prefabs/enemies/Zapper';
 
 // Game systems
-import { BulletManager } from '../../modules/managers/BulletManager';
-import { BulletPool } from '../../modules/managers/pools/BulletPool';
-import { CameraManager } from '../../modules/managers/CameraManager';
+import { BulletManager } from '../physics/BulletManager';
+import { BulletPool } from '../pools/BulletPool';
+import { CameraManager } from '../physics/CameraManager';
 
 export class ManagerFactory {
     /**

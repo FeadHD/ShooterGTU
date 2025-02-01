@@ -4,8 +4,8 @@
  * Extends BaseManager for dependency injection capabilities.
  */
 
-import { BaseManager } from '../../di/BaseManager';
-import { GameEvents } from '../../managers/EventManager';
+import { BaseManager } from '../core/BaseManager';
+import { GameEvents } from '../core/EventManager';
 
 export class EntityManager extends BaseManager {
     /**

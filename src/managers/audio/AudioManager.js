@@ -4,7 +4,7 @@
  * Handles volume control, muting, and audio state persistence
  */
 
-import { BaseManager } from '../di/BaseManager';
+import { BaseManager } from '../core/BaseManager';
 
 export default class AudioManager extends BaseManager {
     /**
