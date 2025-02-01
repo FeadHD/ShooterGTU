@@ -53,7 +53,7 @@ def store_game_knowledge(directory="src/"):
                     # Create embedding with category context
                     embedding_text = f"[Category: {category}] {cleaned_content}"
                     vector_data.append(get_embedding(embedding_text))
-                    file_paths.append(f"{file_path} (Category: {category})")
+                    file_paths.append(file_path)  # Store only the correct file path, without category
 
     if not vector_data:
         print("❌ No game files found! Ensure your game files are inside 'src/'.")
