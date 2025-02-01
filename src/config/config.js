@@ -11,7 +11,7 @@
  * Import all game scenes, menus, and UI components
  */
 // Core game scenes
-import { GameOver } from '../events/GameOver';
+import { GameOver } from '../scenes/menus/GameOver';
 import { WayneWorld } from '../scenes/levels/WayneWorld';
 
 // Menu scenes
