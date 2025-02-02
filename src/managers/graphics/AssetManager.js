@@ -4,7 +4,7 @@
  * Handles sprites, audio, UI elements, and error handling
  */
 
-import { PlayerHUD } from '../../prefabs/ui/PlayerHUD';
+import { PlayerHUD } from '../ui/PlayerHUD';
 import { enemyAssets } from '../../config/enemyAssetsMap';
 
 export class AssetManager {

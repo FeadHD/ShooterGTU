@@ -5,7 +5,7 @@
  */
 
 import { Scene } from 'phaser';
-import { PlayerController } from '../../modules/controls/PlayerController';
+import { PlayerController } from '../../controls/PlayerController';
 
 export class ControlsSettingsScene extends Scene {
     constructor() {

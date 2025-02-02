@@ -1,5 +1,5 @@
 import Enemy from './Enemy';
-import { PlatformPathFinder } from '../modules/pathfinding/PathFinder';
+import { PlatformPathFinder } from '../pathfinding/PathFinder';
 import { GameConfig } from '../config/GameConfig';
 
 class MeleeWarrior extends Enemy {

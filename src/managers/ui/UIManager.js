@@ -11,7 +11,7 @@
 import { GameEvents } from '../core/EventManager';
 import { Scene } from 'phaser';
 import { TextStyleManager } from '../graphics/TextStyleManager';
-import { PlayerHUD } from '../../prefabs/ui/PlayerHUD';
+import { PlayerHUD } from './PlayerHUD';
 
 export class UIManager {
     /**

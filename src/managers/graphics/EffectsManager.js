@@ -4,7 +4,7 @@
  * Handles particle effects, sound playback, and visual feedback
  */
 
-import { ParticlePool } from '../pools/ParticlePool';
+import { ParticlePool } from '../../pools/ParticlePool';
 
 export class EffectsManager {
     /**

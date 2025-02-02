@@ -4,7 +4,7 @@
  * Provides UI for viewing, modifying, and resetting control schemes
  */
 import { Scene } from 'phaser';
-import { PlayerController } from '../../modules/controls/PlayerController';
+import { PlayerController } from '../../controls/PlayerController';
 
 export default class ControlsSettings extends Scene {
     /**

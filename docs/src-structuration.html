@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ShooterGTU Source Code Structure</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .structure {
+            font-family: monospace;
+            white-space: pre;
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .note {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffeeba;
+            padding: 15px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ShooterGTU Source Code Structure</h1>
+
+        <div class="structure">
+src/
+├── main.js                              // Entry point of the application
+│
+├── config/                              // Configuration and settings
+│   ├── config.js                        // General game configuration
+│   ├── GameConfig.js                    // Game-specific settings
+│   └── enemyAssetsMap.js               // Enemy asset mappings
+│
+├── constants/                           // Global constants and enums
+│   └── Constants.js                     // Game-wide constant definitions
+│
+├── controls/                            // Input handling and controls
+│   └── PlayerController.js              // Player input management
+│
+├── debug/                               // Debugging utilities
+│   └── DebugSystem.js                   // Debug overlay and tools
+│
+├── managers/                            // Game systems and managers
+│   ├── audio/                           // Audio management
+│   │   └── AudioManager.js              // Sound and music management
+│   │
+│   ├── camera/                          // Camera management
+│   │   └── CameraManager.js             // Camera control and movement
+│   │
+│   ├── core/                            // Core system components
+│   │   ├── BaseManager.js               // Base class for managers
+│   │   ├── EventManager.js              // Event system
+│   │   ├── ManagerFactory.js            // Manager instantiation
+│   │   └── ServiceContainer.js          // Dependency injection
+│   │
+│   ├── entities/                        // Entity management
+│   │   ├── EnemyManager.js              // Enemy spawning and control
+│   │   ├── EntityManager.js             // General entity management
+│   │   └── HazardManager.js             // Hazard and trap management
+│   │
+│   ├── graphics/                        // Visual systems
+│   │   ├── AnimationManager.js          // Animation control
+│   │   ├── AssetManager.js              // Asset loading and management
+│   │   ├── EffectsManager.js            // Visual effects
+│   │   └── TextStyleManager.js          // Text styling
+│   │
+│   ├── ldtk/                            // Level editor integration
+│   │   ├── LDTKEntityManager.js         // LDTK entity handling
+│   │   └── LDTKTileManager.js           // LDTK tile management
+│   │
+│   ├── level/                           // Level management
+│   │   ├── GameStateManager.js          // Game state handling
+│   │   ├── LevelLoader.js               // Level loading
+│   │   └── PersistenceManager.js        // Save/load system
+│   │
+│   ├── physics/                         // Physics systems
+│   │   ├── BoundaryManager.js           // World boundaries
+│   │   ├── BulletManager.js             // Projectile management
+│   │   └── CollisionManager.js          // Collision detection
+│   │
+│   └── ui/                              // User interface
+│       ├── PlayerHUD.js                 // Player HUD elements
+│       └── UIManager.js                 // UI management
+│
+├── pathfinding/                         // Path finding system
+│   └── PathFinder.js                    // A* pathfinding implementation
+│
+├── pools/                               // Object pooling
+│   ├── ObjectPool.js                    // Base object pool
+│   ├── BulletPool.js                    // Bullet object pool
+│   └── ParticlePool.js                  // Particle effect pool
+│
+├── prefabs/                             // Game object templates
+│   ├── enemies/                         // Enemy prefabs
+│   │   └── Zapper.js                    // Zapper enemy type
+│   │
+│   ├── objects/                         // Game objects
+│   │   └── Bitcoin.js                   // Collectible bitcoin
+│   │
+│   ├── AlarmTrigger.js                 // Alarm system trigger
+│   ├── AntivirusWall.js                // Antivirus barrier
+│   ├── Bullet.js                        // Projectile
+│   ├── DestructibleBlock.js             // Breakable block
+│   ├── DisappearingPlatform.js          // Temporary platform
+│   ├── Drone.js                         // Drone enemy
+│   ├── Enemy.js                         // Base enemy class
+│   ├── FallingDestructibleBlock.js      // Falling block
+│   ├── LavaWall.js                      // Hazardous wall
+│   ├── MeleeWarrior.js                 // Melee enemy type
+│   ├── ParallaxBackground.js            // Scrolling background
+│   ├── Player.js                        // Player character
+│   ├── Ramp.js                          // Slope platform
+│   ├── Trampoline.js                    // Bounce pad
+│   ├── Trap.js                          // Trap hazard
+│   └── Turret.js                        // Turret enemy
+│
+├── scenes/                              // Game scenes
+│   ├── base/                            // Base scene components
+│   │   ├── BaseScene.js                 // Base scene class
+│   │   ├── Boot.js                      // Boot scene
+│   │   ├── Preloader.js                 // Asset preloader
+│   │   └── TransitionScreen.js          // Scene transition effects
+│   │
+│   ├── levels/                          // Level scenes
+│   │   └── WayneWorld.js                // Wayne's World level
+│   │
+│   └── menus/                           // Menu scenes
+│       ├── DevHub/                      // Developer tools
+│       │   ├── DevHub.js                // Developer hub scene
+│       │   ├── SoundTester.js           // Sound testing utility
+│       │   └── ui-helpers.js            // UI helper functions
+│       │
+│       ├── ControlsSettings.js          // Controls configuration
+│       ├── ControlsSettingsScene.js     // Controls menu scene
+│       ├── Credits.js                   // Credits screen
+│       ├── GameOver.js                  // Game over screen
+│       ├── Leaderboard.js               // Leaderboard display
+│       ├── MainMenu.js                  // Main menu
+│       ├── MissionComplete.js           // Mission complete screen
+│       ├── PauseMenu.js                 // Pause menu
+│       ├── Settings.js                  // Game settings
+│       └── SoundSettings.js             // Sound settings menu
+│
+├── scripts/                             // Utility scripts
+│   ├── ProceduralGenerator.js           // Procedural content generation
+│   └── ProceduralSoundGenerator.js      // Dynamic sound generation
+│
+└── systems/                             // Core game systems
+    └── ErrorSystem.js                   // Error handling and logging
+</div>
+
+        <h2>Architecture Overview</h2>
+        <ul>
+            <li><strong>Core Systems</strong>: Event management, dependency injection, and base manager functionality</li>
+            <li><strong>Managers</strong>: Specialized systems for audio, graphics, physics, UI, and game state</li>
+            <li><strong>Prefabs</strong>: Reusable game object templates including enemies, platforms, and items</li>
+            <li><strong>Scenes</strong>: Game levels and menu screens</li>
+            <li><strong>Object Pools</strong>: Performance optimization for frequently created/destroyed objects</li>
+            <li><strong>Configuration</strong>: Game settings, constants, and asset mappings</li>
+        </ul>
+
+        <div class="note">
+            This structure follows a modular architecture pattern, separating concerns into distinct components while maintaining clear relationships between systems.
+        </div>
+    </div>
+</body>
+</html>

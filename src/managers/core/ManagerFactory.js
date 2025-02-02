@@ -15,16 +15,19 @@ import { LDTKTileManager } from '../ldtk/LDTKTileManager';
 import { AnimationManager } from '../graphics/AnimationManager';
 import { EffectsManager } from '../graphics/EffectsManager';
 import { SceneBoundaryManager } from '../physics/BoundaryManager';
-import { DebugSystem } from '../../_Debug/DebugSystem';
+import { DebugSystem } from '../../debug/DebugSystem';
 import { CollisionManager } from '../physics/CollisionManager';
 import { EventManager } from './EventManager';
 import { AssetManager } from '../graphics/AssetManager';
 import { container } from './ServiceContainer';
 import { UIManager } from '../ui/UIManager';
+import { BulletManager } from '../physics/BulletManager';
+import { BulletPool } from '../../pools/BulletPool';
+import { CameraManager } from '../camera/CameraManager';
 
 // Entity prefabs
 import Enemy from '../../prefabs/Enemy';
-import { Bitcoin } from '../../prefabs/Bitcoin';
+import { Bitcoin } from '../../prefabs/objects/Bitcoin';
 import { Drone } from '../../prefabs/Drone';
 import Trampoline from '../../prefabs/Trampoline';
 import { Trap } from '../../prefabs/Trap';
@@ -36,9 +39,6 @@ import MeleeWarrior from '../../prefabs/MeleeWarrior';
 import { Zapper } from '../../prefabs/enemies/Zapper';
 
 // Game systems
-import { BulletManager } from '../physics/BulletManager';
-import { BulletPool } from '../pools/BulletPool';
-import { CameraManager } from '../physics/CameraManager';
 
 export class ManagerFactory {
     /**

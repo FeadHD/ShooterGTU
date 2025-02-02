@@ -8,7 +8,7 @@
  */
 
 import Phaser from 'phaser';
-import { PlayerController } from '../modules/controls/PlayerController';
+import { PlayerController } from '../controls/PlayerController';
 import { GameEvents } from '../managers/core/EventManager';
 import { GameConfig } from '../config/GameConfig';
 

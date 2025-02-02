@@ -3,8 +3,8 @@
  * Manages a reusable pool of bullet objects for efficient memory usage
  * Extends the base ObjectPool class with bullet-specific functionality
  */
-import { ObjectPool } from '../core/ObjectPool';
-import { Bullet } from '../../prefabs/Bullet';
+import { ObjectPool } from './ObjectPool';
+import { Bullet } from '../prefabs/Bullet';
 
 export class BulletPool extends ObjectPool {
     /**
