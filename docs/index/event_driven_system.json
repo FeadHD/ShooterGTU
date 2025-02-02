@@ -1,0 +1,233 @@
+{
+    "eventDrivenSystem": {
+        "metadata": {
+            "version": "1.0.0",
+            "lastModified": "2024-02-02",
+            "description": "Event-driven architecture for ShooterGTU game",
+            "author": "FeadHD",
+            "dependencies": {
+                "required": [
+                    {
+                        "name": "Phaser",
+                        "version": "3.x",
+                        "purpose": "Game engine and event system foundation"
+                    }
+                ],
+                "optional": [
+                    {
+                        "name": "WebFont",
+                        "version": "1.x",
+                        "purpose": "Font loading for UI elements"
+                    }
+                ]
+            }
+        },
+        "core": {
+            "EventManager": {
+                "role": "Central Event Bus",
+                "location": "managers/core/EventManager.js",
+                "features": [
+                    "Extends BaseManager for dependency injection",
+                    "Provides GameEvents constants",
+                    "Handles event registration and emission",
+                    "Manages event lifecycle and cleanup"
+                ],
+                "notes": [
+                    "Core component responsible for all event communication",
+                    "Uses Phaser's event system under the hood",
+                    "Implements cleanup to prevent memory leaks"
+                ],
+                "events": {
+                    "entityLifecycle": [
+                        "PLAYER_DEATH",
+                        "PLAYER_RESPAWN",
+                        "ENEMY_DEATH",
+                        "ENEMY_SPAWN",
+                        "BOSS_SPAWN",
+                        "BOSS_PHASE_CHANGE"
+                    ],
+                    "gameplayState": [
+                        "SCORE_CHANGE",
+                        "HEALTH_CHANGE",
+                        "CHECKPOINT_REACHED",
+                        "GAME_OVER",
+                        "HAZARD_COLLISION",
+                        "GAME_STATE_INITIALIZED",
+                        "GAME_STATE_CHANGED",
+                        "PLAYER_HP_CHANGED"
+                    ],
+                    "entityEvents": [
+                        "ENEMY_HEALTH_CHANGED",
+                        "ENTITY_ADDED",
+                        "ENTITY_REMOVED"
+                    ],
+                    "itemEvents": [
+                        "ITEM_PICKUP",
+                        "ITEM_USE",
+                        "POWERUP_START",
+                        "POWERUP_END"
+                    ],
+                    "systemEvents": [
+                        "SCENE_READY",
+                        "RESOURCES_LOADED",
+                        "ERROR_OCCURRED"
+                    ]
+                }
+            }
+        },
+        "hierarchy": {
+            "sceneLayer": {
+                "WayneWorld": {
+                    "role": "Game Level Scene 1",
+                    "extends": "BaseScene",
+                    "imports": ["ManagerFactory"],
+                    "emits": [],
+                    "notes": [
+                        "Main game level implementation",
+                        "Handles level-specific logic and events"
+                    ],
+                    "dependencies": {
+                        "managers": ["EntityManager", "GameStateManager", "UIManager"]
+                    }
+                },
+                "BaseScene": {
+                    "role": "Base Scene Template",
+                    "extends": null,
+                    "imports": [
+                        "ManagerFactory",
+                        "EventManager"
+                    ],
+                    "emits": [
+                        "SCENE_READY",
+                        "GAME_STATE_INITIALIZED"
+                    ]
+                }
+            },
+            "managerLayer": {
+                "ManagerFactory": {
+                    "role": "Manager Creation and DI Container",
+                    "extends": null,
+                    "imports": [],
+                    "creates": [
+                        "EventManager",
+                        "UIManager",
+                        "Player",
+                        "EntityManager",
+                        "GameStateManager",
+                        "HazardManager",
+                        "CollisionManager",
+                        "EnemyManager"
+                    ],
+                    "notes": [
+                        "Handles dependency injection and manager lifecycle",
+                        "Ensures proper initialization order",
+                        "Maintains singleton instances of managers"
+                    ],
+                    "dependencies": {
+                        "runtime": {
+                            "required": ["Phaser.Scene", "EventManager"],
+                            "optional": []
+                        }
+                    }
+                }
+            },
+            "componentLayer": {
+                "emitters": {
+                    "Player": {
+                        "role": "Player Entity Controller",
+                        "extends": null,
+                        "imports": ["EventManager"],
+                        "emits": [
+                            "PLAYER_DEATH",
+                            "HEALTH_CHANGE",
+                            "PLAYER_HP_CHANGED"
+                        ],
+                        "notes": [
+                            "Handles player input and state",
+                            "Manages player animations and physics",
+                            "Emits events for player state changes"
+                        ],
+                        "dependencies": {
+                            "runtime": {
+                                "required": ["Phaser.Physics", "EventManager"],
+                                "optional": ["ProceduralSoundGenerator"]
+                            }
+                        }
+                    },
+                    "EntityManager": {
+                        "role": "Entity Lifecycle Manager",
+                        "extends": null,
+                        "imports": ["EventManager"],
+                        "emits": [
+                            "ENTITY_ADDED",
+                            "ENTITY_REMOVED"
+                        ]
+                    },
+                    "GameStateManager": {
+                        "role": "Game State Controller",
+                        "extends": null,
+                        "imports": ["EventManager"],
+                        "emits": [
+                            "GAME_STATE_CHANGED",
+                            "GAME_STATE_INITIALIZED"
+                        ]
+                    },
+                    "HazardManager": {
+                        "role": "Hazard Controller",
+                        "extends": null,
+                        "imports": ["EventManager"],
+                        "emits": [
+                            "HAZARD_COLLISION"
+                        ]
+                    },
+                    "EnemyManager": {
+                        "role": "Enemy Controller",
+                        "extends": null,
+                        "imports": ["EventManager"],
+                        "emits": [
+                            "ENEMY_DEATH",
+                            "ENEMY_SPAWN",
+                            "ENEMY_HEALTH_CHANGED"
+                        ]
+                    },
+                    "CollisionManager": {
+                        "role": "Collision Handler",
+                        "extends": null,
+                        "imports": ["EventManager"],
+                        "emits": [
+                            "HAZARD_COLLISION"
+                        ]
+                    }
+                },
+                "listeners": {
+                    "UIManager": {
+                        "role": "UI State Manager",
+                        "extends": null,
+                        "imports": ["EventManager"],
+                        "listensTo": [
+                            "HEALTH_CHANGE",
+                            "SCORE_CHANGE",
+                            "GAME_STATE_CHANGED",
+                            "PLAYER_HP_CHANGED"
+                        ]
+                    }
+                }
+            }
+        },
+        "systemNotes": [
+            "Event-driven architecture ensures loose coupling between components",
+            "Managers use dependency injection for better testability",
+            "Event system supports both sync and async event handling",
+            "Components can be both emitters and listeners",
+            "Event naming follows consistent convention: CATEGORY_ACTION",
+            "All events are documented in GameEvents constant"
+        ],
+        "bestPractices": [
+            "Always use GameEvents constants instead of string literals",
+            "Clean up event listeners in destroy() methods",
+            "Avoid circular event dependencies",
+            "Document all new events in GameEvents",
+            "Use typed event payloads for better maintainability"
+        ]
+    }
+}
