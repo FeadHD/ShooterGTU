@@ -23,20 +23,131 @@
             }
         },
         "core": {
+            "ServiceContainer": {
+                "id": "servicecontainer_01",
+                "role": "Dependency Injection Container",
+                "location": "managers/core/ServiceContainer.js",
+                "extends": null,
+                "imports": [],
+                "emits": [],
+                "listensTo": [],
+                "features": [
+                    "Centralized service registry",
+                    "Dependency injection support",
+                    "Global singleton pattern"
+                ],
+                "methods": {
+                    "register": "Register new services with unique keys",
+                    "get": "Retrieve services by their keys"
+                },
+                "dependencies": {
+                    "core": [],
+                    "managers": [],
+                    "runtime": {
+                        "required": [],
+                        "optional": []
+                    },
+                    "assets": {}
+                },
+                "notes": [
+                    "Core foundation for dependency injection",
+                    "Enables loose coupling between components",
+                    "Facilitates service location and management"
+                ],
+                "usedBy": [
+                    "BaseManager",
+                    "ManagerFactory",
+                    "All manager classes through inheritance"
+                ],
+                "creates": [],
+                "events": {}
+            },
+            "BaseManager": {
+                "id": "basemanager_01",
+                "role": "Base Manager Class",
+                "location": "managers/core/BaseManager.js",
+                "extends": null,
+                "imports": ["ServiceContainer"],
+                "emits": [],
+                "listensTo": [],
+                "features": [
+                    "Base dependency injection functionality",
+                    "Common manager utilities",
+                    "Scene access methods"
+                ],
+                "methods": {
+                    "getScene": "Access current game scene",
+                    "getManager": "Get other manager instances"
+                },
+                "dependencies": {
+                    "core": ["ServiceContainer"],
+                    "managers": [],
+                    "runtime": {
+                        "required": ["Phaser.Scene"],
+                        "optional": []
+                    },
+                    "assets": {}
+                },
+                "notes": [
+                    "Base class for all managers",
+                    "Provides dependency injection support",
+                    "Manages service access and scene references"
+                ],
+                "extendedBy": [
+                    "EventManager",
+                    "UIManager",
+                    "EntityManager",
+                    "GameStateManager",
+                    "HazardManager",
+                    "CollisionManager",
+                    "EnemyManager"
+                ],
+                "creates": [],
+                "events": {},
+                "usedBy": []
+            },
             "EventManager": {
+                "id": "eventmanager_01",
                 "role": "Central Event Bus",
                 "location": "managers/core/EventManager.js",
+                "extends": "BaseManager",
+                "imports": ["BaseManager"],
+                "emits": [
+                    "SCENE_READY",
+                    "GAME_STATE_INITIALIZED"
+                ],
+                "listensTo": [],
                 "features": [
                     "Extends BaseManager for dependency injection",
                     "Provides GameEvents constants",
                     "Handles event registration and emission",
                     "Manages event lifecycle and cleanup"
                 ],
+                "methods": {
+                    "on": "Register event handler",
+                    "once": "Register one-time event handler",
+                    "emit": "Emit event with data",
+                    "off": "Remove specific event handler",
+                    "removeAllListeners": "Remove all handlers for event",
+                    "destroy": "Clean up all event handlers"
+                },
+                "dependencies": {
+                    "core": ["Phaser.Events"],
+                    "managers": [],
+                    "runtime": {
+                        "required": ["Phaser.Events.EventEmitter"],
+                        "optional": []
+                    },
+                    "assets": {}
+                },
                 "notes": [
                     "Core component responsible for all event communication",
                     "Uses Phaser's event system under the hood",
                     "Implements cleanup to prevent memory leaks"
                 ],
+                "creates": [],
+                "usedBy": [],
+                "extendedBy": [],
                 "events": {
                     "entityLifecycle": [
                         "PLAYER_DEATH",
@@ -78,21 +189,49 @@
         "hierarchy": {
             "sceneLayer": {
                 "WayneWorld": {
+                    "id": "wayneworld_01",
                     "role": "Game Level Scene 1",
+                    "location": "scenes/WayneWorld.js",
                     "extends": "BaseScene",
                     "imports": ["ManagerFactory"],
                     "emits": [],
+                    "listensTo": ["SCENE_READY", "GAME_STATE_INITIALIZED"],
+                    "features": [
+                        "Main game level implementation",
+                        "Level-specific logic and events",
+                        "Asset management and scene setup"
+                    ],
+                    "methods": {
+                        "create": "Initialize level and assets",
+                        "update": "Handle game loop logic",
+                        "destroy": "Clean up resources"
+                    },
+                    "dependencies": {
+                        "core": ["Phaser.Scene", "BaseScene"],
+                        "managers": ["EntityManager", "GameStateManager", "UIManager"],
+                        "assets": {
+                            "sprites": ["GtuTileset"],
+                            "backgrounds": ["bg-1", "bg-2", "bg-3", "bg-4", "bg-5", "bg-6", "bg-7", "bg-8", "bg-9"]
+                        },
+                        "runtime": {
+                            "required": [],
+                            "optional": []
+                        }
+                    },
                     "notes": [
                         "Main game level implementation",
                         "Handles level-specific logic and events"
                     ],
-                    "dependencies": {
-                        "managers": ["EntityManager", "GameStateManager", "UIManager"]
-                    }
+                    "usedBy": [],
+                    "creates": [],
+                    "events": {},
+                    "extendedBy": []
                 },
                 "BaseScene": {
+                    "id": "basescene_01",
                     "role": "Base Scene Template",
-                    "extends": null,
+                    "location": "scenes/BaseScene.js",
+                    "extends": "Phaser.Scene",
                     "imports": [
                         "ManagerFactory",
                         "EventManager"
@@ -100,14 +239,70 @@
                     "emits": [
                         "SCENE_READY",
                         "GAME_STATE_INITIALIZED"
-                    ]
+                    ],
+                    "listensTo": [],
+                    "features": [
+                        "Base scene template for all game scenes",
+                        "Provides basic scene functionality"
+                    ],
+                    "methods": {
+                        "create": "Initialize scene and assets",
+                        "update": "Handle game loop logic",
+                        "destroy": "Clean up resources"
+                    },
+                    "dependencies": {
+                        "core": ["Phaser.Scene"],
+                        "managers": ["ManagerFactory", "EventManager"],
+                        "runtime": {
+                            "required": ["Phaser.Game"],
+                            "optional": []
+                        },
+                        "assets": {}
+                    },
+                    "notes": [
+                        "Base scene template for all game scenes",
+                        "Provides basic scene functionality"
+                    ],
+                    "usedBy": [],
+                    "creates": [],
+                    "events": {},
+                    "extendedBy": []
                 }
             },
             "managerLayer": {
                 "ManagerFactory": {
+                    "id": "managerfactory_01",
                     "role": "Manager Creation and DI Container",
+                    "location": "managers/ManagerFactory.js",
                     "extends": null,
-                    "imports": [],
+                    "imports": ["EventManager"],
+                    "emits": [],
+                    "listensTo": [],
+                    "features": [
+                        "Handles dependency injection",
+                        "Manager lifecycle control",
+                        "Singleton pattern implementation"
+                    ],
+                    "methods": {
+                        "createManager": "Create new manager instance",
+                        "getManager": "Get existing manager instance",
+                        "destroyManager": "Clean up manager instance"
+                    },
+                    "dependencies": {
+                        "core": ["Phaser.Scene"],
+                        "managers": ["EventManager"],
+                        "runtime": {
+                            "required": ["Phaser.Scene", "EventManager"],
+                            "optional": []
+                        },
+                        "assets": {}
+                    },
+                    "notes": [
+                        "Handles dependency injection and manager lifecycle",
+                        "Ensures proper initialization order",
+                        "Maintains singleton instances of managers"
+                    ],
+                    "usedBy": [],
                     "creates": [
                         "EventManager",
                         "UIManager",
@@ -118,98 +313,312 @@
                         "CollisionManager",
                         "EnemyManager"
                     ],
-                    "notes": [
-                        "Handles dependency injection and manager lifecycle",
-                        "Ensures proper initialization order",
-                        "Maintains singleton instances of managers"
-                    ],
-                    "dependencies": {
-                        "runtime": {
-                            "required": ["Phaser.Scene", "EventManager"],
-                            "optional": []
-                        }
-                    }
+                    "events": {}
                 }
             },
             "componentLayer": {
                 "emitters": {
                     "Player": {
+                        "id": "player_01",
                         "role": "Player Entity Controller",
-                        "extends": null,
+                        "location": "components/Player.js",
+                        "extends": "Phaser.GameObjects.Sprite",
                         "imports": ["EventManager"],
                         "emits": [
                             "PLAYER_DEATH",
                             "HEALTH_CHANGE",
                             "PLAYER_HP_CHANGED"
                         ],
+                        "listensTo": ["HAZARD_COLLISION"],
+                        "features": [
+                            "Handles player input and state",
+                            "Manages player animations and physics",
+                            "Emits events for player state changes"
+                        ],
+                        "methods": {
+                            "update": "Handle player movement and animation",
+                            "destroy": "Clean up player resources"
+                        },
+                        "dependencies": {
+                            "core": ["Phaser.GameObjects.Sprite", "Phaser.Input"],
+                            "managers": ["EventManager"],
+                            "runtime": {
+                                "required": ["Phaser.Physics", "EventManager"],
+                                "optional": ["ProceduralSoundGenerator"]
+                            },
+                            "assets": {
+                                "sprites": {
+                                    "player": {
+                                        "dimensions": "48x48",
+                                        "animations": [
+                                            {"name": "idle", "frames": 4},
+                                            {"name": "walk", "frames": 6},
+                                            {"name": "jump", "frames": 1},
+                                            {"name": "death", "frames": 8},
+                                            {"name": "fall", "frames": 1},
+                                            {"name": "roll", "frames": 3}
+                                        ]
+                                    }
+                                },
+                                "audio": ["hit.wav"]
+                            }
+                        },
                         "notes": [
                             "Handles player input and state",
                             "Manages player animations and physics",
                             "Emits events for player state changes"
                         ],
-                        "dependencies": {
-                            "runtime": {
-                                "required": ["Phaser.Physics", "EventManager"],
-                                "optional": ["ProceduralSoundGenerator"]
-                            }
-                        }
+                        "usedBy": [],
+                        "creates": [],
+                        "events": {}
                     },
                     "EntityManager": {
+                        "id": "entitymanager_01",
                         "role": "Entity Lifecycle Manager",
-                        "extends": null,
+                        "location": "managers/EntityManager.js",
+                        "extends": "BaseManager",
                         "imports": ["EventManager"],
                         "emits": [
                             "ENTITY_ADDED",
                             "ENTITY_REMOVED"
-                        ]
+                        ],
+                        "listensTo": ["ENEMY_DEATH", "PLAYER_DEATH"],
+                        "features": [
+                            "Manages entity lifecycle and state",
+                            "Handles entity creation and removal",
+                            "Emits events for entity state changes"
+                        ],
+                        "methods": {
+                            "addEntity": "Add new entity to the game",
+                            "removeEntity": "Remove entity from the game",
+                            "update": "Handle entity updates"
+                        },
+                        "dependencies": {
+                            "core": ["BaseManager"],
+                            "managers": ["EventManager"],
+                            "components": ["Player", "Enemy"],
+                            "runtime": {
+                                "required": ["Phaser.GameObjects.Group"],
+                                "optional": []
+                            },
+                            "assets": {}
+                        },
+                        "notes": [
+                            "Manages entity lifecycle and state",
+                            "Handles entity creation and removal",
+                            "Emits events for entity state changes"
+                        ],
+                        "usedBy": [],
+                        "creates": [],
+                        "events": {}
                     },
                     "GameStateManager": {
+                        "id": "gamestatemanager_01",
                         "role": "Game State Controller",
-                        "extends": null,
+                        "location": "managers/GameStateManager.js",
+                        "extends": "BaseManager",
                         "imports": ["EventManager"],
                         "emits": [
                             "GAME_STATE_CHANGED",
                             "GAME_STATE_INITIALIZED"
-                        ]
+                        ],
+                        "listensTo": ["PLAYER_DEATH", "BOSS_SPAWN"],
+                        "features": [
+                            "Manages game state and transitions",
+                            "Handles game state initialization",
+                            "Emits events for game state changes"
+                        ],
+                        "methods": {
+                            "initialize": "Initialize game state",
+                            "update": "Handle game state updates",
+                            "destroy": "Clean up game state resources"
+                        },
+                        "dependencies": {
+                            "core": ["BaseManager"],
+                            "managers": ["EventManager", "UIManager"],
+                            "runtime": {
+                                "required": [],
+                                "optional": []
+                            },
+                            "assets": {}
+                        },
+                        "notes": [
+                            "Manages game state and transitions",
+                            "Handles game state initialization",
+                            "Emits events for game state changes"
+                        ],
+                        "usedBy": [],
+                        "creates": [],
+                        "events": {}
                     },
                     "HazardManager": {
+                        "id": "hazardmanager_01",
                         "role": "Hazard Controller",
-                        "extends": null,
+                        "location": "managers/HazardManager.js",
+                        "extends": "BaseManager",
                         "imports": ["EventManager"],
                         "emits": [
                             "HAZARD_COLLISION"
-                        ]
+                        ],
+                        "listensTo": [],
+                        "features": [
+                            "Manages hazard creation and removal",
+                            "Handles hazard collision detection",
+                            "Emits events for hazard collisions"
+                        ],
+                        "methods": {
+                            "addHazard": "Add new hazard to the game",
+                            "removeHazard": "Remove hazard from the game",
+                            "update": "Handle hazard updates"
+                        },
+                        "dependencies": {
+                            "core": ["BaseManager", "Phaser.Physics"],
+                            "managers": ["EventManager", "CollisionManager"],
+                            "runtime": {
+                                "required": ["Phaser.Physics.Arcade"],
+                                "optional": []
+                            },
+                            "assets": {}
+                        },
+                        "notes": [
+                            "Manages hazard creation and removal",
+                            "Handles hazard collision detection",
+                            "Emits events for hazard collisions"
+                        ],
+                        "usedBy": [],
+                        "creates": [],
+                        "events": {}
                     },
                     "EnemyManager": {
+                        "id": "enemymanager_01",
                         "role": "Enemy Controller",
-                        "extends": null,
+                        "location": "managers/EnemyManager.js",
+                        "extends": "BaseManager",
                         "imports": ["EventManager"],
                         "emits": [
                             "ENEMY_DEATH",
                             "ENEMY_SPAWN",
                             "ENEMY_HEALTH_CHANGED"
-                        ]
+                        ],
+                        "listensTo": ["PLAYER_DEATH", "GAME_STATE_CHANGED"],
+                        "features": [
+                            "Manages enemy creation and removal",
+                            "Handles enemy AI and behavior",
+                            "Emits events for enemy state changes"
+                        ],
+                        "methods": {
+                            "addEnemy": "Add new enemy to the game",
+                            "removeEnemy": "Remove enemy from the game",
+                            "update": "Handle enemy updates"
+                        },
+                        "dependencies": {
+                            "core": ["BaseManager", "Phaser.Physics"],
+                            "managers": ["EventManager", "CollisionManager"],
+                            "assets": {
+                                "sprites": {
+                                    "enemy": {
+                                        "dimensions": "48x48",
+                                        "animations": ["idle", "attack", "death"]
+                                    }
+                                }
+                            },
+                            "runtime": {
+                                "required": ["Phaser.Physics.Arcade"],
+                                "optional": []
+                            }
+                        },
+                        "notes": [
+                            "Manages enemy creation and removal",
+                            "Handles enemy AI and behavior",
+                            "Emits events for enemy state changes"
+                        ],
+                        "usedBy": [],
+                        "creates": [],
+                        "events": {}
                     },
                     "CollisionManager": {
+                        "id": "collisionmanager_01",
                         "role": "Collision Handler",
-                        "extends": null,
+                        "location": "managers/CollisionManager.js",
+                        "extends": "BaseManager",
                         "imports": ["EventManager"],
                         "emits": [
                             "HAZARD_COLLISION"
-                        ]
+                        ],
+                        "listensTo": ["ENTITY_ADDED", "ENTITY_REMOVED"],
+                        "features": [
+                            "Handles collision detection and response",
+                            "Manages collision groups and masks",
+                            "Emits events for collisions"
+                        ],
+                        "methods": {
+                            "checkCollisions": "Check for collisions between entities",
+                            "handleCollision": "Handle collision response",
+                            "update": "Handle collision updates"
+                        },
+                        "dependencies": {
+                            "core": ["BaseManager", "Phaser.Physics"],
+                            "managers": ["EventManager", "EntityManager"],
+                            "runtime": {
+                                "required": ["Phaser.Physics.Arcade"],
+                                "optional": []
+                            },
+                            "assets": {}
+                        },
+                        "notes": [
+                            "Handles collision detection and response",
+                            "Manages collision groups and masks",
+                            "Emits events for collisions"
+                        ],
+                        "usedBy": [],
+                        "creates": [],
+                        "events": {}
                     }
                 },
                 "listeners": {
                     "UIManager": {
+                        "id": "uimanager_01",
                         "role": "UI State Manager",
-                        "extends": null,
+                        "location": "managers/UIManager.js",
+                        "extends": "BaseManager",
                         "imports": ["EventManager"],
+                        "emits": [],
                         "listensTo": [
                             "HEALTH_CHANGE",
                             "SCORE_CHANGE",
                             "GAME_STATE_CHANGED",
                             "PLAYER_HP_CHANGED"
-                        ]
+                        ],
+                        "features": [
+                            "Manages UI state and updates",
+                            "Handles UI events and input",
+                            "Listens to game state changes"
+                        ],
+                        "methods": {
+                            "updateUI": "Update UI state",
+                            "handleInput": "Handle UI input",
+                            "destroy": "Clean up UI resources"
+                        },
+                        "dependencies": {
+                            "core": ["BaseManager"],
+                            "managers": ["EventManager"],
+                            "assets": {
+                                "fonts": ["Gameplay.ttf", "Retronoid"],
+                                "audio": ["confirmation.mp3"]
+                            },
+                            "runtime": {
+                                "required": ["WebFont"],
+                                "optional": []
+                            }
+                        },
+                        "notes": [
+                            "Manages UI state and updates",
+                            "Handles UI events and input",
+                            "Listens to game state changes"
+                        ],
+                        "usedBy": [],
+                        "creates": [],
+                        "events": {}
                     }
                 }
             }
