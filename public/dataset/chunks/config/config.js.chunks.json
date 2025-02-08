@@ -1,0 +1,53 @@
+[
+  {
+    "file_name": "config.js",
+    "chunk_index": 0,
+    "method": "file_header",
+    "chunk_text": "/**\n * config.js\n * Main Phaser game configuration file that defines core settings and scene management.\n * This file sets up the game engine, rendering, physics, and scene order.\n */",
+    "metadata": {
+      "start_line": 1,
+      "end_line": 5,
+      "notes": "File header documentation",
+      "imports": []
+    }
+  },
+  {
+    "file_name": "config.js",
+    "chunk_index": 1,
+    "method": "scene_imports",
+    "chunk_text": "/**\n * SCENE IMPORTS\n * Import all game scenes, menus, and UI components\n */\n// Core game scenes\nimport { GameOver } from '../scenes/menus/GameOver';\nimport { WayneWorld } from '../scenes/levels/WayneWorld';\n\n// Menu scenes\nimport { MainMenu } from '../scenes/menus/MainMenu';\nimport { Leaderboard } from '../scenes/menus/Leaderboard';\nimport { MissionComplete } from '../scenes/menus/MissionComplete';\nimport { DevHub } from '../scenes/menus/DevHub/DevHub';\nimport { Credits } from '../scenes/menus/Credits';\n\n// Settings scenes\nimport Settings from '../scenes/menus/Settings';\nimport ControlsSettings from '../scenes/menus/ControlsSettings';\nimport SoundSettings from '../scenes/menus/SoundSettings';\nimport { SoundTester } from '../scenes/menus/DevHub/SoundTester';\n\n// Core engine scenes\nimport { Boot } from '../scenes/base/Boot';\nimport { Preloader } from '../scenes/base/Preloader';\nimport { PauseMenu } from '../scenes/menus/PauseMenu';",
+    "metadata": {
+      "start_line": 9,
+      "end_line": 31,
+      "notes": "Scene import declarations",
+      "imports": [
+        "../scenes/menus/GameOver",
+        "../scenes/levels/WayneWorld",
+        "../scenes/menus/MainMenu",
+        "../scenes/menus/Leaderboard",
+        "../scenes/menus/MissionComplete",
+        "../scenes/menus/DevHub/DevHub",
+        "../scenes/menus/Credits",
+        "../scenes/menus/Settings",
+        "../scenes/menus/ControlsSettings",
+        "../scenes/menus/SoundSettings",
+        "../scenes/menus/DevHub/SoundTester",
+        "../scenes/base/Boot",
+        "../scenes/base/Preloader",
+        "../scenes/menus/PauseMenu"
+      ]
+    }
+  },
+  {
+    "file_name": "config.js",
+    "chunk_index": 2,
+    "method": "config",
+    "chunk_text": "/**\n * GAME CONFIGURATION\n * Core settings that define how the game engine behaves\n */\nexport const config = {\n    // Rendering configuration\n    type: Phaser.AUTO,          // Let Phaser choose WebGL or Canvas\n    pixelArt: true,             // Optimize for pixel art graphics\n    \n    // Display settings\n    scale: {\n        mode: Phaser.Scale.NONE,\n        parent: 'game-container',    // DOM element to mount game\n        width: 1920,                 // Base game resolution\n        height: 1080,\n        autoRound: true,             // Round pixel values\n        zoom: 1,\n        autoCenter: Phaser.Scale.CENTER_BOTH,  // Center game in container\n        fullscreenTarget: 'game-container',\n        expandParent: true\n    },\n    \n    // DOM element support (for UI overlays)\n    dom: {\n        createContainer: true\n    },\n    \n    // Physics engine settings\n    physics: {\n        default: 'arcade',\n        arcade: {\n            debug: false,           // Show physics bodies when true\n            gravity: { y: 400 },    // Vertical gravity strength\n            tileBias: 32,          // Tile collision accuracy\n        }\n    },\n    \n    // Input handling\n    input: {\n        mouse: {\n            preventDefaultWheel: true,           // Prevent page scroll on wheel\n            preventDefaultContextMenu: true      // Disable right-click menu\n        }\n    },\n    \n    // Scene sequence (loaded in order)\n    scene: [\n        // Boot sequence\n        Boot,            // Initial setup and system initialization\n        Preloader,      // Asset loading\n        MainMenu,       // Game start menu\n        \n        // Main menus\n        Settings,       // General settings\n        ControlsSettings,\n        SoundSettings,\n        \n        // Game levels\n        WayneWorld,\n\n        // UI overlays\n        Leaderboard,\n        MissionComplete,\n        GameOver,\n        PauseMenu,\n        \n        // Development tools\n        DevHub,         // Developer hub\n        Credits,        // Game credits\n        SoundTester     // Audio testing\n    ]\n};",
+    "metadata": {
+      "start_line": 33,
+      "end_line": 97,
+      "notes": "Main game configuration object with rendering, display, physics, and scene settings",
+      "imports": []
+    }
+  }
+]

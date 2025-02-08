@@ -1,0 +1,24 @@
+[
+  {
+    "file_name": "enemyAssetsMap.js",
+    "chunk_index": 0,
+    "method": "file_header",
+    "chunk_text": "/**\n * enemyAssetsMap.js\n * Configuration file for all enemy sprite assets and animations in the game.\n * \n * This file defines the mapping between enemy types and their associated sprite assets.\n * Each enemy type has a list of actions that correspond to specific sprite files.\n * \n * File Structure:\n * - Assets should be placed in: assets/enemys/{enemy_type}/{enemy_type}_{action}.png\n * - All sprites should use 32x32 pixel dimensions\n * \n * Usage:\n * {\n *   enemy_type: ['action1', 'action2', ...],\n * }\n * \n * Standard Actions:\n * - idle: Default state\n * - walk: Movement animation\n * - attack: Combat animation\n * - death: Defeat animation\n * - wake: Activation animation\n * - shock: Special effects\n * \n * Example:\n * {\n *   zapper: ['idle', 'walk', 'attack', 'death', 'wake', 'shock']\n * }\n * \n * Note:\n * - All sprite files must follow the naming convention: {enemy_type}_{action}.png\n * - Animation keys will be generated as: {enemy_type}_{action}\n * - Add new enemy types by creating a new key with an array of supported actions\n */",
+    "metadata": {
+      "start_line": 1,
+      "end_line": 34,
+      "notes": "File header documentation explaining enemy asset configuration structure and usage"
+    }
+  },
+  {
+    "file_name": "enemyAssetsMap.js",
+    "chunk_index": 1,
+    "method": "enemyAssets",
+    "chunk_text": "export const enemyAssets = {\n    melee_warrior: [\n        'idle',\n        'attack1',\n        'attack2',\n        'attack3',\n        'run',\n        'hurt',\n        'defend',\n        'jump',\n        'walk',\n        'death'\n    ],\n    drone: [\n        'idle'\n    ],\n    zapper: [\n        'idle',\n        'hit',\n        'walk',\n        'attack',\n        'shock',\n        'death',\n        'wake'\n    ],\n    slime: [\n        'idle',\n        'jump',\n        'death'\n    ]\n};",
+    "metadata": {
+      "start_line": 36,
+      "end_line": 70,
+      "notes": "Main enemy assets configuration object defining animation states for each enemy type"
+    }
+  }
+]

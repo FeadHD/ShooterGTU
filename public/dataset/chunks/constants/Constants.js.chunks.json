@@ -1,0 +1,35 @@
+[
+  {
+    "file_name": "Constants.js",
+    "chunk_index": 0,
+    "method": "file_header",
+    "chunk_text": "/**\n * Constants.js\n * Defines default configurations for game entities.\n * These values serve as fallbacks when specific configurations are not provided.\n */",
+    "metadata": {
+      "start_line": 1,
+      "end_line": 5,
+      "notes": "File header documentation explaining purpose of constants"
+    }
+  },
+  {
+    "file_name": "Constants.js",
+    "chunk_index": 1,
+    "method": "DEFAULT_ENEMY_CONFIG",
+    "chunk_text": "/**\n * DEFAULT ENEMY CONFIGURATION\n * Base settings for enemy entities if not overridden by specific enemy types\n */\nexport const DEFAULT_ENEMY_CONFIG = {\n    speed: 100,      // Base movement speed in pixels/second\n    health: 100,     // Starting health points\n    damage: 10,      // Damage dealt to player on contact\n    spawnRate: 1000, // Milliseconds between spawns\n    points: 100      // Score awarded when defeated\n};",
+    "metadata": {
+      "start_line": 7,
+      "end_line": 16,
+      "notes": "Default configuration object for enemy entities with base settings"
+    }
+  },
+  {
+    "file_name": "Constants.js",
+    "chunk_index": 2,
+    "method": "DEFAULT_TRAP_CONFIG",
+    "chunk_text": "/**\n * DEFAULT TRAP CONFIGURATION\n * Base settings for trap objects in the game environment\n */\nexport const DEFAULT_TRAP_CONFIG = {\n    damage: 20,      // Damage dealt to entities\n    duration: 5000,  // How long trap remains active (ms)\n    cooldown: 3000,  // Time before trap can be triggered again (ms)\n    cost: 50         // Resource cost to place trap\n};",
+    "metadata": {
+      "start_line": 18,
+      "end_line": 26,
+      "notes": "Default configuration object for trap entities with base settings"
+    }
+  }
+]

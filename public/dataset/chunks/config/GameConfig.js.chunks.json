@@ -1,0 +1,134 @@
+[
+  {
+    "file_name": "GameConfig.js",
+    "chunk_index": 0,
+    "method": "SCENE",
+    "chunk_text": "    // Scene dimensions\n    SCENE: {\n        INTRO: {\n            WIDTH: 900,\n            HEIGHT: 400\n        },\n        MATRIX: {\n            WIDTH: 640,\n            HEIGHT: 360\n        }\n    }",
+    "metadata": {
+      "start_line": 2,
+      "end_line": 12,
+      "notes": "Scene dimension configurations for different game scenes"
+    }
+  },
+  {
+    "file_name": "GameConfig.js",
+    "chunk_index": 1,
+    "method": "PLAYER",
+    "chunk_text": "    // Player settings\n    PLAYER: {\n        INITIAL_HP: 100,\n        INITIAL_LIVES: 3,\n        DAMAGE: 25,\n        BULLET_DAMAGE: 25,\n        INVULNERABLE_DURATION: 2000,\n        GROUND_OFFSET: 16,\n//        SPAWN_OFFSET_X: 0.1,\n        MOVEMENT_SPEED: 300,\n        HOVER_FORCE: -100\n    }",
+    "metadata": {
+      "start_line": 14,
+      "end_line": 25,
+      "notes": "Player configuration including health, damage, movement, and combat settings"
+    }
+  },
+  {
+    "file_name": "GameConfig.js",
+    "chunk_index": 2,
+    "method": "ENEMIES",
+    "chunk_text": "    // Enemy settings\n    ENEMIES: {\n        TOTAL_DEFAULT: 7,\n        MELEE_WARRIOR: {\n            HEALTH: 100,\n            DAMAGE: 25,\n            SPEED: 150,\n            PATROL_SPEED: 100\n        },\n        DRONE: {\n            HEALTH: 75,\n            DAMAGE: 20,\n            SPEED: 200,\n            HOVER_HEIGHT: 150\n        },\n        BOSS: {\n            GROUND_OFFSET: 92,\n            HEALTH: 500,\n            DAMAGE: 50\n        },\n        WARRIOR: {\n            GROUND_OFFSET: 92,\n            HEALTH: 500,\n            DAMAGE: 50\n        },\n        ZAPPER: {\n            HEALTH: 100,\n            DAMAGE: 20,\n            SPEED: 100,\n            ATTACK_RANGE: 200,\n            AWAKEN_RANGE: 300,\n            ATTACK_COOLDOWN: 2000,\n            POINTS: 150\n        }\n    }",
+    "metadata": {
+      "start_line": 27,
+      "end_line": 62,
+      "notes": "Enemy configurations for different enemy types including health, damage, and behavior settings"
+    }
+  },
+  {
+    "file_name": "GameConfig.js",
+    "chunk_index": 3,
+    "method": "TRAPS",
+    "chunk_text": "    // Trap settings\n    TRAPS: {\n        DAMAGE: 5,\n        PARTICLES: {\n            SPEED: {\n                MIN: 20,\n                MAX: 50\n            }\n        }\n    }",
+    "metadata": {
+      "start_line": 64,
+      "end_line": 73,
+      "notes": "Trap configuration including damage and particle effects"
+    }
+  },
+  {
+    "file_name": "GameConfig.js",
+    "chunk_index": 4,
+    "method": "PROJECTILES",
+    "chunk_text": "    // Projectile settings\n    PROJECTILES: {\n        BULLET: {\n            SPEED: 600,\n            DAMAGE: 25\n        },\n        LASER: {\n            BASE_SPEED: 400,\n            SPEED_VARIATION: 25\n        }\n    }",
+    "metadata": {
+      "start_line": 75,
+      "end_line": 85,
+      "notes": "Projectile configuration for different weapon types"
+    }
+  },
+  {
+    "file_name": "GameConfig.js",
+    "chunk_index": 5,
+    "method": "WORLD",
+    "chunk_text": "    // World settings\n    WORLD: {\n        GROUND_OFFSET: 64,\n        GRAVITY: 300\n    }",
+    "metadata": {
+      "start_line": 87,
+      "end_line": 91,
+      "notes": "World physics and layout configuration"
+    }
+  },
+  {
+    "file_name": "GameConfig.js",
+    "chunk_index": 6,
+    "method": "SPRITES",
+    "chunk_text": "    // Sprite dimensions\n    SPRITES: {\n        CHARACTER: {\n            WIDTH: 24,\n            HEIGHT: 24\n        }\n    }",
+    "metadata": {
+      "start_line": 93,
+      "end_line": 99,
+      "notes": "Sprite dimension configurations"
+    }
+  },
+  {
+    "file_name": "GameConfig.js",
+    "chunk_index": 7,
+    "method": "UI",
+    "chunk_text": "    // UI settings\n    UI: {\n        DEFAULT_LIVES: 3,\n        INITIAL_SCORE: 0,\n        INITIAL_COINS: 0,\n        HEALTH_BAR: {\n            WIDTH_MULTIPLIER: 1.5,\n            HEIGHT_RATIO: 0.08,\n            MIN_HEIGHT: 6,\n            OFFSET_MULTIPLIER: 2\n        }\n    }",
+    "metadata": {
+      "start_line": 101,
+      "end_line": 112,
+      "notes": "UI configuration including health bar and initial game state settings"
+    }
+  },
+  {
+    "file_name": "GameConfig.js",
+    "chunk_index": 8,
+    "method": "ANTIVIRUS_WALL",
+    "chunk_text": "    // Antivirus wall configuration\n    ANTIVIRUS_WALL: {\n        WIDTH: 32,\n        START_OFFSET: -64, // Start 2 tiles outside the map\n        SPEED: 80,\n        RESPAWN_DELAY: 5000, // milliseconds\n        FLASH_DURATION: 500 // milliseconds for warning flash\n    }",
+    "metadata": {
+      "start_line": 114,
+      "end_line": 121,
+      "notes": "Antivirus wall mechanics and timing configuration"
+    }
+  },
+  {
+    "file_name": "GameConfig.js",
+    "chunk_index": 9,
+    "method": "getGroundTop",
+    "chunk_text": "export const getGroundTop = (height) => height - GameConfig.WORLD.GROUND_OFFSET;",
+    "metadata": {
+      "start_line": 127,
+      "end_line": 127,
+      "notes": "Helper function to calculate ground top position"
+    }
+  },
+  {
+    "file_name": "GameConfig.js",
+    "chunk_index": 10,
+    "method": "getSpawnHeight",
+    "chunk_text": "export const getSpawnHeight = (groundTop) => groundTop - GameConfig.PLAYER.GROUND_OFFSET;",
+    "metadata": {
+      "start_line": 128,
+      "end_line": 128,
+      "notes": "Helper function to calculate spawn height based on ground top position"
+    }
+  },
+  {
+    "file_name": "GameConfig.js",
+    "chunk_index": 11,
+    "method": "getHealthBarDimensions",
+    "chunk_text": "export const getHealthBarDimensions = (displayWidth, displayHeight) => ({\n    width: displayWidth * GameConfig.UI.HEALTH_BAR.WIDTH_MULTIPLIER,\n    height: Math.max(GameConfig.UI.HEALTH_BAR.MIN_HEIGHT, Math.floor(displayHeight * GameConfig.UI.HEALTH_BAR.HEIGHT_RATIO)),\n    yOffset: displayHeight / 2 + Math.max(GameConfig.UI.HEALTH_BAR.MIN_HEIGHT, Math.floor(displayHeight * GameConfig.UI.HEALTH_BAR.HEIGHT_RATIO)) * GameConfig.UI.HEALTH_BAR.OFFSET_MULTIPLIER\n});",
+    "metadata": {
+      "start_line": 129,
+      "end_line": 133,
+      "notes": "Helper function to calculate health bar dimensions based on display size"
+    }
+  }
+]
