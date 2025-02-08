@@ -1,0 +1,149 @@
+[
+    {
+      "file_name": "AssetManager.js",
+      "chunk_index": 0,
+      "method": "imports",
+      "chunk_text": "import { PlayerHUD } from '../ui/PlayerHUD';\nimport { enemyAssets } from '../../config/enemyAssetsMap';",
+      "metadata": {
+        "start_line": 7,
+        "end_line": 8,
+        "notes": "Import statements for required dependencies",
+        "imports": [
+          "../ui/PlayerHUD",
+          "../../config/enemyAssetsMap"
+        ]
+      }
+    },
+    {
+      "file_name": "AssetManager.js",
+      "chunk_index": 1,
+      "method": "class_definition",
+      "chunk_text": "/**\n * AssetManager.js\n * Manages loading and initialization of all game assets\n * Handles sprites, audio, UI elements, and error handling\n */\n\nexport class AssetManager {",
+      "metadata": {
+        "start_line": 1,
+        "end_line": 10,
+        "notes": "File-level doc block plus class declaration",
+        "imports": []
+      }
+    },
+    {
+      "file_name": "AssetManager.js",
+      "chunk_index": 2,
+      "method": "constructor",
+      "chunk_text": "    /**\n     * Initialize asset management system\n     * @param {Phaser.Scene} scene - Scene to load assets into\n     */\n    constructor(scene) {\n        this.scene = scene;\n        this.initialized = false;\n        console.log('AssetManager initialized for scene:', scene.sys.settings.key);\n    }",
+      "metadata": {
+        "start_line": 11,
+        "end_line": 19,
+        "notes": "Constructor setting scene reference and logging initialization",
+        "imports": []
+      }
+    },
+    {
+      "file_name": "AssetManager.js",
+      "chunk_index": 3,
+      "method": "initialize",
+      "chunk_text": "    /**\n     * One-time initialization check\n     * Prevents duplicate asset loading\n     */\n    initialize() {\n        if (this.initialized) return;\n        this.initialized = true;\n    }",
+      "metadata": {
+        "start_line": 21,
+        "end_line": 25,
+        "notes": "Method to prevent re-initializing assets if already set",
+        "imports": []
+      }
+    },
+    {
+      "file_name": "AssetManager.js",
+      "chunk_index": 4,
+      "method": "loadAssets",
+      "chunk_text": "    /**\n     * Load all required game assets\n     * \n     * @description\n     * Main asset loading orchestrator called during scene preload.\n     * Coordinates loading of:\n     * - Level data (LDTK format)\n     * - Enemy sprites and animations\n     * - Error handling setup\n     * \n     * Note: Most static assets are loaded via Preloader.js\n     * \n     * @fires Phaser.Loader.Events#COMPLETE When all assets finish loading\n     * @fires Phaser.Loader.Events#FILE_COMPLETE For each loaded asset\n     * @throws {Error} If critical assets fail to load\n     */\n    loadAssets() {\n        // Most assets are now loaded in Preloader.js\n        this.loadLevelData();       // Level layout data\n        this.loadEnemySprites();    // Enemy types (dynamic loading)\n        this.setupErrorHandling();  // Error tracking\n    }",
+      "metadata": {
+        "start_line": 27,
+        "end_line": 34,
+        "notes": "Main asset loading coordinator with complete documentation of events and error handling",
+        "imports": []
+      }
+    },
+    {
+      "file_name": "AssetManager.js",
+      "chunk_index": 5,
+      "method": "loadLevelData",
+      "chunk_text": "    /**\n     * Load level layout data\n     * LDTK format level design\n     */\n    loadLevelData() {\n        this.scene.load.json('combined-level', 'assets/levels/Json/WayneWorld.ldtk');\n    }",
+      "metadata": {
+        "start_line": 36,
+        "end_line": 39,
+        "notes": "Method to load LDTK-based level data",
+        "imports": []
+      }
+    },
+    {
+      "file_name": "AssetManager.js",
+      "chunk_index": 6,
+      "method": "loadEnemySprites",
+      "chunk_text": "    /**\n     * Dynamically load enemy sprite assets\n     * \n     * @description\n     * Loads enemy sprites and spritesheets based on enemyAssets configuration.\n     * Performs HEAD requests to verify asset existence before loading.\n     * Handles both single images and spritesheets with standard dimensions.\n     * \n     * @fires Phaser.Loader.Events#ADD When adding a file to load queue\n     * @fires Phaser.Loader.Events#FILE_COMPLETE When each sprite loads\n     * @fires Phaser.Loader.Events#FILE_ERROR If sprite loading fails\n     * \n     * @throws {Warning} When asset files are not found\n     * @throws {Warning} When fetch requests fail\n     * \n     * @requires enemyAssets Configuration mapping enemy types to their assets\n     */\n    loadEnemySprites() {\n        console.log('loadEnemySprites called');\n\n        Object.entries(enemyAssets).forEach(([folder, actions]) => {\n            console.log(`Processing folder: ${folder}`);\n            const fullPath = `assets/enemys/${folder}/`;\n\n            actions.forEach(action => {\n                const key = `${folder}_${action}`;\n                const path = `${fullPath}${folder}_${action}.png`;\n\n                // Define frame dimensions for spritesheets\n                const frameWidth = 32;\n                const frameHeight = 32;\n\n                // Dynamically check if the file exists\n                fetch(path, { method: 'HEAD' })\n                .then(response => {\n                    if (response.ok) {\n                        if (action === 'image') {\n                            this.scene.load.image(key, path);\n                            console.log(`Image queued for loading: ${key} -> ${path}`);\n                        } else {\n                            this.scene.load.spritesheet(key, path, { frameWidth, frameHeight });\n                            console.log(`Spritesheet queued for loading: ${key} -> ${path}`);\n                        }\n                    } else {\n                        console.warn(`File not found: ${path}`);\n                    }\n                })\n                .catch(error => {\n                    console.warn(`Error checking file existence: ${path}`, error);\n                });\n            });\n        });\n    }",
+      "metadata": {
+        "start_line": 41,
+        "end_line": 93,
+        "notes": "Dynamic enemy asset loader with comprehensive error handling and event documentation",
+        "imports": ["../../config/enemyAssetsMap"]
+      }
+    },
+    {
+      "file_name": "AssetManager.js",
+      "chunk_index": 7,
+      "method": "setupErrorHandling",
+      "chunk_text": "    /**\n     * Configure asset loading error handlers\n     * \n     * @description\n     * Sets up error handling for the Phaser loader system.\n     * Logs detailed error information for debugging asset loading issues.\n     * \n     * @fires Phaser.Loader.Events#FILE_LOAD_ERROR When an asset fails to load\n     * \n     * @example\n     * // Error event data structure:\n     * {\n     *   key: 'asset_key',\n     *   src: 'path/to/asset.png',\n     *   type: 'image|spritesheet|json'\n     * }\n     */\n    setupErrorHandling() {\n        this.scene.load.on('loaderror', (fileObj) => {\n            console.error('Error loading file:', fileObj.key, fileObj.src);\n        });\n    }",
+      "metadata": {
+        "start_line": 95,
+        "end_line": 101,
+        "notes": "Error handling setup with event documentation and example error structure",
+        "imports": []
+      }
+    },
+    {
+      "file_name": "AssetManager.js",
+      "chunk_index": 8,
+      "method": "getTextureKeyForEntity",
+      "chunk_text": "    /**\n     * Get texture configuration for a game entity\n     * \n     * @param {string} entityType - Type of entity (e.g., 'zapper', 'meleewarrior')\n     * @returns {Object} Asset configuration containing:\n     *   @property {string} spritesheet - Key of the spritesheet to use\n     *   @property {string} defaultAnim - Default animation key\n     *   @property {string[]} animations - List of available animation keys\n     *   @property {number} width - Sprite width in pixels\n     *   @property {number} height - Sprite height in pixels\n     * \n     * @throws {Warning} When entity type is not found (returns default config)\n     * @throws {Warning} When spritesheet is not loaded (returns default config)\n     * \n     * @example\n     * const config = assetManager.getTextureKeyForEntity('zapper');\n     * sprite.play(config.defaultAnim);\n     */\n    getTextureKeyForEntity(entityType) {\n        console.log('zzz Asset Manager - Got Entity Type:', entityType);\n        const type = entityType.toLowerCase();\n\n        // Entity-to-texture mapping\n        const entityAssets = {\n            zapper: {\n                spritesheet: 'zapper_idle',\n                defaultAnim: 'zapper_idle',\n                animations: ['zapper_idle', 'zapper_attack', 'zapper_walk', 'zapper_death'],\n                width: 32,\n                height: 32\n            },\n            playerstart: {\n                spritesheet: 'player_idle',\n                defaultAnim: 'player_idle',\n                animations: ['player_idle'],\n                width: 48,\n                height: 48\n            },\n            meleewarrior: {\n                spritesheet: 'meleewarrior_idle',\n                defaultAnim: 'meleewarrior_idle',\n                animations: [\n                    'meleewarrior_idle',\n                    'meleewarrior_walk',\n                    'meleewarrior_attack1',\n                    'meleewarrior_attack2',\n                    'meleewarrior_attack3',\n                    'meleewarrior_hurt',\n                    'meleewarrior_death'\n                ],\n                width: 48,\n                height: 48\n            }\n            // Add more entities here as needed\n        };\n\n        const assetConfig = entityAssets[type];\n\n        // Handle missing entity configurations\n        if (!assetConfig) {\n            console.warn(`No asset configuration found for entity type: ${entityType}`);\n            return {\n                spritesheet: 'default_sprite',\n                defaultAnim: null,\n                animations: [],\n                width: 32,\n                height: 32\n            };\n        }\n\n        // Check if texture exists in Phaser cache\n        if (!this.scene.textures.exists(assetConfig.spritesheet)) {\n            console.warn(`Spritesheet ${assetConfig.spritesheet} not found for entity type: ${entityType}`);\n            return {\n                spritesheet: 'default_sprite',\n                defaultAnim: null,\n                animations: [],\n                width: assetConfig.width,\n                height: assetConfig.height\n            };\n        }\n\n        return assetConfig;\n    }",
+      "metadata": {
+        "start_line": 103,
+        "end_line": 153,
+        "notes": "Method to retrieve and validate texture configurations for game entities with complete documentation",
+        "imports": []
+      }
+    },
+    {
+      "file_name": "AssetManager.js",
+      "chunk_index": 9,
+      "method": "validateTexture",
+      "chunk_text": "    /**\n     * Validate if a texture is loaded in the scene\n     * \n     * @param {string} textureKey - Key of the texture to check\n     * @returns {boolean} True if texture exists in scene cache\n     * \n     * @example\n     * if (assetManager.validateTexture('player_sprite')) {\n     *     sprite.setTexture('player_sprite');\n     * }\n     */\n    validateTexture(textureKey) {\n        return this.scene.textures.exists(textureKey);\n    }",
+      "metadata": {
+        "start_line": 155,
+        "end_line": 159,
+        "notes": "Utility method to validate texture existence with example usage",
+        "imports": []
+      }
+    },
+    {
+      "file_name": "AssetManager.js",
+      "chunk_index": 10,
+      "method": "getDefaultTexture",
+      "chunk_text": "    /**\n     * Get the fallback texture key\n     * \n     * @returns {string} Key of the default fallback texture\n     * @description Used when requested textures are missing or invalid\n     * \n     * @example\n     * sprite.setTexture(assetManager.getDefaultTexture());\n     */\n    getDefaultTexture() {\n        return 'default_sprite';\n    }",
+      "metadata": {
+        "start_line": 161,
+        "end_line": 165,
+        "notes": "Helper method providing fallback texture key with usage example",
+        "imports": []
+      }
+    },
+    {
+      "file_name": "AssetManager.js",
+      "chunk_index": 11,
+      "method": "createPlayerHUD",
+      "chunk_text": "    /**\n     * Create player HUD interface\n     * @param {number} x - HUD x position\n     * @param {number} y - HUD y position\n     * @param {boolean} fixedToCamera - Lock to viewport\n     * @returns {PlayerHUD} HUD instance\n     */\n    createPlayerHUD(x = 10, y = 10, fixedToCamera = true) {\n        // Verify required assets are loaded\n        if (!this.scene.textures.exists('health') ||\n            !this.scene.textures.exists('lifebar') ||\n            !this.scene.textures.exists('stamina')) {\n            console.error('PlayerHUD assets not loaded. Make sure loadUI() was called first.');\n            return null;\n        }\n\n        // Create and return HUD\n        return new PlayerHUD(this.scene, x, y, fixedToCamera);\n    }\n}",
+      "metadata": {
+        "start_line": 167,
+        "end_line": 185,
+        "notes": "Method to create the PlayerHUD, verifying health/stamina textures; includes closing brace for class",
+        "imports": []
+      }
+    }
+  ]

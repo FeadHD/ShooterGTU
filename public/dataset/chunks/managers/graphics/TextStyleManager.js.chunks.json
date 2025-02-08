@@ -1,0 +1,158 @@
+[
+    {
+      "file_name": "TextStyleManager.js",
+      "chunk_index": 0,
+      "method": "class_definition",
+      "chunk_text": "/**\n * @file\n * Text style and UI theming system for the game\n * \n * @module managers/graphics\n * @description\n * Provides a centralized system for managing text styles and visual effects:\n * - Cyberpunk-inspired color palette\n * - Retro and arcade themed fonts\n * - Neon glow and shadow effects\n * - Responsive hover animations\n * - Consistent UI element styling\n * \n * @requires Phaser.Scene\n * @requires Phaser.GameObjects.Text\n * @requires Phaser.Types.GameObjects.Text.TextStyle\n */\nexport class TextStyleManager {",
+      "metadata": {
+        "start_line": 1,
+        "end_line": 7,
+        "notes": "File-level documentation with complete module info and theme system details",
+        "imports": [],
+        "related_methods": []
+      }
+    },
+    {
+      "file_name": "TextStyleManager.js",
+      "chunk_index": 1,
+      "method": "constructor",
+      "chunk_text": "    /**\n     * Initialize the text style management system\n     * \n     * @param {Phaser.Scene} scene - Scene to manage styles for\n     * \n     * @property {Phaser.Scene} scene - Reference to the parent scene\n     * @property {Object.<string, Phaser.Types.GameObjects.Text.TextStyle>} styles - Dictionary of initialized text styles\n     * \n     * @throws {Error} If scene is invalid or required fonts are not loaded\n     * \n     * @example\n     * const styleManager = new TextStyleManager(this);\n     * const scoreText = this.add.text(100, 100, 'Score: 0', styleManager.styles.score);\n     */",
+      "metadata": {
+        "start_line": 8,
+        "end_line": 14,
+        "notes": "Constructor with property documentation and usage example",
+        "imports": [],
+        "related_methods": ["initializeStyles"]
+      }
+    },
+    {
+      "file_name": "TextStyleManager.js",
+      "chunk_index": 2,
+      "method": "initializeStyles",
+      "chunk_text": "    /**\n     * Create the initial set of UI text styles\n     * \n     * @returns {Object.<string, Phaser.Types.GameObjects.Text.TextStyle>} Collection of common UI styles\n     * \n     * @description\n     * Initializes styles for common UI elements with consistent formatting:\n     * - Score display (24px, cyan)\n     * - Lives counter (24px, deep pink)\n     * - Health display (24px, lime)\n     * - Timer display (24px, magenta)\n     * - Bitcoin counter (24px, gold)\n     * - FPS counter (16px, white)\n     * - Wallet display (20px, gold)\n     * \n     * Each style extends the retro base style with specific colors and sizes.\n     * \n     * @example\n     * // Access a specific style\n     * text.setStyle(styles.score);\n     * \n     * // Create text with style\n     * scene.add.text(x, y, 'Score: 0', styles.score);\n     */",
+      "metadata": {
+        "start_line": 16,
+        "end_line": 28,
+        "notes": "Style initialization with detailed descriptions and examples",
+        "imports": [],
+        "related_methods": ["baseStyles", "colors", "styles"]
+      }
+    },
+    {
+      "file_name": "TextStyleManager.js",
+      "chunk_index": 3,
+      "method": "baseStyles",
+      "chunk_text": "    /**\n     * Base text style definitions for game themes\n     * \n     * @returns {Object.<string, Phaser.Types.GameObjects.Text.TextStyle>}\n     * \n     * @description\n     * Defines foundational text styles for different visual themes:\n     * \n     * Retro Theme:\n     * - Pixel-style font (Retronoid)\n     * - White stroke outline\n     * - Centered alignment\n     * \n     * Arcade Theme:\n     * - Classic arcade font\n     * - No stroke\n     * - Centered alignment\n     * \n     * @example\n     * // Extend retro style\n     * const customStyle = {\n     *   ...TextStyleManager.baseStyles.retro,\n     *   fontSize: '32px'\n     * };\n     */",
+      "metadata": {
+        "start_line": 30,
+        "end_line": 47,
+        "notes": "Base style definitions with theme descriptions and extension example",
+        "imports": [],
+        "related_methods": ["styles", "initializeStyles", "shadowEffects"]
+      }
+    },
+    {
+      "file_name": "TextStyleManager.js",
+      "chunk_index": 4,
+      "method": "shadowEffects",
+      "chunk_text": "    /**\n     * Shadow and glow effect presets\n     * \n     * @returns {Object.<string, Phaser.Types.GameObjects.Text.TextShadow>}\n     * \n     * @description\n     * Predefined shadow configurations for text effects:\n     * \n     * Neon Effect:\n     * - Strong magenta glow\n     * - 8px blur radius\n     * - 2px offset\n     * - Used for titles and important UI\n     * \n     * Subtle Effect:\n     * - Soft magenta shadow\n     * - 4px blur radius\n     * - 1px offset\n     * - Used for regular UI elements\n     * \n     * @example\n     * text.setShadow(\n     *   TextStyleManager.shadowEffects.neon.offsetX,\n     *   TextStyleManager.shadowEffects.neon.offsetY,\n     *   TextStyleManager.shadowEffects.neon.color,\n     *   TextStyleManager.shadowEffects.neon.blur\n     * );\n     */",
+      "metadata": {
+        "start_line": 49,
+        "end_line": 66,
+        "notes": "Shadow effect presets with detailed configurations and usage example",
+        "imports": [],
+        "related_methods": ["styles", "baseStyles"]
+      }
+    },
+    {
+      "file_name": "TextStyleManager.js",
+      "chunk_index": 5,
+      "method": "colors",
+      "chunk_text": "    /**\n     * Game UI color palette system\n     * \n     * @returns {Object.<string, string>} Color hex codes\n     * \n     * @description\n     * Cyberpunk-inspired color system organized by purpose:\n     * \n     * Primary Colors:\n     * - primary: #00ffff (Cyan) - Main UI elements\n     * - secondary: #ff00ff (Magenta) - Highlights/accents\n     * - accent: #ffd700 (Gold) - Special items/effects\n     * \n     * Status Colors:\n     * - warning: #ff0000 (Red) - Danger/critical states\n     * - success: #00ff00 (Green) - Positive/completion\n     * - neutral: #ffffff (White) - Default/inactive\n     * \n     * UI Element Colors:\n     * - score: #00ffff (Cyan) - Score displays\n     * - lives: #ff1493 (Deep Pink) - Life counters\n     * - hp: #00ff00 (Lime) - Health indicators\n     * - bitcoin: #ffd700 (Gold) - Currency displays\n     * - timer: #ff00ff (Magenta) - Time displays\n     * - wallet: #40e0d0 (Turquoise) - Wallet info\n     * \n     * Menu Colors:\n     * - scene: #9370db (Medium Purple) - Scene titles\n     * - config: #ffffff (White) - Configuration text\n     * - pause: #ffffff (White) - Pause menu text\n     * \n     * @example\n     * text.setColor(TextStyleManager.colors.warning); // Red alert text\n     * text.setColor(TextStyleManager.colors.success); // Green success text\n     */",
+      "metadata": {
+        "start_line": 68,
+        "end_line": 95,
+        "notes": "Comprehensive color system documentation with purpose-based organization",
+        "imports": [],
+        "related_methods": ["styles", "initializeStyles"]
+      }
+    },
+    {
+      "file_name": "TextStyleManager.js",
+      "chunk_index": 6,
+      "method": "styles_partA",
+      "chunk_text": "    /**\n     * Complete style definitions for all UI elements\n     * Combines base styles, colors, and effects\n     */\n    static get styles() {\n        return {\n            // Title styles with neon effects\n            mainTitle: {\n                ...this.baseStyles.retro,\n                fontSize: '100px',\n                color: this.colors.primary,\n                shadow: this.shadowEffects.neon\n            },\n            titleShadow: (isBase = false) => ({\n                ...this.baseStyles.retro,\n                fontSize: '100px',\n                color: isBase ? '#4400ff' : this.colors.secondary\n            }),\n            missionTitle: {\n                ...this.baseStyles.retro,\n                fontSize: '48px',\n                color: this.colors.primary,\n                shadow: this.shadowEffects.subtle\n            },\n\n            // Interactive button styles\n            menuButton: {\n                ...this.baseStyles.retro,\n                fontSize: '72px',\n                color: this.colors.primary,\n                strokeThickness: 4,\n                shadow: {\n                    ...this.shadowEffects.neon,\n                    offsetX: 3,\n                    offsetY: 3,\n                    blur: 5\n                }\n            },\n            walletButton: {\n                ...this.baseStyles.retro,\n                fontSize: '32px',\n                color: this.colors.primary,\n                padding: { x: 15, y: 10 },\n                shadow: this.shadowEffects.subtle\n            },\n            pauseButton: {\n                ...this.baseStyles.retro,\n                fontSize: '24px',\n                color: this.colors.pause,\n                align: 'center',\n                strokeThickness: 2,\n                shadow: {\n                    ...this.shadowEffects.neon,\n                    color: '#4a4a4a'\n                }\n            },",
+      "metadata": {
+        "start_line": 97,
+        "end_line": 146,
+        "notes": "Static getter (styles) - Part A: Titles and interactive button styles",
+        "imports": [],
+        "related_methods": ["baseStyles", "colors", "shadowEffects"]
+      }
+    },
+    {
+      "file_name": "TextStyleManager.js",
+      "chunk_index": 7,
+      "method": "styles_partB",
+      "chunk_text": "            // Game UI element styles\n            gameUI: {\n                ...this.baseStyles.retro,\n                fontSize: '24px',\n                color: this.colors.neutral,\n                align: 'left',\n                strokeThickness: 1\n            },\n            scoreUI: {\n                ...this.baseStyles.retro,\n                fontSize: '24px',\n                color: this.colors.score,\n                align: 'left',\n                strokeThickness: 1,\n                shadow: {\n                    ...this.shadowEffects.subtle,\n                    color: '#005555'\n                }\n            },\n            livesUI: {\n                ...this.baseStyles.retro,\n                fontSize: '24px',\n                color: this.colors.lives,\n                align: 'left',\n                strokeThickness: 1,\n                shadow: {\n                    ...this.shadowEffects.subtle,\n                    color: '#8b0a50'\n                }\n            },\n            hpUI: {\n                ...this.baseStyles.retro,\n                fontSize: '24px',\n                color: this.colors.hp,\n                align: 'left',\n                strokeThickness: 1,\n                shadow: {\n                    ...this.shadowEffects.subtle,\n                    color: '#006400'\n                }\n            },\n            bitcoinUI: {\n                ...this.baseStyles.retro,\n                fontSize: '24px',\n                color: this.colors.bitcoin,\n                align: 'left',\n                strokeThickness: 1,\n                shadow: {\n                    ...this.shadowEffects.subtle,\n                    color: '#b8860b'\n                }\n            },\n            timerUI: {\n                ...this.baseStyles.retro,\n                fontSize: '24px',\n                color: this.colors.timer,\n                align: 'left',\n                strokeThickness: 1,\n                shadow: {\n                    ...this.shadowEffects.subtle,\n                    color: '#8b008b'\n                }\n            },\n            walletUI: {\n                ...this.baseStyles.retro,\n                fontSize: '24px',\n                color: this.colors.wallet,\n                align: 'left',\n                strokeThickness: 1,\n                shadow: {\n                    ...this.shadowEffects.subtle,\n                    color: '#20b2aa'\n                }\n            },\n            sceneUI: {\n                ...this.baseStyles.retro,\n                fontSize: '32px',\n                color: this.colors.scene,\n                align: 'center',\n                strokeThickness: 2,\n                shadow: {\n                    ...this.shadowEffects.subtle,\n                    color: '#483d8b'\n                }\n            },",
+      "metadata": {
+        "start_line": 147,
+        "end_line": 215,
+        "notes": "Static getter (styles) - Part B: General game UI element styles",
+        "imports": [],
+        "related_methods": ["baseStyles", "colors", "shadowEffects", "styles_partA", "styles_partC"]
+      }
+    },
+    {
+      "file_name": "TextStyleManager.js",
+      "chunk_index": 8,
+      "method": "styles_partC",
+      "chunk_text": "            // Special state styles\n            gameUIHighlight: {\n                ...this.baseStyles.retro,\n                fontSize: '24px',\n                color: this.colors.primary,\n                align: 'left',\n                strokeThickness: 1\n            },\n            startMessage: {\n                ...this.baseStyles.retro,\n                fontSize: '48px',\n                color: this.colors.primary,\n                shadow: this.shadowEffects.subtle\n            },\n            gameOver: {\n                ...this.baseStyles.retro,\n                fontSize: '72px',\n                color: this.colors.warning,\n                shadow: this.shadowEffects.neon\n            },\n\n            // Configuration and debug styles\n            configUI: {\n                ...this.baseStyles.retro,\n                fontSize: '24px',\n                color: this.colors.config,\n                fontFamily: 'Arial',\n                align: 'left'\n            },\n            proceduralUI: {\n                ...this.baseStyles.retro,\n                fontSize: '24px',\n                color: this.colors.config,\n                fontFamily: 'Arial',\n                align: 'left'\n            },\n            configText: {\n                ...this.baseStyles.arcade,\n                fontSize: '24px',\n                color: this.colors.neutral\n            },\n            enemyTypeText: {\n                ...this.baseStyles.arcade,\n                fontSize: '20px',\n                color: this.colors.neutral\n            }\n        };\n    }",
+      "metadata": {
+        "start_line": 216,
+        "end_line": 232,
+        "notes": "Static getter (styles) - Part C: Special states, config, debug styles, and closing braces",
+        "imports": [],
+        "related_methods": ["baseStyles", "colors", "shadowEffects", "styles_partA", "styles_partB"]
+      }
+    },
+    {
+      "file_name": "TextStyleManager.js",
+      "chunk_index": 9,
+      "method": "getStyle",
+      "chunk_text": "    /**\n     * Retrieves a style by name with fallback\n     * @param {string} styleName - Name of the style to retrieve\n     * @returns {Object} Style object or default style if not found\n     */\n    static getStyle(styleName) {\n        const style = this.styles[styleName];\n        if (!style) {\n            console.warn(`Style '${styleName}' not found in TextStyleManager`);\n            return this.styles.configText;\n        }\n        return typeof style === 'function' ? style() : { ...style };\n    }",
+      "metadata": {
+        "start_line": 234,
+        "end_line": 242,
+        "notes": "Method to retrieve a named style from the static styles object, falls back if not found",
+        "imports": [],
+        "related_methods": ["styles", "createText"]
+      }
+    },
+    {
+      "file_name": "TextStyleManager.js",
+      "chunk_index": 10,
+      "method": "applyHoverEffect",
+      "chunk_text": "    /**\n     * Adds hover animation to text objects\n     * Scales up and changes color on hover\n     * @param {Phaser.GameObjects.Text} textObject - Text to make interactive\n     * @param {string} hoverColor - Color when hovered\n     * @param {string} baseColor - Default color\n     */\n    static applyHoverEffect(textObject, hoverColor = this.colors.secondary, baseColor = this.colors.primary) {\n        if (!textObject) return;\n\n        textObject.setInteractive({ useHandCursor: true })\n            .on('pointerover', () => {\n                textObject.setScale(1.2);\n                textObject.setColor(hoverColor);\n            })\n            .on('pointerout', () => {\n                textObject.setScale(1);\n                textObject.setColor(baseColor);\n            });\n    }",
+      "metadata": {
+        "start_line": 244,
+        "end_line": 259,
+        "notes": "Static method to add interactivity/hover effects to text objects",
+        "imports": [],
+        "related_methods": ["colors", "createText"]
+      }
+    },
+    {
+      "file_name": "TextStyleManager.js",
+      "chunk_index": 11,
+      "method": "createText",
+      "chunk_text": "    /**\n     * Creates a text object with specified style\n     * @param {Scene} scene - Scene to add text to\n     * @param {number} x - X position\n     * @param {number} y - Y position\n     * @param {string} text - Text content\n     * @param {string} styleName - Name of style to use\n     * @param {number} origin - Text origin point\n     * @param {boolean} interactive - Whether to add hover effects\n     * @returns {Phaser.GameObjects.Text} Created text object\n     */\n    static createText(scene, x, y, text, styleName, origin = 0.5, interactive = false) {\n        const textObject = scene.add.text(x, y, text, this.getStyle(styleName))\n            .setOrigin(origin);\n\n        if (interactive) {\n            this.applyHoverEffect(textObject);\n        }\n\n        return textObject;\n    }\n}",
+      "metadata": {
+        "start_line": 261,
+        "end_line": 277,
+        "notes": "Static method to create styled text with optional hover effect; includes closing brace of class",
+        "imports": [],
+        "related_methods": ["getStyle", "applyHoverEffect"]
+      }
+    }
+  ]
