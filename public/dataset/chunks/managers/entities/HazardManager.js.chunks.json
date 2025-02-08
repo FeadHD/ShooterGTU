@@ -1,0 +1,116 @@
+[
+  {
+    "file_name": "HazardManager.js",
+    "chunk_index": 0,
+    "method": "imports",
+    "chunk_text": "import { GameEvents } from '../core/EventManager';\nimport { EntityManager } from './EntityManager';\nimport { GameConfig } from '../../config/GameConfig';\nimport { AlarmTrigger } from '../../prefabs/AlarmTrigger';\nimport { Trap } from '../../prefabs/Trap';",
+    "metadata": {
+      "start_line": 7,
+      "end_line": 11,
+      "notes": "Import statements for required dependencies",
+      "imports": [
+        "../core/EventManager",
+        "./EntityManager",
+        "../../config/GameConfig",
+        "../../prefabs/AlarmTrigger",
+        "../../prefabs/Trap"
+      ]
+    }
+  },
+  {
+    "file_name": "HazardManager.js",
+    "chunk_index": 1,
+    "method": "class_definition",
+    "chunk_text": "/**\n * @file\n * This file exports the HazardManager class, which extends EntityManager to provide\n * specialized handling of hazardous game elements. Part of the game's entity management\n * system, working alongside EnemyManager and other entity-focused managers.\n *\n * @module managers/entities\n */\n\n/**\n * Specialized manager for hazardous game elements\n * \n * @class HazardManager\n * @extends EntityManager\n * @description\n * Handles all hazard-related functionality including:\n * - Trap and alarm trigger management\n * - Hazard-player collision detection\n * - Damage application with cooldowns\n * - Dynamic spawn point calculation\n * - Physics group integration\n * \n * @see EntityManager Base manager class\n * @see AlarmTrigger Managed entity type\n * @see Trap Managed entity type\n */\nexport class HazardManager extends EntityManager {",
+    "metadata": {
+      "start_line": 1,
+      "end_line": 24,
+      "notes": "Separate file-level (@file) and class-level documentation with clear responsibilities",
+      "imports": []
+    }
+  },
+  {
+    "file_name": "HazardManager.js",
+    "chunk_index": 2,
+    "method": "constructor",
+    "chunk_text": "    /**\n     * Initialize hazard management system and physics groups\n     * \n     * @param   {Phaser.Scene}    scene    The game scene this manager belongs to\n     * \n     * @description\n     * Initializes:\n     * - Base EntityManager functionality\n     * - Damage cooldown tracking\n     * - Physics groups for traps and alarms\n     * - Automatic entity updates\n     */\n    constructor(scene) {\n        super(scene);\n\n        // Map for tracking when each hazard last dealt damage\n        this.lastDamageTime = new Map();  // Tracks damage cooldowns\n\n        // Groups for traps and alarm triggers (merged from TrapManager)\n        this.alarmTriggers = this.scene.physics.add.staticGroup({\n            classType: AlarmTrigger,\n            runChildUpdate: true\n        });\n        this.traps = this.scene.physics.add.group();\n    }",
+    "metadata": {
+      "start_line": 26,
+      "end_line": 47,
+      "notes": "Constructor initialization with physics groups and damage-tracking Map",
+      "imports": []
+    }
+  },
+  {
+    "file_name": "HazardManager.js",
+    "chunk_index": 3,
+    "method": "addHazard",
+    "chunk_text": "    /**\n     * Add a hazard and setup player collision\n     * Used for standard hazards like spikes and lasers\n     * \n     * @param   {Phaser.GameObjects.Sprite|Phaser.GameObjects.Container}    hazard    Hazard instance to manage\n     * @param   {string}                                                    type      Category/type of the hazard (e.g., 'spike', 'laser')\n     * \n     * @description\n     * Registration process:\n     * 1. Adds hazard to EntityManager tracking\n     * 2. Sets up physics collision with player\n     * 3. Configures collision callback\n     * \n     * @returns {void}\n     */\n    addHazard(hazard, type) {\n        super.add(hazard, type);\n\n        // If the hazard has a sprite, set collision overlap with the player\n        if (hazard.sprite) {\n            this.scene.physics.add.overlap(\n                this.scene.player,\n                hazard.sprite,\n                () => this.handlePlayerCollision(hazard),\n                null,\n                this\n            );\n        }\n    }",
+    "metadata": {
+      "start_line": 49,
+      "end_line": 77,
+      "notes": "Method to add and initialize hazards with collision setup",
+      "imports": []
+    }
+  },
+  {
+    "file_name": "HazardManager.js",
+    "chunk_index": 4,
+    "method": "handlePlayerCollision",
+    "chunk_text": "    /**\n     * Process player collision with hazard\n     * Applies damage with invulnerability cooldown\n     * \n     * @param   {Phaser.GameObjects.Sprite|Phaser.GameObjects.Container}    hazard    The hazard that collided with player\n     * @property   {number}                                                 [hazard.damageAmount]    Optional custom damage amount for this hazard\n     * \n     * @description\n     * Collision handling:\n     * 1. Checks damage cooldown period\n     * 2. Applies configured damage amount\n     * 3. Updates last damage timestamp\n     * 4. Broadcasts collision event\n     * \n     * @fires GameEvents.HAZARD_COLLISION\n     * @returns {void}\n     */\n    handlePlayerCollision(hazard) {\n        const now = Date.now();\n        const lastDamage = this.lastDamageTime.get(hazard) || 0;\n\n        // Check damage cooldown\n        if (now - lastDamage >= GameConfig.PLAYER.INVULNERABLE_DURATION) {\n            const damage = hazard.damageAmount || GameConfig.TRAPS.DAMAGE;\n            this.scene.player.takeDamage(damage);\n\n            // Record the time we dealt damage\n            this.lastDamageTime.set(hazard, now);\n\n            // Emit event if desired\n            this.eventManager.emit(GameEvents.HAZARD_COLLISION, {\n                hazard,\n                damage\n            });\n        }\n    }",
+    "metadata": {
+      "start_line": 79,
+      "end_line": 112,
+      "notes": "Method to handle player collisions, respecting invulnerability cooldown",
+      "imports": []
+    }
+  },
+  {
+    "file_name": "HazardManager.js",
+    "chunk_index": 5,
+    "method": "findSpawnPoints",
+    "chunk_text": "    /**\n     * Find valid spawn points for hazards\n     * Checks grid cells avoiding platform collisions\n     * \n     * @description\n     * Spawn point calculation:\n     * 1. Creates grid based on tile size\n     * 2. Checks each point for platform overlap\n     * 3. Maintains safety margin from edges\n     * 4. Returns array of valid positions\n     * \n     * @returns {Array<{x: number, y: number}>} Array of valid spawn coordinates\n     */\n    findSpawnPoints() {\n        const points = [];\n        const tileSize = 32;\n        const margin = tileSize * 2;\n\n        for (let x = margin; x < this.scene.ROOM_WIDTH - margin; x += tileSize) {\n            for (let y = margin; y < this.scene.ROOM_HEIGHT - margin; y += tileSize) {\n                // Check if point is overlapping a platform\n                const hasCollision = this.scene.platforms.getChildren().some(platform => {\n                    return (\n                        Math.abs(platform.x - x) < tileSize &&\n                        Math.abs(platform.y - y) < tileSize\n                    );\n                });\n\n                if (!hasCollision) {\n                    points.push({ x, y });\n                }\n            }\n        }\n        return points;\n    }",
+    "metadata": {
+      "start_line": 114,
+      "end_line": 144,
+      "notes": "Method to calculate valid hazard spawn points by checking platform overlaps",
+      "imports": []
+    }
+  },
+  {
+    "file_name": "HazardManager.js",
+    "chunk_index": 6,
+    "method": "createTraps",
+    "chunk_text": "    /**\n     * Create traps and alarm triggers at valid spawn points\n     * Randomizes placement and handles quantity configuration\n     * \n     * @param   {Object}    config                Configuration for trap creation\n     * @param   {number}    [config.AlarmTrigger]    Number of alarm triggers to create\n     * @param   {number}    [config.TrapPrefab]      Number of traps to create\n     * \n     * @description\n     * Trap creation process:\n     * 1. Gets valid spawn points\n     * 2. Randomizes point order\n     * 3. Creates alarm triggers first\n     * 4. Creates standard traps with remaining points\n     * \n     * @returns {void}\n     */\n    createTraps(config) {\n        const spawnPoints = this.findSpawnPoints();\n        if (spawnPoints.length === 0) return;\n\n        // Randomize order\n        Phaser.Utils.Array.Shuffle(spawnPoints);\n\n        // Create alarm triggers\n        const numAlarms = config.AlarmTrigger || 0;\n        for (let i = 0; i < Math.min(numAlarms, spawnPoints.length); i++) {\n            const point = spawnPoints[i];\n            const alarm = this.alarmTriggers.create(point.x, point.y, null, false);\n            alarm.setSize(32, 32);\n            console.log('Created alarm at', point.x, point.y);\n        }\n\n        // Create traps with remaining points\n        const remainingPoints = spawnPoints.slice(numAlarms);\n        const numTraps = config.TrapPrefab || 0;\n\n        for (let i = 0; i < Math.min(numTraps, remainingPoints.length); i++) {\n            const point = remainingPoints[i];\n            const trap = new Trap(this.scene, point.x, point.y);\n            this.traps.add(trap);\n            console.log('Created trap at', point.x, point.y);\n        }\n    }",
+    "metadata": {
+      "start_line": 146,
+      "end_line": 186,
+      "notes": "Method to create and place traps and alarm triggers based on config",
+      "imports": []
+    }
+  },
+  {
+    "file_name": "HazardManager.js",
+    "chunk_index": 7,
+    "method": "setupCollisions",
+    "chunk_text": "    /**\n     * Setup collision detection between player and alarm triggers\n     * \n     * @param   {Phaser.Types.Physics.Arcade.SpriteWithDynamicBody}    player    The player sprite to check collisions against\n     * \n     * @description\n     * Collision setup:\n     * 1. Adds physics overlap between player and alarms\n     * 2. Configures alarm trigger callback\n     * \n     * @returns {void}\n     */\n    setupCollisions(player) {\n        this.scene.physics.add.overlap(\n            player,\n            this.alarmTriggers,\n            (p, alarmTrigger) => alarmTrigger.triggerAlarm()\n        );\n    }",
+    "metadata": {
+      "start_line": 188,
+      "end_line": 206,
+      "notes": "Method to establish collision callbacks for alarm triggers and the player",
+      "imports": []
+    }
+  },
+  {
+    "file_name": "HazardManager.js",
+    "chunk_index": 8,
+    "method": "cleanup",
+    "chunk_text": "    /**\n     * Clean up all hazards and reset state\n     * Called during scene transitions or shutdown\n     * \n     * @description\n     * Cleanup process:\n     * 1. Calls parent cleanup\n     * 2. Clears damage tracking\n     * 3. Destroys all traps and alarms\n     * 4. Resets physics groups\n     * \n     * @returns {void}\n     */\n    cleanup() {\n        super.cleanup();\n        this.lastDamageTime.clear();\n\n        // Clear traps and alarm triggers\n        if (this.alarmTriggers) {\n            this.alarmTriggers.clear(true, true);\n        }\n        if (this.traps) {\n            this.traps.clear(true, true);\n        }\n    }",
+    "metadata": {
+      "start_line": 208,
+      "end_line": 231,
+      "notes": "Method to remove hazards, reset cooldowns, and clear groups",
+      "imports": []
+    }
+  }
+]
