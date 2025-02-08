@@ -1,0 +1,102 @@
+[
+  {
+    "file_name": "EnemyManager.js",
+    "chunk_index": 0,
+    "method": "imports",
+    "chunk_text": "import { EntityManager } from './EntityManager';\nimport { GameConfig } from '../../config/GameConfig';\nimport { GameEvents } from '../core/EventManager';",
+    "metadata": {
+      "start_line": 7,
+      "end_line": 9,
+      "notes": "Import statements for required dependencies",
+      "imports": [
+        "./EntityManager",
+        "../../config/GameConfig",
+        "../core/EventManager"
+      ]
+    }
+  },
+  {
+    "file_name": "EnemyManager.js",
+    "chunk_index": 1,
+    "method": "class_definition",
+    "chunk_text": "/**\n * EnemyManager.js\n * Manages enemy entities in the game, including their lifecycle, combat interactions,\n * and level progression tracking. Extends EntityManager for core entity functionality.\n */\n\n/**\n * Manages enemy entities in the game with dual support for:\n * 1. Event-based enemies (modern implementation with event emitters)\n * 2. Traditional enemies (direct property access)\n * \n * Integration Points:\n * - EntityManager: Provides core entity tracking and querying\n * - EffectsManager: Visual/audio feedback on hits\n * - GameStateManager: Score tracking via Phaser registry\n */\nexport class EnemyManager extends EntityManager {",
+    "metadata": {
+      "start_line": 1,
+      "end_line": 19,
+      "notes": "Class definition with comprehensive documentation",
+      "imports": []
+    }
+  },
+  {
+    "file_name": "EnemyManager.js",
+    "chunk_index": 2,
+    "method": "constructor",
+    "chunk_text": "    /**\n     * Initialize the enemy management system\n     * @param {Phaser.Scene} scene - The game scene this manager belongs to\n     */\n    constructor(scene) {\n        super(scene);\n        this.remainingEnemies = 0; // Tracks enemies for level completion\n    }",
+    "metadata": {
+      "start_line": 20,
+      "end_line": 27,
+      "notes": "Constructor initialization with enemy tracking",
+      "imports": []
+    }
+  },
+  {
+    "file_name": "EnemyManager.js",
+    "chunk_index": 3,
+    "method": "addEnemy",
+    "chunk_text": "    /** \n     * Register a new enemy with the management system\n     * \n     * Features:\n     * - Supports both modern (event-based) and legacy enemies\n     * - Automatically sets up health tracking\n     * - Initializes event listeners for health and death\n     * \n     * @param {Object} enemy - Enemy instance to manage\n     * @param {Phaser.GameObjects.Sprite} sprite - Enemy's visual representation\n     * @param {number} [health] - Starting health for legacy enemies\n     */\n    addEnemy(enemy, sprite, health) {\n        super.add(enemy, 'enemy');\n        this.remainingEnemies++;\n\n        // Set up appropriate health tracking system\n        if (typeof enemy.on === 'function') {\n            // Modern event-based enemy\n            enemy.on('healthChanged', this.handleEnemyHealthChanged.bind(this));\n            enemy.on('died', this.handleEnemyDeath.bind(this));\n        } else if (health !== undefined) {\n            // Legacy enemy with direct property access\n            enemy.currentHealth = health;\n            enemy.maxHealth = health;\n        }\n    }",
+    "metadata": {
+      "start_line": 29,
+      "end_line": 54,
+      "notes": "Method to add and initialize new enemies with health tracking",
+      "imports": []
+    }
+  },
+  {
+    "file_name": "EnemyManager.js",
+    "chunk_index": 4,
+    "method": "handleBulletHit",
+    "chunk_text": "    /** \n     * Process bullet collision with enemy\n     * \n     * Workflow:\n     * 1. Trigger hit effects (visual/audio)\n     * 2. Calculate and apply damage\n     * 3. Check for death condition\n     * 4. Clean up bullet\n     * \n     * @param {Phaser.GameObjects.GameObject} bullet - Colliding bullet\n     * @param {Phaser.GameObjects.Sprite} enemySprite - Hit enemy sprite\n     */\n    handleBulletHit(bullet, enemySprite) {\n        // Visual and audio feedback\n        if (this.scene.effectsManager) {\n            this.scene.effectsManager.createHitEffect(bullet.x, bullet.y);\n            this.scene.effectsManager.playSound('hit');\n        }\n\n        // Damage application\n        const enemy = this.getEnemyBySprite(enemySprite);\n        if (enemy) {\n            const damage = bullet.damage || GameConfig.PLAYER.DAMAGE || 1;\n\n            if (typeof enemy.takeDamage === 'function') {\n                // Modern enemy with damage handler\n                enemy.takeDamage(damage);\n            } else {\n                // Legacy enemy with direct health manipulation\n                enemy.currentHealth -= damage;\n                \n                if (enemy.updateHealthBar) {\n                    enemy.updateHealthBar();\n                }\n\n                if (enemy.currentHealth <= 0) {\n                    if (enemy.die) enemy.die();\n                    this.handleEnemyDeath(enemy);\n                }\n            }\n        }\n\n        // Cleanup collided bullet\n        if (bullet?.destroy) bullet.destroy();\n    }",
+    "metadata": {
+      "start_line": 56,
+      "end_line": 98,
+      "notes": "Method to handle bullet collisions and damage application",
+      "imports": []
+    }
+  },
+  {
+    "file_name": "EnemyManager.js",
+    "chunk_index": 5,
+    "method": "handleEnemyHealthChanged",
+    "chunk_text": "    /** \n     * Broadcast enemy health changes to interested systems\n     * Used for UI updates, achievements, and sound effects\n     * \n     * @param {Object} enemy - Enemy with changed health\n     */\n    handleEnemyHealthChanged(enemy) {\n        this.eventManager.emit(GameEvents.ENEMY_HEALTH_CHANGED, { enemy });\n    }",
+    "metadata": {
+      "start_line": 100,
+      "end_line": 108,
+      "notes": "Method to broadcast enemy health changes via events",
+      "imports": []
+    }
+  },
+  {
+    "file_name": "EnemyManager.js",
+    "chunk_index": 6,
+    "method": "handleEnemyDeath",
+    "chunk_text": "    /** \n     * Process enemy death event\n     * \n     * Actions:\n     * 1. Remove from management system\n     * 2. Update enemy counter\n     * 3. Award score points\n     * 4. Check level completion\n     * \n     * @param {Object} enemy - Defeated enemy\n     */\n    handleEnemyDeath(enemy) {\n        this.remove(enemy, 'enemy');\n        this.remainingEnemies--;\n\n        // Award points based on enemy type\n        const points = enemy.isBoss ? 50 : 10;\n\n        // Add a console log to confirm points awarding\n        console.log(`[EnemyManager] handleEnemyDeath: awarding ${points} points.`);\n\n        // Updated line: Use scene.gameStateManager instead of scene.gameState\n        if (this.scene.gameStateManager?.increment) {\n            this.scene.gameStateManager.increment('score', points);\n        }\n    }",
+    "metadata": {
+      "start_line": 110,
+      "end_line": 134,
+      "notes": "Method to handle enemy death and score updates",
+      "imports": []
+    }
+  },
+  {
+    "file_name": "EnemyManager.js",
+    "chunk_index": 7,
+    "method": "getEnemyBySprite",
+    "chunk_text": "    /** \n     * Find enemy entity from sprite reference\n     * Essential for collision system sprite-to-entity mapping\n     * \n     * @param {Phaser.GameObjects.Sprite} sprite - Sprite to look up\n     * @returns {Object} Matching enemy entity or undefined\n     */\n    getEnemyBySprite(sprite) {\n        return this.getAll('enemy').find(enemy => enemy.sprite === sprite);\n    }",
+    "metadata": {
+      "start_line": 136,
+      "end_line": 144,
+      "notes": "Utility method to find enemy entity from sprite reference",
+      "imports": []
+    }
+  }
+]

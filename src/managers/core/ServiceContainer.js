@@ -19,6 +19,12 @@ export class ServiceContainer {
      * @param {Object} service - Service instance to store
      */
     register(key, service) {
+        if (typeof key !== 'string') {
+            throw new TypeError('Service key must be a string');
+        }
+        if (service === null || service === undefined) {
+            throw new TypeError('Service instance cannot be null or undefined');
+        }
         this.services.set(key, service);
     }
 
@@ -29,6 +35,9 @@ export class ServiceContainer {
      * @throws {Error} If service is not found
      */
     get(key) {
+        if (typeof key !== 'string') {
+            throw new TypeError('Service key must be a string');
+        }
         if (!this.services.has(key)) {
             throw new Error(`Service ${key} not found in container`);
         }

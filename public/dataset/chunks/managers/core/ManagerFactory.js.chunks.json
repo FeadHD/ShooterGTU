@@ -1,0 +1,94 @@
+[
+  {
+    "file_name": "ManagerFactory.js",
+    "chunk_index": 0,
+    "method": "class_definition",
+    "chunk_text": "/**\n * ManagerFactory.js\n * Factory class responsible for creating and managing game system instances.\n * Handles dependency injection and ensures proper initialization order.\n *\n * @class ManagerFactory\n * @description\n * A static factory class that:\n * - Creates and initializes game managers\n * - Manages dependency injection\n * - Ensures proper initialization order\n * - Provides singleton access to core systems\n *\n * @requires Phaser.Scene\n * @requires Phaser.Events.EventEmitter\n * @requires ServiceContainer\n */\n\nimport { GameStateManager } from '../level/GameStateManager';\nimport { PersistenceManager } from '../level/PersistenceManager';\nimport AudioManager from '../audio/AudioManager';\nimport { EntityManager } from '../entities/EntityManager';\nimport { EnemyManager } from '../entities/EnemyManager';\nimport { HazardManager } from '../entities/HazardManager';\nimport { LDTKEntityManager } from '../ldtk/LDTKEntityManager';\nimport { LDTKTileManager } from '../ldtk/LDTKTileManager';\nimport { AnimationManager } from '../graphics/AnimationManager';\nimport { EffectsManager } from '../graphics/EffectsManager';\nimport { SceneBoundaryManager } from '../physics/BoundaryManager';\nimport { DebugSystem } from '../../debug/DebugSystem';\nimport { CollisionManager } from '../physics/CollisionManager';\nimport { EventManager } from './EventManager';\nimport { AssetManager } from '../graphics/AssetManager';\nimport { container } from './ServiceContainer';\nimport { UIManager } from '../ui/UIManager';\nimport { BulletManager } from '../physics/BulletManager';\nimport { BulletPool } from '../../pools/BulletPool';\nimport { CameraManager } from '../camera/CameraManager';\n\n// Entity prefabs\nimport Enemy from '../../prefabs/Enemy';\nimport { Bitcoin } from '../../prefabs/objects/Bitcoin';\nimport { Drone } from '../../prefabs/Drone';\nimport Trampoline from '../../prefabs/Trampoline';\nimport { Trap } from '../../prefabs/Trap';\nimport { DestructibleBlock } from '../../prefabs/DestructibleBlock';\nimport { FallingDestructibleBlock } from '../../prefabs/FallingDestructibleBlock';\nimport { DisappearingPlatform } from '../../prefabs/DisappearingPlatform';\nimport { Turret } from '../../prefabs/Turret';\nimport MeleeWarrior from '../../prefabs/MeleeWarrior';\nimport { Zapper } from '../../prefabs/enemies/Zapper';\n\nexport class ManagerFactory {",
+    "metadata": {
+      "start_line": 1,
+      "end_line": 47,
+      "notes": "Class definition and imports",
+      "imports": [
+        "../level/GameStateManager",
+        "../level/PersistenceManager",
+        "../audio/AudioManager",
+        "../entities/EntityManager",
+        "../entities/EnemyManager",
+        "../entities/HazardManager",
+        "../ldtk/LDTKEntityManager",
+        "../ldtk/LDTKTileManager",
+        "../graphics/AnimationManager",
+        "../graphics/EffectsManager",
+        "../physics/BoundaryManager",
+        "../../debug/DebugSystem",
+        "../physics/CollisionManager",
+        "./EventManager",
+        "../graphics/AssetManager",
+        "./ServiceContainer",
+        "../ui/UIManager",
+        "../physics/BulletManager",
+        "../../pools/BulletPool",
+        "../camera/CameraManager",
+        "../../prefabs/Enemy",
+        "../../prefabs/objects/Bitcoin",
+        "../../prefabs/Drone",
+        "../../prefabs/Trampoline",
+        "../../prefabs/Trap",
+        "../../prefabs/DestructibleBlock",
+        "../../prefabs/FallingDestructibleBlock",
+        "../../prefabs/DisappearingPlatform",
+        "../../prefabs/Turret",
+        "../../prefabs/MeleeWarrior",
+        "../../prefabs/enemies/Zapper"
+      ]
+    }
+  },
+  {
+    "file_name": "ManagerFactory.js",
+    "chunk_index": 1,
+    "method": "createManagers",
+    "chunk_text": "    /**\n     * Creates and initializes all game managers for a scene\n     * @param {Phaser.Scene} scene - The scene to create managers for\n     * @returns {Object} Collection of initialized managers including:\n     * - events: EventManager\n     * - assets: AssetManager\n     * - gameState: GameStateManager\n     * - persistence: PersistenceManager\n     * - audio: AudioManager\n     * - entityManager: EntityManager\n     * - ldtkEntityManager: LDTKEntityManager\n     * - enemies: EnemyManager\n     * - hazards: HazardManager\n     * - animations: AnimationManager\n     * - effects: EffectsManager\n     * - boundaries: SceneBoundaryManager\n     * - debug: DebugSystem\n     * - collision: CollisionManager\n     * - ui: UIManager (except for MainMenu scene)\n     * \n     * @description\n     * Creates and initializes all required managers in the correct order:\n     * 1. Event system (first, for other systems to use)\n     * 2. Asset management\n     * 3. State management\n     * 4. Audio system\n     * 5. Entity management\n     * 6. Graphics and effects\n     * 7. Physics and collisions\n     * 8. UI (except for MainMenu)\n     * \n     * @requires Phaser.Scene\n     */\n    static createManagers(scene) {\n        console.log('Initializing managers for scene:', scene);\n    \n        // 1) Register the scene in DI\n        container.register('scene', scene);\n    \n        // 2) Create a scene-based EventManager FIRST\n        let events;\n        if (container.services.has('events')) {\n            events = container.get('events');\n        } else {\n            events = new EventManager(scene);\n            container.register('events', events);\n        }\n    \n        // 3) Now initialize it (so events are ready for other managers)\n        events.initialize();\n\n        // 4) Make sure the scene has a reference to it\n        scene.eventManager = events;   // <-- IMPORTANT!\n    \n        // 5) Local DI container\n        const localContainer = scene.container || {};\n        container.register('container', localContainer);\n    \n        // 6) Asset management\n        const assets = new AssetManager(scene);\n        container.register('assets', assets);\n    \n        // 6) State management\n        const gameState = new GameStateManager(scene);\n        const persistence = new PersistenceManager(gameState);\n    \n        // 7) Audio system\n        let audio = container.services.has('audio')\n            ? container.get('audio')\n            : new AudioManager(scene);\n    \n        if (!container.services.has('audio')) {\n            container.register('audio', audio);\n        }\n    \n        // 8) Entity + gameplay managers\n        // (Now it's safe to do these, as events is registered)\n        const entityManager = new EntityManager(scene);\n        const ldtkEntityManager = new LDTKEntityManager(scene);\n        console.log('LDTKEntityManager created:', ldtkEntityManager);\n        container.register('ldtkEntityManager', ldtkEntityManager);\n    \n        console.log('Registering entity factories...');\n        ldtkEntityManager.registerEntityFactories({\n            Enemy: (scene, x, y, fields) => {\n                console.log(`Factory invoked for Enemy at (${x}, ${y}) with fields:`, fields);\n                return new Enemy(scene, x, y);\n            },\n            Bitcoin: (scene, x, y, fields) => {\n                console.log(`Factory invoked for Bitcoin at (${x}, ${y}) with fields:`, fields);\n                return new Bitcoin(scene, x, y);\n            },\n            Zapper: (scene, x, y, fields) => {\n                console.log(`Factory invoked for Zapper at (${x}, ${y}) with fields:`, fields);\n                return new Zapper(scene, x, y, fields);\n            },\n            PlayerStart: (scene, x, y, fields) => {\n                console.log(`Factory invoked for PlayerStart at (${x}, ${y}) with fields:`, fields);\n                return { x, y, type: 'PlayerStart' };\n            },\n            Drone: (scene, x, y, fields) => {\n                console.log(`Factory invoked for Drone at (${x}, ${y}) with fields:`, fields);\n                return new Drone(scene, x, y);\n            },\n            MeleeWarrior: (scene, x, y, fields) => {    \n                console.log(`Factory invoked for meleeWarrior at (${x}, ${y}) with fields:`, fields);\n                return new MeleeWarrior(scene, x, y, fields);\n            }\n        });\n    \n        const enemies = new EnemyManager(scene);\n        const hazards = new HazardManager(scene);\n\n        const effects = new EffectsManager(scene);\n        const boundaries = new SceneBoundaryManager(scene);\n        const debug = new DebugSystem(scene);\n        const collision = new CollisionManager(scene);\n\n        // 8) Initialize animation manager\n        const animations = new AnimationManager(scene);\n        scene.animations = animations; // Attach it to the scene\n    \n        // Delay animation initialization until assets are loaded\n        scene.load.once('complete', () => {\n            animations.initialize();\n            console.log('AnimationManager initialized after textures loaded.');\n        });\n    \n        // 9) Skip UI if MainMenu\n        let ui = null;\n        if (scene.scene.key !== 'MainMenu') {\n            ui = new UIManager(scene);  \n        }\n    \n        // 10) Initialize assets\n        assets.initialize();\n    \n        // 11) Register all these managers\n        container.register('gameState', gameState);\n        container.register('persistence', persistence);\n        container.register('entityManager', entityManager);\n        container.register('ldtkEntityManager', ldtkEntityManager);\n        container.register('enemies', enemies);\n        container.register('hazards', hazards);\n        container.register('animations', animations);\n        container.register('effects', effects);\n        container.register('boundaries', boundaries);\n        container.register('debug', debug);\n        container.register('collision', collision);\n    \n        if (ui) {\n            container.register('ui', ui);\n        }\n    \n        // 12) Return references\n        return {\n            events,\n            assets,\n            gameState,\n            persistence,\n            audio,\n            entityManager,\n            ldtkEntityManager,\n            enemies,\n            hazards,\n            animations,\n            effects,\n            boundaries,\n            debug,\n            collision,\n            ui,\n        };\n    }",
+    "metadata": {
+      "start_line": 48,
+      "end_line": 180,
+      "notes": "Main manager creation and initialization method. This is a large method but kept in one chunk for clarity of initialization flow.",
+      "imports": []
+    }
+  },
+  {
+    "file_name": "ManagerFactory.js",
+    "chunk_index": 2,
+    "method": "createEntityManager",
+    "chunk_text": "    /**\n     * Creates a new LDTKEntityManager instance\n     * @param {Phaser.Scene} scene - The scene to create the manager for\n     * @returns {LDTKEntityManager} New entity manager instance\n     * \n     * @description\n     * Factory method for creating LDTK entity managers.\n     * These manage level entities loaded from LDTK files.\n     * \n     * @requires Phaser.Scene\n     * @requires LDTKEntityManager\n     */\n    static createEntityManager(scene) {\n        console.log('Creating LDTKEntityManager for scene:', scene);\n        return new LDTKEntityManager(scene);\n    }",
+    "metadata": {
+      "start_line": 182,
+      "end_line": 196,
+      "notes": "Entity manager factory method",
+      "imports": []
+    }
+  },
+  {
+    "file_name": "ManagerFactory.js",
+    "chunk_index": 3,
+    "method": "singleton_getters",
+    "chunk_text": "    /**\n     * Collection of singleton getter methods for various managers\n     * Each method follows the pattern:\n     * - Check if instance exists\n     * - Create if needed\n     * - Return instance\n     * \n     * @description\n     * These methods ensure only one instance of each manager exists:\n     * - AnimationManager\n     * - BulletManager\n     * - BulletPool\n     * - CameraManager\n     * - LDTKEntityManager\n     * - LDTKTileManager\n     * - UIManager\n     * - AssetManager\n     * \n     * @requires Phaser.Scene\n     * @requires AnimationManager\n     * @requires BulletManager\n     * @requires BulletPool\n     * @requires CameraManager\n     * @requires LDTKEntityManager\n     * @requires LDTKTileManager\n     * @requires UIManager\n     * @requires AssetManager\n     */\n    static getAnimationManager() {\n        if (!this.animationManager) {\n            this.animationManager = new AnimationManager();\n        }\n        return this.animationManager;\n    }\n\n    static getBulletManager(scene) {\n        if (!this.bulletManager) {\n            this.bulletManager = new BulletManager(scene);\n        }\n        return this.bulletManager;\n    }\n\n    static getBulletPool() {\n        if (!this.bulletPool) {\n            this.bulletPool = new BulletPool();\n        }\n        return this.bulletPool;\n    }\n\n    static getCameraManager(scene) {\n        if (!this.cameraManager) {\n            this.cameraManager = new CameraManager(scene);\n        }\n        return this.cameraManager;\n    }\n\n    static getLDTKEntityManager(scene) {\n        if (!this.ldtkEntityManager) {\n            this.ldtkEntityManager = new LDTKEntityManager(scene);\n        }\n        return this.ldtkEntityManager;\n    }\n\n    static getLDTKTileManager(scene) {\n        if (!this.ldtkTileManager) {\n            this.ldtkTileManager = new LDTKTileManager(scene);\n        }\n        return this.ldtkTileManager;\n    }\n\n    static getUIManager(scene) {\n        if (!this.uiManager) {\n            this.uiManager = new UIManager(scene);\n        }\n        return this.uiManager;\n    }\n\n    static getAssetManager(scene) {\n        if (!this.assetManager) {\n            this.assetManager = new AssetManager(scene);\n        }\n        return this.assetManager;\n    }",
+    "metadata": {
+      "start_line": 198,
+      "end_line": 266,
+      "notes": "Collection of singleton getter methods for various managers. Grouped together as they follow the same pattern.",
+      "imports": []
+    }
+  },
+  {
+    "file_name": "ManagerFactory.js",
+    "chunk_index": 4,
+    "method": "entity_getters",
+    "chunk_text": "    /**\n     * Collection of entity factory methods\n     * Each method creates or returns a cached entity instance\n     * \n     * @description\n     * Factory methods for game entities:\n     * - Zapper\n     * - MeleeWarrior\n     * \n     * @requires Phaser.Scene\n     * @requires Zapper\n     * @requires MeleeWarrior\n     */\n    static getZapper(scene, x, y, fields) {\n        if (!this.zapper) {\n            this.zapper = new Zapper(scene, x, y, fields);\n        }\n        return this.zapper;\n    }\n\n    static getMeleeWarrior(scene, x, y, fields) {\n        if (!this.meleeWarrior) {\n            this.meleeWarrior = new MeleeWarrior(scene, x, y);\n        }\n        return this.meleeWarrior;\n    }",
+    "metadata": {
+      "start_line": 268,
+      "end_line": 290,
+      "notes": "Entity factory methods grouped together",
+      "imports": []
+    }
+  }
+]

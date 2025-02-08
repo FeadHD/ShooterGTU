@@ -1,0 +1,101 @@
+[
+  {
+    "file_name": "EntityManager.js",
+    "chunk_index": 0,
+    "method": "imports",
+    "chunk_text": "import { BaseManager } from '../core/BaseManager';\nimport { GameEvents } from '../core/EventManager';",
+    "metadata": {
+      "start_line": 7,
+      "end_line": 8,
+      "notes": "Import statements for required dependencies",
+      "imports": [
+        "../core/BaseManager",
+        "../core/EventManager"
+      ]
+    }
+  },
+  {
+    "file_name": "EntityManager.js",
+    "chunk_index": 1,
+    "method": "class_definition",
+    "chunk_text": "/**\n * EntityManager.js\n * Core manager for all game entities, providing tracking, updates, and lifecycle management.\n * Extends BaseManager for dependency injection capabilities.\n *\n * @class EntityManager\n * @extends BaseManager\n * @description\n * A core system that:\n * - Manages entity lifecycle (creation, updates, destruction)\n * - Groups entities by type for efficient querying\n * - Broadcasts entity events for system coordination\n * - Provides dependency injection via BaseManager\n * \n * @example\n * const manager = new EntityManager(scene);\n * manager.add(player, 'player');\n * manager.update();\n */\nexport class EntityManager extends BaseManager {",
+    "metadata": {
+      "start_line": 1,
+      "end_line": 20,
+      "notes": "Class definition with comprehensive documentation",
+      "imports": []
+    }
+  },
+  {
+    "file_name": "EntityManager.js",
+    "chunk_index": 2,
+    "method": "constructor",
+    "chunk_text": "    /**\n     * Initialize entity management system\n     * Sets up entity collections and event bus connection\n     * \n     * @constructor\n     * @param {Phaser.Scene} scene - The game scene this manager belongs to\n     * \n     * @description\n     * Initializes:\n     * - Scene reference\n     * - Type-based entity storage\n     * - Event system connection\n     */\n    constructor(scene) {\n        super();\n        this.scene = scene;\n        this.entities = new Map();  // Type-based entity storage\n        this.eventManager = this.container.get('events');\n    }",
+    "metadata": {
+      "start_line": 22,
+      "end_line": 38,
+      "notes": "Constructor initialization with entity storage and event system setup",
+      "imports": []
+    }
+  },
+  {
+    "file_name": "EntityManager.js",
+    "chunk_index": 3,
+    "method": "add",
+    "chunk_text": "    /**\n     * Register a new entity with the manager\n     * Groups entities by type and broadcasts addition\n     * \n     * @param {Object} entity - Entity instance to manage\n     * @param {string} type - Category/type of the entity\n     * \n     * @description\n     * Registration process:\n     * 1. Creates type collection if needed\n     * 2. Adds entity to type group\n     * 3. Broadcasts addition event\n     * \n     * @fires GameEvents.ENTITY_ADDED\n     * @returns {void}\n     */\n    add(entity, type) {\n        if (!this.entities.has(type)) {\n            this.entities.set(type, new Set());\n        }\n        this.entities.get(type).add(entity);\n        \n        // Notify systems of new entity\n        this.eventManager.emit(GameEvents.ENTITY_ADDED, { entity, type });\n    }",
+    "metadata": {
+      "start_line": 40,
+      "end_line": 62,
+      "notes": "Method to add and register new entities",
+      "imports": []
+    }
+  },
+  {
+    "file_name": "EntityManager.js",
+    "chunk_index": 4,
+    "method": "remove",
+    "chunk_text": "    /**\n     * Remove an entity from management\n     * Broadcasts removal for system cleanup\n     * \n     * @param {Object} entity - Entity to remove\n     * @param {string} type - Category/type of the entity\n     * \n     * @description\n     * Removal process:\n     * 1. Finds type collection\n     * 2. Removes entity if found\n     * 3. Broadcasts removal event\n     * \n     * @fires GameEvents.ENTITY_REMOVED\n     * @returns {void}\n     */\n    remove(entity, type) {\n        const entities = this.entities.get(type);\n        if (entities) {\n            entities.delete(entity);\n            // Notify systems of removal\n            this.eventManager.emit(GameEvents.ENTITY_REMOVED, { entity, type });\n        }\n    }",
+    "metadata": {
+      "start_line": 64,
+      "end_line": 85,
+      "notes": "Method to remove entities and notify systems",
+      "imports": []
+    }
+  },
+  {
+    "file_name": "EntityManager.js",
+    "chunk_index": 5,
+    "method": "getAll",
+    "chunk_text": "    /**\n     * Get all entities of a specific type\n     * Converts Set to Array for easier iteration\n     * \n     * @param {string} type - Category/type to retrieve\n     * @returns {Array} Array of entities of the specified type\n     * \n     * @description\n     * Query process:\n     * 1. Retrieves type collection\n     * 2. Converts Set to Array\n     * 3. Returns empty array if type not found\n     */\n    getAll(type) {\n        return Array.from(this.entities.get(type) || []);\n    }",
+    "metadata": {
+      "start_line": 87,
+      "end_line": 101,
+      "notes": "Method to query entities by type",
+      "imports": []
+    }
+  },
+  {
+    "file_name": "EntityManager.js",
+    "chunk_index": 6,
+    "method": "update",
+    "chunk_text": "    /**\n     * Update all managed entities\n     * Calls update() on entities that support it\n     * \n     * @description\n     * Update process:\n     * 1. Iterates all type collections\n     * 2. Updates each entity with update()\n     * 3. Skips entities without update()\n     * \n     * @returns {void}\n     */\n    update() {\n        for (const entities of this.entities.values()) {\n            for (const entity of entities) {\n                if (entity.update) {\n                    entity.update();\n                }\n            }\n        }\n    }",
+    "metadata": {
+      "start_line": 103,
+      "end_line": 122,
+      "notes": "Method to update all managed entities",
+      "imports": []
+    }
+  },
+  {
+    "file_name": "EntityManager.js",
+    "chunk_index": 7,
+    "method": "cleanup",
+    "chunk_text": "    /**\n     * Clean up all entities\n     * Called during scene transitions or shutdown\n     * \n     * @description\n     * Cleanup process:\n     * 1. Calls destroy() on entities if available\n     * 2. Clears all type collections\n     * 3. Resets entity storage\n     * \n     * @returns {void}\n     */\n    cleanup() {\n        for (const entities of this.entities.values()) {\n            for (const entity of entities) {\n                if (entity.destroy) {\n                    entity.destroy();\n                }\n            }\n            entities.clear();\n        }\n        this.entities.clear();\n    }",
+    "metadata": {
+      "start_line": 124,
+      "end_line": 144,
+      "notes": "Method to clean up and destroy all entities",
+      "imports": []
+    }
+  }
+]

@@ -1,0 +1,208 @@
+[
+    {
+      "file_name": "AudioManager.js",
+      "chunk_index": 0,
+      "method": "class_definition",
+      "chunk_text": "/**\n * AudioManager.js\n * Unified manager for both sound effects (SFX) and background music\n * Handles volume control, muting, and audio state persistence\n *\n * @class AudioManager\n * @extends BaseManager\n * @description\n * Core audio management system that handles:\n * - Sound effect (SFX) playback and caching\n * - Background music playback and transitions\n * - Volume control for both SFX and music\n * - Mute/unmute functionality\n * - Volume persistence via scene registry\n *\n * @fires AudioManager#changedata-soundVolume - When SFX volume changes\n * @fires AudioManager#changedata-musicVolume - When music volume changes\n *\n * @see\n * - {@link AudioManager#play} - Play sound effects\n * - {@link AudioManager#playMusic} - Play background music\n * - {@link AudioManager#mute} - Mute all audio\n *\n * @example\n * const audioManager = new AudioManager(this);\n * audioManager.play('laserShot');\n * audioManager.playMusic('bgmLoop');\n */\n\nimport { BaseManager } from '../core/BaseManager';\n\nexport default class AudioManager extends BaseManager {",
+      "metadata": {
+        "start_line": 0,
+        "end_line": 8,
+        "notes": "Class definition with comprehensive documentation of functionality and events",
+        "imports": [
+          "../core/BaseManager"
+        ]
+      }
+    },
+    {
+      "file_name": "AudioManager.js",
+      "chunk_index": 1,
+      "method": "constructor",
+      "chunk_text": "    /**\n     * Initialize audio management system\n     * Sets up volume controls and registry listeners\n     * \n     * @param {Phaser.Scene} scene - The Phaser scene this manager attaches to\n     * \n     * @property {Map<string, Phaser.Sound.BaseSound>} sounds - Cached sound effects\n     * @property {number} soundVolume - Current volume for sound effects (0-1)\n     * @property {boolean} isMuted - Whether all audio is globally muted\n     * @property {Phaser.Sound.BaseSound|null} currentMusic - Currently playing music track\n     * @property {number} musicVolume - Current volume for music (0-1)\n     * \n     * @fires AudioManager#changedata-soundVolume - When sound effect volume changes\n     * @fires AudioManager#changedata-musicVolume - When music volume changes\n     * \n     * @throws {Error} If scene is invalid or missing sound system\n     * @throws {Error} If registry access fails\n     * \n     * @see\n     * - {@link AudioManager#setSoundVolume} - Update sound volume\n     * - {@link AudioManager#setMusicVolume} - Update music volume\n     */\n    constructor(scene) {\n        super();\n        this.scene = scene;\n\n        // Sound Effects (SFX) Setup\n        this.sounds = new Map();                                      // Key-value store for sound effects\n        this.soundVolume = scene.registry.get('soundVolume') ?? 1;    // Default volume = 1\n        this.isMuted = false;\n\n        // Background Music Setup\n        this.currentMusic = null;                                     // Single track playing at a time\n        this.musicVolume = scene.registry.get('musicVolume') ?? 1;    // Default volume = 1\n\n        // Volume Change Listeners\n        scene.registry.events.on('changedata-soundVolume', (_, newValue) => {\n            if (this.soundVolume !== newValue) {\n                this.soundVolume = newValue;\n                this._updateAllSoundVolumes();\n            }\n        });\n\n        scene.registry.events.on('changedata-musicVolume', (_, newValue) => {\n            if (this.musicVolume !== newValue) {\n                this.musicVolume = newValue;\n                if (this.currentMusic) {\n                    this.currentMusic.setVolume(newValue);\n                }\n            }\n        });\n    }",
+      "metadata": {
+        "start_line": 9,
+        "end_line": 40,
+        "notes": "Constructor with enhanced property documentation and error handling",
+        "imports": []
+      }
+    },
+    {
+      "file_name": "AudioManager.js",
+      "chunk_index": 2,
+      "method": "add",
+      "chunk_text": "/**\n * Add a new sound to the audio manager.\n * Registers a sound with specified key and configuration for later playback.\n *\n * @method add\n * @memberof AudioManager\n * @param {string} key - Unique identifier for the sound\n * @param {Object} config - Sound configuration options\n * @param {number} [config.volume=1] - Initial volume (0.0 to 1.0)\n * @param {boolean} [config.loop=false] - Whether sound should loop\n * @param {number} [config.rate=1] - Playback rate (1.0 = normal)\n * @param {number} [config.detune=0] - Detune value in cents\n * @param {number} [config.seek=0] - Start position in seconds\n * @param {number} [config.delay=0] - Delay before playing in ms\n * @returns {void}\n *\n * @description\n * Sound Configuration:\n * - Volume: Controls sound amplitude (0-1)\n * - Loop: Enables continuous playback\n * - Rate: Adjusts playback speed\n * - Detune: Fine-tunes pitch\n * - Seek: Sets start position\n * - Delay: Adds initial delay\n *\n * @performance\n * - Memory: ~100KB per sound\n * - Load time: ~5-10ms\n * - Pooling: Yes\n * - Max sounds: Browser dependent\n *\n * @requires\n * - Sound key must be preloaded\n * - Valid configuration object\n * - Available memory\n * - Browser audio support\n *\n * @throws {Error} If sound key not found\n * @throws {Error} If invalid config\n * @throws {Error} If memory limit reached\n *\n * @example\n * // Basic usage\n * audioManager.add('explosion', { volume: 0.8 });\n *\n * // Full configuration\n * audioManager.add('music', {\n *   volume: 0.5,\n *   loop: true,\n *   rate: 1.2,\n *   detune: 50,\n *   seek: 1.5,\n *   delay: 1000\n * });\n */\nadd(key, config = {}) {\n    if (!this.scene.sound) return;\n    \n    // Set default config values\n    const defaultConfig = {\n        volume: 1,\n        loop: false,\n        rate: 1,\n        detune: 0,\n        seek: 0,\n        delay: 0\n    };\n\n    // Merge with provided config\n    const finalConfig = { ...defaultConfig, ...config };\n    \n    // Create sound instance\n    const sound = this.scene.sound.add(key, finalConfig);\n    \n    // Store in sounds map\n    this.sounds.set(key, sound);\n}",
+      "metadata": {
+        "start_line": 44,
+        "end_line": 56,
+        "notes": "Sound registration method with comprehensive configuration and error handling",
+        "imports": []
+      }
+    },
+    {
+      "file_name": "AudioManager.js",
+      "chunk_index": 3,
+      "method": "play",
+      "chunk_text": "/**\n * Play a registered sound with optional configuration override.\n * Starts playback of a previously added sound with potential runtime adjustments.\n *\n * @method play\n * @memberof AudioManager\n * @param {string} key - Identifier of sound to play\n * @param {Object} [config] - Optional runtime configuration\n * @param {number} [config.volume] - Override volume\n * @param {boolean} [config.loop] - Override loop setting\n * @param {number} [config.rate] - Override playback rate\n * @param {number} [config.detune] - Override detune value\n * @param {number} [config.seek] - Override start position\n * @param {number} [config.delay] - Override start delay\n * @returns {Phaser.Sound.BaseSound} The playing sound instance\n *\n * @description\n * Playback Features:\n * - Dynamic config override\n * - Volume ramping support\n * - Rate modulation\n * - Loop control\n * - Position seeking\n * - Delayed start\n *\n * Runtime Controls:\n * - Can modify during playback\n * - Supports fade effects\n * - Maintains original config\n * - Allows temporary changes\n *\n * @performance\n * - Start latency: ~5ms\n * - Memory overhead: Minimal\n * - CPU usage: ~0.1-1%\n * - Concurrent sounds: Browser-dependent\n *\n * @requires\n * - Sound must be added first\n * - Valid sound key\n * - Available audio channel\n * - Browser not muted\n *\n * @throws {Error} If sound not found\n * @throws {Error} If audio system error\n * @throws {Error} If too many sounds\n *\n * @fires AudioManager#soundStarted\n * @fires AudioManager#soundFailed\n *\n * @example\n * // Basic playback\n * audioManager.play('explosion');\n *\n * // With runtime config\n * audioManager.play('music', {\n *   volume: 0.7,\n *   loop: true,\n *   rate: 1.5\n * });\n */\nplay(key, config = {}) {\n    const sound = this.sounds.get(key);\n    if (!sound) return null;\n\n    // Apply runtime config if provided\n    if (config.volume !== undefined) sound.setVolume(config.volume);\n    if (config.loop !== undefined) sound.setLoop(config.loop);\n    if (config.rate !== undefined) sound.setRate(config.rate);\n    if (config.detune !== undefined) sound.setDetune(config.detune);\n    \n    // Start playback\n    sound.play(config);\n    return sound;\n}",
+      "metadata": {
+        "start_line": 58,
+        "end_line": 70,
+        "notes": "Sound playback method with runtime configuration and event handling",
+        "imports": []
+      }
+    },
+    {
+      "file_name": "AudioManager.js",
+      "chunk_index": 4,
+      "method": "stop",
+      "chunk_text": "/**\n * Stop playback of a specific sound or all sounds.\n * Immediately halts audio playback and resets sound state.\n *\n * @method stop\n * @memberof AudioManager\n * @param {string} [key] - Sound to stop (stops all if omitted)\n * @returns {void}\n *\n * @description\n * Stop Behavior:\n * - Immediate playback halt\n * - State reset to start\n * - Loop cancellation\n * - Effects termination\n * - Resource cleanup\n *\n * Stop Types:\n * - Single sound stop\n * - All sounds stop\n * - Category stop\n * - Fade-out stop\n *\n * @performance\n * - Stop latency: ~2ms\n * - Memory cleanup: Yes\n * - CPU impact: Minimal\n * - Resource release: Immediate\n *\n * @requires\n * - Valid sound key (if specified)\n * - Active sound playback\n * - Audio system active\n *\n * @throws {Error} If invalid sound key\n * @throws {Error} If audio system error\n *\n * @fires AudioManager#soundStopped\n *\n * @example\n * // Stop specific sound\n * audioManager.stop('explosion');\n *\n * // Stop all sounds\n * audioManager.stop();\n */\nstop(key) {\n    if (key) {\n        // Stop specific sound\n        const sound = this.sounds.get(key);\n        if (sound) sound.stop();\n    } else {\n        // Stop all sounds\n        this.sounds.forEach(sound => sound.stop());\n    }\n}",
+      "metadata": {
+        "start_line": 72,
+        "end_line": 84,
+        "notes": "Sound stopping method with comprehensive cleanup and event handling",
+        "imports": []
+      }
+    },
+    {
+      "file_name": "AudioManager.js",
+      "chunk_index": 5,
+      "method": "stopAll",
+      "chunk_text": "    /**\n     * Stop all currently playing sound effects\n     */\n    stopAll() {\n        this.sounds.forEach(soundObj => {\n            soundObj.stop();\n        });\n    }",
+      "metadata": {
+        "start_line": 90,
+        "end_line": 97,
+        "notes": "Method to stop all sounds",
+        "imports": []
+      }
+    },
+    {
+      "file_name": "AudioManager.js",
+      "chunk_index": 6,
+      "method": "mute",
+      "chunk_text": "    /**\n     * Mute all audio (both SFX and music)\n     * Pauses currently playing sounds and music\n     */\n    mute() {\n        this.isMuted = true;\n\n        this.sounds.forEach(soundObj => {\n            if (soundObj.isPlaying) {\n                soundObj.pause();\n            }\n        });\n\n        if (this.currentMusic && this.currentMusic.isPlaying) {\n            this.currentMusic.pause();\n        }\n    }",
+      "metadata": {
+        "start_line": 101,
+        "end_line": 116,
+        "notes": "Method to mute all audio",
+        "imports": []
+      }
+    },
+    {
+      "file_name": "AudioManager.js",
+      "chunk_index": 7,
+      "method": "unmute",
+      "chunk_text": "    /**\n     * Resume all previously playing audio\n     * Resumes paused sounds and music\n     */\n    unmute() {\n        this.isMuted = false;\n\n        this.sounds.forEach(soundObj => {\n            if (soundObj.isPaused) {\n                soundObj.resume();\n            }\n        });\n\n        if (this.currentMusic && this.currentMusic.isPaused) {\n            this.currentMusic.resume();\n        }\n    }",
+      "metadata": {
+        "start_line": 118,
+        "end_line": 133,
+        "notes": "Method to unmute all audio",
+        "imports": []
+      }
+    },
+    {
+      "file_name": "AudioManager.js",
+      "chunk_index": 8,
+      "method": "_updateAllSoundVolumes",
+      "chunk_text": "    /**\n     * Update volume for all sound effects\n     * @private\n     */\n    _updateAllSoundVolumes() {\n        this.sounds.forEach(soundObj => {\n            soundObj.setVolume(this.soundVolume);\n        });\n    }",
+      "metadata": {
+        "start_line": 135,
+        "end_line": 143,
+        "notes": "Private method to update all sound volumes",
+        "imports": []
+      }
+    },
+    {
+      "file_name": "AudioManager.js",
+      "chunk_index": 9,
+      "method": "getSoundVolume",
+      "chunk_text": "/**\n * Get current SFX volume level\n * @returns {number} Current sound volume (0.0 to 1.0)\n * @description Returns the current volume setting for all non-music audio effects.\n * The value is normalized between 0 (muted) and 1 (full volume).\n */\ngetSoundVolume() {\n    return this.soundVolume;\n}",
+      "metadata": {
+        "start_line": 157,
+        "end_line": 163,
+        "notes": "Method to get sound effect volume",
+        "imports": []
+      }
+    },
+    {
+      "file_name": "AudioManager.js",
+      "chunk_index": 10,
+      "method": "getMusicVolume",
+      "chunk_text": "/**\n * Get current music volume level\n * @returns {number} Current music volume (0.0 to 1.0)\n * @description Returns the current volume setting for background music tracks.\n * The value is normalized between 0 (muted) and 1 (full volume).\n */\ngetMusicVolume() {\n    return this.musicVolume;\n}",
+      "metadata": {
+        "start_line": 175,
+        "end_line": 181,
+        "notes": "Method to get music volume",
+        "imports": []
+      }
+    },
+    {
+      "file_name": "AudioManager.js",
+      "chunk_index": 11,
+      "method": "playMusic",
+      "chunk_text": "/**\n * Play background music track\n * @param {string} key - Asset key for music track\n * @param {object} [config] - Phaser sound config\n * @param {boolean} [config.loop=true] - Whether to loop the track\n * @param {number} [config.volume] - Override default volume (0.0 to 1.0)\n * @description Starts playing a music track. If a different track is currently playing,\n * it will be stopped first. The track will automatically loop by default.\n * Volume follows the global music volume unless overridden in config.\n * @throws {Error} If the music track is not found\n */\nplayMusic(key, config = {}) {\n    if (this.currentMusic?.key === key && this.currentMusic.isPlaying) {\n        this.currentMusic.setVolume(this.musicVolume);\n        return;\n    }\n\n    this.stopMusic();\n\n    this.currentMusic = this.scene.sound.add(key, {\n        loop: true,\n        volume: this.musicVolume,\n        ...config\n    });\n\n    if (!this.isMuted) {\n        this.currentMusic.play();\n    }\n}",
+      "metadata": {
+        "start_line": 185,
+        "end_line": 207,
+        "notes": "Method to play background music",
+        "imports": []
+      }
+    },
+    {
+      "file_name": "AudioManager.js",
+      "chunk_index": 12,
+      "method": "setVolume",
+      "chunk_text": "/**\n * Set volume for an individual sound instance\n * @param {string} key - Sound identifier in the audio manager\n * @param {number} volume - Target volume level (0.0 to 1.0)\n * @returns {boolean} True if volume was set successfully, false if sound not found\n * @description Adjusts the volume of a specific sound instance. The volume will be\n * clamped between 0 (muted) and 1 (full volume). If the sound is not found,\n * the method returns false.\n */\nsetVolume(key, volume) {\n    const sound = this.sounds.get(key);\n    if (!sound) return false;\n\n    volume = Math.max(0, Math.min(1, volume));\n    sound.setVolume(volume);\n    return true;\n}",
+      "metadata": {
+        "start_line": 86,
+        "end_line": 98,
+        "notes": "Method to set volume for individual sound",
+        "imports": []
+      }
+    },
+    {
+      "file_name": "AudioManager.js",
+      "chunk_index": 13,
+      "method": "setSoundVolume",
+      "chunk_text": "/**\n * Set global volume level for all sound effects\n * @param {number} volume - Target volume level (0.0 to 1.0)\n * @param {Object} [options] - Volume adjustment options\n * @param {boolean} [options.persist=true] - Whether to save to local storage\n * @param {boolean} [options.updateExisting=true] - Whether to update currently playing sounds\n * @description Adjusts the volume of all non-music sound effects. The volume is\n * normalized between 0 (muted) and 1 (full volume). Changes can be persisted to\n * local storage and optionally applied to currently playing sounds.\n */\nsetSoundVolume(volume, options = {}) {\n    volume = Math.max(0, Math.min(1, volume));\n    this.soundVolume = volume;\n\n    if (options.updateExisting !== false) {\n        this.sounds.forEach(sound => {\n            if (!sound.isMusic) {\n                sound.setVolume(volume);\n            }\n        });\n    }\n\n    if (options.persist !== false) {\n        localStorage.setItem('soundVolume', volume.toString());\n    }\n}",
+      "metadata": {
+        "start_line": 100,
+        "end_line": 112,
+        "notes": "Method to set global sound effect volume",
+        "imports": []
+      }
+    },
+    {
+      "file_name": "AudioManager.js",
+      "chunk_index": 14,
+      "method": "setMusicVolume",
+      "chunk_text": "/**\n * Set global volume level for all music tracks\n * @param {number} volume - Target volume level (0.0 to 1.0)\n * @param {Object} [options] - Volume adjustment options\n * @param {boolean} [options.persist=true] - Whether to save to local storage\n * @param {boolean} [options.updateExisting=true] - Whether to update currently playing music\n * @param {number} [options.fadeDuration] - Duration in milliseconds for volume fade\n * @description Adjusts the volume of all music tracks. The volume is normalized\n * between 0 (muted) and 1 (full volume). Changes can be persisted to local storage\n * and optionally applied to currently playing music with a smooth fade transition.\n */\nsetMusicVolume(volume, options = {}) {\n    volume = Math.max(0, Math.min(1, volume));\n    this.musicVolume = volume;\n\n    if (options.updateExisting !== false) {\n        this.sounds.forEach(sound => {\n            if (sound.isMusic) {\n                if (options.fadeDuration) {\n                    sound.setVolume(volume, { duration: options.fadeDuration });\n                } else {\n                    sound.setVolume(volume);\n                }\n            }\n        });\n    }\n\n    if (options.persist !== false) {\n        localStorage.setItem('musicVolume', volume.toString());\n    }\n}",
+      "metadata": {
+        "start_line": 114,
+        "end_line": 126,
+        "notes": "Method to set global music volume with fade support",
+        "imports": []
+      }
+    },
+    {
+      "file_name": "AudioManager.js",
+      "chunk_index": 15,
+      "method": "playBackgroundMusic",
+      "chunk_text": "    /**\n     * Convenience method for playing looping background music\n     * @param {string} trackKey - Asset key for the music track to play\n     * @description A simplified way to start background music that automatically loops.\n     * This is equivalent to calling playMusic with loop=true. If another track is\n     * currently playing, it will be stopped first. The volume will follow the\n     * current music volume setting.\n     */\n    playBackgroundMusic(trackKey) {\n        this.playMusic(trackKey, { loop: true });\n    }",
+      "metadata": {
+        "start_line": 220,
+        "end_line": 226,
+        "notes": "Convenience method for playing looped background music",
+        "imports": []
+      }
+    },
+    {
+      "file_name": "AudioManager.js",
+      "chunk_index": 16,
+      "method": "stopMusic",
+      "chunk_text": "    /**\n     * Stop and cleanup the currently playing music track\n     * @description Stops any currently playing music track and performs cleanup.\n     * This includes stopping playback, destroying the sound instance to free\n     * resources, and clearing the current music reference. Safe to call even\n     * if no music is currently playing.\n     */\n    stopMusic() {\n        if (this.currentMusic) {\n            this.currentMusic.stop();\n            this.currentMusic.destroy();\n            this.currentMusic = null;\n        }\n    }",
+      "metadata": {
+        "start_line": 209,
+        "end_line": 218,
+        "notes": "Method to stop background music",
+        "imports": []
+      }
+    }
+]

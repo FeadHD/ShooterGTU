@@ -1,0 +1,50 @@
+[
+  {
+    "file_name": "BaseManager.js",
+    "chunk_index": 0,
+    "method": "class_definition",
+    "chunk_text": "/**\n * BaseManager.js\n * Base class for all game managers providing dependency injection functionality.\n * Serves as a foundation for specialized managers (Audio, UI, State, etc.)\n *\n * @class BaseManager\n * @description\n * A foundational class that provides dependency injection and service access\n * for all specialized game managers. This class enables managers to:\n * - Access the service container\n * - Retrieve the current game scene\n * - Get references to other managers\n *\n * @requires Phaser.Scene\n * @requires Phaser.Events.EventEmitter\n */\n\nimport { container } from './ServiceContainer';\n\nexport class BaseManager {",
+    "metadata": {
+      "start_line": 1,
+      "end_line": 16,
+      "notes": "Base class definition with enhanced documentation and Phaser dependencies",
+      "imports": ["./ServiceContainer"]
+    }
+  },
+  {
+    "file_name": "BaseManager.js",
+    "chunk_index": 1,
+    "method": "constructor",
+    "chunk_text": "    /**\n     * Initialize manager with service container access\n     * Container holds references to all game services and managers\n     * \n     * @constructor\n     * @description\n     * Sets up access to the service container which provides:\n     * - Game service references\n     * - Manager instances\n     * - Scene access\n     * - Global state management\n     * \n     * @returns {void} - This method doesn't return a value\n     */\n    constructor() {\n        this.container = container;\n    }",
+    "metadata": {
+      "start_line": 17,
+      "end_line": 31,
+      "notes": "Constructor with container initialization",
+      "imports": []
+    }
+  },
+  {
+    "file_name": "BaseManager.js",
+    "chunk_index": 2,
+    "method": "getScene",
+    "chunk_text": "    /**\n     * Get the current active scene\n     * @returns {Phaser.Scene} Current game scene\n     * \n     * @description\n     * Retrieves the currently active Phaser scene from the service container.\n     * This scene can be used to access:\n     * - Game objects\n     * - Physics systems\n     * - Input handling\n     * - Scene-specific state\n     * \n     * @requires Phaser.Scene\n     * @see {@link Phaser.Scene}\n     */\n    getScene() {\n        return this.container.get('scene');\n    }",
+    "metadata": {
+      "start_line": 33,
+      "end_line": 47,
+      "notes": "Method to get current game scene with Phaser Scene type references",
+      "imports": []
+    }
+  },
+  {
+    "file_name": "BaseManager.js",
+    "chunk_index": 3,
+    "method": "getManager",
+    "chunk_text": "    /**\n     * Get a specific manager instance by key\n     * @param {string} managerKey - Identifier for the desired manager\n     * @returns {BaseManager} Instance of the requested manager\n     * \n     * @description\n     * Retrieves a specific manager instance from the service container.\n     * Common manager types include:\n     * - AudioManager\n     * - UIManager\n     * - StateManager\n     * - InputManager\n     * \n     * @throws {Error} If manager is not found in container\n     * @example\n     * // Get audio manager\n     * const audioManager = this.getManager('audio');\n     * audioManager.playSound('explosion');\n     */\n    getManager(managerKey) {\n        return this.container.get(managerKey);\n    }",
+    "metadata": {
+      "start_line": 49,
+      "end_line": 71,
+      "notes": "Method to get manager instances with examples",
+      "imports": []
+    }
+  }
+]

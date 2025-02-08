@@ -3,7 +3,7 @@
     "file_name": "GameConfig.js",
     "chunk_index": 0,
     "method": "SCENE",
-    "chunk_text": "    // Scene dimensions\n    SCENE: {\n        INTRO: {\n            WIDTH: 900,\n            HEIGHT: 400\n        },\n        MATRIX: {\n            WIDTH: 640,\n            HEIGHT: 360\n        }\n    }",
+    "chunk_text": "/**\n * Scene dimension configurations for different game scenes\n * @property {Object} INTRO - Dimensions for the Intro scene\n * @property {number} INTRO.WIDTH - Scene width in pixels\n * @property {number} INTRO.HEIGHT - Scene height in pixels\n * @property {Object} MATRIX - Dimensions for the Matrix scene\n * @property {number} MATRIX.WIDTH\n * @property {number} MATRIX.HEIGHT\n */\n    // Scene dimensions\n    SCENE: {\n        INTRO: {\n            WIDTH: 900,\n            HEIGHT: 400\n        },\n        MATRIX: {\n            WIDTH: 640,\n            HEIGHT: 360\n        }\n    }",
     "metadata": {
       "start_line": 2,
       "end_line": 12,
@@ -15,7 +15,7 @@
     "file_name": "GameConfig.js",
     "chunk_index": 1,
     "method": "PLAYER",
-    "chunk_text": "    // Player settings\n    PLAYER: {\n        INITIAL_HP: 100,\n        INITIAL_LIVES: 3,\n        DAMAGE: 25,\n        BULLET_DAMAGE: 25,\n        INVULNERABLE_DURATION: 2000,\n        GROUND_OFFSET: 16,\n//        SPAWN_OFFSET_X: 0.1,\n        MOVEMENT_SPEED: 300,\n        HOVER_FORCE: -100\n    }",
+    "chunk_text": "/**\n * Player configuration including health, damage, movement, and combat settings\n * @property {number} INITIAL_HP - Starting health points\n * @property {number} INITIAL_LIVES - Number of extra lives\n * @property {number} DAMAGE - Base damage dealt by player\n * @property {number} BULLET_DAMAGE - Damage dealt by player bullets\n * @property {number} INVULNERABLE_DURATION - Time (ms) after being hit when player is invulnerable\n * @property {number} GROUND_OFFSET - Y offset from the ground level\n * @property {number} MOVEMENT_SPEED - Movement speed in pixels per second\n * @property {number} HOVER_FORCE - Force used for hover mechanics\n */\n    // Player settings\n    PLAYER: {\n        INITIAL_HP: 100,\n        INITIAL_LIVES: 3,\n        DAMAGE: 25,\n        BULLET_DAMAGE: 25,\n        INVULNERABLE_DURATION: 2000,\n        GROUND_OFFSET: 16,\n//        SPAWN_OFFSET_X: 0.1,\n        MOVEMENT_SPEED: 300,\n        HOVER_FORCE: -100\n    }",
     "metadata": {
       "start_line": 14,
       "end_line": 25,
@@ -27,7 +27,7 @@
     "file_name": "GameConfig.js",
     "chunk_index": 2,
     "method": "ENEMIES",
-    "chunk_text": "    // Enemy settings\n    ENEMIES: {\n        TOTAL_DEFAULT: 7,\n        MELEE_WARRIOR: {\n            HEALTH: 100,\n            DAMAGE: 25,\n            SPEED: 150,\n            PATROL_SPEED: 100\n        },\n        DRONE: {\n            HEALTH: 75,\n            DAMAGE: 20,\n            SPEED: 200,\n            HOVER_HEIGHT: 150\n        },\n        BOSS: {\n            GROUND_OFFSET: 92,\n            HEALTH: 500,\n            DAMAGE: 50\n        },\n        WARRIOR: {\n            GROUND_OFFSET: 92,\n            HEALTH: 500,\n            DAMAGE: 50\n        },\n        ZAPPER: {\n            HEALTH: 100,\n            DAMAGE: 20,\n            SPEED: 100,\n            ATTACK_RANGE: 200,\n            AWAKEN_RANGE: 300,\n            ATTACK_COOLDOWN: 2000,\n            POINTS: 150\n        }\n    }",
+    "chunk_text": "/**\n * Enemy configurations for different enemy types including health, damage, and behavior settings\n * @property {number} TOTAL_DEFAULT - Default number of enemies\n * @property {Object} MELEE_WARRIOR - Stats for melee warrior enemies\n * @property {Object} DRONE - Stats for drone enemies\n * @property {Object} BOSS - Stats for a boss enemy\n * @property {Object} WARRIOR - Another specialized enemy config\n * @property {Object} ZAPPER - Stats for a zapper enemy\n */\n    // Enemy settings\n    ENEMIES: {\n        TOTAL_DEFAULT: 7,\n        MELEE_WARRIOR: {\n            HEALTH: 100,\n            DAMAGE: 25,\n            SPEED: 150,\n            PATROL_SPEED: 100\n        },\n        DRONE: {\n            HEALTH: 75,\n            DAMAGE: 20,\n            SPEED: 200,\n            HOVER_HEIGHT: 150\n        },\n        BOSS: {\n            GROUND_OFFSET: 92,\n            HEALTH: 500,\n            DAMAGE: 50\n        },\n        WARRIOR: {\n            GROUND_OFFSET: 92,\n            HEALTH: 500,\n            DAMAGE: 50\n        },\n        ZAPPER: {\n            HEALTH: 100,\n            DAMAGE: 20,\n            SPEED: 100,\n            ATTACK_RANGE: 200,\n            AWAKEN_RANGE: 300,\n            ATTACK_COOLDOWN: 2000,\n            POINTS: 150\n        }\n    }",
     "metadata": {
       "start_line": 27,
       "end_line": 62,
@@ -39,7 +39,7 @@
     "file_name": "GameConfig.js",
     "chunk_index": 3,
     "method": "TRAPS",
-    "chunk_text": "    // Trap settings\n    TRAPS: {\n        DAMAGE: 5,\n        PARTICLES: {\n            SPEED: {\n                MIN: 20,\n                MAX: 50\n            }\n        }\n    }",
+    "chunk_text": "/**\n * Trap configuration including damage and particle effects\n * @property {number} DAMAGE - Damage dealt by trap (hit points)\n * @property {Object} PARTICLES - Config for particles\n * @property {Object} PARTICLES.SPEED - Speed range for trap particles\n * @property {number} PARTICLES.SPEED.MIN - Minimum particle speed (pixels/sec)\n * @property {number} PARTICLES.SPEED.MAX - Maximum particle speed (pixels/sec)\n */\n    // Trap settings\n    TRAPS: {\n        DAMAGE: 5,\n        PARTICLES: {\n            SPEED: {\n                MIN: 20,\n                MAX: 50\n            }\n        }\n    }",
     "metadata": {
       "start_line": 64,
       "end_line": 73,
@@ -51,7 +51,7 @@
     "file_name": "GameConfig.js",
     "chunk_index": 4,
     "method": "PROJECTILES",
-    "chunk_text": "    // Projectile settings\n    PROJECTILES: {\n        BULLET: {\n            SPEED: 600,\n            DAMAGE: 25\n        },\n        LASER: {\n            BASE_SPEED: 400,\n            SPEED_VARIATION: 25\n        }\n    }",
+    "chunk_text": "/**\n * Projectile configuration for different weapon types\n * @property {Object} BULLET - Stats for bullet projectiles\n * @property {number} BULLET.SPEED - Bullet travel speed (pixels/sec)\n * @property {number} BULLET.DAMAGE - Bullet damage (hit points)\n * @property {Object} LASER - Stats for laser projectiles\n * @property {number} LASER.BASE_SPEED - Base laser speed (pixels/sec)\n * @property {number} LASER.SPEED_VARIATION - Random speed variation (pixels/sec)\n */\n    // Projectile settings\n    PROJECTILES: {\n        BULLET: {\n            SPEED: 600,\n            DAMAGE: 25\n        },\n        LASER: {\n            BASE_SPEED: 400,\n            SPEED_VARIATION: 25\n        }\n    }",
     "metadata": {
       "start_line": 75,
       "end_line": 85,
@@ -63,7 +63,7 @@
     "file_name": "GameConfig.js",
     "chunk_index": 5,
     "method": "WORLD",
-    "chunk_text": "    // World settings\n    WORLD: {\n        GROUND_OFFSET: 64,\n        GRAVITY: 300\n    }",
+    "chunk_text": "/**\n * World physics and layout configuration\n * @property {number} GROUND_OFFSET - Vertical offset for ground level (pixels)\n * @property {number} GRAVITY - Default gravity value (pixels/sec²)\n */\n    // World settings\n    WORLD: {\n        GROUND_OFFSET: 64,\n        GRAVITY: 300\n    }",
     "metadata": {
       "start_line": 87,
       "end_line": 91,
@@ -75,7 +75,7 @@
     "file_name": "GameConfig.js",
     "chunk_index": 6,
     "method": "SPRITES",
-    "chunk_text": "    // Sprite dimensions\n    SPRITES: {\n        CHARACTER: {\n            WIDTH: 24,\n            HEIGHT: 24\n        }\n    }",
+    "chunk_text": "/**\n * Sprite dimension configurations\n * @property {Object} CHARACTER - Dimensions for the player character sprite\n * @property {number} CHARACTER.WIDTH - Character sprite width (pixels)\n * @property {number} CHARACTER.HEIGHT - Character sprite height (pixels)\n * \n * Note: These dimensions affect collision detection and visual rendering.\n * Character sprite is centered on its position coordinates.\n */\n    // Sprite dimensions\n    SPRITES: {\n        CHARACTER: {\n            WIDTH: 24,\n            HEIGHT: 24\n        }\n    }",
     "metadata": {
       "start_line": 93,
       "end_line": 99,
@@ -87,7 +87,7 @@
     "file_name": "GameConfig.js",
     "chunk_index": 7,
     "method": "UI",
-    "chunk_text": "    // UI settings\n    UI: {\n        DEFAULT_LIVES: 3,\n        INITIAL_SCORE: 0,\n        INITIAL_COINS: 0,\n        HEALTH_BAR: {\n            WIDTH_MULTIPLIER: 1.5,\n            HEIGHT_RATIO: 0.08,\n            MIN_HEIGHT: 6,\n            OFFSET_MULTIPLIER: 2\n        }\n    }",
+    "chunk_text": "/**\n * UI configuration including health bar and initial game state settings\n * @property {number} DEFAULT_LIVES - Number of extra lives at game start\n * @property {number} INITIAL_SCORE - Starting score value\n * @property {number} INITIAL_COINS - Starting coin count\n * @property {Object} HEALTH_BAR - Health bar display configuration\n * @property {number} HEALTH_BAR.WIDTH_MULTIPLIER - Scale factor relative to entity width\n * @property {number} HEALTH_BAR.HEIGHT_RATIO - Height as ratio of entity height\n * @property {number} HEALTH_BAR.MIN_HEIGHT - Minimum height in pixels\n * @property {number} HEALTH_BAR.OFFSET_MULTIPLIER - Vertical offset as multiple of bar height\n */\n    // UI settings\n    UI: {\n        DEFAULT_LIVES: 3,\n        INITIAL_SCORE: 0,\n        INITIAL_COINS: 0,\n        HEALTH_BAR: {\n            WIDTH_MULTIPLIER: 1.5,\n            HEIGHT_RATIO: 0.08,\n            MIN_HEIGHT: 6,\n            OFFSET_MULTIPLIER: 2\n        }\n    }",
     "metadata": {
       "start_line": 101,
       "end_line": 112,
@@ -99,7 +99,7 @@
     "file_name": "GameConfig.js",
     "chunk_index": 8,
     "method": "ANTIVIRUS_WALL",
-    "chunk_text": "    // Antivirus wall configuration\n    ANTIVIRUS_WALL: {\n        WIDTH: 32,\n        START_OFFSET: -64, // Start 2 tiles outside the map\n        SPEED: 80,\n        RESPAWN_DELAY: 5000, // milliseconds\n        FLASH_DURATION: 500 // milliseconds for warning flash\n    }",
+    "chunk_text": "/**\n * Antivirus wall mechanics and timing configuration\n * @property {number} WIDTH - Width of the wall in pixels\n * @property {number} START_OFFSET - Initial offset (in pixels) before wall enters\n * @property {number} SPEED - Movement speed of the antivirus wall\n * @property {number} RESPAWN_DELAY - Time (ms) to respawn after leaving\n * @property {number} FLASH_DURATION - Warning flash duration (ms)\n */\n    // Antivirus wall configuration\n    ANTIVIRUS_WALL: {\n        WIDTH: 32,\n        START_OFFSET: -64, // Start 2 tiles outside the map\n        SPEED: 80,\n        RESPAWN_DELAY: 5000, // milliseconds\n        FLASH_DURATION: 500 // milliseconds for warning flash\n    }",
     "metadata": {
       "start_line": 114,
       "end_line": 121,
@@ -111,7 +111,7 @@
     "file_name": "GameConfig.js",
     "chunk_index": 9,
     "method": "getGroundTop",
-    "chunk_text": "export const getGroundTop = (height) => height - GameConfig.WORLD.GROUND_OFFSET;",
+    "chunk_text": "/**\n * Calculates the top position of the ground based on scene height\n * @param {number} height - Total height of the scene (pixels)\n * @returns {number} Y-coordinate of the ground top (pixels)\n */\nexport const getGroundTop = (height) => height - GameConfig.WORLD.GROUND_OFFSET;",
     "metadata": {
       "start_line": 127,
       "end_line": 127,
@@ -123,7 +123,7 @@
     "file_name": "GameConfig.js",
     "chunk_index": 10,
     "method": "getSpawnHeight",
-    "chunk_text": "export const getSpawnHeight = (groundTop) => groundTop - GameConfig.PLAYER.GROUND_OFFSET;",
+    "chunk_text": "/**\n * Calculates the spawn height for entities based on ground position\n * @param {number} groundTop - Y-coordinate of the ground top (pixels)\n * @returns {number} Y-coordinate for entity spawn position (pixels)\n */\nexport const getSpawnHeight = (groundTop) => groundTop - GameConfig.PLAYER.GROUND_OFFSET;",
     "metadata": {
       "start_line": 128,
       "end_line": 128,
@@ -135,7 +135,7 @@
     "file_name": "GameConfig.js",
     "chunk_index": 11,
     "method": "getHealthBarDimensions",
-    "chunk_text": "export const getHealthBarDimensions = (displayWidth, displayHeight) => ({\n    width: displayWidth * GameConfig.UI.HEALTH_BAR.WIDTH_MULTIPLIER,\n    height: Math.max(GameConfig.UI.HEALTH_BAR.MIN_HEIGHT, Math.floor(displayHeight * GameConfig.UI.HEALTH_BAR.HEIGHT_RATIO)),\n    yOffset: displayHeight / 2 + Math.max(GameConfig.UI.HEALTH_BAR.MIN_HEIGHT, Math.floor(displayHeight * GameConfig.UI.HEALTH_BAR.HEIGHT_RATIO)) * GameConfig.UI.HEALTH_BAR.OFFSET_MULTIPLIER\n});",
+    "chunk_text": "/**\n * Calculates health bar dimensions and position based on display size\n * @param {number} displayWidth - Width of the display area (pixels)\n * @param {number} displayHeight - Height of the display area (pixels)\n * @returns {Object} Health bar dimensions and position\n * @returns {number} returns.width - Width of health bar (pixels)\n * @returns {number} returns.height - Height of health bar (pixels)\n * @returns {number} returns.yOffset - Vertical offset from center (pixels)\n * \n * Note: Height is calculated with a minimum value and ratio of display height.\n * Offset is positioned relative to vertical center of display.\n */\nexport const getHealthBarDimensions = (displayWidth, displayHeight) => ({\n    width: displayWidth * GameConfig.UI.HEALTH_BAR.WIDTH_MULTIPLIER,\n    height: Math.max(GameConfig.UI.HEALTH_BAR.MIN_HEIGHT, Math.floor(displayHeight * GameConfig.UI.HEALTH_BAR.HEIGHT_RATIO)),\n    yOffset: displayHeight / 2 + Math.max(GameConfig.UI.HEALTH_BAR.MIN_HEIGHT, Math.floor(displayHeight * GameConfig.UI.HEALTH_BAR.HEIGHT_RATIO)) * GameConfig.UI.HEALTH_BAR.OFFSET_MULTIPLIER\n});",
     "metadata": {
       "start_line": 129,
       "end_line": 133,

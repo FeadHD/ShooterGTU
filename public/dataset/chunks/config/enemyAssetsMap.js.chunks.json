@@ -3,23 +3,23 @@
     "file_name": "enemyAssetsMap.js",
     "chunk_index": 0,
     "method": "file_header",
-    "chunk_text": "/**\n * enemyAssetsMap.js\n * Configuration file for all enemy sprite assets and animations in the game.\n * \n * This file defines the mapping between enemy types and their associated sprite assets.\n * Each enemy type has a list of actions that correspond to specific sprite files.\n * \n * File Structure:\n * - Assets should be placed in: assets/enemys/{enemy_type}/{enemy_type}_{action}.png\n * - All sprites should use 32x32 pixel dimensions\n * \n * Usage:\n * {\n *   enemy_type: ['action1', 'action2', ...],\n * }\n * \n * Standard Actions:\n * - idle: Default state\n * - walk: Movement animation\n * - attack: Combat animation\n * - death: Defeat animation\n * - wake: Activation animation\n * - shock: Special effects\n * \n * Example:\n * {\n *   zapper: ['idle', 'walk', 'attack', 'death', 'wake', 'shock']\n * }\n * \n * Note:\n * - All sprite files must follow the naming convention: {enemy_type}_{action}.png\n * - Animation keys will be generated as: {enemy_type}_{action}\n * - Add new enemy types by creating a new key with an array of supported actions\n */",
+    "chunk_text": "/**\n * @file Enemy sprite and animation assets mapping\n * @description Asset configuration system for game enemies with the following structure:\n * \n * File Organization:\n * - Root: assets/enemys/{enemy_type}/\n * - Naming: {enemy_type}_{action}.png\n * - Format: 32x32 pixel spritesheets\n * \n * Standard Animation States:\n * - idle: Default standing animation (required)\n * - walk: Basic movement sequence\n * - attack: Combat action frames\n * - death: Defeat sequence\n * - wake: Initialization animation\n * - shock: Special effect state\n * \n * Implementation Notes:\n * - Animation keys format: {enemy_type}_{action}\n * - All enemies require 'idle' state\n * - Optional states: walk, attack, death\n * - Special states per type: wake, shock\n * \n * @module EnemyAssets\n * @example\n * // Enemy type definition\n * {\n *   zapper: {\n *     spritesheet: 'zapper_main',\n *     animations: {\n *       idle: { frames: [0, 1], frameRate: 8 },\n *       attack: { frames: [2, 3], frameRate: 12 }\n *     }\n *   }\n * }\n */",
     "metadata": {
       "start_line": 1,
       "end_line": 34,
-      "notes": "File header documentation explaining enemy asset configuration structure and usage",
+      "notes": "Enemy asset system configuration and structure documentation",
       "imports": []
     }
   },
   {
     "file_name": "enemyAssetsMap.js",
     "chunk_index": 1,
-    "method": "enemyAssets",
-    "chunk_text": "export const enemyAssets = {\n    melee_warrior: [\n        'idle',\n        'attack1',\n        'attack2',\n        'attack3',\n        'run',\n        'hurt',\n        'defend',\n        'jump',\n        'walk',\n        'death'\n    ],\n    drone: [\n        'idle'\n    ],\n    zapper: [\n        'idle',\n        'hit',\n        'walk',\n        'attack',\n        'shock',\n        'death',\n        'wake'\n    ],\n    slime: [\n        'idle',\n        'jump',\n        'death'\n    ]\n};",
+    "method": "enemyAssetsMap",
+    "chunk_text": "/**\n * Enemy assets configuration dictionary\n * @type {Object.<string, EnemyAssetConfig>}\n * @property {string} key Enemy type identifier (e.g., 'drone', 'boss')\n * @property {object} value Enemy configuration object\n * @property {string} value.spritesheet Spritesheet asset key in the game cache\n * @property {object} value.animations Animation configurations\n * @property {object} value.animations.idle Default state animation {frames: number[], frameRate: number}\n * @property {object} [value.animations.attack] Attack animation configuration\n * @property {object} [value.animations.death] Death animation configuration\n * \n * @description Maps enemy types to their visual assets and animation configurations.\n * Each enemy type defines its spritesheet and frame-based animations with timing.\n * \n * @example\n * // Drone enemy configuration\n * {\n *   'drone': {\n *     spritesheet: 'drone',\n *     animations: {\n *       idle: { frames: [0, 1, 2], frameRate: 8 },\n *       attack: { frames: [3, 4, 5], frameRate: 12 }\n *     }\n *   }\n * }\n */\nconst enemyAssetsMap = {\n    'drone': {\n        spritesheet: 'drone',\n        animations: {\n            idle: { frames: [0, 1, 2], frameRate: 8 },\n            attack: { frames: [3, 4, 5], frameRate: 12 },\n            death: { frames: [6, 7, 8], frameRate: 10 }\n        }\n    },\n    'boss': {\n        spritesheet: 'boss',\n        animations: {\n            idle: { frames: [0, 1, 2, 3], frameRate: 6 },\n            attack: { frames: [4, 5, 6, 7], frameRate: 10 },\n            death: { frames: [8, 9, 10, 11], frameRate: 8 }\n        }\n    }\n};",
     "metadata": {
       "start_line": 36,
-      "end_line": 70,
-      "notes": "Main enemy assets configuration object defining animation states for each enemy type",
+      "end_line": 65,
+      "notes": "Enemy sprite and animation configuration with frame sequences",
       "imports": []
     }
   }
