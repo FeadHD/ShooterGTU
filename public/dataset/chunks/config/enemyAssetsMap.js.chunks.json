@@ -7,7 +7,8 @@
     "metadata": {
       "start_line": 1,
       "end_line": 34,
-      "notes": "File header documentation explaining enemy asset configuration structure and usage"
+      "notes": "File header documentation explaining enemy asset configuration structure and usage",
+      "imports": []
     }
   },
   {
@@ -18,7 +19,8 @@
     "metadata": {
       "start_line": 36,
       "end_line": 70,
-      "notes": "Main enemy assets configuration object defining animation states for each enemy type"
+      "notes": "Main enemy assets configuration object defining animation states for each enemy type",
+      "imports": []
     }
   }
 ]

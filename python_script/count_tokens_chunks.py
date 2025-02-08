@@ -20,45 +20,42 @@ def count_tokens(text, model="cl100k_base"):
         # Not as accurate, but works if tiktoken is not installed
         return len(text.split())
 
-def main(json_file, chunk_index):
-    # Load the JSON file
+def main(json_file):
+    # Load the JSON file containing an array of chunks
     with open(json_file, 'r', encoding='utf-8') as f:
         data = json.load(f)
     
-    # Convert chunk_index from string to int
-    chunk_index = int(chunk_index)
-    
-    # Find the chunk with the specified chunk_index
-    chunk_data = next((chunk for chunk in data if chunk['chunk_index'] == chunk_index), None)
-    if not chunk_data:
-        print(f"No chunk found with chunk_index={chunk_index}")
-        return
-    
-    # Extract the chunk text
-    chunk_text = chunk_data.get('chunk_text', '')
-    
-    # Count tokens
-    token_count = count_tokens(chunk_text)
-    
-    # Print results
-    print(f"File: {json_file}")
-    print(f"Chunk Index: {chunk_index}")
-    print(f"Method: {chunk_data.get('method', 'N/A')}")
-    print(f"Token Count: {token_count}")
-    print("------")
-    print("Chunk Text Preview:")
-    if len(chunk_text) > 200:
-        print(chunk_text[:200] + "...")
-    else:
-        print(chunk_text)
+    # Iterate over all chunks
+    for chunk in data:
+        chunk_index = chunk.get('chunk_index', 'N/A')
+        method = chunk.get('method', 'N/A')
+        chunk_text = chunk.get('chunk_text', '')
+        
+        # Count tokens in this chunk
+        token_count = count_tokens(chunk_text)
+        
+        # Print results for this chunk
+        print(f"Chunk Index: {chunk_index}")
+        print(f"Method: {method}")
+        print(f"Token Count: {token_count}")
+        print("------")
+        
+        # Optional preview
+        if len(chunk_text) > 200:
+            print("Chunk Text Preview:")
+            print(chunk_text[:200] + "...")
+        else:
+            print("Chunk Text:")
+            print(chunk_text)
+        
+        print("\n" + "="*50 + "\n")
 
 if __name__ == "__main__":
     # Usage example:
-    # python count_tokens_chunks.py config.js.chunks.json 1
-    if len(sys.argv) < 3:
-        print("Usage: python count_tokens_chunks.py <json_file> <chunk_index>")
+    # python count_tokens_chunks.py config.js.chunks.json
+    if len(sys.argv) < 2:
+        print("Usage: python count_tokens_chunks.py <json_file>")
         sys.exit(1)
 
     json_file_path = sys.argv[1]
-    chunk_idx = sys.argv[2]
-    main(json_file_path, chunk_idx)
+    main(json_file_path)
