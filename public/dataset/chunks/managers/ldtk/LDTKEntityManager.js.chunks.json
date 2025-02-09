@@ -1,0 +1,156 @@
+[
+    {
+      "file_name": "LDTKEntityManager.js",
+      "chunk_index": 0,
+      "method": "class_definition",
+      "chunk_text": "export class LDTKEntityManager {\n",
+      "metadata": {
+        "start_line": 1,
+        "end_line": 1,
+        "notes": "Class definition start",
+        "imports": [],
+        "related_methods": [],
+        "tags": ["ldtk", "class_definition", "phaser3"]
+      }
+    },
+    {
+      "file_name": "LDTKEntityManager.js",
+      "chunk_index": 1,
+      "method": "constructor",
+      "chunk_text": "    constructor(scene) {\n        this.scene = scene;\n        this.assetManager = scene.assetManager;\n        this.entityInstances = new Map();\n        this.entityLayers = new Map();\n        this.entityFactories = new Map();\n        this.loadedEntityPositions = new Set();\n        this.debug = false;\n        this.debugText = null;\n\n        // Log initialization\n        console.log('LDTKEntityManager initialized with scene:', scene);\n\n        // Get reference to AssetManager\n        this.assetManager = scene.assetManager || {\n            getTextureKeyForEntity: () => ({ spritesheet: 'default_sprite', defaultAnim: null }),\n            getDefaultTexture: () => 'default_sprite'\n        };\n\n        if (!this.assetManager) {\n            console.error('AssetManager is not linked to LDTKEntityManager.');\n        } else {\n            console.log('AssetManager linked successfully:', this.assetManager);\n        }\n    }",
+      "metadata": {
+        "start_line": 2,
+        "end_line": 29,
+        "notes": "Constructor initializes manager properties and logs setup details",
+        "imports": [],
+        "related_methods": [],
+        "tags": ["constructor", "initialization", "phaser3"]
+      }
+    },
+    {
+      "file_name": "LDTKEntityManager.js",
+      "chunk_index": 2,
+      "method": "registerEntityFactories",
+      "chunk_text": "    registerEntityFactories(factories) {\n        console.log('Registering entity factories:', Object.keys(factories));\n        Object.entries(factories).forEach(([type, factory]) => {\n            this.entityFactories.set(type, factory);\n            console.log(`Factory registered for type: ${type}`);\n        });\n    }",
+      "metadata": {
+        "start_line": 31,
+        "end_line": 38,
+        "notes": "Registers custom factories for different entity types",
+        "imports": [],
+        "related_methods": [],
+        "tags": ["factories", "phaser3", "ldtk"]
+      }
+    },
+    {
+        "file_name": "LDTKEntityManager.js",
+        "chunk_index": 3,
+        "method": "createEntityInstance",
+        "chunk_text": "    createEntityInstance(entityData, worldX = 0, worldY = 0) {\n        const factory = this.entityFactories.get(entityData.__identifier);\n        if (!factory) {\n            console.warn(`No factory found for entity type: ${entityData.__identifier}`);\n            return this.createFallbackEntity(entityData, worldX, worldY);\n        }\n\n        const x = entityData.px[0] + worldX;\n        const y = entityData.px[1] + worldY;\n        const fields = entityData.fieldInstances || [];\n\n        console.log(`Creating entity of type ${entityData.__identifier} at (${x}, ${y})`);\n\n        const instance = factory(this.scene, x, y, fields);\n\n        // Add entities to appropriate groups based on their type\n        if (entityData.__identifier === 'Zapper' || entityData.__identifier === 'Enemy') {\n            if (this.scene.enemies) {\n                this.scene.enemies.add(instance);\n                console.log(`Added ${entityData.__identifier} to enemies group`);\n            }\n        } else if (entityData.__identifier === 'NeutralObject') {\n            if (this.scene.neutralEntities) {\n                this.scene.neutralEntities.add(instance);\n                console.log(`Added ${entityData.__identifier} to neutralEntities group`);\n            }\n        } else if (entityData.__identifier === 'InteractiveObject') {\n            if (this.scene.interactiveEntities) {\n                this.scene.interactiveEntities.add(instance);\n                console.log(`Added ${entityData.__identifier} to interactiveEntities group`);\n            }\n        }\n\n        return instance;\n    }",
+        "metadata": {
+          "start_line": 40,
+          "end_line": 73,
+          "notes": "Creates an entity from a factory or fallback; adds it to a relevant group if applicable",
+          "imports": [],
+          "related_methods": ["createFallbackEntity"],
+          "tags": ["entity_creation", "factory", "phaser3", "ldtk", "grouping"]
+        }
+      },
+      {
+        "file_name": "LDTKEntityManager.js",
+        "chunk_index": 4,
+        "method": "createEntities",
+        "chunk_text": "    createEntities(levelData, worldX = 0, worldY = 0) {\n        console.log('Creating entities for level data:', levelData);\n\n        const layerInstances = levelData.layerInstances || [];\n        const createdEntities = [];\n\n        layerInstances.forEach(layer => {\n            if (layer.__type === \"Entities\") {\n                console.log(`Processing layer: ${layer.__identifier}`);\n\n                // Ensure processing only valid entities in the layer\n                if (layer.entityInstances) {\n                    layer.entityInstances.forEach(entityData => {\n                        const entity = this.createEntityInstance(entityData, worldX, worldY);\n                        if (entity) {\n                            createdEntities.push(entity);\n                        }\n                    });\n                } else {\n                    console.warn(`No entities found in layer ${layer.__identifier}`);\n                }\n            }\n        });\n\n        console.log('Total entities created:', createdEntities.length);\n        return createdEntities;\n    }",
+        "metadata": {
+          "start_line": 75,
+          "end_line": 99,
+          "notes": "Iterates through layerInstances to create multiple entities at once",
+          "imports": [],
+          "related_methods": ["createEntityInstance"],
+          "tags": ["entities", "layer_processing", "phaser3", "ldtk", "batch_creation"]
+        }
+      },
+      {
+        "file_name": "LDTKEntityManager.js",
+        "chunk_index": 5,
+        "method": "processEntityLayer",
+        "chunk_text": "    processEntityLayer(layer, worldX, worldY) {\n        console.log('Processing entity layer:', layer.__identifier);\n        console.log('Number of entities in layer:', layer.entityInstances.length);\n        console.log('Entities in layer:', layer.entityInstances.map(e => e.__identifier));\n\n        const layerEntities = new Set();\n        const createdEntities = [];\n        this.entityLayers.set(layer.__identifier, layerEntities);\n\n        layer.entityInstances.forEach(entity => {\n            const positionKey = this.getPositionKey(entity, worldX, worldY);\n\n            if (this.loadedEntityPositions.has(positionKey)) {\n                console.warn(`Entity already exists at position (${positionKey}), skipping creation.`);\n                return;\n            }\n\n            // Log entity creation attempt\n            console.log('Attempting to create entity:', {\n                identifier: entity.__identifier,\n                positionKey,\n                worldPosition: { x: entity.px[0] + worldX, y: entity.px[1] + worldY }\n            });\n\n            const instance = this.tryCreateEntity(entity, worldX, worldY);\n            if (instance) {\n                this.registerEntity(instance, entity, layerEntities, positionKey, createdEntities);\n            } else {\n                console.warn('Entity creation failed for:', entity.__identifier);\n            }\n        });\n\n        console.log('Layer processing complete for:', layer.__identifier);\n        console.log('Total created entities in this layer:', createdEntities.length);\n\n        return createdEntities;\n    }",
+        "metadata": {
+          "start_line": 101,
+          "end_line": 139,
+          "notes": "Processes a single entity layer, creating entities, registering them, and logging",
+          "imports": [],
+          "related_methods": ["getPositionKey", "tryCreateEntity", "registerEntity"],
+          "tags": ["layer_processing", "entity_registration", "phaser3", "ldtk", "logging"]
+        }
+      },
+      {
+        "file_name": "LDTKEntityManager.js",
+        "chunk_index": 6,
+        "method": "getPositionKey",
+        "chunk_text": "    getPositionKey(entity, worldX, worldY) {\n        // Log position key generation\n        const key = `${entity.px[0] + worldX},${entity.px[1] + worldY}`;\n        console.log('Generated position key:', key);\n        return key;\n    }",
+        "metadata": {
+          "start_line": 141,
+          "end_line": 147,
+          "notes": "Generates a unique string key based on entity position",
+          "imports": [],
+          "related_methods": [],
+          "tags": ["positioning", "key_generation", "phaser3", "ldtk"]
+        }
+      },
+      {
+        "file_name": "LDTKEntityManager.js",
+        "chunk_index": 7,
+        "method": "tryCreateEntity",
+        "chunk_text": "    tryCreateEntity(entity, worldX, worldY) {\n        try {\n            console.log('Creating entity with data:', {\n                identifier: entity.__identifier,\n                position: { x: entity.px[0], y: entity.px[1] },\n                worldPosition: { x: entity.px[0] + worldX, y: entity.px[1] + worldY }\n            });\n\n            const instance = this.createEntityInstance(entity, worldX, worldY);\n            console.log('Entity instance created:', {\n                identifier: entity.__identifier,\n                instance,\n            });\n\n            return instance;\n        } catch (error) {\n            console.error(`Error creating entity (${entity.__identifier}):`, error);\n            return null;\n        }\n    }",
+        "metadata": {
+          "start_line": 149,
+          "end_line": 169,
+          "notes": "Wrapper that safely calls createEntityInstance and logs any errors",
+          "imports": [],
+          "related_methods": ["createEntityInstance"],
+          "tags": ["entity_creation", "error_handling", "phaser3", "ldtk"]
+        }
+      },
+      {
+        "file_name": "LDTKEntityManager.js",
+        "chunk_index": 8,
+        "method": "registerEntity",
+        "chunk_text": "    registerEntity(instance, entity, layerEntities, positionKey, createdEntities) {\n        console.log('Registering entity:', {\n            identifier: entity.__identifier,\n            positionKey,\n            instance,\n        });\n\n        this.entityInstances.set(entity.iid, instance);\n        layerEntities.add(instance);\n        this.loadedEntityPositions.add(positionKey);\n        createdEntities.push(instance);\n    }",
+        "metadata": {
+          "start_line": 171,
+          "end_line": 183,
+          "notes": "Adds the created entity to tracking structures (entityInstances, layerEntities, etc.)",
+          "imports": [],
+          "related_methods": [],
+          "tags": ["entity_registration", "tracking", "phaser3", "ldtk"]
+        }
+      },
+      {
+        "file_name": "LDTKEntityManager.js",
+        "chunk_index": 9,
+        "method": "createFallbackEntity",
+        "chunk_text": "    createFallbackEntity(entityData, worldX, worldY) {\n        console.warn(`Creating fallback entity for ${entityData.__identifier}`);\n        const x = entityData.px[0] + worldX;\n        const y = entityData.px[1] + worldY;\n\n        const fallbackEntity = this.scene.add.sprite(x, y, 'default_sprite');\n        this.scene.physics.add.existing(fallbackEntity);\n        return fallbackEntity;\n    }",
+        "metadata": {
+          "start_line": 185,
+          "end_line": 195,
+          "notes": "Creates a simple fallback sprite if no factory is found",
+          "imports": [],
+          "related_methods": [],
+          "tags": ["fallback", "entity_creation", "sprite", "phaser3", "ldtk"]
+        }
+      },
+      {
+        "file_name": "LDTKEntityManager.js",
+        "chunk_index": 10,
+        "method": "getPlayerStart",
+        "chunk_text": "    /**\n     * Retrieves the player start coordinates from the level data.\n     * @param {object} levelData - The level data object.\n     * @returns {object} - The player start coordinates as an object with 'x' and 'y' properties.\n     */\n    getPlayerStart(levelData, worldX = 0, worldY = 0) {\n        console.log('Getting PlayerStart from level data:', levelData);\n\n        // Handle both direct layerInstances and nested levels structure\n        const layerInstances = levelData.layerInstances || \n                              (levelData.levels?.[0]?.layerInstances) || \n                              [];\n\n        console.log('Layer instances:', layerInstances);\n\n        for (const layer of layerInstances) {\n            console.log('Checking layer:', {\n                identifier: layer.__identifier,\n                type: layer.__type,\n                entityCount: layer.entityInstances?.length\n            });\n\n            if (layer.__type === \"Entities\") {\n                // Then find the entity named \"PlayerStart\"\n                const playerStartEntity = layer.entityInstances?.find(\n                  e => e.__identifier === \"PlayerStart\"\n                );\n\n                console.log('PlayerStart entity found:', playerStartEntity);\n\n                if (playerStartEntity) {\n                  const spawn = {\n                    x: playerStartEntity.px[0],\n                    y: playerStartEntity.px[1]\n                  };\n                  console.log('Found PlayerStart:', spawn);\n                  return spawn;\n                }\n              }\n        }\n    }",
+        "metadata": {
+          "start_line": 197,
+          "end_line": 246,
+          "notes": "Finds 'PlayerStart' entity in the level data to determine spawn coordinates",
+          "imports": [],
+          "related_methods": [],
+          "tags": ["player_spawn", "level_data", "phaser3", "ldtk", "entity_search"]
+        }
+    }
+]  
