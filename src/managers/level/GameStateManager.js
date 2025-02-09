@@ -1,13 +1,13 @@
-// GameStateManager.js
-import { GameConfig } from '../../config/GameConfig';
-import { BaseManager } from '../core/BaseManager';
-import { GameEvents } from '../core/EventManager';
-
 /**
  * GameStateManager.js
  * Centralizes game state using Phaser's registry + event bus for communication.
  * Also supports optional local storage, state change listeners, etc.
  */
+
+import { GameConfig } from '../../config/GameConfig';
+import { BaseManager } from '../core/BaseManager';
+import { GameEvents } from '../core/EventManager';
+
 export class GameStateManager extends BaseManager {
     /**
      * @param {Phaser.Scene} scene - The scene that owns this manager

@@ -1,0 +1,190 @@
+{
+    "chunks": [
+        {
+            "file_name": "CollisionManager.js",
+            "chunk_index": 0,
+            "method": "file_header",
+            "chunk_text": "/**\n * CollisionManager.js\n * Centralized collision handling system for game physics\n * Manages player, enemy, bullet, and environment interactions\n * Handles damage calculations, effects, and event dispatching\n */",
+            "metadata": {
+                "start_line": 1,
+                "end_line": 6,
+                "notes": "File header describing the collision management system",
+                "imports": [],
+                "tags": ["collision", "physics", "game_manager", "phaser3"],
+                "related_chunks": [
+                    {"file_name": "CollisionManager.js", "chunk_index": 2, "method": "setupCollisions"},
+                    {"file_name": "CollisionManager.js", "chunk_index": 3, "method": "setupEnemyCollisions"},
+                    {"file_name": "CollisionManager.js", "chunk_index": 4, "method": "setupBulletCollisions"},
+                    {"file_name": "CollisionManager.js", "chunk_index": 6, "method": "setupPlayerCollisions"},
+                    {"file_name": "CollisionManager.js", "chunk_index": 9, "method": "setupTileCollisions"}
+                ]
+            }
+        },
+        {
+            "file_name": "CollisionManager.js",
+            "chunk_index": 1,
+            "method": "constructor",
+            "chunk_text": "    constructor(scene) {\n        // Store the scene reference for accessing game objects (e.g. enemies, bullets, player, etc.)\n        this.scene = scene;\n        \n        // Keep track of which Zappers we've set up collisions for\n        this._processedZappers = new Set();\n        \n        // Add update event to continuously check for new enemies\n        this.scene.events.on('update', this.checkNewEnemies, this);\n    }",
+            "metadata": {
+                "start_line": 8,
+                "end_line": 17,
+                "notes": "Initializes collision manager with scene reference and sets up enemy tracking",
+                "imports": [],
+                "tags": ["constructor", "initialization", "phaser3"],
+                "related_chunks": [
+                    {"file_name": "CollisionManager.js", "chunk_index": 7, "method": "checkNewEnemies"}
+                ]
+            }
+        },
+        {
+            "file_name": "CollisionManager.js",
+            "chunk_index": 2,
+            "method": "setupCollisions",
+            "chunk_text": "    /**\n     * ============================\n     * MASTER COLLISION SETUP\n     * ============================\n     * Main entry point to set up collisions in this scene.\n     * Calls sub-methods for tile, enemy, bullet, and player collisions.\n     */\n    setupCollisions() {\n        this.setupTileCollisions();\n        this.setupEnemyCollisions();\n        this.setupBulletCollisions();\n        this.setupPlayerCollisions();\n    }",
+            "metadata": {
+                "start_line": 19,
+                "end_line": 31,
+                "notes": "Main method to initialize all collision systems",
+                "imports": [],
+                "tags": ["collision_setup", "initialization", "phaser3"],
+                "related_chunks": [
+                    {"file_name": "CollisionManager.js", "chunk_index": 3, "method": "setupEnemyCollisions"},
+                    {"file_name": "CollisionManager.js", "chunk_index": 4, "method": "setupBulletCollisions"},
+                    {"file_name": "CollisionManager.js", "chunk_index": 6, "method": "setupPlayerCollisions"},
+                    {"file_name": "CollisionManager.js", "chunk_index": 8, "method": "setupTileCollisions"}
+                ]
+            }
+        },
+        {
+            "file_name": "CollisionManager.js",
+            "chunk_index": 3,
+            "method": "setupEnemyCollisions",
+            "chunk_text": "    /**\n     * ============================\n     * ENEMY COLLISIONS\n     * ============================\n     * Sets up collisions involving enemy objects\n     */\n    setupEnemyCollisions() {\n        // If we have layers (like mapLayer/platforms), let enemies collide with them\n        if (this.scene.mapLayer) {\n            if (this.scene.drones) {\n                this.scene.physics.add.collider(this.scene.drones, this.scene.mapLayer);\n                this.scene.physics.add.collider(this.scene.drones, this.scene.platforms);\n            }\n\n            // Additional collisions for a generic 'enemies' group\n            if (this.scene.enemies) {\n                this.scene.physics.add.collider(this.scene.enemies, this.scene.groundLayer);\n                this.scene.physics.add.collider(this.scene.enemies, this.scene.platformLayer);\n            }\n        }\n    }",
+            "metadata": {
+                "start_line": 33,
+                "end_line": 53,
+                "notes": "Sets up collisions between enemies and environment",
+                "imports": [],
+                "tags": ["enemy_collisions", "physics", "phaser3"],
+                "related_chunks": []
+            }
+        },
+        {
+            "file_name": "CollisionManager.js",
+            "chunk_index": 4,
+            "method": "setupBulletCollisions",
+            "chunk_text": "    /**\n     * ============================\n     * BULLET COLLISIONS\n     * ============================\n     * Sets up overlap/collision checks involving bullets vs. enemies, platforms, etc.\n     */\n    setupBulletCollisions() {\n        // Make sure we have bullets before setting up any collisions\n        // We check either scene.bullets or a bullet manager's group\n        if (!this.scene.bullets && !this.scene.managers.bullets?.getGroup()) return;\n\n        // Get the bullet group either directly or from the bullet manager\n        const bulletGroup = this.scene.bullets || this.scene.managers.bullets.getGroup();\n        if (!bulletGroup) return;\n\n        // 1) Bullet vs Enemies overlap\n        if (this.scene.enemies) {\n            this.scene.physics.add.overlap(\n                bulletGroup,\n                this.scene.enemies,\n                (bullet, enemySprite) => {\n                    // Example: if we have an enemyManager that handles bullet hits\n                    if (this.scene.enemyManager) {\n                        this.scene.enemyManager.handleBulletHit(bullet, enemySprite);\n                    }\n                },\n                null,\n                this\n            );\n        }\n\n        // 2) Bullet collisions with platforms\n        if (this.scene.platforms) {\n            this.scene.physics.add.collider(\n                bulletGroup,\n                this.scene.platforms,\n                this.handleBulletCollision,\n                null,\n                this\n            );\n        }\n\n        // Overlaps with drones\n        if (this.scene.drones) {\n            this.scene.physics.add.overlap(\n                bulletGroup,\n                this.scene.drones,\n                (bullet, enemySprite) => {\n                    if (this.scene.enemyManager) {\n                        this.scene.enemyManager.handleBulletHit(bullet, enemySprite);\n                    }\n                },\n                null,\n                this\n            );\n        }\n\n        // Overlaps with meleeWarriors\n        if (this.scene.meleeWarriors) {\n            this.scene.physics.add.overlap(\n                bulletGroup,\n                this.scene.meleeWarriors,\n                (bullet, enemySprite) => {\n                    if (this.scene.enemyManager) {\n                        this.scene.enemyManager.handleBulletHit(bullet, enemySprite);\n                    }\n                },\n                null,\n                this\n            );\n        }\n    }",
+            "metadata": {
+                "start_line": 55,
+                "end_line": 127,
+                "notes": "Sets up collisions between bullets and various game objects",
+                "imports": [],
+                "tags": ["bullet_collisions", "physics", "phaser3"],
+                "related_chunks": [
+                    {"file_name": "CollisionManager.js", "chunk_index": 5, "method": "hitEnemyWithBullet"},
+                    {"file_name": "CollisionManager.js", "chunk_index": 9, "method": "handleBulletCollision"}
+                ]
+            }
+        },
+        {
+            "file_name": "CollisionManager.js",
+            "chunk_index": 5,
+            "method": "hitEnemyWithBullet",
+            "chunk_text": "    /**\n     * Example method extracted from BaseScene for bullet vs. enemy overlap logic.\n     * If you prefer not to use arrow functions above, you can call this method instead.\n     */\n    hitEnemyWithBullet(bullet, enemySprite) {\n        if (this.scene.enemies) {\n            this.scene.enemies.handleBulletHit(bullet, enemySprite);\n        }\n    }",
+            "metadata": {
+                "start_line": 129,
+                "end_line": 137,
+                "notes": "Handles bullet-enemy collision logic",
+                "imports": [],
+                "tags": ["bullet_hit", "enemy_hit", "phaser3"],
+                "related_chunks": []
+            }
+        },
+        {
+            "file_name": "CollisionManager.js",
+            "chunk_index": 6,
+            "method": "setupPlayerCollisions",
+            "chunk_text": "    /**\n     * ============================\n     * PLAYER COLLISIONS\n     * ============================\n     * Sets up overlap/collision checks for player vs. enemies, layers, ramps, etc.\n     */\n    setupPlayerCollisions() {\n        // Make sure our player actually exists\n        if (!this.scene.player) return;\n\n        // Basic collisions with ground and platform layers\n        if (this.scene.groundLayer) {\n            this.scene.physics.add.collider(this.scene.player, this.scene.groundLayer);\n        }\n        if (this.scene.platformLayer) {\n            this.scene.physics.add.collider(this.scene.player, this.scene.platformLayer);\n        }\n        if (this.scene.mapLayer) {\n            this.scene.physics.add.collider(this.scene.player, this.scene.mapLayer);\n        }\n        if (this.scene.platforms) {\n            this.scene.physics.add.collider(this.scene.player, this.scene.platforms);\n        }\n        if (this.scene.ramp) {\n            this.scene.physics.add.collider(this.scene.player, this.scene.ramp);\n        }\n\n        // Overlap checks for damage calculations, etc.\n        // Player vs. generic enemies group\n        if (this.scene.enemies) {\n            this.scene.physics.add.overlap(\n                this.scene.player,\n                this.scene.enemies,\n                (player, enemy) => {\n                    // Example: If the enemy is attacking, do more damage\n                    if (!player.isInvulnerable) {\n                        if (enemy.isAttacking) {\n                            player.takeDamage(enemy.damage);\n                        } else {\n                            player.takeDamage(10);\n                        }\n                    }\n                },\n                null,\n                this\n            );\n        }\n\n        // Player vs. drones\n        if (this.scene.drones) {\n            this.scene.physics.add.overlap(\n                this.scene.player,\n                this.scene.drones,\n                this.handlePlayerEnemyOverlap,\n                null,\n                this\n            );\n        }\n    }",
+            "metadata": {
+                "start_line": 139,
+                "end_line": 195,
+                "notes": "Sets up all player-related collisions",
+                "imports": [],
+                "tags": ["player_collisions", "physics", "phaser3"],
+                "related_chunks": [
+                    {"file_name": "CollisionManager.js", "chunk_index": 7, "method": "handlePlayerEnemyOverlap"}
+                ]
+            }
+        },
+        {
+            "file_name": "CollisionManager.js",
+            "chunk_index": 7,
+            "method": "handlePlayerEnemyOverlap",
+            "chunk_text": "    /**\n     * ============================\n     * handlePlayerEnemyOverlap\n     * ============================\n     * This method replaces \"hitEnemy()\" from BaseScene.\n     * It's called when the player overlaps with an enemy (like drones).\n     * We reference scene data (gameState, gameUI) via \"this.scene\".\n     */\n    handlePlayerEnemyOverlap(player, enemy) {\n        // If the player is already dying, skip\n        if (player.isDying) {\n            return;\n        }\n    \n        // Calculate how much damage to inflict\n        const damage = enemy.enemy ? enemy.enemy.damageAmount : 25;\n    \n        // Just call player.takeDamage(...)\n        player.takeDamage(damage);\n    }",
+            "metadata": {
+                "start_line": 197,
+                "end_line": 216,
+                "notes": "Handles collision between player and enemies",
+                "imports": [],
+                "tags": ["player_damage", "enemy_collision", "phaser3"],
+                "related_chunks": []
+            }
+        },
+        {
+            "file_name": "CollisionManager.js",
+            "chunk_index": 8,
+            "method": "checkNewEnemies",
+            "chunk_text": "    /**\n     * ============================\n     * CHECK NEW ENEMIES\n     * ============================\n     * Continuously checks for new enemies and sets up their collisions\n     */\n    checkNewEnemies() {\n        if (!this.scene.player || !this.scene.enemies) return;\n\n        // Check for new Zappers\n        this.scene.enemies.getChildren().forEach(enemy => {\n            if (enemy.type === 'Zapper' && enemy.shockSprite && !this._processedZappers.has(enemy)) {\n                // Set up collision between player and shock sprite\n                this.scene.physics.add.overlap(\n                    this.scene.player,\n                    enemy.shockSprite,\n                    () => {\n                        if (enemy.shockSprite.visible && !this.scene.player.isInvulnerable) {\n                            this.scene.player.takeDamage(enemy.damage);\n                        }\n                    }\n                );\n                \n                // Remember we've processed this Zapper\n                this._processedZappers.add(enemy);\n            }\n        });\n    }",
+            "metadata": {
+                "start_line": 218,
+                "end_line": 246,
+                "notes": "Monitors and sets up collisions for newly spawned enemies",
+                "imports": [],
+                "tags": ["enemy_tracking", "collision_setup", "phaser3"],
+                "related_chunks": []
+            }
+        },
+        {
+            "file_name": "CollisionManager.js",
+            "chunk_index": 9,
+            "method": "setupTileCollisions",
+            "chunk_text": "    /**\n     * ============================\n     * TILE COLLISIONS\n     * ============================\n     * Sets up collisions with tile layers, e.g., map or platforms.\n     */\n    setupTileCollisions(map, layer) {\n        if (!layer) return;\n\n        // Example: define colliding tile IDs\n        const COLLIDING_TILES = [257, 260, 261, 641];\n        layer.setCollision(COLLIDING_TILES);\n\n        // Player vs. the specified layer\n        if (this.scene.player) {\n            this.scene.physics.add.collider(this.scene.player, layer);\n        }\n\n        // Optionally set world bounds from map dimension\n        if (map) {\n            this.scene.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);\n        }\n\n        // Additional tile collisions with enemies or bullets\n        if (this.scene.mapLayer) {\n            if (this.scene.drones) {\n                this.scene.physics.add.collider(this.scene.drones, layer);\n            }\n            if (this.scene.enemies) {\n                this.scene.physics.add.collider(this.scene.enemies, layer);\n            }\n            if (this.scene.bullets) {\n                this.scene.physics.add.collider(\n                    this.scene.bullets,\n                    layer,\n                    this.handleBulletCollision,\n                    null,\n                    this\n                );\n            }\n        }\n    }",
+            "metadata": {
+                "start_line": 248,
+                "end_line": 287,
+                "notes": "Sets up collisions with tile-based level geometry",
+                "imports": [],
+                "tags": ["tile_collisions", "level_physics", "phaser3"],
+                "related_chunks": []
+            }
+        },
+        {
+            "file_name": "CollisionManager.js",
+            "chunk_index": 10,
+            "method": "handleBulletCollision",
+            "chunk_text": "    /**\n     * Called when a bullet collides with a tile layer (e.g., a wall or platform).\n     * We create a hit effect (if possible) and destroy the bullet.\n     */\n    handleBulletCollision(bullet) {\n        if (this.scene.effectsManager) {\n            this.scene.effectsManager.createHitEffect(bullet.x, bullet.y);\n        }\n        bullet.destroy();\n    }",
+            "metadata": {
+                "start_line": 289,
+                "end_line": 298,
+                "notes": "Handles bullet collision with environment",
+                "imports": [],
+                "tags": ["bullet_collision", "effects", "phaser3"],
+                "related_chunks": []
+            }
+        },
+        {
+            "file_name": "CollisionManager.js",
+            "chunk_index": 11,
+            "method": "handleEnemyCollision",
+            "chunk_text": "    /**\n     * Called when two enemies collide with each other (e.g., drones).\n     * Reverses direction or bounces them off one another.\n     */\n    handleEnemyCollision(enemy1, enemy2) {\n        // If enemies are moving towards each other, reverse direction\n        if (\n            (enemy1.body.velocity.x > 0 && enemy2.body.velocity.x < 0) ||\n            (enemy1.body.velocity.x < 0 && enemy2.body.velocity.x > 0)\n        ) {\n            if (enemy1.enemy) {\n                enemy1.enemy.reverseDirection();\n                enemy1.setVelocityY(-150);\n            }\n            if (enemy2.enemy) {\n                enemy2.enemy.reverseDirection();\n                enemy2.setVelocityY(-150);\n            }\n        }\n\n        // Ensure enemies bounce off each other with a push force\n        const pushForce = 100;\n        if (enemy1.x < enemy2.x) {\n            enemy1.setVelocityX(-pushForce);\n            enemy2.setVelocityX(pushForce);\n        } else {\n            enemy1.setVelocityX(pushForce);\n            enemy2.setVelocityX(-pushForce);\n        }\n    }",
+            "metadata": {
+                "start_line": 300,
+                "end_line": 332,
+                "notes": "Handles collision between two enemy entities",
+                "imports": [],
+                "tags": ["enemy_collision", "physics", "phaser3"],
+                "related_chunks": []
+            }
+        }
+    ]
+}

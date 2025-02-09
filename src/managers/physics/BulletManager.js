@@ -19,12 +19,7 @@ class BulletManager {
         this.scene = scene;
 
         // Create bullet pool with physics
-        this.bullets = this.scene.physics.add.group({
-            classType: Bullet,          // Custom bullet class
-            maxSize: 20,                // Limit active bullets
-            runChildUpdate: true,       // Auto-update bullets
-            allowGravity: false         // Projectile motion
-        });
+        this.#createBulletGroup();
     }
 
     /**
@@ -33,7 +28,7 @@ class BulletManager {
      * @private
      */
     #createBulletGroup() {
-        this.bullets = this.physics.add.group({
+        this.bullets = this.scene.physics.add.group({
             classType: Bullet,
             maxSize: -1,               // Unlimited bullets
             runChildUpdate: true,

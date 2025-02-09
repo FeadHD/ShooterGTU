@@ -1,18 +1,25 @@
+/**
+ * Manages LDTK entity creation and management in the game
+ * Handles entity instantiation, positioning, and layer organization
+ * Integrates with Phaser's scene and physics systems
+ */
 export class LDTKEntityManager {
+    /**
+     * Creates a new LDTKEntityManager instance
+     * @param {Phaser.Scene} scene - The Phaser scene this manager belongs to
+     */
     constructor(scene) {
         this.scene = scene;
         this.assetManager = scene.assetManager;
-        this.entityInstances = new Map();
-        this.entityLayers = new Map();
-        this.entityFactories = new Map();
-        this.loadedEntityPositions = new Set();
+        // Track entity instances and their organization
+        this.entityInstances = new Map();  // Maps entity IDs to instances
+        this.entityLayers = new Map();     // Maps layer names to entity sets
+        this.entityFactories = new Map();  // Maps entity types to factory functions
+        this.loadedEntityPositions = new Set(); // Tracks occupied positions
         this.debug = false;
         this.debugText = null;
 
-        // Log initialization
-        console.log('LDTKEntityManager initialized with scene:', scene);
-
-        // Get reference to AssetManager
+        // Get reference to AssetManager for texture loading
         this.assetManager = scene.assetManager || {
             getTextureKeyForEntity: () => ({ spritesheet: 'default_sprite', defaultAnim: null }),
             getDefaultTexture: () => 'default_sprite',
@@ -25,6 +32,10 @@ export class LDTKEntityManager {
         }
     }
 
+    /**
+     * Registers entity factory functions for different entity types
+     * @param {Object} factories - Map of entity types to their factory functions
+     */
     registerEntityFactories(factories) {
         console.log('Registering entity factories:', Object.keys(factories));
         Object.entries(factories).forEach(([type, factory]) => {
@@ -33,6 +44,13 @@ export class LDTKEntityManager {
         });
     }
 
+    /**
+     * Creates a single entity instance from LDTK entity data
+     * @param {Object} entityData - LDTK entity data
+     * @param {number} worldX - World X offset
+     * @param {number} worldY - World Y offset
+     * @returns {Phaser.GameObjects.GameObject} The created entity instance
+     */
     createEntityInstance(entityData, worldX = 0, worldY = 0) {
         const factory = this.entityFactories.get(entityData.__identifier);
         if (!factory) {
@@ -48,7 +66,7 @@ export class LDTKEntityManager {
     
         const instance = factory(this.scene, x, y, fields);
     
-        // Add entities to appropriate groups based on their type
+        // Add entities to appropriate Phaser groups based on type
         if (entityData.__identifier === 'Zapper' || entityData.__identifier === 'Enemy') {
             if (this.scene.enemies) {
                 this.scene.enemies.add(instance);
@@ -68,8 +86,14 @@ export class LDTKEntityManager {
     
         return instance;
     }
-    
 
+    /**
+     * Creates all entities from a level's data
+     * @param {Object} levelData - LDTK level data
+     * @param {number} worldX - World X offset
+     * @param {number} worldY - World Y offset
+     * @returns {Array} Array of created entity instances
+     */
     createEntities(levelData, worldX = 0, worldY = 0) {
         console.log('Creating entities for level data:', levelData);
       
@@ -98,6 +122,13 @@ export class LDTKEntityManager {
         return createdEntities;
     }
     
+    /**
+     * Processes a single entity layer, creating and tracking its entities
+     * @param {Object} layer - LDTK layer data
+     * @param {number} worldX - World X offset
+     * @param {number} worldY - World Y offset
+     * @returns {Array} Array of created entity instances
+     */
     processEntityLayer(layer, worldX, worldY) {
         console.log('Processing entity layer:', layer.__identifier);
         console.log('Number of entities in layer:', layer.entityInstances.length);
@@ -136,6 +167,10 @@ export class LDTKEntityManager {
         return createdEntities;
     }
 
+    /**
+     * Generates a unique key for an entity's position
+     * @private
+     */
     getPositionKey(entity, worldX, worldY) {
         // Log position key generation
         const key = `${entity.px[0] + worldX},${entity.px[1] + worldY}`;
@@ -143,6 +178,10 @@ export class LDTKEntityManager {
         return key;
     }
 
+    /**
+     * Attempts to create an entity, with error handling
+     * @private
+     */
     tryCreateEntity(entity, worldX, worldY) {
         try {
             console.log('Creating entity with data:', {
@@ -164,6 +203,10 @@ export class LDTKEntityManager {
         }
     }
 
+    /**
+     * Registers a created entity in the tracking systems
+     * @private
+     */
     registerEntity(instance, entity, layerEntities, positionKey, createdEntities) {
         console.log('Registering entity:', {
             identifier: entity.__identifier,
@@ -177,6 +220,10 @@ export class LDTKEntityManager {
         createdEntities.push(instance);
     }
 
+    /**
+     * Creates a basic fallback sprite when no factory exists
+     * @private
+     */
     createFallbackEntity(entityData, worldX, worldY) {
         console.warn(`Creating fallback entity for ${entityData.__identifier}`);
         const x = entityData.px[0] + worldX;
@@ -187,45 +234,47 @@ export class LDTKEntityManager {
         return fallbackEntity;
     }
 
-/**
- * Retrieves the player start coordinates from the level data.
- * @param {object} levelData - The level data object.
- * @returns {object} - The player start coordinates as an object with 'x' and 'y' properties.
- */
-getPlayerStart(levelData, worldX = 0, worldY = 0) {
-    console.log('Getting PlayerStart from level data:', levelData);
-    
-    // Handle both direct layerInstances and nested levels structure
-    const layerInstances = levelData.layerInstances || 
-                          (levelData.levels?.[0]?.layerInstances) || 
-                          [];
-    
-    console.log('Layer instances:', layerInstances);
-    
-    for (const layer of layerInstances) {
-        console.log('Checking layer:', {
-            identifier: layer.__identifier,
-            type: layer.__type,
-            entityCount: layer.entityInstances?.length
-        });
+    /**
+     * Retrieves the player start coordinates from the level data
+     * @param {object} levelData - The level data object
+     * @param {number} worldX - World X offset
+     * @param {number} worldY - World Y offset
+     * @returns {object} The player start coordinates as an object with 'x' and 'y' properties
+     */
+    getPlayerStart(levelData, worldX = 0, worldY = 0) {
+        console.log('Getting PlayerStart from level data:', levelData);
         
-        if (layer.__type === "Entities") {
-            // Then find the entity named "PlayerStart"
-            const playerStartEntity = layer.entityInstances?.find(
-              e => e.__identifier === "PlayerStart"
-            );
-          
-            console.log('PlayerStart entity found:', playerStartEntity);
-          
-            if (playerStartEntity) {
-              const spawn = {
-                x: playerStartEntity.px[0],
-                y: playerStartEntity.px[1]
-              };
-              console.log('Found PlayerStart:', spawn);
-              return spawn;
+        // Handle both direct layerInstances and nested levels structure
+        const layerInstances = levelData.layerInstances || 
+                              (levelData.levels?.[0]?.layerInstances) || 
+                              [];
+        
+        console.log('Layer instances:', layerInstances);
+        
+        for (const layer of layerInstances) {
+            console.log('Checking layer:', {
+                identifier: layer.__identifier,
+                type: layer.__type,
+                entityCount: layer.entityInstances?.length
+            });
+            
+            if (layer.__type === "Entities") {
+                // Then find the entity named "PlayerStart"
+                const playerStartEntity = layer.entityInstances?.find(
+                  e => e.__identifier === "PlayerStart"
+                );
+              
+                console.log('PlayerStart entity found:', playerStartEntity);
+              
+                if (playerStartEntity) {
+                  const spawn = {
+                    x: playerStartEntity.px[0],
+                    y: playerStartEntity.px[1]
+                  };
+                  console.log('Found PlayerStart:', spawn);
+                  return spawn;
+                }
+              }
             }
-          }
         }
     }
-}

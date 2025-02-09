@@ -58,6 +58,54 @@
         "notes": "Processes integer grid tiles and creates hitboxes for solid cells",
         "imports": []
       }
+    },
+    {
+      "file_name": "LDTKTileManager.js",
+      "chunk_index": 5,
+      "method": "createHitbox",
+      "chunk_text": "/**\n     * Create physics hitbox at position\n     * Sets up collision properties\n     * @param {number} x - World position X\n     * @param {number} y - World position Y\n     * @returns {Phaser.GameObjects.Rectangle} Physics hitbox\n     */\n    createHitbox(x, y) {\n        const hitbox = this.scene.add.rectangle(x, y, 32, 32);\n        this.scene.physics.add.existing(hitbox, true);\n        hitbox.body.allowGravity = false;  // Static position\n        hitbox.body.immovable = true;      // Solid collision\n        this.hitboxes.set(`${x},${y}`, hitbox);\n        return hitbox;\n    }",
+      "metadata": {
+        "start_line": 112,
+        "end_line": 126,
+        "notes": "Creates a static physics rectangle for tile collision",
+        "imports": [],
+        "tags": ["physics", "collision", "hitbox", "phaser3", "ldtk"],
+        "related_chunks": [
+          {"file_name": "LDTKTileManager.js", "chunk_index": 3, "method": "processAutoLayerTiles"},
+          {"file_name": "LDTKTileManager.js", "chunk_index": 4, "method": "processIntGridTiles"}
+        ]
+      }
+    },
+    {
+      "file_name": "LDTKTileManager.js",
+      "chunk_index": 6,
+      "method": "cleanupHitboxes",
+      "chunk_text": "/**\n     * Remove hitboxes from old sections\n     * Called during level progression\n     * @param {number} cleanupX - Remove sections before this X\n     */\n    cleanupHitboxes(cleanupX) {\n        // Clean up by section\n        for (const [sectionX, hitboxes] of this.sectionHitboxes.entries()) {\n            if (sectionX < cleanupX) {\n                for (const hitbox of hitboxes) {\n                    hitbox.destroy();\n                    const key = `${hitbox.x},${hitbox.y}`;\n                    this.hitboxes.delete(key);\n                }\n                this.sectionHitboxes.delete(sectionX);\n            }\n        }\n    }",
+      "metadata": {
+        "start_line": 127,
+        "end_line": 145,
+        "notes": "Removes collision hitboxes from passed level sections",
+        "imports": [],
+        "tags": ["cleanup", "memory_management", "physics", "phaser3", "ldtk"],
+        "related_chunks": [
+          {"file_name": "LDTKTileManager.js", "chunk_index": 2, "method": "createTileHitboxes"}
+        ]
+      }
+    },
+    {
+      "file_name": "LDTKTileManager.js",
+      "chunk_index": 7,
+      "method": "addCollider",
+      "chunk_text": "/**\n     * Add collision between object and hitboxes\n     * Used for player and enemy physics\n     * @param {Phaser.GameObjects.GameObject} object - Entity to collide\n     */\n    addCollider(object) {\n        for (const hitbox of this.hitboxes.values()) {\n            this.scene.physics.add.collider(object, hitbox);\n        }\n    }",
+      "metadata": {
+        "start_line": 146,
+        "end_line": 155,
+        "notes": "Sets up collision between game object and all tile hitboxes",
+        "imports": [],
+        "tags": ["physics", "collision", "game_object", "phaser3", "ldtk"],
+        "related_chunks": [
+          {"file_name": "LDTKTileManager.js", "chunk_index": 5, "method": "createHitbox"}
+        ]
+      }
     }
   ]
-  

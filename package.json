@@ -58,8 +58,7 @@
     },
     "description": "A 2D action platformer game built with Phaser 3, featuring dynamic combat, enemy AI, and procedurally generated levels.",
     "directories": {
-        "doc": "docs",
-        "test": "tests"
+        "doc": "docs"
     },
     "keywords": []
 }

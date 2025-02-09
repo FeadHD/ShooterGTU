@@ -49,8 +49,8 @@
       "method": "get",
       "chunk_text": "    /**\n     * Get a value from Phaser's registry\n     * @param {string} key - The state key\n     * @returns {any} The current value\n     *\n     * @description\n     * Retrieves the current value associated with the provided key from the registry.\n     *\n     * @returns {any} The value for the given key.\n     */\n    get(key) {\n        return this.registry.get(key);\n    }",
       "metadata": {
-        "start_line": 69,
-        "end_line": 81,
+        "start_line": 49,
+        "end_line": 56,
         "notes": "Method to retrieve a state value from the Phaser registry",
         "imports": [],
         "tags": ["get", "state_retrieval", "phaser3"],
