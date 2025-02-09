@@ -49,8 +49,11 @@
         "webpack-merge": "^5.10.0"
     },
     "dependencies": {
+        "@babel/parser": "^7.26.8",
+        "@babel/traverse": "^7.26.8",
         "body-parser": "^1.20.3",
         "express": "^4.21.2",
+        "gpt-tokenizer": "^2.8.1",
         "phaser": "^3.87.0"
     },
     "description": "A 2D action platformer game built with Phaser 3, featuring dynamic combat, enemy AI, and procedurally generated levels.",
