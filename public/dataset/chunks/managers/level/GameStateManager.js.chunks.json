@@ -1,0 +1,225 @@
+[
+    {
+      "file_name": "GameStateManager.js",
+      "chunk_index": 0,
+      "method": "class_definition",
+      "chunk_text": "/**\n * GameStateManager.js\n * Centralizes game state using Phaser's registry + event bus for communication.\n * Also supports optional local storage, state change listeners, etc.\n *\n * @class GameStateManager\n * @extends BaseManager\n * @description\n * Manages and tracks game state for various aspects of gameplay.\n * Provides methods for state initialization, retrieval, updates, and persistence.\n *\n * @requires Phaser.Scene\n * @requires Phaser.Events.EventEmitter\n * @requires GameConfig\n * @requires EventManager\n */\n\nimport { GameConfig } from '../../config/GameConfig';\nimport { BaseManager } from '../core/BaseManager';\nimport { GameEvents } from '../core/EventManager';\n\nexport class GameStateManager extends BaseManager {",
+      "metadata": {
+        "start_line": 1,
+        "end_line": 18,
+        "notes": "Class definition for managing game state with Phaser's registry and event system",
+        "imports": ["../../config/GameConfig", "../core/BaseManager", "../core/EventManager"],
+        "tags": ["class_definition", "game_state", "dependency_injection", "phaser3"],
+        "related_chunks": []
+      }
+    },
+    {
+      "file_name": "GameStateManager.js",
+      "chunk_index": 1,
+      "method": "constructor",
+      "chunk_text": "    /**\n     * @param {Phaser.Scene} scene - The scene that owns this manager\n     *\n     * @description\n     * Initializes the GameStateManager with scene reference and access to\n     * Phaser's registry and event manager for game state management.\n     *\n     * @returns {void}\n     */\n    constructor(scene) {\n        super();\n        this.scene = scene;\n        this.registry = scene.registry;\n        this.events = scene.events;\n        this.eventManager = scene.eventManager;\n    }",
+      "metadata": {
+        "start_line": 20,
+        "end_line": 35,
+        "notes": "Constructor for initializing game state manager with scene and game registry access",
+        "imports": [],
+        "tags": ["constructor", "game_state", "phaser3"],
+        "related_chunks": []
+      }
+    },
+    {
+      "file_name": "GameStateManager.js",
+      "chunk_index": 2,
+      "method": "initializeGameState",
+      "chunk_text": "    /**\n     * Initialize default game state values (if not already set).\n     * Emits 'gameStateInitialized' once done.\n     *\n     * @description\n     * Sets default values for score, lives, health, etc., if not already set.\n     * Emits a GAME_STATE_INITIALIZED event once the initialization is complete.\n     *\n     * @returns {void}\n     */\n    initializeGameState() {\n        const defaults = {\n            score: GameConfig.UI?.INITIAL_SCORE ?? 0,\n            lives: GameConfig.UI?.DEFAULT_LIVES ?? 3,\n            playerHP: GameConfig.PLAYER?.INITIAL_HP ?? 100,\n            bitcoins: GameConfig.UI?.INITIAL_COINS ?? 0,\n            musicEnabled: true,\n            gameStarted: false,\n            stamina: 100\n        };\n        Object.entries(defaults).forEach(([key, value]) => {\n            if (!this.registry.has(key)) {\n                this.registry.set(key, value);\n            }\n        });\n        this.eventManager.emit(GameEvents.GAME_STATE_INITIALIZED, defaults);\n    }",
+      "metadata": {
+        "start_line": 37,
+        "end_line": 67,
+        "notes": "Initializes game state with default values and emits initialization event",
+        "imports": [],
+        "tags": ["initialize", "game_state", "phaser3", "game_events"],
+        "related_chunks": [
+          {"file_name": "GameStateManager.js", "chunk_index": 4, "method": "set"}
+        ]
+      }
+    },
+    {
+      "file_name": "GameStateManager.js",
+      "chunk_index": 3,
+      "method": "get",
+      "chunk_text": "    /**\n     * Get a value from Phaser's registry\n     * @param {string} key - The state key\n     * @returns {any} The current value\n     *\n     * @description\n     * Retrieves the current value associated with the provided key from the registry.\n     *\n     * @returns {any} The value for the given key.\n     */\n    get(key) {\n        return this.registry.get(key);\n    }",
+      "metadata": {
+        "start_line": 69,
+        "end_line": 81,
+        "notes": "Method to retrieve a state value from the Phaser registry",
+        "imports": [],
+        "tags": ["get", "state_retrieval", "phaser3"],
+        "related_chunks": [
+          {"file_name": "GameStateManager.js", "chunk_index": 5, "method": "increment"},
+          {"file_name": "GameStateManager.js", "chunk_index": 6, "method": "decrement"},
+          {"file_name": "GameStateManager.js", "chunk_index": 10, "method": "saveToLocalStorage"}
+        ]
+      }
+    },
+    {
+      "file_name": "GameStateManager.js",
+      "chunk_index": 4,
+      "method": "set",
+      "chunk_text": "    /**\n     * Set a value in Phaser's registry + emit 'stateChanged'\n     * @param {string} key - The state key\n     * @param {any} value - New value\n     *\n     * @description\n     * Sets the new value for a given key in the registry and emits the stateChanged event.\n     * This helps keep track of game state changes and notifies other systems.\n     *\n     * @returns {void}\n     */\n    set(key, value) {\n        console.log(`[GameStateManager] set(): Updating ${key} to`, value);\n        this.registry.set(key, value);\n        this.eventManager.emit(GameEvents.STATE_CHANGED, { key, value });\n    }",
+      "metadata": {
+        "start_line": 83,
+        "end_line": 105,
+        "notes": "Sets a new value for a state key and emits a state changed event",
+        "imports": [],
+        "tags": ["set", "state_update", "phaser3", "game_events"],
+        "related_chunks": [
+          {"file_name": "GameStateManager.js", "chunk_index": 2, "method": "initializeGameState"},
+          {"file_name": "GameStateManager.js", "chunk_index": 5, "method": "increment"},
+          {"file_name": "GameStateManager.js", "chunk_index": 6, "method": "decrement"},
+          {"file_name": "GameStateManager.js", "chunk_index": 10, "method": "saveToLocalStorage"},
+          {"file_name": "GameStateManager.js", "chunk_index": 11, "method": "loadFromLocalStorage"},
+          {"file_name": "GameStateManager.js", "chunk_index": 7, "method": "reset"}
+        ]
+      }
+    },
+    {         
+      "file_name": "GameStateManager.js",
+      "chunk_index": 5,
+      "method": "increment",
+      "chunk_text": "    /**\n     * Increase a numeric state value\n     * @param {string} key - The state key\n     * @param {number} amount - Amount to increase (default 1)\n     *\n     * @description\n     * Increments the value of a numeric state key by a specified amount.\n     * The default increment value is 1.\n     *\n     * @returns {void}\n     */\n    increment(key, amount = 1) {\n        const currentValue = this.get(key) || 0;\n        this.set(key, currentValue + amount);\n    }",
+      "metadata": {
+        "start_line": 107,
+        "end_line": 119,
+        "notes": "Increments a numeric state value in the registry",
+        "imports": [],
+        "tags": ["increment", "state_update", "phaser3"],
+        "related_chunks": [
+          {"file_name": "GameStateManager.js", "chunk_index": 3, "method": "get"},
+          {"file_name": "GameStateManager.js", "chunk_index": 4, "method": "set"}
+        ]
+      }
+    },
+    {
+        "file_name": "GameStateManager.js",
+        "chunk_index": 6,
+        "method": "decrement",
+        "chunk_text": "    /**\n     * Decrease a numeric state value (clamped at 0)\n     * @param {string} key - The state key\n     * @param {number} amount - Amount to decrease (default 1)\n     *\n     * @description\n     * Decrements a numeric state value by a specified amount, ensuring it doesn't go below 0.\n     * The default decrement value is 1.\n     *\n     * @returns {void}\n     */\n    decrement(key, amount = 1) {\n        const currentValue = this.get(key) || 0;\n        const newValue = Math.max(0, currentValue - amount);\n        this.set(key, newValue);\n    }",
+        "metadata": {
+          "start_line": 121,
+          "end_line": 133,
+          "notes": "Decrements a numeric state value and ensures it doesn't go below 0",
+          "imports": [],
+          "tags": ["decrement", "state_update", "phaser3"],
+          "related_chunks": [
+            {"file_name": "GameStateManager.js", "chunk_index": 3, "method": "get"},
+            {"file_name": "GameStateManager.js", "chunk_index": 4, "method": "set"}
+          ]
+        }
+      },
+      {
+        "file_name": "GameStateManager.js",
+        "chunk_index": 7,
+        "method": "reset",
+        "chunk_text": "    /**\n     * Reset single key or entire game state to default values\n     * @param {string} [key] - If provided, only reset that key\n     *\n     * @description\n     * Resets the value of a specific state key or the entire game state to its default values.\n     *\n     * @returns {void}\n     */\n    reset(key) {\n        const defaults = {\n            score: GameConfig.UI?.INITIAL_SCORE ?? 0,\n            lives: GameConfig.UI?.DEFAULT_LIVES ?? 3,\n            playerHP: GameConfig.PLAYER?.INITIAL_HP ?? 100,\n            bitcoins: GameConfig.UI?.INITIAL_COINS ?? 0,\n            musicEnabled: true,\n            gameStarted: false,\n            stamina: 100\n        };\n        if (key) {\n            this.set(key, defaults[key]);\n        } else {\n            Object.entries(defaults).forEach(([k, value]) => {\n                this.set(k, value);\n            });\n        }\n    }",
+        "metadata": {
+          "start_line": 135,
+          "end_line": 168,
+          "notes": "Resets the state of a specific key or the entire game state to default values",
+          "imports": [],
+          "tags": ["reset", "state_reset", "phaser3"],
+          "related_chunks": [
+            {"file_name": "GameStateManager.js", "chunk_index": 4, "method": "set"}
+          ]
+        }
+      },
+      {
+        "file_name": "GameStateManager.js",
+        "chunk_index": 8,
+        "method": "onStateChange",
+        "chunk_text": "    /**\n     * Register a callback for Phaser registry changes.\n     * @param {Function} callback - Called on 'changedata' events\n     *\n     * @description\n     * Registers a callback to listen for changes in Phaser's game state registry.\n     * This helps in tracking state changes in the game.\n     *\n     * @returns {void}\n     */\n    onStateChange(callback) {\n        this.registry.events.on('changedata', callback);\n    }",
+        "metadata": {
+          "start_line": 170,
+          "end_line": 182,
+          "notes": "Registers a callback for listening to state changes in Phaser registry",
+          "imports": [],
+          "tags": ["state_change", "callback_registration", "phaser3"],
+          "related_chunks": []
+        }
+      },
+      {
+        "file_name": "GameStateManager.js",
+        "chunk_index": 9,
+        "method": "offStateChange",
+        "chunk_text": "    /**\n     * Remove a callback for Phaser registry changes.\n     * @param {Function} callback - The function to remove\n     *\n     * @description\n     * Unregisters a previously registered callback for changes in the Phaser registry.\n     *\n     * @returns {void}\n     */\n    offStateChange(callback) {\n        this.registry.events.off('changedata', callback);\n    }",
+        "metadata": {
+          "start_line": 184,
+          "end_line": 196,
+          "notes": "Unregisters a callback for listening to state changes in Phaser registry",
+          "imports": [],
+          "tags": ["state_change", "callback_unregistration", "phaser3"],
+          "related_chunks": []
+        }
+      },
+      {
+        "file_name": "GameStateManager.js",
+        "chunk_index": 10,
+        "method": "saveToLocalStorage",
+        "chunk_text": "    /**\n     * Save current state to local storage\n     *\n     * @description\n     * Saves the current game state to the browser's local storage for persistence.\n     *\n     * @returns {void}\n     */\n    saveToLocalStorage() {\n        const keys = ['score', 'lives', 'playerHP', 'bitcoins', 'musicEnabled', 'gameStarted', 'stamina'];\n        const gameState = {};\n        keys.forEach(key => {\n            gameState[key] = this.get(key);\n        });\n        localStorage.setItem('gameState', JSON.stringify(gameState));\n    }",
+        "metadata": {
+          "start_line": 198,
+          "end_line": 212,
+          "notes": "Saves the current game state to local storage",
+          "imports": [],
+          "tags": ["local_storage", "state_persistence", "phaser3"],
+          "related_chunks": [
+            {"file_name": "GameStateManager.js", "chunk_index": 3, "method": "get"}
+          ]
+        }
+      },
+      {
+        "file_name": "GameStateManager.js",
+        "chunk_index": 11,
+        "method": "loadFromLocalStorage",
+        "chunk_text": "    /**\n     * Load saved state from local storage\n     * @returns {boolean} True if state loaded successfully\n     *\n     * @description\n     * Loads the saved game state from local storage and updates the registry.\n     *\n     * @returns {boolean} Whether the state was successfully loaded from local storage\n     */\n    loadFromLocalStorage() {\n        const savedState = localStorage.getItem('gameState');\n        if (savedState) {\n            const gameState = JSON.parse(savedState);\n            Object.entries(gameState).forEach(([key, value]) => {\n                this.set(key, value);\n            });\n            return true;\n        }\n        return false;\n    }",
+        "metadata": {
+          "start_line": 214,
+          "end_line": 231,
+          "notes": "Loads the saved game state from local storage",
+          "imports": [],
+          "tags": ["local_storage", "state_persistence", "phaser3"],
+          "related_chunks": [
+            {"file_name": "GameStateManager.js", "chunk_index": 4, "method": "set"}
+          ]
+        }
+      },
+      {
+        "file_name": "GameStateManager.js",
+        "chunk_index": 12,
+        "method": "clearSavedState",
+        "chunk_text": "    /**\n     * Clear saved game state from local storage\n     *\n     * @description\n     * Clears the saved game state from the browser's local storage.\n     *\n     * @returns {void}\n     */\n    clearSavedState() {\n        localStorage.removeItem('gameState');\n    }",
+        "metadata": {
+          "start_line": 233,
+          "end_line": 241,
+          "notes": "Clears the saved game state from local storage",
+          "imports": [],
+          "tags": ["local_storage", "state_clearance", "phaser3"],
+          "related_chunks": []
+        }
+      },
+      {
+        "file_name": "GameStateManager.js",
+        "chunk_index": 13,
+        "method": "handleGameOver",
+        "chunk_text": "    /**\n     * Trigger game over logic\n     * Currently just emits 'gameOver' event, which Scenes can listen for.\n     *\n     * @description\n     * Emitting the GAME_OVER event to signal that the game is over.\n     * Can be expanded with additional game-over logic.\n     *\n     * @returns {void}\n     */\n    handleGameOver() {\n        console.log('[GameStateManager] handleGameOver(): Game Over triggered');\n        this.eventManager.emit(GameEvents.GAME_OVER);\n    }",
+        "metadata": {
+          "start_line": 243,
+          "end_line": 256,
+          "notes": "Handles game over logic and emits game over event",
+          "imports": [],
+          "tags": ["game_over", "event_handling", "phaser3"],
+          "related_chunks": [
+            {"file_name": "GameStateManager.js", "chunk_index": 7, "method": "reset"}
+          ]
+        }
+      }
+  ]

@@ -1,0 +1,63 @@
+[
+    {
+      "file_name": "LDTKTileManager.js",
+      "chunk_index": 0,
+      "method": "file_header",
+      "chunk_text": "/**\n * LDTKTileManager.js\n * Manages tile-based collision system from LDtk level data\n * Creates and maintains physics hitboxes for solid tiles\n * Handles progressive loading and cleanup of level sections\n */",
+      "metadata": {
+        "start_line": 1,
+        "end_line": 4,
+        "notes": "File header and general class description",
+        "imports": []
+      }
+    },
+    {
+      "file_name": "LDTKTileManager.js",
+      "chunk_index": 1,
+      "method": "constructor",
+      "chunk_text": "/**\n * Initialize tile collision system\n * @param {Phaser.Scene} scene - Scene to create hitboxes in\n */\n    constructor(scene) {\n        this.scene = scene;\n        this.hitboxes = new Map();        // All active hitboxes\n        this.sectionHitboxes = new Map(); // Hitboxes by level section\n    }",
+      "metadata": {
+        "start_line": 6,
+        "end_line": 10,
+        "notes": "Constructor to initialize collision system and hitboxes",
+        "imports": []
+      }
+    },
+    {
+      "file_name": "LDTKTileManager.js",
+      "chunk_index": 2,
+      "method": "createTileHitboxes",
+      "chunk_text": "/**\n * Create collision hitboxes for level section\n * Called when loading new level chunks\n * @param {Object} levelData - LDtk level definition\n * @param {number} worldX - Section X offset\n * @param {number} worldY - Section Y offset\n * @param {number} sectionWidth - Section width in pixels\n */\n    createTileHitboxes(levelData, worldX = 0, worldY = 0, sectionWidth) {\n        if (!levelData || !levelData.layerInstances) {\n            console.error('Invalid level data provided');\n            return;\n        }\n\n        // Find collision layer in LDtk data\n        const solidLayer = levelData.layerInstances.find(layer => \n            layer.__identifier === 'Solid' || layer.__type === 'IntGrid'\n        );\n\n        if (!solidLayer) {\n            console.warn('No solid layer found in level data');\n            return;\n        }\n\n        // Track hitboxes for this section\n        const sectionHitboxes = new Set();\n        this.sectionHitboxes.set(worldX, sectionHitboxes);\n\n        // Process different tile types\n        if (solidLayer.autoLayerTiles) {\n            this.processAutoLayerTiles(solidLayer.autoLayerTiles, worldX, worldY, sectionWidth, sectionHitboxes);\n        }\n\n        if (solidLayer.intGridCsv) {\n            this.processIntGridTiles(solidLayer, worldX, worldY, sectionWidth, sectionHitboxes);\n        }\n    }",
+      "metadata": {
+        "start_line": 11,
+        "end_line": 43,
+        "notes": "Creates collision hitboxes for the level section, processing solid tiles",
+        "imports": []
+      }
+    },
+    {
+      "file_name": "LDTKTileManager.js",
+      "chunk_index": 3,
+      "method": "processAutoLayerTiles",
+      "chunk_text": "/**\n * Process auto-placed tiles from LDtk\n * Creates hitboxes for solid auto-tiles\n * @param {Array} tiles - Auto-layer tile data\n * @param {number} worldX - Section offset X\n * @param {number} worldY - Section offset Y\n * @param {number} sectionWidth - Section bounds\n * @param {Set} sectionHitboxes - Current section's hitboxes\n */\n    processAutoLayerTiles(tiles, worldX, worldY, sectionWidth, sectionHitboxes) {\n        const sectionEnd = worldX + sectionWidth;\n        \n        tiles.forEach(tile => {\n            const tileX = tile.px[0] + worldX;\n            // Only process tiles in current section\n            if (tileX >= worldX && tileX < sectionEnd) {\n                const tileY = tile.px[1] + worldY;\n                const hitbox = this.createHitbox(tileX, tileY);\n                if (hitbox) {\n                    sectionHitboxes.add(hitbox);\n                }\n            }\n        });\n    }",
+      "metadata": {
+        "start_line": 44,
+        "end_line": 58,
+        "notes": "Processes auto-placed tiles and creates hitboxes for them",
+        "imports": []
+      }
+    },
+    {
+      "file_name": "LDTKTileManager.js",
+      "chunk_index": 4,
+      "method": "processIntGridTiles",
+      "chunk_text": "/**\n * Process integer grid tiles from LDtk\n * Creates hitboxes for solid grid cells\n * @param {Object} layer - IntGrid layer data\n * @param {number} worldX - Section offset X\n * @param {number} worldY - Section offset Y\n * @param {number} sectionWidth - Section bounds\n * @param {Set} sectionHitboxes - Current section's hitboxes\n */\n    processIntGridTiles(layer, worldX, worldY, sectionWidth, sectionHitboxes) {\n        const tileSize = 32;              // Tile dimensions\n        const sectionEnd = worldX + sectionWidth;\n        const startTile = Math.floor(worldX / tileSize);\n        const endTile = Math.ceil(sectionEnd / tileSize);\n\n        // Scan grid cells in section\n        for (let x = startTile; x < endTile; x++) {\n            for (let y = 0; y < layer.__cHei; y++) {\n                const idx = y * layer.__cWid + x;\n                const value = layer.intGridCsv[idx];\n\n                // Create hitbox for solid cells (value > 0)\n                if (value > 0) {\n                    const tileX = x * tileSize + worldX;\n                    const tileY = y * tileSize + worldY;\n                    const hitbox = this.createHitbox(tileX, tileY);\n                    if (hitbox) {\n                        sectionHitboxes.add(hitbox);\n                    }\n                }\n            }\n        }\n    }",
+      "metadata": {
+        "start_line": 59,
+        "end_line": 88,
+        "notes": "Processes integer grid tiles and creates hitboxes for solid cells",
+        "imports": []
+      }
+    }
+  ]
+  

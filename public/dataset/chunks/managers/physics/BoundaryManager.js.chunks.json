@@ -1,0 +1,47 @@
+[
+    {
+      "file_name": "BoundaryManager.js",
+      "chunk_index": 0,
+      "method": "class_definition",
+      "chunk_text": "/**\n * BoundaryManager.js\n * Creates and manages invisible boundaries for the game scene\n * Prevents player from moving outside playable area\n */\n\nexport class SceneBoundaryManager {",
+      "metadata": {
+        "start_line": 1,
+        "end_line": 5,
+        "notes": "Class definition for managing invisible boundaries to restrict player movement within the scene",
+        "imports": [],
+        "tags": ["class_definition", "boundary_manager", "phaser3"],
+        "related_chunks": []
+      }
+    },
+    {
+      "file_name": "BoundaryManager.js",
+      "chunk_index": 1,
+      "method": "constructor",
+      "chunk_text": "    /**\n     * Initialize boundary manager\n     * @param {Phaser.Scene} scene - The scene to add boundaries to\n     */\n    constructor(scene) {\n        this.scene = scene;\n    }",
+      "metadata": {
+        "start_line": 7,
+        "end_line": 11,
+        "notes": "Constructor for initializing the SceneBoundaryManager with scene reference",
+        "imports": [],
+        "tags": ["constructor", "boundary_manager", "phaser3"],
+        "related_chunks": []
+      }
+    },
+    {
+      "file_name": "BoundaryManager.js",
+      "chunk_index": 2,
+      "method": "createBoundaries",
+      "chunk_text": "    /**\n     * Create invisible collision boundaries\n     * Currently implements left boundary, can be extended for right/top/bottom\n     * @param {Phaser.GameObjects.Sprite} player - Player sprite to collide with boundaries\n     */\n    createBoundaries(player) {\n        const { width, height } = this.scene.scale;\n\n        const leftBoundary = this.scene.add.rectangle(0, height / 2, 10, height, 0x000000, 0);\n        this.scene.physics.add.existing(leftBoundary, true);\n\n        if (player) {\n            this.scene.physics.add.collider(player, leftBoundary);\n        }\n    }",
+      "metadata": {
+        "start_line": 13,
+        "end_line": 32,
+        "notes": "Creates an invisible boundary on the left side of the scene and sets collision with player",
+        "imports": [],
+        "tags": ["create_boundaries", "collision", "phaser3"],
+        "related_chunks": [
+          {"file_name": "BoundaryManager.js", "chunk_index": 1, "method": "constructor"}
+        ]
+      }
+    }
+  ]
+  

@@ -1,0 +1,92 @@
+[
+    {
+      "file_name": "LevelLoader.js",
+      "chunk_index": 0,
+      "method": "class_definition",
+      "chunk_text": "/**\n * LevelLoader.js\n * Loads and converts LDtk level data into Phaser tilemaps\n * Handles tile placement, collision setup, and layer management\n * Bridges LDtk editor format with Phaser's tilemap system\n */\n\nexport class LevelLoader {",
+      "metadata": {
+        "start_line": 1,
+        "end_line": 5,
+        "notes": "Class definition for loading and converting LDtk level data into Phaser tilemaps",
+        "imports": [],
+        "tags": ["class_definition", "level_loader", "phaser3"],
+        "related_chunks": []
+      }
+    },
+    {
+      "file_name": "LevelLoader.js",
+      "chunk_index": 1,
+      "method": "constructor",
+      "chunk_text": "    /**\n     * Initialize level loading system\n     * @param {Phaser.Scene} scene - Scene to create tilemaps in\n     */\n    constructor(scene) {\n        this.scene = scene;\n    }",
+      "metadata": {
+        "start_line": 7,
+        "end_line": 11,
+        "notes": "Constructor for initializing the LevelLoader with scene reference",
+        "imports": [],
+        "tags": ["constructor", "level_loader", "phaser3"],
+        "related_chunks": []
+      }
+    },
+    {
+      "file_name": "LevelLoader.js",
+      "chunk_index": 2,
+      "method": "loadLevel",
+      "chunk_text": "    /**\n     * Load level from cache and create tilemap\n     * Handles both single and multi-level files\n     * @param {string} levelKey - Cache key for level data\n     * @returns {Object} Created map and layer\n     */\n    loadLevel(levelKey) {\n        const levelData = this.scene.cache.json.get(levelKey);\n        if (!levelData) {\n            console.error(`Level data not found for key: ${levelKey}`);\n            return { map: null, layer: null };\n        }\n\n        if (levelData.levels && levelData.levels[0]) {\n            return this.createTileMap(levelData.levels[0]);\n        }\n        return this.createTileMap(levelData);\n    }",
+      "metadata": {
+        "start_line": 13,
+        "end_line": 31,
+        "notes": "Loads a level from cache and creates a tilemap, handles multi-level files",
+        "imports": [],
+        "tags": ["load_level", "tilemap", "phaser3"],
+        "related_chunks": [
+          {"file_name": "LevelLoader.js", "chunk_index": 3, "method": "createTileMap"}
+        ]
+      }
+    },
+    {
+      "file_name": "LevelLoader.js",
+      "chunk_index": 3,
+      "method": "createTileMap",
+      "chunk_text": "    /**\n     * Convert LDtk level to Phaser tilemap\n     * Sets up tiles, collisions, and properties\n     * @param {Object} levelData - LDtk level definition\n     * @returns {Object} Phaser map and layer objects\n     */\n    createTileMap(levelData) {\n        const layerInstances = levelData.layerInstances || [];\n        const tileLayer = layerInstances.find(layer => layer.__type === 'Tiles');\n\n        if (!tileLayer) {\n            console.error('Tiles layer not found');\n            return { map: null, layer: null };\n        }\n\n        const map = this.scene.make.tilemap({\n            width: tileLayer.__cWid,\n            height: tileLayer.__cHei,\n            tileWidth: tileLayer.__gridSize,\n            tileHeight: tileLayer.__gridSize\n        });\n\n        const tileset = map.addTilesetImage('tileset');\n        if (!tileset) {\n            console.error('Failed to add tileset image');\n            return { map: null, layer: null };\n        }\n\n        const layer = map.createBlankLayer('level', tileset, 0, 0);\n        if (!layer) {\n            console.error('Failed to create level layer');\n            return { map: null, layer: null };\n        }\n\n        if (tileLayer.gridTiles) {\n            tileLayer.gridTiles.forEach(tile => {\n                const tileX = Math.floor(tile.px[0] / tileLayer.__gridSize);\n                const tileY = Math.floor(tile.px[1] / tileLayer.__gridSize);\n                const tileIndex = this.getFrameFromSrc(tile.src, tileLayer.__gridSize);\n                layer.putTileAt(tileIndex, tileX, tileY);\n            });\n\n            layer.forEachTile(tile => {\n                if (tile && tile.index !== -1) {\n                    tile.setCollision(true, true, true, true);\n                    tile.properties = { ...tile.properties, collides: true };\n                }\n            });\n\n            const indexes = [];\n            for (let i = 0; i < this.getTotalTiles(tileset); i++) {\n                indexes.push(i);\n            }\n            layer.setCollision(indexes);\n        }\n\n        return { map, layer };",
+      "metadata": {
+        "start_line": 33,
+        "end_line": 103,
+        "notes": "Converts LDtk level data to a Phaser tilemap and handles collision setup",
+        "imports": [],
+        "tags": ["create_tilemap", "ldtk", "collision", "tilemap", "phaser3"],
+        "related_chunks": [
+          {"file_name": "LevelLoader.js", "chunk_index": 4, "method": "getFrameFromSrc"},
+          {"file_name": "LevelLoader.js", "chunk_index": 5, "method": "getTotalTiles"}
+        ]
+      }
+    },
+    {
+      "file_name": "LevelLoader.js",
+      "chunk_index": 4,
+      "method": "getFrameFromSrc",
+      "chunk_text": "    /**\n     * Convert LDtk tile coordinates to tileset index\n     * Maps 2D position to 1D array index\n     * @param {Array} src - [x,y] position in tileset\n     * @param {number} gridSize - Tile dimensions\n     * @returns {number} Tileset index\n     */\n    getFrameFromSrc(src, gridSize) {\n        const [x, y] = src;\n        return (y / gridSize) * (192 / 32) + (x / gridSize);\n    }",
+      "metadata": {
+        "start_line": 105,
+        "end_line": 112,
+        "notes": "Converts LDtk tile coordinates to tileset index",
+        "imports": [],
+        "tags": ["tile_conversion", "ldtk", "phaser3"],
+        "related_chunks": []
+      }
+    },
+    {
+      "file_name": "LevelLoader.js",
+      "chunk_index": 5,
+      "method": "getTotalTiles",
+      "chunk_text": "    /**\n     * Calculate total tiles in tileset\n     * Used for collision setup\n     * @param {Phaser.Tilemaps.Tileset} tileset - Loaded tileset\n     * @returns {number} Total tile count\n     */\n    getTotalTiles(tileset) {\n        return (tileset.image.width / tileset.tileWidth) * (tileset.image.height / tileset.tileHeight);\n    }",
+      "metadata": {
+        "start_line": 114,
+        "end_line": 121,
+        "notes": "Calculates the total number of tiles in a tileset for collision setup",
+        "imports": [],
+        "tags": ["tile_count", "collision", "tileset", "phaser3"],
+        "related_chunks": []
+      }
+    }
+  ]
+  

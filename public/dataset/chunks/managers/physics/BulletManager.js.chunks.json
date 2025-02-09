@@ -1,0 +1,89 @@
+[
+    {
+      "file_name": "BulletManager.js",
+      "chunk_index": 0,
+      "method": "class_definition",
+      "chunk_text": "/**\n * BulletManager.js\n * Manages bullet creation, pooling, and lifecycle\n * Handles bullet physics and collision detection\n */\n\nimport { Bullet } from '../../prefabs/Bullet';\n\nclass BulletManager {",
+      "metadata": {
+        "start_line": 1,
+        "end_line": 5,
+        "notes": "Class definition for managing bullet pooling, creation, and physics interactions",
+        "imports": ["../../prefabs/Bullet"],
+        "tags": ["class_definition", "bullet_manager", "phaser3"],
+        "related_chunks": []
+      }
+    },
+    {
+      "file_name": "BulletManager.js",
+      "chunk_index": 1,
+      "method": "constructor",
+      "chunk_text": "    /**\n     * Initialize bullet management system\n     * Creates physics group for bullet pooling\n     * @param {Phaser.Scene} scene - Scene to attach bullets to\n     */\n    constructor(scene) {\n        if (!scene) {\n            throw new Error('Scene is required to initialize BulletManager.');\n        }\n        this.scene = scene;\n\n        this.bullets = this.scene.physics.add.group({\n            classType: Bullet,\n            maxSize: 20,\n            runChildUpdate: true,\n            allowGravity: false\n        });\n    }",
+      "metadata": {
+        "start_line": 7,
+        "end_line": 20,
+        "notes": "Constructor for initializing the BulletManager with scene reference and bullet pooling setup",
+        "imports": [],
+        "tags": ["constructor", "bullet_pooling", "phaser3"],
+        "related_chunks": []
+      }
+    },
+    {
+      "file_name": "BulletManager.js",
+      "chunk_index": 2,
+      "method": "#createBulletGroup",
+      "chunk_text": "    /**\n     * Create physics group for bullet pooling\n     * Sets up bullet behavior and constraints\n     * @private\n     */\n    #createBulletGroup() {\n        this.bullets = this.physics.add.group({\n            classType: Bullet,\n            maxSize: -1,\n            runChildUpdate: true,\n            allowGravity: false,\n            immovable: true\n        });\n    }",
+      "metadata": {
+        "start_line": 22,
+        "end_line": 31,
+        "notes": "Private method for creating the bullet pool with unlimited size and setting constraints",
+        "imports": [],
+        "tags": ["private_method", "bullet_pooling", "phaser3"],
+        "related_chunks": []
+      }
+    },
+    {
+      "file_name": "BulletManager.js",
+      "chunk_index": 3,
+      "method": "destroyBullet",
+      "chunk_text": "    /**\n     * Deactivate and hide bullet\n     * Called when bullet hits target or leaves screen\n     * @param {Bullet} bullet - Bullet to destroy\n     */\n    destroyBullet(bullet) {\n        bullet.setActive(false);\n        bullet.setVisible(false);\n        bullet.body.enable = false;\n    }",
+      "metadata": {
+        "start_line": 33,
+        "end_line": 40,
+        "notes": "Deactivates and hides the bullet when it hits its target or leaves the screen",
+        "imports": [],
+        "tags": ["bullet_lifecycle", "destroy_bullet", "phaser3"],
+        "related_chunks": []
+      }
+    },
+    {
+      "file_name": "BulletManager.js",
+      "chunk_index": 4,
+      "method": "createBullet",
+      "chunk_text": "    /**\n     * Create new bullet from pool\n     * Sets initial position and velocity\n     * @returns {Bullet|null} Created bullet or null if pool full\n     */\n    createBullet(x, y, velocityX) {\n        const bullet = this.bullets.get(x, y);\n        if (bullet) {\n            bullet.setActive(true)\n                 .setVisible(true)\n                 .setVelocityX(velocityX);\n        }\n        return bullet;\n    }",
+      "metadata": {
+        "start_line": 42,
+        "end_line": 53,
+        "notes": "Creates a new bullet from the pool, sets position and velocity",
+        "imports": [],
+        "tags": ["bullet_creation", "bullet_pooling", "phaser3"],
+        "related_chunks": [
+          {"file_name": "BulletManager.js", "chunk_index": 1, "method": "constructor"}
+        ]
+      }
+    },
+    {
+      "file_name": "BulletManager.js",
+      "chunk_index": 5,
+      "method": "getGroup",
+      "chunk_text": "    /**\n     * Get bullet physics group\n     * Used by collision manager for detection\n     * @returns {Phaser.Physics.Arcade.Group} Bullet group\n     */\n    getGroup() {\n        return this.bullets;\n    }",
+      "metadata": {
+        "start_line": 55,
+        "end_line": 61,
+        "notes": "Returns the bullet physics group for collision detection",
+        "imports": [],
+        "tags": ["bullet_group", "collision_manager", "phaser3"],
+        "related_chunks": []
+      }
+    }
+  ]
+  

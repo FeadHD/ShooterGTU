@@ -1,0 +1,79 @@
+[
+    {
+      "file_name": "PersistenceManager.js",
+      "chunk_index": 0,
+      "method": "class_definition",
+      "chunk_text": "/**\n * PersistenceManager.js\n * Manages game state persistence using local storage\n * Handles saving, loading, and clearing of the game state\n * Bridges game state manager with local storage functionality\n */\n\nexport class PersistenceManager {",
+      "metadata": {
+        "start_line": 1,
+        "end_line": 5,
+        "notes": "Class definition for managing game state persistence with local storage",
+        "imports": [],
+        "tags": ["class_definition", "persistence_manager", "local_storage"],
+        "related_chunks": []
+      }
+    },
+    {
+      "file_name": "PersistenceManager.js",
+      "chunk_index": 1,
+      "method": "constructor",
+      "chunk_text": "    /**\n     * Initializes the PersistenceManager with a reference to the GameStateManager\n     * @param {GameStateManager} gameStateManager - The game state manager instance\n     */\n    constructor(gameStateManager) {\n        this.gameStateManager = gameStateManager;\n    }",
+      "metadata": {
+        "start_line": 7,
+        "end_line": 11,
+        "notes": "Constructor for initializing the PersistenceManager with a reference to the GameStateManager",
+        "imports": [],
+        "tags": ["constructor", "persistence_manager", "game_state_manager"],
+        "related_chunks": []
+      }
+    },
+    {
+      "file_name": "PersistenceManager.js",
+      "chunk_index": 2,
+      "method": "saveToLocalStorage",
+      "chunk_text": "    /**\n     * Save the current game state to local storage\n     * @description\n     * Iterates over the registry values and stores them in local storage\n     * @returns {void}\n     */\n    saveToLocalStorage() {\n        const gameState = {};\n        const registry = this.gameStateManager.registry;\n\n        registry.getAll().forEach(({ key, value }) => {\n            gameState[key] = value;\n        });\n\n        localStorage.setItem('gameState', JSON.stringify(gameState));\n    }",
+      "metadata": {
+        "start_line": 13,
+        "end_line": 28,
+        "notes": "Saves the current game state from the registry to local storage",
+        "imports": [],
+        "tags": ["save_to_local_storage", "game_state", "local_storage"],
+        "related_chunks": [
+          {"file_name": "PersistenceManager.js", "chunk_index": 1, "method": "constructor"},
+          {"file_name": "GameStateManager.js", "chunk_index": 4, "method": "set"}
+        ]
+      }
+    },
+    {
+      "file_name": "PersistenceManager.js",
+      "chunk_index": 3,
+      "method": "loadFromLocalStorage",
+      "chunk_text": "    /**\n     * Load the saved game state from local storage\n     * @returns {boolean} True if the state was loaded successfully\n     *\n     * @description\n     * Retrieves the game state from local storage and updates the registry\n     * @returns {boolean} True if state loaded, false otherwise\n     */\n    loadFromLocalStorage() {\n        const savedState = localStorage.getItem('gameState');\n        if (savedState) {\n            const gameState = JSON.parse(savedState);\n            Object.entries(gameState).forEach(([key, value]) => {\n                this.gameStateManager.set(key, value);\n            });\n            return true;\n        }\n        return false;\n    }",
+      "metadata": {
+        "start_line": 30,
+        "end_line": 52,
+        "notes": "Loads the saved game state from local storage and updates the game state manager",
+        "imports": [],
+        "tags": ["load_from_local_storage", "game_state", "local_storage"],
+        "related_chunks": [
+          {"file_name": "PersistenceManager.js", "chunk_index": 1, "method": "constructor"},
+          {"file_name": "GameStateManager.js", "chunk_index": 4, "method": "set"}
+        ]
+      }
+    },
+    {
+      "file_name": "PersistenceManager.js",
+      "chunk_index": 4,
+      "method": "clearSavedState",
+      "chunk_text": "    /**\n     * Clears the saved game state from local storage\n     * @returns {void}\n     *\n     * @description\n     * Removes the saved game state from the browser's local storage\n     */\n    clearSavedState() {\n        localStorage.removeItem('gameState');\n    }",
+      "metadata": {
+        "start_line": 54,
+        "end_line": 59,
+        "notes": "Clears the saved game state from local storage",
+        "imports": [],
+        "tags": ["clear_saved_state", "local_storage", "game_state"],
+        "related_chunks": []
+      }
+    }
+  ]
+  
