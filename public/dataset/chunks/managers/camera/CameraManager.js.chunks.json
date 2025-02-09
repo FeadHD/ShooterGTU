@@ -8,7 +8,8 @@
       "start_line": 1,
       "end_line": 8,
       "notes": "Class definition and overview",
-      "imports": []
+      "imports": [],
+      "tags": ["camera", "gameplay", "scene", "progressive_loading"]
     }
   },
   {
@@ -20,7 +21,8 @@
       "start_line": 9,
       "end_line": 42,
       "notes": "Constructor with camera system initialization",
-      "imports": []
+      "imports": [],
+      "tags": ["constructor", "camera_system", "follow", "zoom", "loading"]
     }
   },
   {
@@ -32,7 +34,8 @@
       "start_line": 44,
       "end_line": 84,
       "notes": "Camera initialization with player and level bounds",
-      "imports": []
+      "imports": [],
+      "tags": ["camera_setup", "player_follow", "level_bounds", "zoom", "ui"]
     }
   },
   {
@@ -44,7 +47,8 @@
       "start_line": 86,
       "end_line": 94,
       "notes": "Basic camera setup method",
-      "imports": []
+      "imports": [],
+      "tags": ["camera", "player_follow", "setup"]
     }
   },
   {
@@ -56,7 +60,8 @@
       "start_line": 96,
       "end_line": 137,
       "notes": "Main update method for camera bounds and progressive loading",
-      "imports": []
+      "imports": [],
+      "tags": ["camera", "update", "bounds", "progressive_loading"]
     }
   },
   {
@@ -68,7 +73,8 @@
       "start_line": 139,
       "end_line": 161,
       "notes": "Progressive level loading check method",
-      "imports": []
+      "imports": [],
+      "tags": ["loading", "level_sections", "player_position"]
     }
   },
   {
@@ -80,7 +86,8 @@
       "start_line": 163,
       "end_line": 171,
       "notes": "Method to reset camera bounds",
-      "imports": []
+      "imports": [],
+      "tags": ["camera", "bounds", "reset"]
     }
   },
   {
@@ -92,7 +99,8 @@
       "start_line": 173,
       "end_line": 197,
       "notes": "Camera intro sequence animation",
-      "imports": []
+      "imports": [],
+      "tags": ["camera", "intro", "animation", "pan"]
     }
   },
   {
@@ -104,7 +112,8 @@
       "start_line": 199,
       "end_line": 213,
       "notes": "Method to stop intro sequence and transition to normal following",
-      "imports": []
+      "imports": [],
+      "tags": ["camera", "stop", "intro", "transition"]
     }
   }
 ]

@@ -8,7 +8,8 @@
       "start_line": 1,
       "end_line": 3,
       "notes": "Core Phaser game configuration header",
-      "imports": []
+      "imports": [],
+      "tags": ["phaser", "game-configuration", "core-settings"]
     }
   },
   {
@@ -35,7 +36,8 @@
         "../scenes/base/Boot",
         "../scenes/base/Preloader",
         "../scenes/menus/PauseMenu"
-      ]
+      ],
+      "tags": ["scene-config", "phaser-scenes", "import-statements"]
     }
   },
   {
@@ -47,7 +49,8 @@
       "start_line": 33,
       "end_line": 99,
       "notes": "Main game configuration object with rendering, display, physics, and scene settings",
-      "imports": []
+      "imports": [],
+      "tags": ["game-config", "main-settings", "rendering", "physics", "scenes"]
     }
   }
 ]

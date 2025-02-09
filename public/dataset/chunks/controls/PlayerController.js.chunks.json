@@ -8,9 +8,8 @@
       "start_line": 1,
       "end_line": 6,
       "notes": "File header documentation and imports",
-      "imports": [
-        "phaser"
-      ]
+      "imports": ["phaser"],
+      "tags": ["player", "input", "controller", "keyboard", "mouse", "Phaser"]
     }
   },
   {
@@ -22,7 +21,8 @@
       "start_line": 12,
       "end_line": 33,
       "notes": "Constructor initializing player controls with default or saved key bindings",
-      "imports": []
+      "imports": [],
+      "tags": ["player", "input", "constructor", "controls", "keyBindings"]
     }
   },
   {
@@ -34,7 +34,8 @@
       "start_line": 35,
       "end_line": 61,
       "notes": "Creates control objects for keyboard and mouse inputs",
-      "imports": []
+      "imports": [],
+      "tags": ["player", "input", "controls", "keyboard", "mouse"]
     }
   },
   {
@@ -46,7 +47,8 @@
       "start_line": 65,
       "end_line": 71,
       "notes": "Loads key bindings from localStorage with fallback to defaults",
-      "imports": []
+      "imports": [],
+      "tags": ["player", "input", "keyBindings", "localStorage", "controls"]
     }
   },
   {
@@ -58,7 +60,8 @@
       "start_line": 73,
       "end_line": 79,
       "notes": "Saves current key bindings to localStorage",
-      "imports": []
+      "imports": [],
+      "tags": ["player", "input", "keyBindings", "localStorage", "controls"]
     }
   },
   {
@@ -70,7 +73,8 @@
       "start_line": 81,
       "end_line": 104,
       "notes": "Change key binding for an action with special key handling",
-      "imports": []
+      "imports": [],
+      "tags": ["player", "input", "keyBindings", "controls", "keyboard", "rebinding"]
     }
   },
   {
@@ -82,7 +86,8 @@
       "start_line": 106,
       "end_line": 167,
       "notes": "Converts key codes to human-readable display names with special character support",
-      "imports": []
+      "imports": [],
+      "tags": ["player", "input", "keyBindings", "controls", "keyCodes"]
     }
   },
   {
@@ -94,7 +99,8 @@
       "start_line": 169,
       "end_line": 183,
       "notes": "Creates and manages the key rebinding UI interface",
-      "imports": []
+      "imports": [],
+      "tags": ["player", "input", "keyBindings", "UI", "controls", "rebind"]
     }
   },
   {
@@ -106,7 +112,8 @@
       "start_line": 184,
       "end_line": 190,
       "notes": "Resets all key bindings to their default values with storage update",
-      "imports": []
+      "imports": [],
+      "tags": ["player", "input", "keyBindings", "reset", "controls", "localStorage"]
     }
   },
   {
@@ -118,7 +125,8 @@
       "start_line": 192,
       "end_line": 204,
       "notes": "Main game loop update method for player controls",
-      "imports": []
+      "imports": [],
+      "tags": ["player", "controls", "movement", "shooting", "gameLoop"]
     }
   },
   {
@@ -130,7 +138,8 @@
       "start_line": 206,
       "end_line": 238,
       "notes": "Handles player movement mechanics and physics",
-      "imports": []
+      "imports": [],
+      "tags": ["player", "movement", "controls", "physics", "animation"]
     }
   },
   {
@@ -142,7 +151,8 @@
       "start_line": 240,
       "end_line": 280,
       "notes": "Handles player shooting mechanics with projectile management",
-      "imports": []
+      "imports": [],
+      "tags": ["player", "shooting", "projectiles", "cooldown", "controls"]
     }
   }
 ]

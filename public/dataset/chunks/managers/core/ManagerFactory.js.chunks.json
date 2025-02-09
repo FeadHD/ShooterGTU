@@ -40,7 +40,8 @@
         "../../prefabs/Turret",
         "../../prefabs/MeleeWarrior",
         "../../prefabs/enemies/Zapper"
-      ]
+      ],
+      "tags": ["class", "dependency_injection", "singleton", "game_system", "initialization"]
     }
   },
   {
@@ -52,7 +53,8 @@
       "start_line": 48,
       "end_line": 180,
       "notes": "Main manager creation and initialization method. This is a large method but kept in one chunk for clarity of initialization flow.",
-      "imports": []
+      "imports": [],
+      "tags": ["manager_creation", "initialization", "game_systems", "dependency_injection", "service_container"]
     }
   },
   {
@@ -64,7 +66,8 @@
       "start_line": 182,
       "end_line": 196,
       "notes": "Entity manager factory method",
-      "imports": []
+      "imports": [],
+      "tags": ["factory_method", "entity_manager", "ldtk"]
     }
   },
   {
@@ -76,7 +79,8 @@
       "start_line": 198,
       "end_line": 266,
       "notes": "Collection of singleton getter methods for various managers. Grouped together as they follow the same pattern.",
-      "imports": []
+      "imports": [],
+      "tags": ["singleton_getters", "game_managers", "dependency_injection", "phaser3"]
     }
   },
   {
@@ -88,7 +92,8 @@
       "start_line": 268,
       "end_line": 290,
       "notes": "Entity factory methods grouped together",
-      "imports": []
+      "imports": [],
+      "tags": ["entity_factory_methods", "game_entities", "phaser3"]
     }
   }
 ]

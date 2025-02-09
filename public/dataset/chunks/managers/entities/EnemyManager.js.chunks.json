@@ -12,7 +12,8 @@
         "./EntityManager",
         "../../config/GameConfig",
         "../core/EventManager"
-      ]
+      ],
+      "tags": ["imports", "dependencies", "phaser3", "enemy_management"]
     }
   },
   {
@@ -24,7 +25,8 @@
       "start_line": 1,
       "end_line": 19,
       "notes": "Class definition with comprehensive documentation",
-      "imports": []
+      "imports": [],
+      "tags": ["class_definition", "enemy_management", "phaser3", "entity_management"]
     }
   },
   {
@@ -36,7 +38,8 @@
       "start_line": 20,
       "end_line": 27,
       "notes": "Constructor initialization with enemy tracking",
-      "imports": []
+      "imports": [],
+      "tags": ["constructor", "initialization", "enemy_tracking", "phaser3"]
     }
   },
   {
@@ -48,7 +51,8 @@
       "start_line": 29,
       "end_line": 54,
       "notes": "Method to add and initialize new enemies with health tracking",
-      "imports": []
+      "imports": [],
+      "tags": ["enemy_registration", "health_tracking", "phaser3", "event_management"]
     }
   },
   {
@@ -60,7 +64,8 @@
       "start_line": 56,
       "end_line": 98,
       "notes": "Method to handle bullet collisions and damage application",
-      "imports": []
+      "imports": [],
+      "tags": ["bullet_collision", "damage_application", "phaser3", "enemy_health"]
     }
   },
   {
@@ -72,7 +77,8 @@
       "start_line": 100,
       "end_line": 108,
       "notes": "Method to broadcast enemy health changes via events",
-      "imports": []
+      "imports": [],
+      "tags": ["health_change", "event_broadcast", "phaser3", "ui_update"]
     }
   },
   {
@@ -84,7 +90,8 @@
       "start_line": 110,
       "end_line": 134,
       "notes": "Method to handle enemy death and score updates",
-      "imports": []
+      "imports": [],
+      "tags": ["enemy_death", "score_update", "phaser3", "game_state"]
     }
   },
   {
@@ -96,7 +103,8 @@
       "start_line": 136,
       "end_line": 144,
       "notes": "Utility method to find enemy entity from sprite reference",
-      "imports": []
+      "imports": [],
+      "tags": ["enemy_lookup", "sprite_reference", "phaser3", "collision_system"]
     }
   }
 ]

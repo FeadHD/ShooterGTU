@@ -8,7 +8,8 @@
       "start_line": 1,
       "end_line": 34,
       "notes": "Enemy asset system configuration and structure documentation",
-      "imports": []
+      "imports": [],
+      "tags": ["asset-config", "enemy-assets", "animation", "sprites"]
     }
   },
   {
@@ -20,7 +21,8 @@
       "start_line": 36,
       "end_line": 65,
       "notes": "Enemy sprite and animation configuration with frame sequences",
-      "imports": []
+      "imports": [],
+      "tags": ["enemy-config", "sprites", "animations", "game-assets"]
     }
   }
 ]

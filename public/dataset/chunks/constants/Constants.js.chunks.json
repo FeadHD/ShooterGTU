@@ -8,7 +8,8 @@
       "start_line": 1,
       "end_line": 5,
       "notes": "File header documentation explaining purpose of constants",
-      "imports": []
+      "imports": [],
+      "tags": ["constants", "game-entities", "default-configurations"]
     }
   },
   {
@@ -20,7 +21,8 @@
       "start_line": 7,
       "end_line": 16,
       "notes": "Default configuration object for enemy entities with base settings",
-      "imports": []
+      "imports": [],
+      "tags": ["constants", "enemy", "configuration", "default"]
     }
   },
   {
@@ -32,7 +34,8 @@
       "start_line": 18,
       "end_line": 26,
       "notes": "Default configuration object for trap entities with base settings",
-      "imports": []
+      "imports": [],
+      "tags": ["constants", "trap", "configuration", "default"]
     }
   }
 ]

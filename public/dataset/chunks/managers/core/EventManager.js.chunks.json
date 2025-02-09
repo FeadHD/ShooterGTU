@@ -8,7 +8,8 @@
       "start_line": 1,
       "end_line": 18,
       "notes": "Class definition with enhanced documentation and Phaser dependencies",
-      "imports": ["./BaseManager"]
+      "imports": ["./BaseManager"],
+      "tags": ["class_definition", "event_manager", "dependency_injection", "phaser3"]
     }
   },
   {
@@ -20,7 +21,8 @@
       "start_line": 20,
       "end_line": 55,
       "notes": "Game event constants with enhanced documentation and usage examples",
-      "imports": []
+      "imports": [],
+      "tags": ["game_events", "constants", "event_handling", "phaser3"]
     }
   },
   {
@@ -32,7 +34,8 @@
       "start_line": 65,
       "end_line": 82,
       "notes": "Constructor with scene initialization and Phaser dependencies",
-      "imports": []
+      "imports": [],
+      "tags": ["constructor", "event_manager", "phaser3", "dependency_injection"]
     }
   },
   {
@@ -44,7 +47,8 @@
       "start_line": 84,
       "end_line": 103,
       "notes": "Event system initialization method",
-      "imports": []
+      "imports": [],
+      "tags": ["event_system", "initialization", "phaser3"]
     }
   },
   {
@@ -56,7 +60,8 @@
       "start_line": 105,
       "end_line": 150,
       "notes": "Default event handler registration",
-      "imports": []
+      "imports": [],
+      "tags": ["event_registration", "core_game_events", "event_handling"]
     }
   },
   {
@@ -68,7 +73,8 @@
       "start_line": 152,
       "end_line": 167,
       "notes": "Event handler registration method",
-      "imports": []
+      "imports": [],
+      "tags": ["event_handler", "registration", "phaser3"]
     }
   },
   {
@@ -80,7 +86,8 @@
       "start_line": 169,
       "end_line": 183,
       "notes": "One-time event handler registration",
-      "imports": []
+      "imports": [],
+      "tags": ["event_handler", "one_time", "phaser3"]
     }
   },
   {
@@ -92,7 +99,8 @@
       "start_line": 185,
       "end_line": 206,
       "notes": "Event emission method with enhanced data documentation",
-      "imports": []
+      "imports": [],
+      "tags": ["event_emission", "data_enrichment", "phaser3"]
     }
   },
   {
@@ -104,7 +112,8 @@
       "start_line": 208,
       "end_line": 221,
       "notes": "Event handler removal method",
-      "imports": []
+      "imports": [],
+      "tags": ["event_handler", "removal", "phaser3"]
     }
   },
   {
@@ -116,7 +125,8 @@
       "start_line": 223,
       "end_line": 236,
       "notes": "Complete event cleanup method",
-      "imports": []
+      "imports": [],
+      "tags": ["event_cleanup", "event_removal", "phaser3"]
     }
   },
   {
@@ -128,7 +138,8 @@
       "start_line": 238,
       "end_line": 252,
       "notes": "Manager cleanup and destruction method",
-      "imports": []
+      "imports": [],
+      "tags": ["event_manager", "cleanup", "phaser3"]
     }
   }
 ]

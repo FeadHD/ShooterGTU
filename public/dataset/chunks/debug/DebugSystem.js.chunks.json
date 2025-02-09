@@ -8,7 +8,8 @@
       "start_line": 1,
       "end_line": 42,
       "notes": "Core debug system initialization with graphics layers and input handling",
-      "imports": []
+      "imports": [],
+      "tags": ["debug", "visualization", "game", "development", "testing", "input"]
     }
   },
   {
@@ -20,7 +21,8 @@
       "start_line": 44,
       "end_line": 48,
       "notes": "Reserved method for future debug system expansion",
-      "imports": []
+      "imports": [],
+      "tags": ["debug", "visualization", "future", "expansion"]
     }
   },
   {
@@ -32,7 +34,8 @@
       "start_line": 50,
       "end_line": 60,
       "notes": "Physics body visualization with real-time boundary drawing",
-      "imports": []
+      "imports": [],
+      "tags": ["debug", "physics", "collision", "real-time", "visualization"]
     }
   },
   {
@@ -44,7 +47,8 @@
       "start_line": 62,
       "end_line": 102,
       "notes": "Comprehensive drone enemy debug visualization with patrol paths and states",
-      "imports": []
+      "imports": [],
+      "tags": ["debug", "visualization", "drone", "enemies", "patrol", "health"]
     }
   },
   {
@@ -56,7 +60,8 @@
       "start_line": 104,
       "end_line": 132,
       "notes": "Warrior enemy debug visualization with combat ranges and movement indicators",
-      "imports": []
+      "imports": [],
+      "tags": ["debug", "warrior", "enemies", "combat", "visualization"]
     }
   },
   {
@@ -68,7 +73,8 @@
       "start_line": 134,
       "end_line": 162,
       "notes": "Player character debug visualization with movement and combat state indicators",
-      "imports": []
+      "imports": [],
+      "tags": ["debug", "player", "combat", "movement", "visualization"]
     }
   },
   {
@@ -80,7 +86,8 @@
       "start_line": 164,
       "end_line": 200,
       "notes": "Core update loop for debug visualization with detailed performance analysis and error handling",
-      "imports": []
+      "imports": [],
+      "tags": ["debug", "visualization", "platforms", "player", "enemies", "performance"]
     }
   },
   {
@@ -92,7 +99,8 @@
       "start_line": 202,
       "end_line": 210,
       "notes": "Comprehensive resource cleanup with error recovery and state management",
-      "imports": []
+      "imports": [],
+      "tags": ["debug", "cleanup", "resources", "memory", "performance"]
     }
   }
 ]

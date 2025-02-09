@@ -6,12 +6,20 @@ def format_json(input_file):
     try:
         with open(input_file, 'r', encoding='utf-8') as f:
             data = json.load(f)
-        
+
+        # Reformatting the JSON data to ensure consistent field alignment
+        formatted_data = json.dumps(data, indent=2, ensure_ascii=False)
+
+        # Replacing line breaks in the tags array to make sure they're on the same line
+        formatted_data = formatted_data.replace('"tags": [', '"tags": [ ').replace('],\n', ']\n    ')  # tags on the same line
+
         # Write back with consistent formatting
         with open(input_file, 'w', encoding='utf-8') as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
-            f.write('\n')  # Add newline at end of file
+            f.write(formatted_data)
+            f.write('\n')  # Add newline at the end of the file to ensure proper format
+        
         print(f"Successfully formatted: {input_file}")
+    
     except Exception as e:
         print(f"Error processing {input_file}: {str(e)}")
 

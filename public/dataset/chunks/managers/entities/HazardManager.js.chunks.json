@@ -14,7 +14,8 @@
         "../../config/GameConfig",
         "../../prefabs/AlarmTrigger",
         "../../prefabs/Trap"
-      ]
+      ],
+      "tags": ["imports", "dependencies", "phaser3", "hazard_management"]
     }
   },
   {
@@ -26,7 +27,8 @@
       "start_line": 1,
       "end_line": 24,
       "notes": "Separate file-level (@file) and class-level documentation with clear responsibilities",
-      "imports": []
+      "imports": [],
+      "tags": ["file", "documentation", "module", "hazard_manager", "phaser3"]
     }
   },
   {
@@ -38,7 +40,8 @@
       "start_line": 26,
       "end_line": 47,
       "notes": "Constructor initialization with physics groups and damage-tracking Map",
-      "imports": []
+      "imports": [],
+      "tags": ["constructor", "initialization", "hazard_manager", "trap_management", "phaser3"]
     }
   },
   {
@@ -50,7 +53,8 @@
       "start_line": 49,
       "end_line": 77,
       "notes": "Method to add and initialize hazards with collision setup",
-      "imports": []
+      "imports": [],
+      "tags": ["hazard_management", "collision_detection", "trap_management", "phaser3"]
     }
   },
   {
@@ -62,7 +66,8 @@
       "start_line": 79,
       "end_line": 112,
       "notes": "Method to handle player collisions, respecting invulnerability cooldown",
-      "imports": []
+      "imports": [],
+      "tags": ["collision_handling", "damage_system", "invulnerability", "event_broadcast", "phaser3"]
     }
   },
   {
@@ -74,7 +79,8 @@
       "start_line": 114,
       "end_line": 144,
       "notes": "Method to calculate valid hazard spawn points by checking platform overlaps",
-      "imports": []
+      "imports": [],
+      "tags": ["spawn_point_calculation", "grid_system", "collision_detection", "phaser3"]
     }
   },
   {
@@ -86,7 +92,8 @@
       "start_line": 146,
       "end_line": 186,
       "notes": "Method to create and place traps and alarm triggers based on config",
-      "imports": []
+      "imports": [],
+      "tags": ["trap_creation", "hazard_management", "alarm_trigger", "collision_setup"]
     }
   },
   {
@@ -98,7 +105,8 @@
       "start_line": 188,
       "end_line": 206,
       "notes": "Method to establish collision callbacks for alarm triggers and the player",
-      "imports": []
+      "imports": [],
+      "tags": ["collision_detection", "alarm_triggers", "player_collision", "phaser3"]
     }
   },
   {
@@ -110,7 +118,8 @@
       "start_line": 208,
       "end_line": 231,
       "notes": "Method to remove hazards, reset cooldowns, and clear groups",
-      "imports": []
+      "imports": [],
+      "tags": ["hazard_cleanup", "trap_management", "alarm_cleanup", "game_reset"]
     }
   }
 ]

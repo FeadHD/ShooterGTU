@@ -8,7 +8,8 @@
       "start_line": 1,
       "end_line": 16,
       "notes": "Base class definition with enhanced documentation and Phaser dependencies",
-      "imports": ["./ServiceContainer"]
+      "imports": ["./ServiceContainer"],
+      "tags": ["base_manager", "dependency_injection", "phaser3"]
     }
   },
   {
@@ -20,7 +21,8 @@
       "start_line": 17,
       "end_line": 31,
       "notes": "Constructor with container initialization",
-      "imports": []
+      "imports": [],
+      "tags": ["constructor", "service_access", "phaser3"]
     }
   },
   {
@@ -32,7 +34,8 @@
       "start_line": 33,
       "end_line": 47,
       "notes": "Method to get current game scene with Phaser Scene type references",
-      "imports": []
+      "imports": [],
+      "tags": ["scene_access", "game_scene", "phaser3"]
     }
   },
   {
@@ -44,7 +47,8 @@
       "start_line": 49,
       "end_line": 71,
       "notes": "Method to get manager instances with examples",
-      "imports": []
+      "imports": [],
+      "tags": ["manager_access", "service_container", "dependency_injection", "phaser3"]
     }
   }
 ]

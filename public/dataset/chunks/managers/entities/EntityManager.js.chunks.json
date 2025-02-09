@@ -11,7 +11,8 @@
       "imports": [
         "../core/BaseManager",
         "../core/EventManager"
-      ]
+      ],
+      "tags": ["imports", "dependencies", "phaser3", "event_management"]
     }
   },
   {
@@ -23,7 +24,8 @@
       "start_line": 1,
       "end_line": 20,
       "notes": "Class definition with comprehensive documentation",
-      "imports": []
+      "imports": [],
+      "tags": ["class_definition", "entity_management", "base_manager", "phaser3"]
     }
   },
   {
@@ -35,7 +37,8 @@
       "start_line": 22,
       "end_line": 38,
       "notes": "Constructor initialization with entity storage and event system setup",
-      "imports": []
+      "imports": [],
+      "tags": ["constructor", "initialization", "entity_storage", "event_system", "phaser3"]
     }
   },
   {
@@ -47,7 +50,8 @@
       "start_line": 40,
       "end_line": 62,
       "notes": "Method to add and register new entities",
-      "imports": []
+      "imports": [],
+      "tags": ["entity_management", "entity_registration", "phaser3", "event_handling"]
     }
   },
   {
@@ -59,7 +63,8 @@
       "start_line": 64,
       "end_line": 85,
       "notes": "Method to remove entities and notify systems",
-      "imports": []
+      "imports": [],
+      "tags": ["entity_management", "entity_removal", "phaser3", "event_handling"]
     }
   },
   {
@@ -71,7 +76,8 @@
       "start_line": 87,
       "end_line": 101,
       "notes": "Method to query entities by type",
-      "imports": []
+      "imports": [],
+      "tags": ["entity_query", "entity_management", "phaser3", "data_management"]
     }
   },
   {
@@ -83,7 +89,8 @@
       "start_line": 103,
       "end_line": 122,
       "notes": "Method to update all managed entities",
-      "imports": []
+      "imports": [],
+      "tags": ["entity_update", "entity_management", "phaser3", "system_update"]
     }
   },
   {
@@ -95,7 +102,8 @@
       "start_line": 124,
       "end_line": 144,
       "notes": "Method to clean up and destroy all entities",
-      "imports": []
+      "imports": [],
+      "tags": ["entity_cleanup", "entity_management", "phaser3", "system_cleanup"]
     }
   }
 ]
