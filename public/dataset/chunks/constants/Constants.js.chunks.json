@@ -9,33 +9,122 @@
       "end_line": 5,
       "notes": "File header documentation explaining purpose of constants",
       "imports": [],
-      "tags": ["constants", "game-entities", "default-configurations"]
+      "tags": ["constants", "game-entities", "default-configurations"],
+      "related_chunks": [
+        {"file_name": "Constants.js", "chunk_index": 1, "method": "game_config"}
+      ]
     }
   },
   {
     "file_name": "Constants.js",
     "chunk_index": 1,
-    "method": "DEFAULT_ENEMY_CONFIG",
-    "chunk_text": "/**\n * DEFAULT ENEMY CONFIGURATION\n * Base settings for enemy entities if not overridden by specific enemy types\n *\n * @typedef {Object} EnemyConfig\n * @property {number} speed - Base movement speed in pixels/second\n * @property {number} health - Starting health points\n * @property {number} damage - Damage dealt to player on contact\n * @property {number} spawnRate - Milliseconds between spawns\n * @property {number} points - Score awarded when defeated\n */\nexport const DEFAULT_ENEMY_CONFIG = {\n    speed: 100,      // Base movement speed in pixels/second\n    health: 100,     // Starting health points\n    damage: 10,      // Damage dealt to player on contact\n    spawnRate: 1000, // Milliseconds between spawns\n    points: 100      // Score awarded when defeated\n};",
+    "method": "game_config",
+    "chunk_text": "/**\n * Game configuration constants\n * \n * @description\n * Core game settings and configuration values:\n * - Display dimensions\n * - Physics settings\n * - Debug options\n */\nexport const GAME_CONFIG = {\n    width: 800,\n    height: 600,\n    backgroundColor: '#000000',\n    physics: {\n        default: 'arcade',\n        arcade: {\n            gravity: { y: 300 },\n            debug: false\n        }\n    }\n};",
     "metadata": {
       "start_line": 7,
-      "end_line": 16,
-      "notes": "Default configuration object for enemy entities with base settings",
+      "end_line": 20,
+      "notes": "Core game configuration including display, physics, and debug settings",
       "imports": [],
-      "tags": ["constants", "enemy", "configuration", "default"]
+      "tags": ["constants", "configuration", "physics", "display"],
+      "related_chunks": [
+        {"file_name": "Constants.js", "chunk_index": 0, "method": "file_header"},
+        {"file_name": "Constants.js", "chunk_index": 2, "method": "player_config"}
+      ]
     }
   },
   {
     "file_name": "Constants.js",
     "chunk_index": 2,
+    "method": "player_config",
+    "chunk_text": "/**\n * Player configuration constants\n * \n * @description\n * Player-specific settings:\n * - Movement speeds\n * - Jump parameters\n * - Combat values\n */\nexport const PLAYER_CONFIG = {\n    moveSpeed: 160,\n    jumpForce: -400,\n    dashSpeed: 400,\n    dashDuration: 200,\n    attackCooldown: 250,\n    maxHealth: 100,\n    damageInvulnerability: 1000\n};",
+    "metadata": {
+      "start_line": 22,
+      "end_line": 38,
+      "notes": "Player configuration including movement, combat, and health parameters",
+      "imports": [],
+      "tags": ["constants", "player", "movement", "combat"],
+      "related_chunks": [
+        {"file_name": "Constants.js", "chunk_index": 1, "method": "game_config"},
+        {"file_name": "Constants.js", "chunk_index": 3, "method": "enemy_config"}
+      ]
+    }
+  },
+  {
+    "file_name": "Constants.js",
+    "chunk_index": 3,
+    "method": "enemy_config",
+    "chunk_text": "/**\n * Enemy configuration constants\n * \n * @description\n * Enemy-specific settings:\n * - Movement parameters\n * - Combat values\n * - Spawn settings\n */\nexport const ENEMY_CONFIG = {\n    warrior: {\n        moveSpeed: 120,\n        attackRange: 50,\n        attackDamage: 20,\n        health: 60\n    },\n    drone: {\n        moveSpeed: 100,\n        laserRange: 200,\n        laserDamage: 15,\n        health: 40\n    }\n};",
+    "metadata": {
+      "start_line": 40,
+      "end_line": 61,
+      "notes": "Enemy configuration for different enemy types including movement and combat stats",
+      "imports": [],
+      "tags": ["constants", "enemy", "movement", "combat"],
+      "related_chunks": [
+        {"file_name": "Constants.js", "chunk_index": 2, "method": "player_config"},
+        {"file_name": "Constants.js", "chunk_index": 4, "method": "audio_config"}
+      ]
+    }
+  },
+  {
+    "file_name": "Constants.js",
+    "chunk_index": 4,
+    "method": "audio_config",
+    "chunk_text": "/**\n * Audio configuration constants\n * \n * @description\n * Sound settings:\n * - Volume levels\n * - Effect parameters\n * - Music settings\n */\nexport const AUDIO_CONFIG = {\n    music: {\n        volume: 0.5,\n        fadeIn: 1000,\n        fadeOut: 500\n    },\n    effects: {\n        volume: 0.8,\n        maxInstances: 4\n    }\n};",
+    "metadata": {
+      "start_line": 63,
+      "end_line": 80,
+      "notes": "Audio configuration for music and sound effects",
+      "imports": [],
+      "tags": ["constants", "audio", "configuration", "effects"],
+      "related_chunks": [
+        {"file_name": "Constants.js", "chunk_index": 3, "method": "enemy_config"},
+        {"file_name": "Constants.js", "chunk_index": 5, "method": "ui_config"}
+      ]
+    }
+  },
+  {
+    "file_name": "Constants.js",
+    "chunk_index": 5,
+    "method": "ui_config",
+    "chunk_text": "/**\n * UI configuration constants\n * \n * @description\n * Interface settings:\n * - Colors\n * - Sizes\n * - Positions\n */\nexport const UI_CONFIG = {\n    colors: {\n        health: 0xff0000,\n        energy: 0x00ff00,\n        text: 0xffffff\n    },\n    fontSize: {\n        small: 12,\n        medium: 16,\n        large: 24\n    },\n    padding: 10,\n    margin: 5\n};",
+    "metadata": {
+      "start_line": 82,
+      "end_line": 103,
+      "notes": "UI configuration including colors, fonts, and layout parameters",
+      "imports": [],
+      "tags": ["constants", "UI", "display", "configuration"],
+      "related_chunks": [
+        {"file_name": "Constants.js", "chunk_index": 4, "method": "audio_config"}
+      ]
+    }
+  },
+  {
+    "file_name": "Constants.js",
+    "chunk_index": 6,
+    "method": "DEFAULT_ENEMY_CONFIG",
+    "chunk_text": "/**\n * DEFAULT ENEMY CONFIGURATION\n * Base settings for enemy entities if not overridden by specific enemy types\n *\n * @typedef {Object} EnemyConfig\n * @property {number} speed - Base movement speed in pixels/second\n * @property {number} health - Starting health points\n * @property {number} damage - Damage dealt to player on contact\n * @property {number} spawnRate - Milliseconds between spawns\n * @property {number} points - Score awarded when defeated\n */\nexport const DEFAULT_ENEMY_CONFIG = {\n    speed: 100,      // Base movement speed in pixels/second\n    health: 100,     // Starting health points\n    damage: 10,      // Damage dealt to player on contact\n    spawnRate: 1000, // Milliseconds between spawns\n    points: 100      // Score awarded when defeated\n};",
+    "metadata": {
+      "start_line": 105,
+      "end_line": 120,
+      "notes": "Default configuration object for enemy entities with base settings",
+      "imports": [],
+      "tags": ["constants", "enemy", "configuration", "default"],
+      "related_chunks": []
+    }
+  },
+  {
+    "file_name": "Constants.js",
+    "chunk_index": 7,
     "method": "DEFAULT_TRAP_CONFIG",
     "chunk_text": "/**\n * DEFAULT TRAP CONFIGURATION\n * Base settings for trap objects in the game environment\n *\n * @typedef {Object} TrapConfig\n * @property {number} damage - Damage dealt to entities (hit points)\n * @property {number} duration - How long the trap remains active (ms)\n * @property {number} cooldown - Time before the trap can be triggered again (ms)\n * @property {number} cost - Energy points required to place the trap\n * \n * Note: Traps are temporary hazards that can damage both players and enemies.\n * Cost is deducted from the player's energy pool when placed.\n */\nexport const DEFAULT_TRAP_CONFIG = {\n    damage: 20,      // Damage dealt to entities (hit points)\n    duration: 5000,  // How long trap remains active (ms)\n    cooldown: 3000,  // Time before trap can be triggered again (ms)\n    cost: 50         // Energy points required to place trap\n};",
     "metadata": {
-      "start_line": 18,
-      "end_line": 26,
+      "start_line": 122,
+      "end_line": 138,
       "notes": "Default configuration object for trap entities with base settings",
       "imports": [],
-      "tags": ["constants", "trap", "configuration", "default"]
+      "tags": ["constants", "trap", "configuration", "default"],
+      "related_chunks": []
     }
   }
 ]

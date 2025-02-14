@@ -7,13 +7,23 @@
     "metadata": {
       "start_line": 7,
       "end_line": 9,
-      "notes": "Import statements for required dependencies",
+      "notes": "Core system imports for enemy management, including entity system, game configuration, and event handling",
       "imports": [
-        "./EntityManager",
-        "../../config/GameConfig",
-        "../core/EventManager"
+        "EntityManager",
+        "GameConfig",
+        "GameEvents"
       ],
-      "tags": ["imports", "dependencies", "phaser3", "enemy_management"]
+      "tags": [
+        "imports",
+        "core_system",
+        "enemy_management",
+        "configuration",
+        "event_system"
+      ],
+      "related_chunks": [
+        {"file_name": "EnemyManager.js", "chunk_index": 1, "method": "class_definition"},
+        {"file_name": "EnemyManager.js", "chunk_index": 2, "method": "constructor"}
+      ]
     }
   },
   {
@@ -24,9 +34,24 @@
     "metadata": {
       "start_line": 1,
       "end_line": 19,
-      "notes": "Class definition with comprehensive documentation",
-      "imports": [],
-      "tags": ["class_definition", "enemy_management", "phaser3", "entity_management"]
+      "notes": "Core enemy management class definition with support for both event-based and traditional enemy implementations",
+      "imports": [
+        "EntityManager",
+        "Phaser.Scene",
+        "Phaser.GameObjects.Sprite"
+      ],
+      "tags": [
+        "class_definition",
+        "core_system",
+        "enemy_management",
+        "event_system",
+        "inheritance"
+      ],
+      "related_chunks": [
+        {"file_name": "EnemyManager.js", "chunk_index": 0, "method": "imports"},
+        {"file_name": "EnemyManager.js", "chunk_index": 2, "method": "constructor"},
+        {"file_name": "EnemyManager.js", "chunk_index": 3, "method": "addEnemy"}
+      ]
     }
   },
   {
@@ -37,9 +62,23 @@
     "metadata": {
       "start_line": 20,
       "end_line": 27,
-      "notes": "Constructor initialization with enemy tracking",
-      "imports": [],
-      "tags": ["constructor", "initialization", "enemy_tracking", "phaser3"]
+      "notes": "Initializes enemy management system with scene reference and enemy count tracking",
+      "imports": [
+        "Phaser.Scene",
+        "EntityManager"
+      ],
+      "tags": [
+        "initialization",
+        "core_system",
+        "enemy_tracking",
+        "state_management",
+        "level_progression"
+      ],
+      "related_chunks": [
+        {"file_name": "EnemyManager.js", "chunk_index": 1, "method": "class_definition"},
+        {"file_name": "EnemyManager.js", "chunk_index": 3, "method": "addEnemy"},
+        {"file_name": "EnemyManager.js", "chunk_index": 6, "method": "handleEnemyDeath"}
+      ]
     }
   },
   {
@@ -50,9 +89,23 @@
     "metadata": {
       "start_line": 29,
       "end_line": 54,
-      "notes": "Method to add and initialize new enemies with health tracking",
-      "imports": [],
-      "tags": ["enemy_registration", "health_tracking", "phaser3", "event_management"]
+      "notes": "Registers new enemies with support for both event-based and legacy health tracking systems",
+      "imports": [
+        "Phaser.GameObjects.Sprite",
+        "GameEvents"
+      ],
+      "tags": [
+        "enemy_registration",
+        "health_tracking",
+        "event_system",
+        "legacy_support",
+        "state_management"
+      ],
+      "related_chunks": [
+        {"file_name": "EnemyManager.js", "chunk_index": 2, "method": "constructor"},
+        {"file_name": "EnemyManager.js", "chunk_index": 5, "method": "handleEnemyHealthChanged"},
+        {"file_name": "EnemyManager.js", "chunk_index": 6, "method": "handleEnemyDeath"}
+      ]
     }
   },
   {
@@ -63,9 +116,24 @@
     "metadata": {
       "start_line": 56,
       "end_line": 98,
-      "notes": "Method to handle bullet collisions and damage application",
-      "imports": [],
-      "tags": ["bullet_collision", "damage_application", "phaser3", "enemy_health"]
+      "notes": "Processes bullet collisions with enemies, handling damage, effects, and death conditions",
+      "imports": [
+        "Phaser.GameObjects.GameObject",
+        "Phaser.GameObjects.Sprite",
+        "GameConfig"
+      ],
+      "tags": [
+        "collision_handling",
+        "damage_system",
+        "effects_management",
+        "health_tracking",
+        "cleanup"
+      ],
+      "related_chunks": [
+        {"file_name": "EnemyManager.js", "chunk_index": 7, "method": "getEnemyBySprite"},
+        {"file_name": "EnemyManager.js", "chunk_index": 6, "method": "handleEnemyDeath"},
+        {"file_name": "EnemyManager.js", "chunk_index": 5, "method": "handleEnemyHealthChanged"}
+      ]
     }
   },
   {
@@ -76,9 +144,22 @@
     "metadata": {
       "start_line": 100,
       "end_line": 108,
-      "notes": "Method to broadcast enemy health changes via events",
-      "imports": [],
-      "tags": ["health_change", "event_broadcast", "phaser3", "ui_update"]
+      "notes": "Broadcasts enemy health change events for UI and system updates",
+      "imports": [
+        "GameEvents",
+        "Object"
+      ],
+      "tags": [
+        "event_broadcast",
+        "health_tracking",
+        "ui_update",
+        "system_notification",
+        "state_change"
+      ],
+      "related_chunks": [
+        {"file_name": "EnemyManager.js", "chunk_index": 3, "method": "addEnemy"},
+        {"file_name": "EnemyManager.js", "chunk_index": 4, "method": "handleBulletHit"}
+      ]
     }
   },
   {
@@ -89,9 +170,22 @@
     "metadata": {
       "start_line": 110,
       "end_line": 134,
-      "notes": "Method to handle enemy death and score updates",
-      "imports": [],
-      "tags": ["enemy_death", "score_update", "phaser3", "game_state"]
+      "notes": "Handles enemy death processing including removal, scoring, and level progression",
+      "imports": [
+        "Object",
+        "GameEvents"
+      ],
+      "tags": [
+        "enemy_death",
+        "score_system",
+        "level_progression",
+        "state_management",
+        "cleanup"
+      ],
+      "related_chunks": [
+        {"file_name": "EnemyManager.js", "chunk_index": 2, "method": "constructor"},
+        {"file_name": "EnemyManager.js", "chunk_index": 4, "method": "handleBulletHit"}
+      ]
     }
   },
   {
@@ -102,9 +196,22 @@
     "metadata": {
       "start_line": 136,
       "end_line": 144,
-      "notes": "Utility method to find enemy entity from sprite reference",
-      "imports": [],
-      "tags": ["enemy_lookup", "sprite_reference", "phaser3", "collision_system"]
+      "notes": "Utility method for mapping sprite references to enemy entities during collision detection",
+      "imports": [
+        "Phaser.GameObjects.Sprite",
+        "Object"
+      ],
+      "tags": [
+        "entity_lookup",
+        "collision_system",
+        "helper_method",
+        "sprite_mapping",
+        "optimization"
+      ],
+      "related_chunks": [
+        {"file_name": "EnemyManager.js", "chunk_index": 4, "method": "handleBulletHit"},
+        {"file_name": "EnemyManager.js", "chunk_index": 3, "method": "addEnemy"}
+      ]
     }
   }
 ]

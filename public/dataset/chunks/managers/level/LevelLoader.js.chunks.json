@@ -7,10 +7,27 @@
       "metadata": {
         "start_line": 1,
         "end_line": 5,
-        "notes": "Class definition for loading and converting LDtk level data into Phaser tilemaps",
-        "imports": [],
-        "tags": ["class_definition", "level_loader", "phaser3"],
-        "related_chunks": []
+        "notes": "Defines core level loading system for converting LDtk level data to Phaser tilemaps. Manages tile placement, collision setup, and layer organization.",
+        "imports": [
+          "Phaser.Scene",
+          "Phaser.Tilemaps.Tilemap",
+          "Phaser.Tilemaps.Tileset",
+          "LDtk"
+        ],
+        "tags": [
+          "class_definition",
+          "level_loader",
+          "phaser3",
+          "ldtk",
+          "tilemap",
+          "core_system",
+          "level_management"
+        ],
+        "related_chunks": [
+          {"file_name": "LevelLoader.js", "chunk_index": 1, "method": "constructor"},
+          {"file_name": "LevelLoader.js", "chunk_index": 2, "method": "loadLevel"},
+          {"file_name": "LevelLoader.js", "chunk_index": 3, "method": "createTileMap"}
+        ]
       }
     },
     {
@@ -21,10 +38,19 @@
       "metadata": {
         "start_line": 7,
         "end_line": 11,
-        "notes": "Constructor for initializing the LevelLoader with scene reference",
-        "imports": [],
-        "tags": ["constructor", "level_loader", "phaser3"],
-        "related_chunks": []
+        "notes": "Initializes level loading system with scene context for tilemap creation and management.",
+        "imports": ["Phaser.Scene"],
+        "tags": [
+          "constructor",
+          "initialization",
+          "scene_setup",
+          "dependency_injection",
+          "core_initialization"
+        ],
+        "related_chunks": [
+          {"file_name": "LevelLoader.js", "chunk_index": 0, "method": "class_definition"},
+          {"file_name": "LevelLoader.js", "chunk_index": 2, "method": "loadLevel"}
+        ]
       }
     },
     {
@@ -35,10 +61,21 @@
       "metadata": {
         "start_line": 13,
         "end_line": 31,
-        "notes": "Loads a level from cache and creates a tilemap, handles multi-level files",
-        "imports": [],
-        "tags": ["load_level", "tilemap", "phaser3"],
+        "notes": "Loads level data from cache and initiates tilemap creation. Handles both single and multi-level LDtk files.",
+        "imports": [
+          "Phaser.Scene.Cache",
+          "Phaser.Tilemaps.Tilemap"
+        ],
+        "tags": [
+          "load_level",
+          "tilemap",
+          "phaser3",
+          "level_loading",
+          "error_handling",
+          "data_validation"
+        ],
         "related_chunks": [
+          {"file_name": "LevelLoader.js", "chunk_index": 1, "method": "constructor"},
           {"file_name": "LevelLoader.js", "chunk_index": 3, "method": "createTileMap"}
         ]
       }
@@ -51,10 +88,23 @@
       "metadata": {
         "start_line": 33,
         "end_line": 103,
-        "notes": "Converts LDtk level data to a Phaser tilemap and handles collision setup",
-        "imports": [],
-        "tags": ["create_tilemap", "ldtk", "collision", "tilemap", "phaser3"],
+        "notes": "Converts LDtk level data into Phaser tilemap. Sets up tile layers, collision properties, and handles error cases.",
+        "imports": [
+          "Phaser.Tilemaps",
+          "Phaser.Tilemaps.Tileset",
+          "Phaser.Tilemaps.TilemapLayer"
+        ],
+        "tags": [
+          "create_tilemap",
+          "ldtk",
+          "collision",
+          "tilemap",
+          "phaser3",
+          "tile_setup",
+          "error_handling"
+        ],
         "related_chunks": [
+          {"file_name": "LevelLoader.js", "chunk_index": 2, "method": "loadLevel"},
           {"file_name": "LevelLoader.js", "chunk_index": 4, "method": "getFrameFromSrc"},
           {"file_name": "LevelLoader.js", "chunk_index": 5, "method": "getTotalTiles"}
         ]
@@ -68,10 +118,18 @@
       "metadata": {
         "start_line": 105,
         "end_line": 112,
-        "notes": "Converts LDtk tile coordinates to tileset index",
-        "imports": [],
-        "tags": ["tile_conversion", "ldtk", "phaser3"],
-        "related_chunks": []
+        "notes": "Converts LDtk tile coordinates to Phaser tileset index using grid calculations.",
+        "imports": ["Phaser.Tilemaps.Tileset"],
+        "tags": [
+          "tile_conversion",
+          "ldtk",
+          "phaser3",
+          "helper_method",
+          "coordinate_mapping"
+        ],
+        "related_chunks": [
+          {"file_name": "LevelLoader.js", "chunk_index": 3, "method": "createTileMap"}
+        ]
       }
     },
     {
@@ -82,11 +140,19 @@
       "metadata": {
         "start_line": 114,
         "end_line": 121,
-        "notes": "Calculates the total number of tiles in a tileset for collision setup",
-        "imports": [],
-        "tags": ["tile_count", "collision", "tileset", "phaser3"],
-        "related_chunks": []
+        "notes": "Calculates total tile count in tileset for collision setup using tileset dimensions.",
+        "imports": ["Phaser.Tilemaps.Tileset"],
+        "tags": [
+          "tile_count",
+          "collision",
+          "tileset",
+          "phaser3",
+          "helper_method",
+          "calculation"
+        ],
+        "related_chunks": [
+          {"file_name": "LevelLoader.js", "chunk_index": 3, "method": "createTileMap"}
+        ]
       }
     }
-  ]
-  
+]

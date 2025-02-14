@@ -2,118 +2,250 @@
   {
     "file_name": "CameraManager.js",
     "chunk_index": 0,
-    "method": "class_definition",
-    "chunk_text": "/**\n * CameraManager.js\n * Controls game camera behavior, following, and transitions\n * Handles progressive level loading and intro sequences\n * Manages camera bounds and UI camera separation\n *\n * @class CameraManager\n * @description\n * A class responsible for configuring and updating the main game camera,\n * including progressive loading, intro sequences, and UI camera separation.\n */\n\nexport class CameraManager {",
+    "method": "imports",
+    "chunk_text": "import { BaseManager } from '../core/BaseManager';\nimport { container } from '../core/ServiceContainer';",
     "metadata": {
       "start_line": 1,
-      "end_line": 8,
-      "notes": "Class definition and overview",
-      "imports": [],
-      "tags": ["camera", "gameplay", "scene", "progressive_loading"]
+      "end_line": 2,
+      "notes": "Imports base manager and service container for camera management",
+      "imports": [
+        "BaseManager",
+        "ServiceContainer.container"
+      ],
+      "tags": [
+        "imports",
+        "core_system",
+        "camera_system",
+        "dependency_injection"
+      ],
+      "related_chunks": [
+        {"file_name": "CameraManager.js", "chunk_index": 1, "method": "classDefinition"},
+        {"file_name": "CameraManager.js", "chunk_index": 2, "method": "constructor"}
+      ]
     }
   },
   {
     "file_name": "CameraManager.js",
     "chunk_index": 1,
-    "method": "constructor",
-    "chunk_text": "    /**\n     * Initialize camera system with level dimensions\n     * Sets up following, deadzone, and progressive loading settings\n     *\n     * @param {Phaser.Scene} scene - The Phaser scene that owns this CameraManager\n     * @param {number} [levelWidth=3840] - Initial width of the game level\n     * @param {number} [levelHeight=1080] - Initial height of the game level\n     */\n    constructor(scene, levelWidth = 3840, levelHeight = 1080) {\n        this.scene = scene;\n        this.camera = scene.cameras.main;\n        this.isIntroPlaying = false;\n        this.defaultZoom = 1.5;\n        this.player = null;\n\n        // Game dimensions\n        const { width, height } = scene.scale;\n        this.gameWidth = width;\n        this.gameHeight = height;\n        this.levelWidth = levelWidth;\n        this.levelHeight = levelHeight;\n\n        // Separate UI camera from main camera\n        this.uiCamera = scene.cameras.cameras.find(cam => cam !== this.camera);\n        this.introTweens = [];\n\n        // Camera follow settings\n        this.followOffsetX = width / 8;     // Offset right by 1/8 screen\n        this.followOffsetY = 0;\n        this.followLerpX = 0.1;             // Smooth follow interpolation\n        this.followLerpY = 0.1;\n        this.deadZoneWidth = width / 4;     // Player movement buffer zone\n        this.deadZoneHeight = height / 4;\n\n        // Progressive level loading settings\n        this.lastUpdateTime = performance.now();\n        this.updateInterval = 100;          // Check every 100ms\n        this.loadBuffer = 2;                // Keep 2 sections loaded\n        this.sectionWidth = 640;            // Section size in pixels\n    }",
+    "method": "classDefinition",
+    "chunk_text": "/**\n * CameraManager.js\n * Manages camera behavior and effects for the game\n * Extends BaseManager for core functionality\n *\n * @class CameraManager\n * @extends BaseManager\n * @description\n * Handles:\n * - Camera following\n * - Screen shake effects\n * - Zoom levels\n * - Camera bounds\n * - Smooth transitions\n *\n * @requires Phaser.Scene\n * @requires Phaser.Cameras.Scene2D.Camera\n * @requires BaseManager\n */\nexport class CameraManager extends BaseManager {",
     "metadata": {
-      "start_line": 9,
-      "end_line": 42,
-      "notes": "Constructor with camera system initialization",
-      "imports": [],
-      "tags": ["constructor", "camera_system", "follow", "zoom", "loading"]
+      "start_line": 4,
+      "end_line": 22,
+      "notes": "Defines camera manager class for handling game camera effects and behavior",
+      "imports": [
+        "Phaser.Scene",
+        "Phaser.Cameras.Scene2D.Camera",
+        "BaseManager"
+      ],
+      "tags": [
+        "class_definition",
+        "core_system",
+        "camera_system",
+        "game_effects"
+      ],
+      "related_chunks": [
+        {"file_name": "CameraManager.js", "chunk_index": 0, "method": "imports"},
+        {"file_name": "CameraManager.js", "chunk_index": 2, "method": "constructor"}
+      ]
     }
   },
   {
     "file_name": "CameraManager.js",
     "chunk_index": 2,
-    "method": "init",
-    "chunk_text": "    /**\n     * Set up camera with player and level bounds\n     * Initializes following, zoom, and rendering settings\n     *\n     * @param {Object} options - Initialization options\n     * @param {Phaser.GameObjects.Sprite|Phaser.GameObjects.Image} options.player - The player or main character to follow\n     * @param {Object} [options.levelBounds] - Optional level boundary settings\n     * @param {number} [options.levelBounds.width] - Level width for camera bounds\n     * @param {number} [options.levelBounds.height] - Level height for camera bounds\n     */\n    init({ player, levelBounds }) {\n        if (!player) {\n            console.warn('CameraManager: No player provided for initialization');\n            return;\n        }\n\n        this.player = player;\n        \n        if (!this.camera) {\n            console.warn('CameraManager: Camera not found');\n            return;\n        }\n\n        // Set camera bounds from level or default dimensions\n        const width = levelBounds?.width || this.levelWidth;\n        const height = levelBounds?.height || this.levelHeight;\n        this.camera.setBounds(0, 0, width, height);\n        this.levelWidth = width;\n        this.levelHeight = height;\n        \n        console.log(\"Camera Bounds set to:\", { \n            width, \n            height,\n            playerPos: { x: player.x, y: player.y }\n        });\n        \n        // Configure camera properties\n        this.camera.startFollow(player, true, this.followLerpX, this.followLerpY);\n        this.camera.setZoom(this.defaultZoom);\n        this.camera.setRoundPixels(true);\n        this.camera.setDeadzone(this.deadZoneWidth, this.deadZoneHeight);\n        this.camera.setFollowOffset(-this.followOffsetX, this.followOffsetY);\n\n        // Update UI camera settings if UI exists\n        if (this.scene.gameUI) {\n            this.scene.gameUI.updateCameraIgnoreList();\n        }\n    }",
+    "method": "constructor",
+    "chunk_text": "    /**\n     * Initialize camera manager\n     * @param {Phaser.Scene} scene - Scene this manager belongs to\n     * \n     * @description\n     * Sets up:\n     * - Main camera reference\n     * - Default configuration\n     * - Shake effect settings\n     * - Follow settings\n     * \n     * @requires Phaser.Scene\n     */\n    constructor(scene) {\n        super(scene);\n        \n        // Store main camera reference\n        this.camera = scene.cameras.main;\n        \n        // Default configuration\n        this.config = {\n            follow: {\n                offsetX: 0,\n                offsetY: 0,\n                lerp: 1\n            },\n            shake: {\n                duration: 100,\n                intensity: 0.01\n            },\n            zoom: {\n                default: 1,\n                min: 0.5,\n                max: 2\n            }\n        };\n        \n        // Register with container\n        container.register('camera', this);\n    }",
     "metadata": {
-      "start_line": 44,
-      "end_line": 84,
-      "notes": "Camera initialization with player and level bounds",
-      "imports": [],
-      "tags": ["camera_setup", "player_follow", "level_bounds", "zoom", "ui"]
+      "start_line": 24,
+      "end_line": 58,
+      "notes": "Initializes camera manager with default configuration and camera reference",
+      "imports": [
+        "Phaser.Scene",
+        "Phaser.Cameras.Scene2D.Camera",
+        "ServiceContainer.container"
+      ],
+      "tags": [
+        "initialization",
+        "core_system",
+        "camera_system",
+        "configuration"
+      ],
+      "related_chunks": [
+        {"file_name": "CameraManager.js", "chunk_index": 1, "method": "classDefinition"},
+        {"file_name": "CameraManager.js", "chunk_index": 3, "method": "initialize"}
+      ]
     }
   },
   {
     "file_name": "CameraManager.js",
     "chunk_index": 3,
-    "method": "setupCamera",
-    "chunk_text": "    /**\n     * Basic camera setup for following player\n     * Used when full initialization isn't needed\n     */\n    setupCamera() {\n        console.log('Setting up camera');\n        const camera = this.scene.cameras.main;\n        camera.startFollow(this.scene.player);\n    }",
+    "method": "initialize",
+    "chunk_text": "    /**\n     * Initialize camera system\n     * Sets up initial camera state and configuration\n     * \n     * @description\n     * Performs:\n     * - Camera bounds setup\n     * - Default zoom setting\n     * - Initial position\n     * - Effect configuration\n     */\n    initialize() {\n        console.log('Initializing camera system...');\n        \n        // Set initial zoom\n        this.camera.setZoom(this.config.zoom.default);\n        \n        // Reset any active effects\n        this.camera.resetFX();\n        \n        console.log('Camera system initialized.');\n    }",
     "metadata": {
-      "start_line": 86,
-      "end_line": 94,
-      "notes": "Basic camera setup method",
-      "imports": [],
-      "tags": ["camera", "player_follow", "setup"]
+      "start_line": 60,
+      "end_line": 79,
+      "notes": "Sets up initial camera state and configures default settings",
+      "imports": [
+        "Phaser.Cameras.Scene2D.Camera"
+      ],
+      "tags": [
+        "initialization",
+        "core_system",
+        "camera_system",
+        "setup"
+      ],
+      "related_chunks": [
+        {"file_name": "CameraManager.js", "chunk_index": 2, "method": "constructor"},
+        {"file_name": "CameraManager.js", "chunk_index": 4, "method": "follow"}
+      ]
     }
   },
   {
     "file_name": "CameraManager.js",
     "chunk_index": 4,
-    "method": "update",
-    "chunk_text": "    /**\n     * Update camera bounds and check for progressive loading\n     * Called every frame when not in intro sequence\n     */\n    update() {\n        if (!this.player || this.isIntroPlaying) return;\n        \n        // Throttle updates to updateInterval\n        const now = performance.now();\n        if (now - this.lastUpdateTime < this.updateInterval) return;\n        this.lastUpdateTime = now;\n\n        if (!this.camera || !this.camera.bounds) return;\n\n        // Update bounds based on current level\n        const currentLevel = this.scene.currentLevel || 0;\n        const levelWidth = this.scene.scale.width;\n        \n        const targetBounds = {\n            x: currentLevel * levelWidth,\n            y: 0,\n            width: levelWidth,\n            height: this.scene.scale.height\n        };\n\n        // Only update bounds if they've changed\n        const boundsChanged = \n            this.camera.bounds.x !== targetBounds.x ||\n            this.camera.bounds.y !== targetBounds.y ||\n            this.camera.bounds.width !== targetBounds.width ||\n            this.camera.bounds.height !== targetBounds.height;\n\n        if (boundsChanged) {\n            this.camera.setBounds(\n                targetBounds.x,\n                targetBounds.y,\n                targetBounds.width,\n                targetBounds.height\n            );\n            console.log(\"Camera Bounds:\", { x: targetBounds.x, y: targetBounds.y, width: targetBounds.width, height: targetBounds.height });\n        }\n\n        this.checkProgressiveLoading();\n    }",
+    "method": "follow",
+    "chunk_text": "    /**\n     * Set camera to follow a target\n     * @param {Phaser.GameObjects.Sprite} target - Game object to follow\n     * @param {Object} [options] - Optional follow settings\n     * @param {number} [options.offsetX=0] - Horizontal offset from target\n     * @param {number} [options.offsetY=0] - Vertical offset from target\n     * @param {number} [options.lerp=1] - Follow smoothing factor (0-1)\n     * \n     * @description\n     * Configures camera to follow target with:\n     * - Customizable offset position\n     * - Smooth follow interpolation\n     * - Proper bounds checking\n     */\n    follow(target, options = {}) {\n        const { offsetX = 0, offsetY = 0, lerp = 1 } = options;\n        \n        this.camera.startFollow(\n            target,\n            true,\n            lerp,\n            lerp,\n            offsetX,\n            offsetY\n        );\n        \n        // Update follow config\n        this.config.follow = { offsetX, offsetY, lerp };\n    }",
     "metadata": {
-      "start_line": 96,
-      "end_line": 137,
-      "notes": "Main update method for camera bounds and progressive loading",
-      "imports": [],
-      "tags": ["camera", "update", "bounds", "progressive_loading"]
+      "start_line": 81,
+      "end_line": 108,
+      "notes": "Configures camera to follow a game object with customizable settings",
+      "imports": [
+        "Phaser.GameObjects.Sprite",
+        "Phaser.Cameras.Scene2D.Camera"
+      ],
+      "tags": [
+        "core_system",
+        "camera_system",
+        "follow",
+        "game_objects"
+      ],
+      "related_chunks": [
+        {"file_name": "CameraManager.js", "chunk_index": 3, "method": "initialize"},
+        {"file_name": "CameraManager.js", "chunk_index": 5, "method": "shake"}
+      ]
     }
   },
   {
     "file_name": "CameraManager.js",
     "chunk_index": 5,
-    "method": "checkProgressiveLoading",
-    "chunk_text": "    /**\n     * Check and trigger progressive level loading\n     * Loads sections ahead of and behind player position\n     */\n    checkProgressiveLoading() {\n        if (!this.player || !this.scene.loadLevelSection) return;\n\n        const playerX = this.player.x;\n        if (typeof playerX === 'undefined') return;\n\n        const playerSection = Math.floor(playerX / this.sectionWidth);\n        \n        if (this.scene.loadLevelSection) {\n            // Load previous, current, and next sections\n            const sectionsToLoad = [-1, 0, 1];\n            sectionsToLoad.forEach(offset => {\n                const sectionToLoad = playerSection + offset;\n                if (sectionToLoad >= 0) {\n                    this.scene.loadLevelSection(sectionToLoad * this.sectionWidth);\n                }\n            });\n        }\n    }",
+    "method": "shake",
+    "chunk_text": "    /**\n     * Apply screen shake effect\n     * @param {Object} [options] - Optional shake settings\n     * @param {number} [options.duration=100] - Effect duration in ms\n     * @param {number} [options.intensity=0.01] - Shake intensity (0-1)\n     * \n     * @description\n     * Creates screen shake effect with:\n     * - Configurable duration\n     * - Adjustable intensity\n     * - Smooth transitions\n     */\n    shake(options = {}) {\n        const { duration = 100, intensity = 0.01 } = options;\n        \n        this.camera.shake(duration, intensity);\n        \n        // Update shake config\n        this.config.shake = { duration, intensity };\n    }",
     "metadata": {
-      "start_line": 139,
-      "end_line": 161,
-      "notes": "Progressive level loading check method",
-      "imports": [],
-      "tags": ["loading", "level_sections", "player_position"]
+      "start_line": 110,
+      "end_line": 129,
+      "notes": "Applies screen shake effect with configurable parameters",
+      "imports": [
+        "Phaser.Cameras.Scene2D.Camera"
+      ],
+      "tags": [
+        "core_system",
+        "camera_system",
+        "effects",
+        "game_feedback"
+      ],
+      "related_chunks": [
+        {"file_name": "CameraManager.js", "chunk_index": 4, "method": "follow"},
+        {"file_name": "CameraManager.js", "chunk_index": 6, "method": "setZoom"}
+      ]
     }
   },
   {
     "file_name": "CameraManager.js",
     "chunk_index": 6,
-    "method": "updateCameraBounds",
-    "chunk_text": "    /**\n     * Reset camera bounds to full level dimensions\n     */\n    updateCameraBounds() {\n        if (!this.camera) return;\n        \n        this.camera.setBounds(0, 0, this.levelWidth, this.levelHeight);\n        console.log(\"Camera Bounds:\", { x: 0, y: 0, width: this.levelWidth, height: this.levelHeight });\n    }",
+    "method": "setZoom",
+    "chunk_text": "    /**\n     * Set camera zoom level\n     * @param {number} level - Zoom level (0.5-2)\n     * @param {Object} [options] - Optional zoom settings\n     * @param {number} [options.duration=0] - Transition duration in ms\n     * \n     * @description\n     * Adjusts camera zoom with:\n     * - Bounds checking\n     * - Optional smooth transition\n     * - Config persistence\n     * \n     * @throws {Error} If zoom level is outside valid range\n     */\n    setZoom(level, options = {}) {\n        const { duration = 0 } = options;\n        \n        // Validate zoom level\n        if (level < this.config.zoom.min || level > this.config.zoom.max) {\n            throw new Error(`Zoom level must be between ${this.config.zoom.min} and ${this.config.zoom.max}`);\n        }\n        \n        if (duration > 0) {\n            this.camera.zoomTo(level, duration);\n        } else {\n            this.camera.setZoom(level);\n        }\n        \n        // Update zoom config\n        this.config.zoom.default = level;\n    }",
     "metadata": {
-      "start_line": 163,
-      "end_line": 171,
-      "notes": "Method to reset camera bounds",
-      "imports": [],
-      "tags": ["camera", "bounds", "reset"]
+      "start_line": 131,
+      "end_line": 160,
+      "notes": "Sets camera zoom level with optional smooth transition",
+      "imports": [
+        "Phaser.Cameras.Scene2D.Camera"
+      ],
+      "tags": [
+        "core_system",
+        "camera_system",
+        "zoom",
+        "configuration"
+      ],
+      "related_chunks": [
+        {"file_name": "CameraManager.js", "chunk_index": 5, "method": "shake"},
+        {"file_name": "CameraManager.js", "chunk_index": 7, "method": "setBounds"}
+      ]
     }
   },
   {
     "file_name": "CameraManager.js",
     "chunk_index": 7,
-    "method": "playIntroSequence",
-    "chunk_text": "    /**\n     * Play camera intro sequence\n     * Pans to player position with easing\n     */\n    playIntroSequence(player) {\n        this.isIntroPlaying = true;\n        this.player = player;\n\n        const startX = this.camera.scrollX;\n        const startY = this.camera.scrollY;\n\n        // Pan camera to player\n        this.introTweens.push(\n            this.scene.tweens.add({\n                targets: this.camera,\n                scrollX: player.x - this.gameWidth / 2,\n                scrollY: player.y - this.gameHeight / 2,\n                duration: 2000,\n                ease: 'Power2',\n                onComplete: () => {\n                    this.stopIntroSequence();\n                }\n            })\n        );\n    }",
+    "method": "setBounds",
+    "chunk_text": "    /**\n     * Set camera bounds\n     * @param {Object} bounds - Boundary settings\n     * @param {number} bounds.x - Left boundary\n     * @param {number} bounds.y - Top boundary\n     * @param {number} bounds.width - Boundary width\n     * @param {number} bounds.height - Boundary height\n     * \n     * @description\n     * Updates camera boundaries with:\n     * - Position constraints\n     * - Size limits\n     * - World alignment\n     */\n    setBounds({ x, y, width, height }) {\n        this.camera.setBounds(x, y, width, height);\n        \n        console.log('Camera bounds set:', { x, y, width, height });\n    }",
     "metadata": {
-      "start_line": 173,
-      "end_line": 197,
-      "notes": "Camera intro sequence animation",
-      "imports": [],
-      "tags": ["camera", "intro", "animation", "pan"]
+      "start_line": 162,
+      "end_line": 180,
+      "notes": "Sets camera boundary constraints for world limits",
+      "imports": [
+        "Phaser.Cameras.Scene2D.Camera"
+      ],
+      "tags": [
+        "core_system",
+        "camera_system",
+        "boundaries",
+        "configuration"
+      ],
+      "related_chunks": [
+        {"file_name": "CameraManager.js", "chunk_index": 6, "method": "setZoom"},
+        {"file_name": "CameraManager.js", "chunk_index": 8, "method": "playIntroSequence"}
+      ]
     }
   },
   {
     "file_name": "CameraManager.js",
     "chunk_index": 8,
-    "method": "stopIntroSequence",
-    "chunk_text": "    /**\n     * Stop and cleanup intro sequence\n     * Transitions to normal camera following\n     */\n    stopIntroSequence() {\n        this.introTweens.forEach(tween => {\n            if (tween.isPlaying) tween.stop();\n        });\n        this.introTweens = [];\n        this.isIntroPlaying = false;\n\n        if (this.player) {\n            this.camera.startFollow(this.player, true, this.followLerpX, this.followLerpY);\n        }\n    }",
+    "method": "playIntroSequence",
+    "chunk_text": "    /**\n     * Play camera intro sequence\n     * @param {Phaser.GameObjects.Sprite} target - Target to focus on\n     * @param {Object} [options] - Optional sequence settings\n     * @param {number} [options.duration=2000] - Sequence duration in ms\n     * @param {string} [options.ease='Power2'] - Easing function name\n     * \n     * @description\n     * Creates cinematic intro sequence:\n     * - Smooth pan to target\n     * - Configurable duration\n     * - Custom easing\n     * - Auto-transition to follow\n     */\n    playIntroSequence(target, options = {}) {\n        const { duration = 2000, ease = 'Power2' } = options;\n        this.isIntroPlaying = true;\n        \n        // Calculate target position\n        const targetX = target.x - this.camera.width / 2;\n        const targetY = target.y - this.camera.height / 2;\n        \n        // Create pan tween\n        this.introTweens.push(\n            this.scene.tweens.add({\n                targets: this.camera,\n                scrollX: targetX,\n                scrollY: targetY,\n                duration: duration,\n                ease: ease,\n                onComplete: () => {\n                    this.stopIntroSequence();\n                    this.follow(target);\n                }\n            })\n        );\n    }",
     "metadata": {
-      "start_line": 199,
-      "end_line": 213,
-      "notes": "Method to stop intro sequence and transition to normal following",
-      "imports": [],
-      "tags": ["camera", "stop", "intro", "transition"]
+      "start_line": 182,
+      "end_line": 215,
+      "notes": "Creates cinematic camera intro sequence with smooth transitions",
+      "imports": [
+        "Phaser.GameObjects.Sprite",
+        "Phaser.Cameras.Scene2D.Camera",
+        "Phaser.Tweens.TweenManager"
+      ],
+      "tags": [
+        "core_system",
+        "camera_system",
+        "effects",
+        "game_intro"
+      ],
+      "related_chunks": [
+        {"file_name": "CameraManager.js", "chunk_index": 7, "method": "setBounds"},
+        {"file_name": "CameraManager.js", "chunk_index": 9, "method": "stopIntroSequence"}
+      ]
+    }
+  },
+  {
+    "file_name": "CameraManager.js",
+    "chunk_index": 9,
+    "method": "stopIntroSequence",
+    "chunk_text": "    /**\n     * Stop intro sequence\n     * @description\n     * Cleans up intro sequence:\n     * - Stops active tweens\n     * - Clears tween array\n     * - Updates sequence state\n     * - Ensures proper follow behavior\n     */\n    stopIntroSequence() {\n        // Stop all intro tweens\n        this.introTweens.forEach(tween => {\n            if (tween.isPlaying) {\n                tween.stop();\n            }\n        });\n        \n        // Clear tweens and reset state\n        this.introTweens = [];\n        this.isIntroPlaying = false;\n    }",
+    "metadata": {
+      "start_line": 217,
+      "end_line": 236,
+      "notes": "Handles cleanup and state reset after intro sequence",
+      "imports": [
+        "Phaser.Tweens.Tween",
+        "Phaser.Cameras.Scene2D.Camera"
+      ],
+      "tags": [
+        "core_system",
+        "camera_system",
+        "cleanup",
+        "game_intro"
+      ],
+      "related_chunks": [
+        {"file_name": "CameraManager.js", "chunk_index": 8, "method": "playIntroSequence"},
+        {"file_name": "CameraManager.js", "chunk_index": 4, "method": "follow"}
+      ]
     }
   }
 ]

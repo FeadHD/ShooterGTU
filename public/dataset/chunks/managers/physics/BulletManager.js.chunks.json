@@ -7,10 +7,25 @@
       "metadata": {
         "start_line": 1,
         "end_line": 5,
-        "notes": "Class definition for managing bullet pooling, creation, and physics interactions",
-        "imports": ["../../prefabs/Bullet"],
-        "tags": ["class_definition", "bullet_manager", "phaser3"],
-        "related_chunks": []
+        "notes": "Class definition for managing bullet lifecycle and physics. Responsible for bullet pooling, creation, and physics interactions.",
+        "imports": [
+          "../../prefabs/Bullet",
+          "Phaser.Physics.Arcade.Group",
+          "Phaser.Scene",
+          "Phaser.GameObjects.GameObject"
+        ],
+        "tags": [
+          "class_definition",
+          "bullet_manager",
+          "phaser3",
+          "physics",
+          "object_pooling",
+          "game_management"
+        ],
+        "related_chunks": [
+          {"file_name": "BulletManager.js", "chunk_index": 1, "method": "constructor"},
+          {"file_name": "BulletManager.js", "chunk_index": 2, "method": "#createBulletGroup"}
+        ]
       }
     },
     {
@@ -21,9 +36,16 @@
       "metadata": {
         "start_line": 7,
         "end_line": 15,
-        "notes": "Constructor for initializing the BulletManager with scene reference and bullet pooling setup",
-        "imports": [],
-        "tags": ["constructor", "bullet_pooling", "phaser3"],
+        "notes": "Constructor initializes the BulletManager with scene reference and sets up bullet pooling system. Validates scene parameter and creates the physics group for bullet management.",
+        "imports": ["Phaser.Scene"],
+        "tags": [
+          "constructor",
+          "bullet_pooling",
+          "phaser3",
+          "initialization",
+          "error_handling",
+          "physics_setup"
+        ],
         "related_chunks": [
           {"file_name": "BulletManager.js", "chunk_index": 2, "method": "#createBulletGroup"}
         ]
@@ -37,10 +59,23 @@
       "metadata": {
         "start_line": 17,
         "end_line": 30,
-        "notes": "Private method for creating the bullet pool with unlimited size and setting constraints",
-        "imports": [],
-        "tags": ["private_method", "bullet_pooling", "phaser3"],
-        "related_chunks": []
+        "notes": "Private method that initializes the physics group for bullet pooling. Configures bullet physics properties including gravity and immovability. Essential for bullet lifecycle management.",
+        "imports": [
+          "Phaser.Physics.Arcade.Group",
+          "Phaser.Physics.Arcade.Factory"
+        ],
+        "tags": [
+          "private_method",
+          "bullet_pooling",
+          "phaser3",
+          "physics",
+          "object_pooling",
+          "configuration"
+        ],
+        "related_chunks": [
+          {"file_name": "BulletManager.js", "chunk_index": 4, "method": "createBullet"},
+          {"file_name": "BulletManager.js", "chunk_index": 5, "method": "getGroup"}
+        ]
       }
     },
     {
@@ -51,10 +86,22 @@
       "metadata": {
         "start_line": 32,
         "end_line": 41,
-        "notes": "Deactivates and hides the bullet when it hits its target or leaves the screen",
-        "imports": [],
-        "tags": ["bullet_lifecycle", "destroy_bullet", "phaser3"],
-        "related_chunks": []
+        "notes": "Handles bullet deactivation and recycling. Properly disables physics body and visibility for pool recycling.",
+        "imports": [
+          "Phaser.Physics.Arcade.Body",
+          "Phaser.GameObjects.GameObject"
+        ],
+        "tags": [
+          "bullet_lifecycle",
+          "destroy_bullet",
+          "phaser3",
+          "object_pooling",
+          "physics",
+          "resource_management"
+        ],
+        "related_chunks": [
+          {"file_name": "BulletManager.js", "chunk_index": 4, "method": "createBullet"}
+        ]
       }
     },
     {
@@ -65,11 +112,23 @@
       "metadata": {
         "start_line": 43,
         "end_line": 56,
-        "notes": "Creates a new bullet from the pool, sets position and velocity",
-        "imports": [],
-        "tags": ["bullet_creation", "bullet_pooling", "phaser3"],
+        "notes": "Creates and initializes bullets from the object pool. Sets position, visibility, and velocity. Returns null if pool is exhausted.",
+        "imports": [
+          "Phaser.Physics.Arcade.Group",
+          "Phaser.GameObjects.GameObject",
+          "Phaser.Physics.Arcade.Body"
+        ],
+        "tags": [
+          "bullet_creation",
+          "bullet_pooling",
+          "phaser3",
+          "physics",
+          "object_initialization",
+          "resource_management"
+        ],
         "related_chunks": [
-          {"file_name": "BulletManager.js", "chunk_index": 2, "method": "#createBulletGroup"}
+          {"file_name": "BulletManager.js", "chunk_index": 2, "method": "#createBulletGroup"},
+          {"file_name": "BulletManager.js", "chunk_index": 3, "method": "destroyBullet"}
         ]
       }
     },
@@ -81,10 +140,18 @@
       "metadata": {
         "start_line": 58,
         "end_line": 65,
-        "notes": "Returns the bullet physics group for collision detection",
-        "imports": [],
-        "tags": ["bullet_group", "collision_manager", "phaser3"],
-        "related_chunks": []
+        "notes": "Accessor method for the bullet physics group. Provides encapsulated access to the bullet pool.",
+        "imports": ["Phaser.Physics.Arcade.Group"],
+        "tags": [
+          "bullet_group",
+          "phaser3",
+          "physics",
+          "accessor",
+          "encapsulation"
+        ],
+        "related_chunks": [
+          {"file_name": "BulletManager.js", "chunk_index": 2, "method": "#createBulletGroup"}
+        ]
       }
     }
-  ]
+]

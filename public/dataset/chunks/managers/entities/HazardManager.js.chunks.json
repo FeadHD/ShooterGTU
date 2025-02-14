@@ -7,15 +7,25 @@
     "metadata": {
       "start_line": 7,
       "end_line": 11,
-      "notes": "Import statements for required dependencies",
+      "notes": "Core imports for hazard management system including events, base manager, config, and prefabs",
       "imports": [
-        "../core/EventManager",
-        "./EntityManager",
-        "../../config/GameConfig",
-        "../../prefabs/AlarmTrigger",
-        "../../prefabs/Trap"
+        "GameEvents",
+        "EntityManager",
+        "GameConfig",
+        "AlarmTrigger",
+        "Trap"
       ],
-      "tags": ["imports", "dependencies", "phaser3", "hazard_management"]
+      "tags": [
+        "imports",
+        "core_system",
+        "hazard_management",
+        "prefabs",
+        "configuration"
+      ],
+      "related_chunks": [
+        {"file_name": "HazardManager.js", "chunk_index": 1, "method": "class_definition"},
+        {"file_name": "HazardManager.js", "chunk_index": 2, "method": "constructor"}
+      ]
     }
   },
   {
@@ -26,9 +36,21 @@
     "metadata": {
       "start_line": 1,
       "end_line": 24,
-      "notes": "Separate file-level (@file) and class-level documentation with clear responsibilities",
-      "imports": [],
-      "tags": ["file", "documentation", "module", "hazard_manager", "phaser3"]
+      "notes": "Class definition for HazardManager with comprehensive documentation of responsibilities and relationships",
+      "imports": [
+        "EntityManager"
+      ],
+      "tags": [
+        "class_definition",
+        "core_system",
+        "hazard_management",
+        "documentation",
+        "inheritance"
+      ],
+      "related_chunks": [
+        {"file_name": "HazardManager.js", "chunk_index": 0, "method": "imports"},
+        {"file_name": "HazardManager.js", "chunk_index": 2, "method": "constructor"}
+      ]
     }
   },
   {
@@ -39,9 +61,25 @@
     "metadata": {
       "start_line": 26,
       "end_line": 47,
-      "notes": "Constructor initialization with physics groups and damage-tracking Map",
-      "imports": [],
-      "tags": ["constructor", "initialization", "hazard_manager", "trap_management", "phaser3"]
+      "notes": "Constructor initializing physics groups, damage tracking, and base manager functionality",
+      "imports": [
+        "Phaser.Scene",
+        "Phaser.Physics.Arcade.StaticGroup",
+        "Phaser.Physics.Arcade.Group",
+        "Map"
+      ],
+      "tags": [
+        "initialization",
+        "physics",
+        "hazard_management",
+        "core_system",
+        "state_tracking"
+      ],
+      "related_chunks": [
+        {"file_name": "HazardManager.js", "chunk_index": 1, "method": "class_definition"},
+        {"file_name": "HazardManager.js", "chunk_index": 3, "method": "addHazard"},
+        {"file_name": "HazardManager.js", "chunk_index": 4, "method": "handlePlayerCollision"}
+      ]
     }
   },
   {
@@ -52,9 +90,24 @@
     "metadata": {
       "start_line": 49,
       "end_line": 77,
-      "notes": "Method to add and initialize hazards with collision setup",
-      "imports": [],
-      "tags": ["hazard_management", "collision_detection", "trap_management", "phaser3"]
+      "notes": "Registers hazards and sets up physics-based player collision detection with callback handling",
+      "imports": [
+        "Phaser.GameObjects.Sprite",
+        "Phaser.GameObjects.Container",
+        "Phaser.Physics.Arcade.World",
+        "Phaser.Scene"
+      ],
+      "tags": [
+        "hazard_management",
+        "collision_setup",
+        "physics",
+        "registration",
+        "core_system"
+      ],
+      "related_chunks": [
+        {"file_name": "HazardManager.js", "chunk_index": 2, "method": "constructor"},
+        {"file_name": "HazardManager.js", "chunk_index": 4, "method": "handlePlayerCollision"}
+      ]
     }
   },
   {
@@ -65,9 +118,26 @@
     "metadata": {
       "start_line": 79,
       "end_line": 112,
-      "notes": "Method to handle player collisions, respecting invulnerability cooldown",
-      "imports": [],
-      "tags": ["collision_handling", "damage_system", "invulnerability", "event_broadcast", "phaser3"]
+      "notes": "Handles hazard-player collisions with damage application, cooldown tracking, and event broadcasting",
+      "imports": [
+        "Phaser.GameObjects.Sprite",
+        "Phaser.GameObjects.Container",
+        "GameEvents",
+        "GameConfig",
+        "Map",
+        "Date"
+      ],
+      "tags": [
+        "collision_handling",
+        "damage_system",
+        "cooldown_management",
+        "event_system",
+        "core_system"
+      ],
+      "related_chunks": [
+        {"file_name": "HazardManager.js", "chunk_index": 2, "method": "constructor"},
+        {"file_name": "HazardManager.js", "chunk_index": 3, "method": "addHazard"}
+      ]
     }
   },
   {
@@ -78,9 +148,23 @@
     "metadata": {
       "start_line": 114,
       "end_line": 144,
-      "notes": "Method to calculate valid hazard spawn points by checking platform overlaps",
-      "imports": [],
-      "tags": ["spawn_point_calculation", "grid_system", "collision_detection", "phaser3"]
+      "notes": "Calculates valid hazard spawn points using grid-based system with platform collision checks and margin safety",
+      "imports": [
+        "Phaser.Scene",
+        "Phaser.GameObjects.Group",
+        "Array",
+        "Math"
+      ],
+      "tags": [
+        "spawn_system",
+        "grid_calculation",
+        "collision_detection",
+        "helper_method",
+        "optimization"
+      ],
+      "related_chunks": [
+        {"file_name": "HazardManager.js", "chunk_index": 6, "method": "createTraps"}
+      ]
     }
   },
   {
@@ -91,9 +175,27 @@
     "metadata": {
       "start_line": 146,
       "end_line": 186,
-      "notes": "Method to create and place traps and alarm triggers based on config",
-      "imports": [],
-      "tags": ["trap_creation", "hazard_management", "alarm_trigger", "collision_setup"]
+      "notes": "Creates and places traps and alarm triggers at valid spawn points with randomized distribution",
+      "imports": [
+        "Phaser.Utils.Array",
+        "Phaser.Physics.Arcade.StaticGroup",
+        "Phaser.Physics.Arcade.Group",
+        "AlarmTrigger",
+        "Trap",
+        "Array",
+        "Math"
+      ],
+      "tags": [
+        "trap_creation",
+        "spawn_management",
+        "entity_placement",
+        "randomization",
+        "core_system"
+      ],
+      "related_chunks": [
+        {"file_name": "HazardManager.js", "chunk_index": 5, "method": "findSpawnPoints"},
+        {"file_name": "HazardManager.js", "chunk_index": 7, "method": "setupCollisions"}
+      ]
     }
   },
   {
@@ -104,9 +206,24 @@
     "metadata": {
       "start_line": 188,
       "end_line": 206,
-      "notes": "Method to establish collision callbacks for alarm triggers and the player",
-      "imports": [],
-      "tags": ["collision_detection", "alarm_triggers", "player_collision", "phaser3"]
+      "notes": "Configures physics-based collision detection between player and alarm triggers with callback handling",
+      "imports": [
+        "Phaser.Types.Physics.Arcade.SpriteWithDynamicBody",
+        "Phaser.Physics.Arcade.World",
+        "Phaser.Scene",
+        "AlarmTrigger"
+      ],
+      "tags": [
+        "collision_setup",
+        "alarm_system",
+        "physics",
+        "player_interaction",
+        "helper_method"
+      ],
+      "related_chunks": [
+        {"file_name": "HazardManager.js", "chunk_index": 6, "method": "createTraps"},
+        {"file_name": "HazardManager.js", "chunk_index": 8, "method": "cleanup"}
+      ]
     }
   },
   {
@@ -117,9 +234,23 @@
     "metadata": {
       "start_line": 208,
       "end_line": 231,
-      "notes": "Method to remove hazards, reset cooldowns, and clear groups",
-      "imports": [],
-      "tags": ["hazard_cleanup", "trap_management", "alarm_cleanup", "game_reset"]
+      "notes": "Performs complete cleanup of hazard system including state reset and entity destruction",
+      "imports": [
+        "Phaser.Physics.Arcade.Group",
+        "Phaser.Physics.Arcade.StaticGroup",
+        "Map"
+      ],
+      "tags": [
+        "cleanup",
+        "state_management",
+        "memory_management",
+        "lifecycle",
+        "core_system"
+      ],
+      "related_chunks": [
+        {"file_name": "HazardManager.js", "chunk_index": 2, "method": "constructor"},
+        {"file_name": "HazardManager.js", "chunk_index": 7, "method": "setupCollisions"}
+      ]
     }
   }
 ]

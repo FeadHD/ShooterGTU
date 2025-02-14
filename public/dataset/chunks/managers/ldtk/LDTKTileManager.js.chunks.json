@@ -7,8 +7,24 @@
       "metadata": {
         "start_line": 1,
         "end_line": 4,
-        "notes": "File header and general class description",
-        "imports": []
+        "notes": "Defines core tile collision system for LDtk integration with Phaser physics",
+        "imports": [
+          "Phaser.Physics.Arcade",
+          "Phaser.GameObjects.Rectangle",
+          "LDtk"
+        ],
+        "tags": [
+          "class_definition",
+          "physics",
+          "collision",
+          "ldtk",
+          "core_system",
+          "tile_management"
+        ],
+        "related_chunks": [
+          {"file_name": "LDTKTileManager.js", "chunk_index": 1, "method": "constructor"},
+          {"file_name": "LDTKTileManager.js", "chunk_index": 2, "method": "createTileHitboxes"}
+        ]
       }
     },
     {
@@ -19,8 +35,22 @@
       "metadata": {
         "start_line": 6,
         "end_line": 10,
-        "notes": "Constructor to initialize collision system and hitboxes",
-        "imports": []
+        "notes": "Initializes tile collision system with scene context and hitbox tracking maps",
+        "imports": [
+          "Phaser.Scene",
+          "Map"
+        ],
+        "tags": [
+          "constructor",
+          "initialization",
+          "physics",
+          "collision",
+          "core_system"
+        ],
+        "related_chunks": [
+          {"file_name": "LDTKTileManager.js", "chunk_index": 0, "method": "file_header"},
+          {"file_name": "LDTKTileManager.js", "chunk_index": 5, "method": "createHitbox"}
+        ]
       }
     },
     {
@@ -31,8 +61,25 @@
       "metadata": {
         "start_line": 11,
         "end_line": 43,
-        "notes": "Creates collision hitboxes for the level section, processing solid tiles",
-        "imports": []
+        "notes": "Creates and manages collision hitboxes for a level section based on LDtk data",
+        "imports": [
+          "Set",
+          "LDtk.Layer",
+          "Phaser.Physics.Arcade"
+        ],
+        "tags": [
+          "level_loading",
+          "physics",
+          "collision",
+          "ldtk",
+          "core_system",
+          "error_handling"
+        ],
+        "related_chunks": [
+          {"file_name": "LDTKTileManager.js", "chunk_index": 3, "method": "processAutoLayerTiles"},
+          {"file_name": "LDTKTileManager.js", "chunk_index": 4, "method": "processIntGridTiles"},
+          {"file_name": "LDTKTileManager.js", "chunk_index": 6, "method": "cleanupHitboxes"}
+        ]
       }
     },
     {
@@ -43,8 +90,23 @@
       "metadata": {
         "start_line": 44,
         "end_line": 58,
-        "notes": "Processes auto-placed tiles and creates hitboxes for them",
-        "imports": []
+        "notes": "Processes LDtk auto-layer tiles and creates corresponding physics hitboxes within section bounds",
+        "imports": [
+          "Set",
+          "LDtk.AutoLayer",
+          "Phaser.Physics.Arcade"
+        ],
+        "tags": [
+          "tile_processing",
+          "physics",
+          "collision",
+          "ldtk",
+          "helper_method"
+        ],
+        "related_chunks": [
+          {"file_name": "LDTKTileManager.js", "chunk_index": 2, "method": "createTileHitboxes"},
+          {"file_name": "LDTKTileManager.js", "chunk_index": 5, "method": "createHitbox"}
+        ]
       }
     },
     {
@@ -55,8 +117,25 @@
       "metadata": {
         "start_line": 59,
         "end_line": 88,
-        "notes": "Processes integer grid tiles and creates hitboxes for solid cells",
-        "imports": []
+        "notes": "Processes LDtk integer grid tiles and creates physics hitboxes for solid cells within section bounds",
+        "imports": [
+          "Set",
+          "LDtk.IntGrid",
+          "Math",
+          "Phaser.Physics.Arcade"
+        ],
+        "tags": [
+          "tile_processing",
+          "physics",
+          "collision",
+          "ldtk",
+          "helper_method",
+          "grid_system"
+        ],
+        "related_chunks": [
+          {"file_name": "LDTKTileManager.js", "chunk_index": 2, "method": "createTileHitboxes"},
+          {"file_name": "LDTKTileManager.js", "chunk_index": 5, "method": "createHitbox"}
+        ]
       }
     },
     {
@@ -67,12 +146,25 @@
       "metadata": {
         "start_line": 112,
         "end_line": 126,
-        "notes": "Creates a static physics rectangle for tile collision",
-        "imports": [],
-        "tags": ["physics", "collision", "hitbox", "phaser3", "ldtk"],
+        "notes": "Creates and configures a static physics rectangle for tile collision with specific properties",
+        "imports": [
+          "Phaser.GameObjects.Rectangle",
+          "Phaser.Physics.Arcade.Body",
+          "Phaser.Scene",
+          "Map"
+        ],
+        "tags": [
+          "physics",
+          "collision",
+          "hitbox",
+          "creation",
+          "helper_method",
+          "core_system"
+        ],
         "related_chunks": [
           {"file_name": "LDTKTileManager.js", "chunk_index": 3, "method": "processAutoLayerTiles"},
-          {"file_name": "LDTKTileManager.js", "chunk_index": 4, "method": "processIntGridTiles"}
+          {"file_name": "LDTKTileManager.js", "chunk_index": 4, "method": "processIntGridTiles"},
+          {"file_name": "LDTKTileManager.js", "chunk_index": 7, "method": "addCollider"}
         ]
       }
     },
@@ -84,11 +176,23 @@
       "metadata": {
         "start_line": 127,
         "end_line": 145,
-        "notes": "Removes collision hitboxes from passed level sections",
-        "imports": [],
-        "tags": ["cleanup", "memory_management", "physics", "phaser3", "ldtk"],
+        "notes": "Manages memory by removing collision hitboxes from passed level sections during progression",
+        "imports": [
+          "Map",
+          "Set",
+          "Phaser.GameObjects.Rectangle"
+        ],
+        "tags": [
+          "cleanup",
+          "memory_management",
+          "physics",
+          "level_progression",
+          "core_system",
+          "optimization"
+        ],
         "related_chunks": [
-          {"file_name": "LDTKTileManager.js", "chunk_index": 2, "method": "createTileHitboxes"}
+          {"file_name": "LDTKTileManager.js", "chunk_index": 2, "method": "createTileHitboxes"},
+          {"file_name": "LDTKTileManager.js", "chunk_index": 5, "method": "createHitbox"}
         ]
       }
     },
@@ -100,11 +204,22 @@
       "metadata": {
         "start_line": 146,
         "end_line": 155,
-        "notes": "Sets up collision between game object and all tile hitboxes",
-        "imports": [],
-        "tags": ["physics", "collision", "game_object", "phaser3", "ldtk"],
+        "notes": "Establishes physics collisions between a game object and all active tile hitboxes",
+        "imports": [
+          "Phaser.GameObjects.GameObject",
+          "Phaser.Physics.Arcade.Collider",
+          "Map"
+        ],
+        "tags": [
+          "physics",
+          "collision",
+          "game_object",
+          "core_system",
+          "helper_method"
+        ],
         "related_chunks": [
-          {"file_name": "LDTKTileManager.js", "chunk_index": 5, "method": "createHitbox"}
+          {"file_name": "LDTKTileManager.js", "chunk_index": 5, "method": "createHitbox"},
+          {"file_name": "LDTKTileManager.js", "chunk_index": 1, "method": "constructor"}
         ]
       }
     }

@@ -1,0 +1,65 @@
+[
+  {
+    "file_name": "BaseManager.js",
+    "chunk_index": 0,
+    "method": "BaseManager",
+    "chunk_text": "/**\n * BaseManager.js\n * Base class for all game managers providing dependency injection functionality.\n * Serves as a foundation for specialized managers (Audio, UI, State, etc.)\n */\n\nimport { container } from './ServiceContainer';\n\nexport class BaseManager {\n    /**\n     * Initialize manager with service container access\n     * Container holds references to all game services and managers\n     */\n    constructor() {\n        this.container = container;\n    }\n\n    /**\n     * Get the current active scene\n     * @returns {Phaser.Scene} Current game scene\n     */\n    getScene() {\n        return this.container.get('scene');\n    }\n\n    /**\n     * Get a specific manager instance by key\n     * @param {string} managerKey - Identifier for the desired manager\n     * @returns {BaseManager} Instance of the requested manager\n     */\n    getManager(managerKey) {\n        return this.container.get(managerKey);\n    }\n}\n",
+    "metadata": {
+      "start_line": 9,
+      "end_line": 34,
+      "notes": "No notes available.",
+      "imports": [],
+      "tags": [
+        "phaser3",
+        "dependency_injection"
+      ],
+      "related_chunks": []
+    }
+  },
+  {
+    "file_name": "BaseManager.js",
+    "chunk_index": 1,
+    "method": "constructor",
+    "chunk_text": "        this.container = container;",
+    "metadata": {
+      "start_line": 14,
+      "end_line": 16,
+      "notes": "Method body only (no doc comments).",
+      "imports": [],
+      "tags": [],
+      "related_chunks": []
+    }
+  },
+  {
+    "file_name": "BaseManager.js",
+    "chunk_index": 2,
+    "method": "getScene",
+    "chunk_text": "        return this.container.get('scene');",
+    "metadata": {
+      "start_line": 22,
+      "end_line": 24,
+      "notes": "Method body only (no doc comments).",
+      "imports": [],
+      "tags": [
+        "dependency_injection"
+      ],
+      "related_chunks": []
+    }
+  },
+  {
+    "file_name": "BaseManager.js",
+    "chunk_index": 3,
+    "method": "getManager",
+    "chunk_text": "        return this.container.get(managerKey);",
+    "metadata": {
+      "start_line": 31,
+      "end_line": 33,
+      "notes": "Method body only (no doc comments).",
+      "imports": [],
+      "tags": [
+        "dependency_injection"
+      ],
+      "related_chunks": []
+    }
+  }
+]

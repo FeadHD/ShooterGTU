@@ -15,14 +15,157 @@
   {
     "file_name": "enemyAssetsMap.js",
     "chunk_index": 1,
-    "method": "enemyAssetsMap",
-    "chunk_text": "/**\n * Enemy assets configuration dictionary\n * @type {Object.<string, EnemyAssetConfig>}\n * @property {string} key Enemy type identifier (e.g., 'drone', 'boss')\n * @property {object} value Enemy configuration object\n * @property {string} value.spritesheet Spritesheet asset key in the game cache\n * @property {object} value.animations Animation configurations\n * @property {object} value.animations.idle Default state animation {frames: number[], frameRate: number}\n * @property {object} [value.animations.attack] Attack animation configuration\n * @property {object} [value.animations.death] Death animation configuration\n * \n * @description Maps enemy types to their visual assets and animation configurations.\n * Each enemy type defines its spritesheet and frame-based animations with timing.\n * \n * @example\n * // Drone enemy configuration\n * {\n *   'drone': {\n *     spritesheet: 'drone',\n *     animations: {\n *       idle: { frames: [0, 1, 2], frameRate: 8 },\n *       attack: { frames: [3, 4, 5], frameRate: 12 }\n *     }\n *   }\n * }\n */\nconst enemyAssetsMap = {\n    'drone': {\n        spritesheet: 'drone',\n        animations: {\n            idle: { frames: [0, 1, 2], frameRate: 8 },\n            attack: { frames: [3, 4, 5], frameRate: 12 },\n            death: { frames: [6, 7, 8], frameRate: 10 }\n        }\n    },\n    'boss': {\n        spritesheet: 'boss',\n        animations: {\n            idle: { frames: [0, 1, 2, 3], frameRate: 6 },\n            attack: { frames: [4, 5, 6, 7], frameRate: 10 },\n            death: { frames: [8, 9, 10, 11], frameRate: 8 }\n        }\n    }\n};",
+    "method": "class_definition",
+    "chunk_text": "/**\n * @class EnemyAssetsManager\n * @classdesc Manages enemy sprite and animation assets with standardized structure\n * \n * File Organization:\n * - Root: assets/enemys/{enemy_type}/\n * - Naming: {enemy_type}_{action}.png\n * - Format: 32x32 pixel spritesheets\n * \n * Standard Animation States:\n * - idle: Default standing animation (required)\n * - walk: Basic movement sequence\n * - attack: Combat action frames\n * - death: Defeat sequence\n * - wake: Initialization animation\n * - shock: Special effect state\n * \n * @description\n * Core functionality:\n * - Manages enemy asset configurations\n * - Provides standardized animation states\n * - Validates asset structure\n * - Handles frame sequences\n */\nexport class EnemyAssetsManager {",
     "metadata": {
       "start_line": 36,
-      "end_line": 65,
-      "notes": "Enemy sprite and animation configuration with frame sequences",
+      "end_line": 59,
+      "notes": "EnemyAssetsManager class definition with asset organization details",
       "imports": [],
-      "tags": ["enemy-config", "sprites", "animations", "game-assets"]
+      "tags": [
+        "configuration",
+        "core_system",
+        "class_definition",
+        "asset_management"
+      ],
+      "related_chunks": [
+        {"file_name": "enemyAssetsMap.js", "chunk_index": 0, "method": "file_header"},
+        {"file_name": "enemyAssetsMap.js", "chunk_index": 2, "method": "constructor"}
+      ]
+    }
+  },
+  {
+    "file_name": "enemyAssetsMap.js",
+    "chunk_index": 2,
+    "method": "constructor",
+    "chunk_text": "    /**\n     * @constructor\n     * @description\n     * Initializes the enemy assets manager with:\n     * - Default enemy configurations\n     * - Animation state mappings\n     * - Asset validation system\n     */\n    constructor() {\n        this.assetsMap = this._initializeAssetsMap();\n        this.validateAssets();\n    }",
+    "metadata": {
+      "start_line": 61,
+      "end_line": 71,
+      "notes": "Constructor initialization with default configurations and validation",
+      "imports": [],
+      "tags": [
+        "configuration",
+        "initialization",
+        "constructor",
+        "asset_management"
+      ],
+      "related_chunks": [
+        {"file_name": "enemyAssetsMap.js", "chunk_index": 1, "method": "class_definition"},
+        {"file_name": "enemyAssetsMap.js", "chunk_index": 3, "method": "_initializeAssetsMap"}
+      ]
+    }
+  },
+  {
+    "file_name": "enemyAssetsMap.js",
+    "chunk_index": 3,
+    "method": "_initializeAssetsMap",
+    "chunk_text": "    /**\n     * Initialize enemy assets configuration\n     * \n     * @private\n     * @returns {Object.<string, EnemyAssetConfig>} Enemy assets configuration\n     * \n     * @description\n     * Defines the core enemy types and their animations:\n     * - Drone: Basic flying enemy\n     * - Boss: Advanced enemy with complex animations\n     * \n     * @example\n     * // Asset configuration structure\n     * {\n     *   'drone': {\n     *     spritesheet: 'drone',\n     *     animations: {\n     *       idle: { frames: [0, 1, 2], frameRate: 8 },\n     *       attack: { frames: [3, 4, 5], frameRate: 12 }\n     *     }\n     *   }\n     * }\n     */\n    _initializeAssetsMap() {\n        return {\n            'drone': {\n                spritesheet: 'drone',\n                animations: {\n                    idle: { frames: [0, 1, 2], frameRate: 8 },\n                    attack: { frames: [3, 4, 5], frameRate: 12 },\n                    death: { frames: [6, 7, 8], frameRate: 10 }\n                }\n            },\n            'boss': {\n                spritesheet: 'boss',\n                animations: {\n                    idle: { frames: [0, 1, 2, 3], frameRate: 6 },\n                    attack: { frames: [4, 5, 6, 7], frameRate: 10 },\n                    death: { frames: [8, 9, 10, 11], frameRate: 8 }\n                }\n            }\n        };\n    }",
+    "metadata": {
+      "start_line": 73,
+      "end_line": 113,
+      "notes": "Private method to initialize enemy asset configurations with animation details",
+      "imports": [],
+      "tags": [
+        "configuration",
+        "initialization",
+        "private_method",
+        "asset_management",
+        "animation"
+      ],
+      "related_chunks": [
+        {"file_name": "enemyAssetsMap.js", "chunk_index": 2, "method": "constructor"},
+        {"file_name": "enemyAssetsMap.js", "chunk_index": 4, "method": "validateAssets"}
+      ]
+    }
+  },
+  {
+    "file_name": "enemyAssetsMap.js",
+    "chunk_index": 4,
+    "method": "validateAssets",
+    "chunk_text": "    /**\n     * Validate all enemy asset configurations\n     * \n     * @private\n     * @description\n     * Validation process:\n     * 1. Check required properties\n     * 2. Validate animation frames\n     * 3. Verify frame rates\n     * 4. Ensure required states exist\n     * \n     * @throws {Error} If asset configuration is invalid\n     */\n    validateAssets() {\n        Object.entries(this.assetsMap).forEach(([type, config]) => {\n            if (!config.spritesheet) {\n                throw new Error(`Missing spritesheet for enemy type: ${type}`);\n            }\n            if (!config.animations || !config.animations.idle) {\n                throw new Error(`Missing required idle animation for enemy type: ${type}`);\n            }\n            this._validateAnimations(type, config.animations);\n        });\n    }",
+    "metadata": {
+      "start_line": 115,
+      "end_line": 137,
+      "notes": "Validates enemy asset configurations including required animations",
+      "imports": [],
+      "tags": [
+        "configuration",
+        "validation",
+        "private_method",
+        "asset_management",
+        "animation"
+      ],
+      "related_chunks": [
+        {"file_name": "enemyAssetsMap.js", "chunk_index": 3, "method": "_initializeAssetsMap"},
+        {"file_name": "enemyAssetsMap.js", "chunk_index": 5, "method": "_validateAnimations"}
+      ]
+    }
+  },
+  {
+    "file_name": "enemyAssetsMap.js",
+    "chunk_index": 5,
+    "method": "_validateAnimations",
+    "chunk_text": "    /**\n     * Validate animation configurations for an enemy type\n     * \n     * @private\n     * @param {string} type - Enemy type identifier\n     * @param {Object} animations - Animation configurations\n     * \n     * @description\n     * Validation process:\n     * 1. Check frame sequences\n     * 2. Validate frame rates\n     * 3. Verify animation completeness\n     * \n     * @throws {Error} If animation configuration is invalid\n     */\n    _validateAnimations(type, animations) {\n        Object.entries(animations).forEach(([state, config]) => {\n            if (!Array.isArray(config.frames) || config.frames.length === 0) {\n                throw new Error(`Invalid frames for ${type} ${state} animation`);\n            }\n            if (typeof config.frameRate !== 'number' || config.frameRate <= 0) {\n                throw new Error(`Invalid frame rate for ${type} ${state} animation`);\n            }\n        });\n    }",
+    "metadata": {
+      "start_line": 139,
+      "end_line": 163,
+      "notes": "Private helper method for validating animation configurations",
+      "imports": [],
+      "tags": [
+        "configuration",
+        "validation",
+        "private_method",
+        "animation",
+        "helper_method"
+      ],
+      "related_chunks": [
+        {"file_name": "enemyAssetsMap.js", "chunk_index": 4, "method": "validateAssets"},
+        {"file_name": "enemyAssetsMap.js", "chunk_index": 6, "method": "getAssetConfig"}
+      ]
+    }
+  },
+  {
+    "file_name": "enemyAssetsMap.js",
+    "chunk_index": 6,
+    "method": "getAssetConfig",
+    "chunk_text": "    /**\n     * Get asset configuration for an enemy type\n     * \n     * @param {string} type - Enemy type identifier\n     * @returns {EnemyAssetConfig} Asset configuration object\n     * \n     * @description\n     * Retrieval process:\n     * 1. Validate enemy type\n     * 2. Return full configuration\n     * \n     * @throws {Error} If enemy type is invalid\n     */\n    getAssetConfig(type) {\n        if (!this.assetsMap[type]) {\n            throw new Error(`Invalid enemy type: ${type}`);\n        }\n        return { ...this.assetsMap[type] };\n    }",
+    "metadata": {
+      "start_line": 165,
+      "end_line": 183,
+      "notes": "Public method to retrieve enemy asset configurations",
+      "imports": [],
+      "tags": [
+        "configuration",
+        "getter",
+        "public_method",
+        "asset_management"
+      ],
+      "related_chunks": [
+        {"file_name": "enemyAssetsMap.js", "chunk_index": 5, "method": "_validateAnimations"},
+        {"file_name": "enemyAssetsMap.js", "chunk_index": 7, "method": "hasAnimationState"}
+      ]
+    }
+  },
+  {
+    "file_name": "enemyAssetsMap.js",
+    "chunk_index": 7,
+    "method": "hasAnimationState",
+    "chunk_text": "    /**\n     * Check if enemy type has specific animation state\n     * \n     * @param {string} type - Enemy type identifier\n     * @param {string} state - Animation state to check\n     * @returns {boolean} True if animation state exists\n     * \n     * @description\n     * Check process:\n     * 1. Validate enemy type\n     * 2. Check animation state existence\n     * \n     * @throws {Error} If enemy type is invalid\n     */\n    hasAnimationState(type, state) {\n        if (!this.assetsMap[type]) {\n            throw new Error(`Invalid enemy type: ${type}`);\n        }\n        return !!this.assetsMap[type].animations[state];\n    }",
+    "metadata": {
+      "start_line": 185,
+      "end_line": 205,
+      "notes": "Public method to check animation state availability",
+      "imports": [],
+      "tags": [
+        "configuration",
+        "checker",
+        "public_method",
+        "animation"
+      ],
+      "related_chunks": [
+        {"file_name": "enemyAssetsMap.js", "chunk_index": 6, "method": "getAssetConfig"}
+      ]
     }
   }
 ]

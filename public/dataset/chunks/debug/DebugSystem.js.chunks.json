@@ -2,105 +2,232 @@
   {
     "file_name": "DebugSystem.js",
     "chunk_index": 0,
-    "method": "constructor",
-    "chunk_text": "/**\n * Debug visualization system for game development and testing.\n * Provides real-time visual debugging tools and state inspection.\n *\n * @class DebugSystem\n * @requires Phaser\n * @param {Phaser.Scene} scene - The game scene to attach debug visualization to\n *\n * @property {Phaser.Scene} scene - Reference to the current game scene\n * @property {Phaser.GameObjects.Graphics} graphics - Primary debug drawing layer\n * @property {Phaser.GameObjects.Graphics} debugGraphics - Secondary debug drawing layer\n * @property {boolean} enabled - Master toggle for debug visualization\n * @property {boolean} showDebug - Toggle for debug overlay visibility\n * @property {Map<number, Object>} enemyIds - Maps unique IDs to enemy instances\n * @property {number} nextEnemyId - Auto-incrementing counter for enemy ID generation\n * @property {Array<Phaser.GameObjects.Text>} debugTexts - Collection of debug text overlays\n * @property {Phaser.Input.Keyboard.Key} debugKey - Key binding for toggling debug mode\n *\n * @fires DebugSystem#debugEnabled - When debug mode is enabled\n * @fires DebugSystem#debugDisabled - When debug mode is disabled\n *\n * @example\n * const debugSystem = new DebugSystem(this);\n * // Toggle debug visualization with 'E' key\n * // Debug overlays will appear when enabled\n */\nconstructor(scene) {\n    this.scene = scene;\n    this.graphics = scene.add.graphics();\n    this.graphics.setDepth(999);\n    this.enabled = false;\n    this.showDebug = false;\n    this.enemyIds = new Map(); // Store unique IDs for enemies\n    this.nextEnemyId = 1; // Counter for generating unique IDs\n    this.debugTexts = []; // Initialize debugTexts array\n\n    // Initialize debug graphics\n    this.debugGraphics = scene.add.graphics();\n    this.debugGraphics.setDepth(999);\n\n    // Add debug toggle key\n    this.debugKey = scene.input.keyboard.addKey('E');\n    this.debugKey.on('down', () => {\n        this.enabled = !this.enabled;\n        this.showDebug = !this.showDebug;\n        \n        // Toggle platform visibility\n        if (this.scene.platforms && this.scene.platforms.children) {\n            this.scene.platforms.children.iterate((platform) => {\n                if (platform) {\n                    platform.setVisible(this.enabled);\n                }\n            });\n        }\n        \n        if (!this.enabled) {\n            // Clear all debug graphics\n            this.graphics.clear();\n            if (this.debugGraphics) {\n                this.debugGraphics.clear();\n            }\n            // Clear any debug texts\n            if (this.debugTexts) {\n                this.debugTexts.forEach(text => text.destroy());\n                this.debugTexts = [];\n            }\n        }\n    });\n}",
+    "method": "imports",
+    "chunk_text": "import { GameEvents } from '../managers/core/EventManager';\nimport { GameConfig } from '../config/GameConfig';",
     "metadata": {
       "start_line": 1,
-      "end_line": 42,
-      "notes": "Core debug system initialization with graphics layers and input handling",
-      "imports": [],
-      "tags": ["debug", "visualization", "game", "development", "testing", "input"]
+      "end_line": 2,
+      "notes": "Core imports for debug system including event system and game configuration",
+      "imports": [
+        "GameEvents",
+        "GameConfig"
+      ],
+      "tags": [
+        "imports",
+        "core_system",
+        "debug",
+        "configuration"
+      ],
+      "related_chunks": [
+        {"file_name": "DebugSystem.js", "chunk_index": 1, "method": "class_definition"},
+        {"file_name": "DebugSystem.js", "chunk_index": 2, "method": "constructor"}
+      ]
     }
   },
   {
     "file_name": "DebugSystem.js",
     "chunk_index": 1,
-    "method": "initialize",
-    "chunk_text": "/**\n * Initialize additional debug graphics layers.\n * Currently reserved for future expansion of debug visualization.\n *\n * @method initialize\n * @memberof DebugSystem\n * @private\n *\n * @description\n * This method is currently disabled but preserved for future features:\n * - Additional graphics layers for complex visualizations\n * - Performance monitoring displays\n * - Custom debug overlays\n * - Scene-specific debug tools\n *\n * @todo Implement additional debug visualization features\n * @todo Add performance monitoring tools\n * @todo Consider scene-specific debug requirements\n */\ninitialize() {\n    // Add debug graphics\n    // this.debugGraphics = this.scene.add.graphics();\n    // this.debugGraphics.setDepth(999);\n}",
+    "method": "class_definition",
+    "chunk_text": "/**\n * @file\n * This file exports the DebugSystem class which provides debugging utilities and tools\n * for development and testing. It handles debug overlays, performance monitoring, and\n * state inspection.\n *\n * @module debug\n */\n\n/**\n * Debug system for development and testing\n * \n * @class DebugSystem\n * @description\n * Provides debugging tools and utilities including:\n * - FPS counter and performance metrics\n * - State inspection and modification\n * - Debug overlay rendering\n * - Event logging and monitoring\n * \n * @see GameConfig Configuration settings\n * @see GameEvents Event system integration\n */\nexport class DebugSystem {",
     "metadata": {
-      "start_line": 44,
-      "end_line": 48,
-      "notes": "Reserved method for future debug system expansion",
+      "start_line": 4,
+      "end_line": 26,
+      "notes": "Class definition for DebugSystem with comprehensive documentation of debugging capabilities",
       "imports": [],
-      "tags": ["debug", "visualization", "future", "expansion"]
+      "tags": [
+        "class_definition",
+        "core_system",
+        "debug",
+        "documentation"
+      ],
+      "related_chunks": [
+        {"file_name": "DebugSystem.js", "chunk_index": 0, "method": "imports"},
+        {"file_name": "DebugSystem.js", "chunk_index": 2, "method": "constructor"}
+      ]
     }
   },
   {
     "file_name": "DebugSystem.js",
     "chunk_index": 2,
-    "method": "drawPhysicsBounds",
-    "chunk_text": "/**\n * Draw debug visualization for physics body boundaries.\n * Visualizes collision boxes and physics properties in real-time.\n *\n * @method drawPhysicsBounds\n * @memberof DebugSystem\n * @param {Phaser.GameObjects.GameObject} gameObject - The game object to visualize\n * @returns {void}\n *\n * @description\n * Renders the following debug elements:\n * - Physics body boundaries (green outline)\n * - Collision box dimensions\n * - Object position markers\n *\n * @requires\n * - Debug system must be enabled\n * - GameObject must have a valid physics body\n * - GameObject must be active in the scene\n *\n * @example\n * debugSystem.drawPhysicsBounds(player);\n * debugSystem.drawPhysicsBounds(enemy);\n */\ndrawPhysicsBounds(gameObject) {\n    if (!this.enabled || !gameObject || !gameObject.body) return;\n\n    const x = gameObject.body.x;\n    const y = gameObject.body.y;\n    const width = gameObject.body.width;\n    const height = gameObject.body.height;\n\n    this.graphics.lineStyle(1, 0x00ff00);\n    this.graphics.strokeRect(x, y, width, height);\n}",
+    "method": "constructor",
+    "chunk_text": "    /**\n     * Initialize debug system\n     * \n     * @param {Phaser.Scene} scene - The scene this debug system belongs to\n     * \n     * @description\n     * Setup process:\n     * 1. Store scene reference\n     * 2. Initialize debug state\n     * 3. Setup event listeners\n     * 4. Create debug overlay if enabled\n     */\n    constructor(scene) {\n        this.scene = scene;\n        this.isEnabled = GameConfig.DEBUG_MODE;\n        this.debugGraphics = null;\n        \n        if (this.isEnabled) {\n            this.setupDebugMode();\n        }\n    }",
     "metadata": {
-      "start_line": 50,
-      "end_line": 60,
-      "notes": "Physics body visualization with real-time boundary drawing",
-      "imports": [],
-      "tags": ["debug", "physics", "collision", "real-time", "visualization"]
+      "start_line": 28,
+      "end_line": 47,
+      "notes": "Constructor implementation for DebugSystem, handling initialization and debug mode setup",
+      "imports": [
+        "GameConfig"
+      ],
+      "tags": [
+        "constructor",
+        "initialization",
+        "debug",
+        "configuration"
+      ],
+      "related_chunks": [
+        {"file_name": "DebugSystem.js", "chunk_index": 1, "method": "class_definition"},
+        {"file_name": "DebugSystem.js", "chunk_index": 3, "method": "setupDebugMode"}
+      ]
     }
   },
   {
     "file_name": "DebugSystem.js",
     "chunk_index": 3,
-    "method": "drawDroneDebug",
-    "chunk_text": "/**\n * Draw debug visualization for drone-type enemies.\n * Visualizes patrol paths, detection ranges, and state information.\n *\n * @method drawDroneDebug\n * @memberof DebugSystem\n * @param {Object} drone - The drone enemy instance to visualize\n * @param {Phaser.GameObjects.Sprite} drone.sprite - The drone's sprite object\n * @param {number} [drone.laserRange=500] - Drone's laser attack range\n * @param {Array<{x: number, y: number}>} [drone.patrolPoints] - Patrol path points\n * @param {boolean} drone.isLaserCharging - Current laser charging state\n * @param {number} drone.health - Current health value\n * @param {number} drone.maxHealth - Maximum health value\n * @returns {void}\n *\n * @description\n * Renders the following debug elements:\n * - Laser range indicator (red circle)\n * - Patrol path (green lines)\n * - Patrol points (red dots)\n * - Current position\n * - Health status\n *\n * @requires\n * - Debug system must be enabled\n * - Drone must have valid sprite and position\n * - Drone must be active in scene\n *\n * @example\n * debugSystem.drawDroneDebug(droneEnemy);\n */\ndrawDroneDebug(drone) {\n    if (!this.enabled) return;\n    console.log('Drawing drone debug for:', drone);\n\n    const sprite = drone.sprite || drone;\n    if (!sprite || !sprite.active) {\n        console.log('Invalid sprite for drone debug');\n        return;\n    }\n\n    console.log('Drone sprite position:', sprite.x, sprite.y);\n    console.log('Drone properties:', {\n        laserRange: drone.laserRange,\n        patrolPoints: drone.patrolPoints,\n        isLaserCharging: drone.isLaserCharging,\n        health: drone.health,\n        maxHealth: drone.maxHealth\n    });\n\n    // Draw laser range\n    this.graphics.lineStyle(1, 0xff0000, 0.3);\n    this.graphics.strokeCircle(sprite.x, sprite.y, drone.laserRange || 500);\n\n    // Draw patrol path and points\n    if (drone.patrolPoints) {\n        this.graphics.lineStyle(2, 0x00ff00, 0.5);\n        for (let i = 0; i < drone.patrolPoints.length; i++) {\n            const startPoint = drone.patrolPoints[i];\n            const endPoint = drone.patrolPoints[(i + 1) % drone.patrolPoints.length];\n            \n            this.graphics.beginPath();\n            this.graphics.moveTo(startPoint.x, startPoint.y);\n            this.graphics.lineTo(endPoint.x, endPoint.y);\n            this.graphics.strokePath();\n            \n            this.graphics.fillStyle(0xff0000, 1);\n            this.graphics.fillCircle(startPoint.x, startPoint.y, 5);\n        }\n    }\n}",
+    "method": "setupDebugMode",
+    "chunk_text": "    /**\n     * Setup debug mode configuration and tools\n     * \n     * @private\n     * @description\n     * Setup process:\n     * 1. Create debug graphics layer\n     * 2. Initialize FPS counter\n     * 3. Setup keyboard shortcuts\n     * 4. Configure debug event listeners\n     * \n     * @returns {void}\n     */\n    setupDebugMode() {\n        this.debugGraphics = this.scene.add.graphics();\n        this.setupKeyboardShortcuts();\n        this.setupEventListeners();\n        \n        // Initialize FPS display if enabled\n        if (GameConfig.SHOW_FPS) {\n            this.setupFPSCounter();\n        }\n    }",
     "metadata": {
-      "start_line": 62,
-      "end_line": 102,
-      "notes": "Comprehensive drone enemy debug visualization with patrol paths and states",
-      "imports": [],
-      "tags": ["debug", "visualization", "drone", "enemies", "patrol", "health"]
+      "start_line": 49,
+      "end_line": 71,
+      "notes": "Sets up debug mode functionality including graphics, shortcuts, and FPS counter",
+      "imports": [
+        "GameConfig"
+      ],
+      "tags": [
+        "initialization",
+        "debug",
+        "configuration",
+        "setup"
+      ],
+      "related_chunks": [
+        {"file_name": "DebugSystem.js", "chunk_index": 2, "method": "constructor"},
+        {"file_name": "DebugSystem.js", "chunk_index": 4, "method": "drawPhysicsBounds"}
+      ]
     }
   },
   {
     "file_name": "DebugSystem.js",
     "chunk_index": 4,
-    "method": "drawWarriorDebug",
-    "chunk_text": "/**\n * Draw debug visualization for warrior-type enemies.\n * Visualizes detection ranges, attack zones, and movement states.\n *\n * @method drawWarriorDebug\n * @memberof DebugSystem\n * @param {Phaser.GameObjects.Sprite} sprite - The warrior enemy's sprite\n * @returns {void}\n *\n * @description\n * Renders the following debug elements:\n * - Physics body boundaries (orange)\n * - Detection range (orange circle)\n * - Attack range (red circle)\n * - Movement direction (yellow line)\n * - Current state indicators\n *\n * @requires\n * - Debug system must be enabled\n * - Sprite must have associated warrior data\n * - Sprite must be active in scene\n *\n * @fires DebugSystem#warriorDebugDrawn - When warrior debug visualization completes\n *\n * @example\n * debugSystem.drawWarriorDebug(warriorSprite);\n */\ndrawWarriorDebug(sprite) {\n    if (!this.enabled || !sprite) return;\n    console.log('Drawing warrior debug for:', sprite);\n\n    const warrior = sprite.getData('enemy');\n    if (!warrior) {\n        console.warn('No warrior data found for sprite:', sprite);\n        return;\n    }\n\n    // Draw physics bounds\n    this.drawPhysicsBounds(sprite);\n\n    // Draw detection and attack ranges\n    this.graphics.lineStyle(1, 0xff6600, 0.3);\n    this.graphics.strokeCircle(sprite.x, sprite.y, warrior.detectionRange || 300);\n\n    this.graphics.lineStyle(1, 0xff0000, 0.3);\n    this.graphics.strokeCircle(sprite.x, sprite.y, warrior.attackRange || 50);\n\n    // Draw movement direction\n    const directionLength = 30;\n    this.graphics.lineStyle(2, 0xffff00);\n    this.graphics.lineBetween(\n        sprite.x,\n        sprite.y,\n        sprite.x + (sprite.flipX ? -directionLength : directionLength),\n        sprite.y\n    );\n}",
+    "method": "drawPhysicsBounds",
+    "chunk_text": "    /**\n     * Draw debug visualization for physics body boundaries\n     * \n     * @param {Phaser.GameObjects.GameObject} gameObject - The game object to visualize\n     * \n     * @description\n     * Visualization process:\n     * 1. Checks if debug is enabled and object is valid\n     * 2. Gets physics body dimensions\n     * 3. Draws green outline around physics bounds\n     * \n     * @returns {void}\n     */\n    drawPhysicsBounds(gameObject) {\n        if (!this.isEnabled || !gameObject || !gameObject.body) return;\n\n        const x = gameObject.body.x;\n        const y = gameObject.body.y;\n        const width = gameObject.body.width;\n        const height = gameObject.body.height;\n\n        this.debugGraphics.lineStyle(1, 0x00ff00);\n        this.debugGraphics.strokeRect(x, y, width, height);\n    }",
     "metadata": {
-      "start_line": 104,
-      "end_line": 132,
-      "notes": "Warrior enemy debug visualization with combat ranges and movement indicators",
+      "start_line": 73,
+      "end_line": 93,
+      "notes": "Draws debug visualization for physics body boundaries with green outline",
       "imports": [],
-      "tags": ["debug", "warrior", "enemies", "combat", "visualization"]
+      "tags": [
+        "debug",
+        "physics",
+        "visualization",
+        "collision",
+        "utility"
+      ],
+      "related_chunks": [
+        {"file_name": "DebugSystem.js", "chunk_index": 3, "method": "setupDebugMode"},
+        {"file_name": "DebugSystem.js", "chunk_index": 5, "method": "drawDroneDebug"}
+      ]
     }
   },
   {
     "file_name": "DebugSystem.js",
     "chunk_index": 5,
-    "method": "drawPlayerDebug",
-    "chunk_text": "/**\n * Draw debug visualization for the player character.\n * Visualizes movement states, combat properties, and physics information.\n *\n * @method drawPlayerDebug\n * @memberof DebugSystem\n * @param {Object} player - The player character instance\n * @param {number} player.x - Player's x position\n * @param {number} player.y - Player's y position\n * @param {number} player.width - Player's collision width\n * @param {number} player.height - Player's collision height\n * @param {number} player.jumpsAvailable - Number of jumps available\n * @param {number} player.jumpSpeed - Jump velocity\n * @param {number} player.lastDamageTaken - Amount of last damage taken\n * @param {number} player.invulnerableUntil - Timestamp when invulnerability ends\n * @param {Phaser.Physics.Arcade.Body} player.body - Player's physics body\n * @returns {void}\n *\n * @description\n * Renders the following debug elements:\n * - Player bounds (green rectangle)\n * - Jump range indicator (green circle when jumps available)\n * - Damage indicator (red circle when recently hit)\n * - Movement direction (yellow line)\n * - Invulnerability status\n *\n * @requires\n * - Debug system must be enabled\n * - Player must be active in scene\n * - Player must have valid physics body\n *\n * @example\n * debugSystem.drawPlayerDebug(scene.player);\n */\ndrawPlayerDebug(player) {\n    if (!this.enabled || !player) return;\n\n    // Draw player bounds\n    this.graphics.lineStyle(2, 0x00ff00);\n    this.graphics.strokeRect(player.x - player.width/2, player.y - player.height/2, player.width, player.height);\n\n    // Draw jump range\n    if (player.jumpsAvailable > 0) {\n        this.graphics.lineStyle(1, 0x00ff00, 0.3);\n        this.graphics.strokeCircle(player.x, player.y, Math.abs(player.jumpSpeed) / 10);\n    }\n\n    // Draw damage indicator\n    if (player.lastDamageTaken > 0 && Date.now() < player.invulnerableUntil) {\n        this.graphics.lineStyle(2, 0xff0000, 0.5);\n        this.graphics.strokeCircle(player.x, player.y, 30);\n    }\n\n    // Draw movement direction\n    const direction = player.body.velocity.x !== 0 ? Math.sign(player.body.velocity.x) : (player.flipX ? -1 : 1);\n    const directionLength = 30;\n    this.graphics.lineStyle(2, 0xffff00);\n    this.graphics.lineBetween(\n        player.x,\n        player.y,\n        player.x + (direction * directionLength),\n        player.y\n    );\n}",
+    "method": "drawDroneDebug",
+    "chunk_text": "    /**\n     * Draw debug visualization for drone enemies\n     * \n     * @param {Object} drone - The drone enemy instance to visualize\n     * \n     * @description\n     * Visualization includes:\n     * 1. Laser range indicator\n     * 2. Patrol path visualization\n     * 3. Current state indicators\n     * 4. Position markers\n     * \n     * @returns {void}\n     */\n    drawDroneDebug(drone) {\n        if (!this.isEnabled) return;\n\n        const sprite = drone.sprite || drone;\n        if (!sprite || !sprite.active) return;\n\n        // Draw laser range\n        this.debugGraphics.lineStyle(1, 0xff0000, 0.3);\n        this.debugGraphics.strokeCircle(sprite.x, sprite.y, drone.laserRange || 500);\n\n        // Draw patrol path and points\n        if (drone.patrolPoints) {\n            this.debugGraphics.lineStyle(2, 0x00ff00, 0.5);\n            for (let i = 0; i < drone.patrolPoints.length; i++) {\n                const startPoint = drone.patrolPoints[i];\n                const endPoint = drone.patrolPoints[(i + 1) % drone.patrolPoints.length];\n                \n                this.debugGraphics.beginPath();\n                this.debugGraphics.moveTo(startPoint.x, startPoint.y);\n                this.debugGraphics.lineTo(endPoint.x, endPoint.y);\n                this.debugGraphics.strokePath();\n                \n                this.debugGraphics.fillStyle(0xff0000, 1);\n                this.debugGraphics.fillCircle(startPoint.x, startPoint.y, 5);\n            }\n        }\n    }",
     "metadata": {
-      "start_line": 134,
-      "end_line": 162,
-      "notes": "Player character debug visualization with movement and combat state indicators",
+      "start_line": 95,
+      "end_line": 135,
+      "notes": "Handles debug visualization for drone enemies including patrol paths and attack ranges",
       "imports": [],
-      "tags": ["debug", "player", "combat", "movement", "visualization"]
+      "tags": [
+        "debug",
+        "visualization",
+        "enemy",
+        "drone",
+        "patrol"
+      ],
+      "related_chunks": [
+        {"file_name": "DebugSystem.js", "chunk_index": 4, "method": "drawPhysicsBounds"},
+        {"file_name": "DebugSystem.js", "chunk_index": 6, "method": "drawWarriorDebug"}
+      ]
     }
   },
   {
     "file_name": "DebugSystem.js",
     "chunk_index": 6,
-    "method": "update",
-    "chunk_text": "/**\n * Main update loop for debug visualization system.\n * Clears and redraws all debug graphics each frame.\n *\n * @method update\n * @memberof DebugSystem\n * @param {number} time - Current game time in milliseconds\n * @returns {void}\n *\n * @description\n * Performs the following operations each frame in order:\n * 1. Graphics Cleanup:\n *    - Clears previous frame's graphics layers\n *    - Removes outdated debug text objects\n *    - Resets visual state\n * \n * 2. Early Exit Check:\n *    - Returns if debug system is disabled\n *    - Prevents unnecessary processing\n * \n * 3. Platform Visualization:\n *    - Updates all active platform bounds\n *    - Skips inactive platforms\n * \n * 4. Entity Updates:\n *    - Refreshes player debug information\n *    - Updates enemy visualizations by type\n *    - Maintains enemy type-specific debug info\n *\n * @performance\n * Frame Budget Considerations:\n * - Graphics clearing: ~0.1ms\n * - Text cleanup: ~0.05ms per text\n * - Entity updates: ~0.2ms per entity\n * - Total budget: ~2ms recommended max\n *\n * @requires\n * - Debug system must be enabled\n * - Scene must be active\n * - Graphics objects must be valid\n * - Minimum frame time: 16.67ms (60 FPS)\n *\n * @throws {Error} If graphics context is invalid\n * @throws {Error} If scene reference is lost\n *\n * @example\n * // In scene update loop\n * debugSystem.update(time);\n *\n * @see\n * - {@link drawPlayerDebug}\n * - {@link drawWarriorDebug}\n * - {@link drawDroneDebug}\n */\nupdate(time) {\n    // Clear previous frame's debug graphics\n    this.graphics.clear();\n    if (this.debugGraphics) {\n        this.debugGraphics.clear();\n    }\n    \n    // Clear previous debug texts\n    if (this.debugTexts) {\n        this.debugTexts.forEach(text => text.destroy());\n        this.debugTexts = [];\n    }\n\n    if (!this.enabled) return;\n\n    // Draw platform bounds\n    if (this.scene.platforms && this.scene.platforms.children) {\n        this.scene.platforms.children.entries.forEach(platform => {\n            if (platform && platform.active) {\n                this.drawPlatformBounds(platform);\n            }\n        });\n    }\n\n    // Draw player and enemy debug info\n    if (this.scene.player) {\n        this.drawPlayerDebug(this.scene.player);\n    }\n\n    if (this.scene.enemies) {\n        this.scene.enemies.getChildren().forEach(enemySprite => {\n            if (enemySprite && enemySprite.active) {\n                if (enemySprite.getData('type') === 'warrior') {\n                    this.drawWarriorDebug(enemySprite);\n                } else if (enemySprite.getData('type') === 'drone') {\n                    this.drawDroneDebug(enemySprite);\n                }\n            }\n        });\n    }\n}",
+    "method": "drawWarriorDebug",
+    "chunk_text": "    /**\n     * Draw debug visualization for warrior enemies\n     * \n     * @param {Phaser.GameObjects.Sprite} sprite - The warrior enemy's sprite\n     * \n     * @description\n     * Visualization includes:\n     * 1. Physics body boundaries\n     * 2. Detection and attack ranges\n     * 3. Movement direction indicators\n     * \n     * @returns {void}\n     */\n    drawWarriorDebug(sprite) {\n        if (!this.isEnabled || !sprite) return;\n\n        const warrior = sprite.getData('enemy');\n        if (!warrior) return;\n\n        // Draw physics bounds\n        this.drawPhysicsBounds(sprite);\n\n        // Draw detection and attack ranges\n        this.debugGraphics.lineStyle(1, 0xff6600, 0.3);\n        this.debugGraphics.strokeCircle(sprite.x, sprite.y, warrior.detectionRange || 300);\n\n        this.debugGraphics.lineStyle(1, 0xff0000, 0.3);\n        this.debugGraphics.strokeCircle(sprite.x, sprite.y, warrior.attackRange || 50);\n\n        // Draw movement direction\n        const directionLength = 30;\n        this.debugGraphics.lineStyle(2, 0xffff00);\n        this.debugGraphics.lineBetween(\n            sprite.x,\n            sprite.y,\n            sprite.x + (sprite.flipX ? -directionLength : directionLength),\n            sprite.y\n        );\n    }",
     "metadata": {
-      "start_line": 164,
-      "end_line": 200,
-      "notes": "Core update loop for debug visualization with detailed performance analysis and error handling",
+      "start_line": 137,
+      "end_line": 165,
+      "notes": "Handles debug visualization for warrior enemies including combat ranges and movement",
       "imports": [],
-      "tags": ["debug", "visualization", "platforms", "player", "enemies", "performance"]
+      "tags": [
+        "debug",
+        "visualization",
+        "enemy",
+        "warrior",
+        "combat"
+      ],
+      "related_chunks": [
+        {"file_name": "DebugSystem.js", "chunk_index": 5, "method": "drawDroneDebug"},
+        {"file_name": "DebugSystem.js", "chunk_index": 7, "method": "drawPlayerDebug"}
+      ]
     }
   },
   {
     "file_name": "DebugSystem.js",
     "chunk_index": 7,
-    "method": "cleanup",
-    "chunk_text": "/**\n * Clean up debug system resources.\n * Destroys graphics and text objects to prevent memory leaks.\n *\n * @method cleanup\n * @memberof DebugSystem\n * @returns {void}\n *\n * @description\n * Cleanup Process Sequence:\n * 1. Graphics Cleanup:\n *    - Destroys main debug graphics\n *    - Removes all visual elements\n *    - Frees GPU resources\n * \n * 2. Text Cleanup:\n *    - Destroys all debug text objects\n *    - Clears text references\n *    - Prevents text memory leaks\n * \n * 3. State Reset:\n *    - Resets internal tracking\n *    - Prepares for potential reuse\n *    - Ensures clean state\n *\n * @timing\n * Recommended Cleanup Points:\n * - Scene transitions\n * - Game shutdown\n * - Debug system disable\n * - Memory pressure situations\n *\n * @requires\n * - Graphics objects must exist\n * - Text objects must be initialized\n * - Scene must be in valid state\n *\n * @throws {Error} If cleanup during active rendering\n * @throws {Error} If resources already destroyed\n *\n * @recovery\n * On Error:\n * 1. Force destroy remaining graphics\n * 2. Clear all object references\n * 3. Reset system state\n * 4. Log cleanup failure\n *\n * @example\n * // During scene shutdown\n * debugSystem.cleanup();\n * \n * // After debug disable\n * if (!debugEnabled) {\n *     debugSystem.cleanup();\n * }\n */\ncleanup() {\n    if (this.debugGraphics) {\n        this.debugGraphics.destroy();\n    }\n    if (this.debugTexts) {\n        this.debugTexts.forEach(text => text.destroy());\n        this.debugTexts = [];\n    }\n}",
+    "method": "drawPlayerDebug",
+    "chunk_text": "    /**\n     * Draw debug visualization for the player character\n     * \n     * @param {Object} player - The player character instance\n     * \n     * @description\n     * Visualization includes:\n     * 1. Player bounds\n     * 2. Jump range indicator\n     * 3. Damage and invulnerability status\n     * 4. Movement direction\n     * \n     * @returns {void}\n     */\n    drawPlayerDebug(player) {\n        if (!this.isEnabled || !player) return;\n\n        // Draw player bounds\n        this.debugGraphics.lineStyle(2, 0x00ff00);\n        this.debugGraphics.strokeRect(player.x - player.width/2, player.y - player.height/2, player.width, player.height);\n\n        // Draw jump range\n        if (player.jumpsAvailable > 0) {\n            this.debugGraphics.lineStyle(1, 0x00ff00, 0.3);\n            this.debugGraphics.strokeCircle(player.x, player.y, Math.abs(player.jumpSpeed) / 10);\n        }\n\n        // Draw damage indicator\n        if (player.lastDamageTaken > 0 && Date.now() < player.invulnerableUntil) {\n            this.debugGraphics.lineStyle(2, 0xff0000, 0.5);\n            this.debugGraphics.strokeCircle(player.x, player.y, 30);\n        }\n\n        // Draw movement direction\n        const direction = player.body.velocity.x !== 0 ? Math.sign(player.body.velocity.x) : (player.flipX ? -1 : 1);\n        const directionLength = 30;\n        this.debugGraphics.lineStyle(2, 0xffff00);\n        this.debugGraphics.lineBetween(\n            player.x,\n            player.y,\n            player.x + (direction * directionLength),\n            player.y\n        );\n    }",
     "metadata": {
-      "start_line": 202,
-      "end_line": 210,
-      "notes": "Comprehensive resource cleanup with error recovery and state management",
+      "start_line": 167,
+      "end_line": 195,
+      "notes": "Handles debug visualization for player character including movement and status indicators",
       "imports": [],
-      "tags": ["debug", "cleanup", "resources", "memory", "performance"]
+      "tags": [
+        "debug",
+        "visualization",
+        "player",
+        "movement",
+        "status"
+      ],
+      "related_chunks": [
+        {"file_name": "DebugSystem.js", "chunk_index": 6, "method": "drawWarriorDebug"},
+        {"file_name": "DebugSystem.js", "chunk_index": 8, "method": "update"}
+      ]
+    }
+  },
+  {
+    "file_name": "DebugSystem.js",
+    "chunk_index": 8,
+    "method": "update",
+    "chunk_text": "    /**\n     * Update debug visualization state\n     * \n     * @param {number} time - Current game time\n     * \n     * @description\n     * Update process:\n     * 1. Clear previous frame graphics\n     * 2. Clear debug text objects\n     * 3. Draw platform bounds\n     * 4. Update entity debug info\n     * \n     * @returns {void}\n     */\n    update(time) {\n        // Clear previous frame's debug graphics\n        this.debugGraphics.clear();\n        \n        // Clear previous debug texts\n        if (this.debugTexts) {\n            this.debugTexts.forEach(text => text.destroy());\n            this.debugTexts = [];\n        }\n\n        if (!this.isEnabled) return;\n\n        // Draw platform bounds\n        if (this.scene.platforms && this.scene.platforms.children) {\n            this.scene.platforms.children.entries.forEach(platform => {\n                if (platform && platform.active) {\n                    this.drawPlatformBounds(platform);\n                }\n            });\n        }\n\n        // Draw player and enemy debug info\n        if (this.scene.player) {\n            this.drawPlayerDebug(this.scene.player);\n        }\n\n        if (this.scene.enemies) {\n            this.scene.enemies.getChildren().forEach(enemySprite => {\n                if (enemySprite && enemySprite.active) {\n                    if (enemySprite.getData('type') === 'warrior') {\n                        this.drawWarriorDebug(enemySprite);\n                    } else if (enemySprite.getData('type') === 'drone') {\n                        this.drawDroneDebug(enemySprite);\n                    }\n                }\n            });\n        }\n    }",
+    "metadata": {
+      "start_line": 197,
+      "end_line": 233,
+      "notes": "Main update loop for debug visualization system, handling graphics clearing and entity updates",
+      "imports": [],
+      "tags": [
+        "debug",
+        "update",
+        "visualization",
+        "core_system",
+        "lifecycle"
+      ],
+      "related_chunks": [
+        {"file_name": "DebugSystem.js", "chunk_index": 7, "method": "drawPlayerDebug"},
+        {"file_name": "DebugSystem.js", "chunk_index": 9, "method": "cleanup"}
+      ]
+    }
+  },
+  {
+    "file_name": "DebugSystem.js",
+    "chunk_index": 9,
+    "method": "cleanup",
+    "chunk_text": "    /**\n     * Clean up debug system resources\n     * \n     * @description\n     * Cleanup process:\n     * 1. Destroy debug graphics\n     * 2. Clear debug texts\n     * 3. Reset internal state\n     * \n     * @returns {void}\n     */\n    cleanup() {\n        if (this.debugGraphics) {\n            this.debugGraphics.destroy();\n        }\n        if (this.debugTexts) {\n            this.debugTexts.forEach(text => text.destroy());\n            this.debugTexts = [];\n        }\n    }",
+    "metadata": {
+      "start_line": 235,
+      "end_line": 243,
+      "notes": "Handles cleanup of debug system resources to prevent memory leaks",
+      "imports": [],
+      "tags": [
+        "debug",
+        "cleanup",
+        "resource_management",
+        "lifecycle"
+      ],
+      "related_chunks": [
+        {"file_name": "DebugSystem.js", "chunk_index": 8, "method": "update"}
+      ]
     }
   }
 ]

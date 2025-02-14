@@ -7,12 +7,22 @@
     "metadata": {
       "start_line": 7,
       "end_line": 8,
-      "notes": "Import statements for required dependencies",
+      "notes": "Core system imports for entity management including base manager and event system",
       "imports": [
-        "../core/BaseManager",
-        "../core/EventManager"
+        "BaseManager",
+        "GameEvents"
       ],
-      "tags": ["imports", "dependencies", "phaser3", "event_management"]
+      "tags": [
+        "imports",
+        "core_system",
+        "dependency_injection",
+        "event_system",
+        "base_functionality"
+      ],
+      "related_chunks": [
+        {"file_name": "EntityManager.js", "chunk_index": 1, "method": "class_definition"},
+        {"file_name": "EntityManager.js", "chunk_index": 2, "method": "constructor"}
+      ]
     }
   },
   {
@@ -23,9 +33,23 @@
     "metadata": {
       "start_line": 1,
       "end_line": 20,
-      "notes": "Class definition with comprehensive documentation",
-      "imports": [],
-      "tags": ["class_definition", "entity_management", "base_manager", "phaser3"]
+      "notes": "Core entity management class definition with lifecycle, grouping, and event broadcasting capabilities",
+      "imports": [
+        "BaseManager",
+        "Phaser.Scene"
+      ],
+      "tags": [
+        "class_definition",
+        "core_system",
+        "entity_management",
+        "lifecycle",
+        "dependency_injection"
+      ],
+      "related_chunks": [
+        {"file_name": "EntityManager.js", "chunk_index": 0, "method": "imports"},
+        {"file_name": "EntityManager.js", "chunk_index": 2, "method": "constructor"},
+        {"file_name": "EntityManager.js", "chunk_index": 6, "method": "update"}
+      ]
     }
   },
   {
@@ -36,9 +60,25 @@
     "metadata": {
       "start_line": 22,
       "end_line": 38,
-      "notes": "Constructor initialization with entity storage and event system setup",
-      "imports": [],
-      "tags": ["constructor", "initialization", "entity_storage", "event_system", "phaser3"]
+      "notes": "Initializes entity management system with scene reference, type-based storage, and event system integration",
+      "imports": [
+        "Phaser.Scene",
+        "Map",
+        "BaseManager",
+        "GameEvents"
+      ],
+      "tags": [
+        "initialization",
+        "core_system",
+        "state_management",
+        "event_system",
+        "dependency_injection"
+      ],
+      "related_chunks": [
+        {"file_name": "EntityManager.js", "chunk_index": 1, "method": "class_definition"},
+        {"file_name": "EntityManager.js", "chunk_index": 3, "method": "add"},
+        {"file_name": "EntityManager.js", "chunk_index": 7, "method": "cleanup"}
+      ]
     }
   },
   {
@@ -49,9 +89,25 @@
     "metadata": {
       "start_line": 40,
       "end_line": 62,
-      "notes": "Method to add and register new entities",
-      "imports": [],
-      "tags": ["entity_management", "entity_registration", "phaser3", "event_handling"]
+      "notes": "Registers and groups entities by type with event broadcasting for system coordination",
+      "imports": [
+        "Map",
+        "Set",
+        "GameEvents",
+        "Object"
+      ],
+      "tags": [
+        "entity_registration",
+        "event_broadcast",
+        "core_system",
+        "type_management",
+        "state_update"
+      ],
+      "related_chunks": [
+        {"file_name": "EntityManager.js", "chunk_index": 2, "method": "constructor"},
+        {"file_name": "EntityManager.js", "chunk_index": 4, "method": "remove"},
+        {"file_name": "EntityManager.js", "chunk_index": 5, "method": "getAll"}
+      ]
     }
   },
   {
@@ -62,9 +118,24 @@
     "metadata": {
       "start_line": 64,
       "end_line": 85,
-      "notes": "Method to remove entities and notify systems",
-      "imports": [],
-      "tags": ["entity_management", "entity_removal", "phaser3", "event_handling"]
+      "notes": "Removes entities from type-based storage and broadcasts removal events for system coordination",
+      "imports": [
+        "Map",
+        "Set",
+        "GameEvents",
+        "Object"
+      ],
+      "tags": [
+        "entity_removal",
+        "event_broadcast",
+        "core_system",
+        "type_management",
+        "state_update"
+      ],
+      "related_chunks": [
+        {"file_name": "EntityManager.js", "chunk_index": 3, "method": "add"},
+        {"file_name": "EntityManager.js", "chunk_index": 7, "method": "cleanup"}
+      ]
     }
   },
   {
@@ -75,9 +146,23 @@
     "metadata": {
       "start_line": 87,
       "end_line": 101,
-      "notes": "Method to query entities by type",
-      "imports": [],
-      "tags": ["entity_query", "entity_management", "phaser3", "data_management"]
+      "notes": "Retrieves and converts type-specific entity collections for iteration with fallback handling",
+      "imports": [
+        "Map",
+        "Set",
+        "Array"
+      ],
+      "tags": [
+        "entity_query",
+        "type_management",
+        "helper_method",
+        "data_conversion",
+        "optimization"
+      ],
+      "related_chunks": [
+        {"file_name": "EntityManager.js", "chunk_index": 3, "method": "add"},
+        {"file_name": "EntityManager.js", "chunk_index": 6, "method": "update"}
+      ]
     }
   },
   {
@@ -88,9 +173,23 @@
     "metadata": {
       "start_line": 103,
       "end_line": 122,
-      "notes": "Method to update all managed entities",
-      "imports": [],
-      "tags": ["entity_update", "entity_management", "phaser3", "system_update"]
+      "notes": "Updates all managed entities that implement the update method with safe checking",
+      "imports": [
+        "Map",
+        "Set",
+        "Iterator"
+      ],
+      "tags": [
+        "entity_update",
+        "lifecycle",
+        "core_system",
+        "iteration",
+        "safety_check"
+      ],
+      "related_chunks": [
+        {"file_name": "EntityManager.js", "chunk_index": 2, "method": "constructor"},
+        {"file_name": "EntityManager.js", "chunk_index": 5, "method": "getAll"}
+      ]
     }
   },
   {
@@ -101,9 +200,23 @@
     "metadata": {
       "start_line": 124,
       "end_line": 144,
-      "notes": "Method to clean up and destroy all entities",
-      "imports": [],
-      "tags": ["entity_cleanup", "entity_management", "phaser3", "system_cleanup"]
+      "notes": "Performs complete system cleanup with safe entity destruction and storage reset",
+      "imports": [
+        "Map",
+        "Set",
+        "Iterator"
+      ],
+      "tags": [
+        "cleanup",
+        "lifecycle",
+        "core_system",
+        "memory_management",
+        "safety_check"
+      ],
+      "related_chunks": [
+        {"file_name": "EntityManager.js", "chunk_index": 2, "method": "constructor"},
+        {"file_name": "EntityManager.js", "chunk_index": 4, "method": "remove"}
+      ]
     }
   }
 ]

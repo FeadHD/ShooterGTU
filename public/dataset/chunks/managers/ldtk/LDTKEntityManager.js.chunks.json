@@ -7,10 +7,24 @@
         "metadata": {
             "start_line": 1,
             "end_line": 6,
-            "notes": "Main class for managing LDTK entities in Phaser game scenes",
-            "imports": [],
-            "tags": ["class_definition", "ldtk", "entity_management", "phaser3"],
-            "related_chunks": []
+            "notes": "Defines core entity management system for LDtk integration with Phaser game objects and physics",
+            "imports": [
+                "Phaser.Scene",
+                "Phaser.GameObjects.GameObject",
+                "Phaser.Physics.Arcade",
+                "LDtk"
+            ],
+            "tags": [
+                "class_definition",
+                "core_system",
+                "entity_management",
+                "ldtk",
+                "initialization"
+            ],
+            "related_chunks": [
+                {"file_name": "LDTKEntityManager.js", "chunk_index": 1, "method": "constructor"},
+                {"file_name": "LDTKEntityManager.js", "chunk_index": 2, "method": "registerEntityFactories"}
+            ]
         }
     },
     {
@@ -21,10 +35,25 @@
         "metadata": {
             "start_line": 7,
             "end_line": 30,
-            "notes": "Initializes the manager with scene reference and tracking systems",
-            "imports": [],
-            "tags": ["constructor", "initialization", "asset_management"],
-            "related_chunks": []
+            "notes": "Initializes entity manager with scene context, tracking systems, and asset management integration",
+            "imports": [
+                "Phaser.Scene",
+                "Map",
+                "Set",
+                "../core/AssetManager"
+            ],
+            "tags": [
+                "constructor",
+                "initialization",
+                "core_system",
+                "asset_management",
+                "error_handling"
+            ],
+            "related_chunks": [
+                {"file_name": "LDTKEntityManager.js", "chunk_index": 0, "method": "class_definition"},
+                {"file_name": "LDTKEntityManager.js", "chunk_index": 2, "method": "registerEntityFactories"},
+                {"file_name": "LDTKEntityManager.js", "chunk_index": 3, "method": "createEntityInstance"}
+            ]
         }
     },
     {
@@ -35,10 +64,22 @@
         "metadata": {
             "start_line": 31,
             "end_line": 38,
-            "notes": "Registers custom factories for different entity types",
-            "imports": [],
-            "related_methods": [],
-            "tags": ["factories", "phaser3", "ldtk"]
+            "notes": "Registers entity factory functions for different entity types with logging",
+            "imports": [
+                "Map",
+                "Object"
+            ],
+            "tags": [
+                "factory_pattern",
+                "registration",
+                "core_system",
+                "initialization",
+                "logging"
+            ],
+            "related_chunks": [
+                {"file_name": "LDTKEntityManager.js", "chunk_index": 1, "method": "constructor"},
+                {"file_name": "LDTKEntityManager.js", "chunk_index": 3, "method": "createEntityInstance"}
+            ]
         }
     },
     {
@@ -49,11 +90,24 @@
         "metadata": {
             "start_line": 39,
             "end_line": 73,
-            "notes": "Creates and configures a single game entity from LDTK data",
-            "imports": [],
-            "tags": ["entity_creation", "factory_pattern", "phaser_groups"],
+            "notes": "Creates and configures game entities using factory pattern with fallback handling and group assignment",
+            "imports": [
+                "Phaser.GameObjects.GameObject",
+                "Phaser.GameObjects.Group",
+                "Phaser.Scene",
+                "Map"
+            ],
+            "tags": [
+                "entity_creation",
+                "factory_pattern",
+                "core_system",
+                "error_handling",
+                "group_management"
+            ],
             "related_chunks": [
-                {"file_name": "LDTKEntityManager.js", "chunk_index": 9, "method": "createFallbackEntity"}
+                {"file_name": "LDTKEntityManager.js", "chunk_index": 2, "method": "registerEntityFactories"},
+                {"file_name": "LDTKEntityManager.js", "chunk_index": 9, "method": "createFallbackEntity"},
+                {"file_name": "LDTKEntityManager.js", "chunk_index": 4, "method": "createEntities"}
             ]
         }
     },
@@ -65,10 +119,23 @@
         "metadata": {
             "start_line": 74,
             "end_line": 98,
-            "notes": "Iterates through layerInstances to create multiple entities at once",
-            "imports": [],
-            "related_methods": ["createEntityInstance"],
-            "tags": ["entities", "layer_processing", "phaser3", "ldtk", "batch_creation"]
+            "notes": "Processes LDtk level data to create multiple entities with position offsets and logging",
+            "imports": [
+                "Phaser.GameObjects.GameObject",
+                "LDtk.Level",
+                "Array"
+            ],
+            "tags": [
+                "batch_creation",
+                "level_loading",
+                "core_system",
+                "error_handling",
+                "logging"
+            ],
+            "related_chunks": [
+                {"file_name": "LDTKEntityManager.js", "chunk_index": 3, "method": "createEntityInstance"},
+                {"file_name": "LDTKEntityManager.js", "chunk_index": 5, "method": "processEntityLayer"}
+            ]
         }
     },
     {
@@ -79,11 +146,21 @@
         "metadata": {
             "start_line": 99,
             "end_line": 123,
-            "notes": "Processes all entities in a layer, handling position tracking and creation",
-            "imports": [],
-            "tags": ["layer_processing", "entity_creation", "position_tracking"],
+            "notes": "Processes entities within a layer with position tracking and duplicate prevention",
+            "imports": [
+                "Set",
+                "Map",
+                "Array",
+                "LDtk.Layer"
+            ],
+            "tags": [
+                "layer_processing",
+                "entity_creation",
+                "position_tracking",
+                "core_system",
+                "optimization"
+            ],
             "related_chunks": [
-                {"file_name": "LDTKEntityManager.js", "chunk_index": 3, "method": "createEntityInstance"},
                 {"file_name": "LDTKEntityManager.js", "chunk_index": 6, "method": "getPositionKey"},
                 {"file_name": "LDTKEntityManager.js", "chunk_index": 7, "method": "tryCreateEntity"},
                 {"file_name": "LDTKEntityManager.js", "chunk_index": 8, "method": "registerEntity"}
@@ -98,38 +175,79 @@
         "metadata": {
             "start_line": 124,
             "end_line": 130,
-            "notes": "Generates a unique string key based on entity position",
-            "imports": [],
-            "related_methods": [],
-            "tags": ["positioning", "key_generation", "phaser3", "ldtk"]
+            "notes": "Generates unique position-based key for entity tracking with debug logging",
+            "imports": [
+                "String",
+                "LDtk.Entity"
+            ],
+            "tags": [
+                "helper_method",
+                "position_tracking",
+                "key_generation",
+                "logging",
+                "optimization"
+            ],
+            "related_chunks": [
+                {"file_name": "LDTKEntityManager.js", "chunk_index": 5, "method": "processEntityLayer"},
+                {"file_name": "LDTKEntityManager.js", "chunk_index": 8, "method": "registerEntity"}
+            ]
         }
     },
     {
         "file_name": "LDTKEntityManager.js",
         "chunk_index": 7,
         "method": "tryCreateEntity",
-        "chunk_text": "    tryCreateEntity(entity, worldX, worldY) {\n        try {\n            console.log('Creating entity with data:', {\n                identifier: entity.__identifier,\n                position: { x: entity.px[0], y: entity.px[1] },\n                worldPosition: { x: entity.px[0] + worldX, y: entity.px[1] + worldY }\n            });\n\n            const instance = this.createEntityInstance(entity, worldX, worldY);\n            console.log('Entity instance created:', {\n                identifier: entity.__identifier,\n                instance,\n            });\n\n            return instance;\n        } catch (error) {\n            console.error(`Error creating entity (${entity.__identifier}):`, error);\n            return null;\n        }\n    }",
+        "chunk_text": "    tryCreateEntity(entity, worldX, worldY) {\n        try {\n            console.log('Creating entity with data:', {\n                identifier: entity.__identifier,\n                position: { x: entity.px[0], y: entity.px[1] },\n                worldPosition: { x: entity.px[0] + worldX, y: entity.px[1] + worldY }\n            });\n\n            const instance = this.createEntityInstance(entity, worldX, worldY);\n            return instance;\n        } catch (error) {\n            console.error('Error creating entity:', error);\n            return null;\n        }\n    }",
         "metadata": {
             "start_line": 131,
-            "end_line": 151,
-            "notes": "Wrapper that safely calls createEntityInstance and logs any errors",
-            "imports": [],
-            "related_methods": ["createEntityInstance"],
-            "tags": ["entity_creation", "error_handling", "phaser3", "ldtk"]
+            "end_line": 145,
+            "notes": "Safely attempts to create an entity with error handling and position logging",
+            "imports": [
+                "Phaser.GameObjects.GameObject",
+                "LDtk.Entity",
+                "Error"
+            ],
+            "tags": [
+                "error_handling",
+                "entity_creation",
+                "helper_method",
+                "logging",
+                "safety_wrapper"
+            ],
+            "related_chunks": [
+                {"file_name": "LDTKEntityManager.js", "chunk_index": 3, "method": "createEntityInstance"},
+                {"file_name": "LDTKEntityManager.js", "chunk_index": 5, "method": "processEntityLayer"},
+                {"file_name": "LDTKEntityManager.js", "chunk_index": 9, "method": "createFallbackEntity"}
+            ]
         }
     },
     {
         "file_name": "LDTKEntityManager.js",
         "chunk_index": 8,
         "method": "registerEntity",
-        "chunk_text": "    registerEntity(instance, entity, layerEntities, positionKey, createdEntities) {\n        console.log('Registering entity:', {\n            identifier: entity.__identifier,\n            positionKey,\n            instance,\n        });\n\n        this.entityInstances.set(entity.iid, instance);\n        layerEntities.add(instance);\n        this.loadedEntityPositions.add(positionKey);\n        createdEntities.push(instance);\n    }",
+        "chunk_text": "    registerEntity(instance, entityData, layerEntities, positionKey, createdEntities) {\n        // Add to tracking collections\n        this.entityInstances.set(entityData.iid, instance);\n        layerEntities.add(instance);\n        this.loadedEntityPositions.add(positionKey);\n        createdEntities.push(instance);\n\n        // Log registration\n        console.log(`Registered entity ${entityData.__identifier} at ${positionKey}`);\n    }",
         "metadata": {
-            "start_line": 152,
-            "end_line": 164,
-            "notes": "Adds the created entity to tracking structures (entityInstances, layerEntities, etc.)",
-            "imports": [],
-            "related_methods": [],
-            "tags": ["entity_registration", "tracking", "phaser3", "ldtk"]
+            "start_line": 146,
+            "end_line": 155,
+            "notes": "Registers created entity in tracking systems with position and layer management",
+            "imports": [
+                "Map",
+                "Set",
+                "Array",
+                "LDtk.Entity"
+            ],
+            "tags": [
+                "entity_management",
+                "registration",
+                "helper_method",
+                "position_tracking",
+                "logging"
+            ],
+            "related_chunks": [
+                {"file_name": "LDTKEntityManager.js", "chunk_index": 5, "method": "processEntityLayer"},
+                {"file_name": "LDTKEntityManager.js", "chunk_index": 6, "method": "getPositionKey"},
+                {"file_name": "LDTKEntityManager.js", "chunk_index": 7, "method": "tryCreateEntity"}
+            ]
         }
     },
     {
@@ -138,12 +256,26 @@
         "method": "createFallbackEntity",
         "chunk_text": "    createFallbackEntity(entityData, worldX, worldY) {\n        console.warn(`Creating fallback entity for ${entityData.__identifier}`);\n        const x = entityData.px[0] + worldX;\n        const y = entityData.px[1] + worldY;\n\n        const fallbackEntity = this.scene.add.sprite(x, y, 'default_sprite');\n        this.scene.physics.add.existing(fallbackEntity);\n        return fallbackEntity;\n    }",
         "metadata": {
-            "start_line": 165,
-            "end_line": 175,
-            "notes": "Creates a simple fallback sprite if no factory is found",
-            "imports": [],
-            "related_methods": [],
-            "tags": ["fallback", "entity_creation", "sprite", "phaser3", "ldtk"]
+            "start_line": 156,
+            "end_line": 164,
+            "notes": "Creates default sprite entity when no factory exists for entity type",
+            "imports": [
+                "Phaser.GameObjects.Sprite",
+                "Phaser.Physics.Arcade.Sprite",
+                "Phaser.Scene",
+                "LDtk.Entity"
+            ],
+            "tags": [
+                "fallback_handling",
+                "entity_creation",
+                "helper_method",
+                "error_handling",
+                "physics"
+            ],
+            "related_chunks": [
+                {"file_name": "LDTKEntityManager.js", "chunk_index": 3, "method": "createEntityInstance"},
+                {"file_name": "LDTKEntityManager.js", "chunk_index": 7, "method": "tryCreateEntity"}
+            ]
         }
     },
     {
@@ -154,10 +286,24 @@
         "metadata": {
             "start_line": 176,
             "end_line": 225,
-            "notes": "Finds 'PlayerStart' entity in the level data to determine spawn coordinates",
-            "imports": [],
-            "related_methods": [],
-            "tags": ["player_spawn", "level_data", "phaser3", "ldtk", "entity_search"]
+            "notes": "Locates and extracts player spawn coordinates from LDtk level data with nested structure support",
+            "imports": [
+                "LDtk.Level",
+                "LDtk.Layer",
+                "Array",
+                "Object"
+            ],
+            "tags": [
+                "player_spawn",
+                "level_data",
+                "helper_method",
+                "entity_search",
+                "logging"
+            ],
+            "related_chunks": [
+                {"file_name": "LDTKEntityManager.js", "chunk_index": 4, "method": "createEntities"},
+                {"file_name": "LDTKEntityManager.js", "chunk_index": 5, "method": "processEntityLayer"}
+            ]
         }
     }
 ]

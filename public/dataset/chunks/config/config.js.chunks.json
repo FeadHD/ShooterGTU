@@ -2,25 +2,12 @@
   {
     "file_name": "config.js",
     "chunk_index": 0,
-    "method": "file_header",
-    "chunk_text": "/**\n * @file Phaser game configuration\n * @description Core game settings for Phaser engine configuration:\n * Physics: Arcade physics system with gravity\n * Display: Canvas dimensions and renderer\n * Scenes: Game state management and flow\n * Debug: Development tools and visualization\n * @module GameConfig\n */",
+    "method": "imports",
+    "chunk_text": "/**\n * @file config.js\n * @description Core Phaser game configuration and scene management\n */\n\n// Core game scenes\nimport { GameOver } from '../scenes/menus/GameOver';\nimport { WayneWorld } from '../scenes/levels/WayneWorld';\n\n// Menu scenes\nimport { MainMenu } from '../scenes/menus/MainMenu';\nimport { Leaderboard } from '../scenes/menus/Leaderboard';\nimport { MissionComplete } from '../scenes/menus/MissionComplete';\nimport { DevHub } from '../scenes/menus/DevHub/DevHub';\nimport { Credits } from '../scenes/menus/Credits';\n\n// Settings scenes\nimport Settings from '../scenes/menus/Settings';\nimport ControlsSettings from '../scenes/menus/ControlsSettings';\nimport SoundSettings from '../scenes/menus/SoundSettings';\nimport { SoundTester } from '../scenes/menus/DevHub/SoundTester';\n\n// Core engine scenes\nimport { Boot } from '../scenes/base/Boot';\nimport { Preloader } from '../scenes/base/Preloader';\nimport { PauseMenu } from '../scenes/menus/PauseMenu';",
     "metadata": {
-      "start_line": 1,
-      "end_line": 3,
-      "notes": "Core Phaser game configuration header",
-      "imports": [],
-      "tags": ["phaser", "game-configuration", "core-settings"]
-    }
-  },
-  {
-    "file_name": "config.js",
-    "chunk_index": 1,
-    "method": "scene_imports",
-    "chunk_text": "/**\n * Phaser game configuration object\n * @type {Phaser.Types.Core.GameConfig}\n * @property {number} width Canvas width (800px)\n * @property {number} height Canvas height (600px)\n * @property {Phaser.AUTO} type Auto-select best renderer\n * @property {object} physics Arcade physics settings\n * @property {string} physics.default Arcade physics engine\n * @property {object} physics.arcade Gravity and collision config\n * @property {boolean} physics.arcade.debug Visual debug mode\n * @property {object} scene Game state handlers\n * @description Configures core game engine settings including canvas size, physics system, and scene management\n */\n// Core game scenes\nimport { GameOver } from '../scenes/menus/GameOver';\nimport { WayneWorld } from '../scenes/levels/WayneWorld';\n\n// Menu scenes\nimport { MainMenu } from '../scenes/menus/MainMenu';\nimport { Leaderboard } from '../scenes/menus/Leaderboard';\nimport { MissionComplete } from '../scenes/menus/MissionComplete';\nimport { DevHub } from '../scenes/menus/DevHub/DevHub';\nimport { Credits } from '../scenes/menus/Credits';\n\n// Settings scenes\nimport Settings from '../scenes/menus/Settings';\nimport ControlsSettings from '../scenes/menus/ControlsSettings';\nimport SoundSettings from '../scenes/menus/SoundSettings';\nimport { SoundTester } from '../scenes/menus/DevHub/SoundTester';\n\n// Core engine scenes\nimport { Boot } from '../scenes/base/Boot';\nimport { Preloader } from '../scenes/base/Preloader';\nimport { PauseMenu } from '../scenes/menus/PauseMenu';",
-    "metadata": {
-      "start_line": 5,
-      "end_line": 31,
-      "notes": "Scene import declarations",
+      "start_line": 0,
+      "end_line": 25,
+      "notes": "Core imports and scene dependencies for Phaser game configuration",
       "imports": [
         "../scenes/menus/GameOver",
         "../scenes/levels/WayneWorld",
@@ -37,20 +24,99 @@
         "../scenes/base/Preloader",
         "../scenes/menus/PauseMenu"
       ],
-      "tags": ["scene-config", "phaser-scenes", "import-statements"]
+      "tags": [
+        "configuration",
+        "core_system",
+        "imports",
+        "scene_management"
+      ],
+      "related_chunks": [
+        {"file_name": "config.js", "chunk_index": 1, "method": "class_definition"}
+      ]
+    }
+  },
+  {
+    "file_name": "config.js",
+    "chunk_index": 1,
+    "method": "class_definition",
+    "chunk_text": "/**\n * @class GameConfiguration\n * @classdesc Manages core Phaser game configuration and scene setup\n * \n * @description\n * Core functionality:\n * - Manages game engine settings\n * - Handles scene configuration\n * - Controls display settings\n * - Configures physics system\n * - Sets up input handling\n */\nexport class GameConfiguration {",
+    "metadata": {
+      "start_line": 27,
+      "end_line": 39,
+      "notes": "GameConfiguration class definition with core engine settings management",
+      "imports": [],
+      "tags": [
+        "configuration",
+        "core_system",
+        "class_definition",
+        "engine_settings"
+      ],
+      "related_chunks": [
+        {"file_name": "config.js", "chunk_index": 0, "method": "imports"},
+        {"file_name": "config.js", "chunk_index": 2, "method": "constructor"}
+      ]
     }
   },
   {
     "file_name": "config.js",
     "chunk_index": 2,
-    "method": "config",
-    "chunk_text": "/**\n * @typedef {Object} GameConfig\n * @property {string|number} type - Rendering type (Phaser.AUTO, Phaser.CANVAS, or numeric)\n * @property {boolean} pixelArt - Whether to optimize for pixel art graphics\n * @property {Object} scale - Display scaling settings\n * @property {Object} dom - DOM element support settings\n * @property {Object} physics - Physics engine configuration\n * @property {Object} input - Input handling settings\n * @property {Array} scene - List of scenes to load in order\n */\n\n/**\n * GAME CONFIGURATION\n * Core settings that define how the game engine behaves\n * @type {GameConfig}\n */\nexport const config = {\n    // Rendering configuration\n    type: Phaser.AUTO,          // Let Phaser choose WebGL or Canvas\n    pixelArt: true,             // Optimize for pixel art graphics\n    \n    // Display settings\n    scale: {\n        mode: Phaser.Scale.NONE,\n        parent: 'game-container',    // DOM element to mount game\n        width: 1920,                 // Base game resolution\n        height: 1080,\n        autoRound: true,             // Round pixel values\n        zoom: 1,\n        autoCenter: Phaser.Scale.CENTER_BOTH,  // Center game in container\n        fullscreenTarget: 'game-container',\n        expandParent: true\n    },\n    \n    // DOM element support (for UI overlays)\n    dom: {\n        createContainer: true\n    },\n    \n    // Physics engine settings\n    physics: {\n        default: 'arcade',\n        arcade: {\n            debug: false,           // Show physics bodies when true\n            gravity: { y: 400 },    // Vertical gravity strength\n            tileBias: 32            // Tile collision accuracy\n        }\n    },\n    \n    // Input handling\n    input: {\n        mouse: {\n            preventDefaultWheel: true,           // Prevent page scroll on wheel\n            preventDefaultContextMenu: true      // Disable right-click menu\n        }\n    },\n    \n    // Scene sequence (loaded in order)\n    scene: [\n        Boot,            // Initial setup and system initialization\n        Preloader,       // Asset loading\n        MainMenu,        // Game start menu\n        Settings,        // General settings\n        ControlsSettings,\n        SoundSettings,\n        WayneWorld,\n        Leaderboard,\n        MissionComplete,\n        GameOver,\n        PauseMenu,\n        DevHub,\n        Credits,\n        SoundTester\n    ]\n};",
+    "method": "constructor",
+    "chunk_text": "    /**\n     * @constructor\n     * @description\n     * Initializes game configuration with:\n     * - Display settings\n     * - Physics configuration\n     * - Scene management\n     * - Input handling\n     */\n    constructor() {\n        this.config = this._initializeConfig();\n        this.validateConfig();\n    }",
     "metadata": {
-      "start_line": 33,
-      "end_line": 99,
-      "notes": "Main game configuration object with rendering, display, physics, and scene settings",
+      "start_line": 41,
+      "end_line": 53,
+      "notes": "Constructor initialization with core game configuration setup",
       "imports": [],
-      "tags": ["game-config", "main-settings", "rendering", "physics", "scenes"]
+      "tags": [
+        "configuration",
+        "initialization",
+        "constructor",
+        "engine_settings"
+      ],
+      "related_chunks": [
+        {"file_name": "config.js", "chunk_index": 1, "method": "class_definition"},
+        {"file_name": "config.js", "chunk_index": 3, "method": "_initializeConfig"}
+      ]
+    }
+  },
+  {
+    "file_name": "config.js",
+    "chunk_index": 3,
+    "method": "_initializeConfig",
+    "chunk_text": "    /**\n     * Initialize core game configuration\n     * \n     * @private\n     * @returns {Phaser.Types.Core.GameConfig} Core game configuration object\n     * \n     * @description\n     * Sets up:\n     * 1. Rendering system\n     * 2. Display settings\n     * 3. Physics engine\n     * 4. Input handling\n     * 5. Scene management\n     */\n    _initializeConfig() {\n        return {\n            // Rendering configuration\n            type: Phaser.AUTO,          // Let Phaser choose WebGL or Canvas\n            pixelArt: true,             // Optimize for pixel art graphics\n            \n            // Display settings\n            scale: {\n                mode: Phaser.Scale.NONE,\n                parent: 'game-container',    // DOM element to mount game\n                width: 1920,                 // Base game resolution\n                height: 1080,\n                autoRound: true,             // Round pixel values\n                zoom: 1,\n                autoCenter: Phaser.Scale.CENTER_BOTH,  // Center game in container\n                fullscreenTarget: 'game-container',\n                expandParent: true\n            },\n            \n            // DOM element support (for UI overlays)\n            dom: {\n                createContainer: true\n            },\n            \n            // Physics engine settings\n            physics: {\n                default: 'arcade',\n                arcade: {\n                    debug: false,           // Show physics bodies when true\n                    gravity: { y: 400 },    // Vertical gravity strength\n                    tileBias: 32            // Tile collision accuracy\n                }\n            },\n            \n            // Input handling\n            input: {\n                mouse: {\n                    preventDefaultWheel: true,\n                    preventDefaultDown: true\n                },\n                keyboard: true,\n                gamepad: true\n            },\n            \n            // Scene configuration\n            scene: [\n                Boot,\n                Preloader,\n                MainMenu,\n                WayneWorld,\n                GameOver,\n                Leaderboard,\n                MissionComplete,\n                DevHub,\n                Credits,\n                Settings,\n                ControlsSettings,\n                SoundSettings,\n                SoundTester,\n                PauseMenu\n            ]\n        };\n    }",
+    "metadata": {
+      "start_line": 55,
+      "end_line": 120,
+      "notes": "Private method to initialize core game engine configuration with display, physics, and scene settings",
+      "imports": [
+        "Phaser.AUTO",
+        "Phaser.Scale",
+        "Boot",
+        "Preloader",
+        "MainMenu",
+        "WayneWorld",
+        "GameOver",
+        "Leaderboard",
+        "MissionComplete",
+        "DevHub",
+        "Credits",
+        "Settings",
+        "ControlsSettings",
+        "SoundSettings",
+        "SoundTester",
+        "PauseMenu"
+      ],
+      "tags": [
+        "configuration",
+        "initialization",
+        "private_method",
+        "engine_settings",
+        "scene_management"
+      ],
+      "related_chunks": [
+        {"file_name": "config.js", "chunk_index": 2, "method": "constructor"},
+        {"file_name": "config.js", "chunk_index": 4, "method": "validateConfig"}
+      ]
     }
   }
 ]

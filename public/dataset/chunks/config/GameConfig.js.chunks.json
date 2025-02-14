@@ -2,157 +2,347 @@
   {
     "file_name": "GameConfig.js",
     "chunk_index": 0,
-    "method": "SCENE",
-    "chunk_text": "/**\n * Scene dimension configurations for different game scenes\n * @property {Object} INTRO - Dimensions for the Intro scene\n * @property {number} INTRO.WIDTH - Scene width in pixels\n * @property {number} INTRO.HEIGHT - Scene height in pixels\n * @property {Object} MATRIX - Dimensions for the Matrix scene\n * @property {number} MATRIX.WIDTH\n * @property {number} MATRIX.HEIGHT\n */\n    // Scene dimensions\n    SCENE: {\n        INTRO: {\n            WIDTH: 900,\n            HEIGHT: 400\n        },\n        MATRIX: {\n            WIDTH: 640,\n            HEIGHT: 360\n        }\n    }",
+    "method": "imports",
+    "chunk_text": "/**\n * @file GameConfig.js\n * @description Core game configuration and settings management\n */\n\nimport { GAME_CONFIG, PLAYER_CONFIG, ENEMY_CONFIG } from '../constants/Constants';",
     "metadata": {
-      "start_line": 2,
-      "end_line": 12,
-      "notes": "Scene dimension configurations for different game scenes",
-      "imports": [],
-      "tags": ["game-config", "scene", "dimensions"]
+      "start_line": 0,
+      "end_line": 5,
+      "notes": "Core imports and file documentation for game configuration",
+      "imports": [
+        "GAME_CONFIG",
+        "PLAYER_CONFIG",
+        "ENEMY_CONFIG"
+      ],
+      "tags": [
+        "configuration",
+        "core_system",
+        "imports"
+      ],
+      "related_chunks": [
+        {"file_name": "GameConfig.js", "chunk_index": 1, "method": "class_definition"}
+      ]
     }
   },
   {
     "file_name": "GameConfig.js",
     "chunk_index": 1,
-    "method": "PLAYER",
-    "chunk_text": "/**\n * Player configuration including health, damage, movement, and combat settings\n * @property {number} INITIAL_HP - Starting health points\n * @property {number} INITIAL_LIVES - Number of extra lives\n * @property {number} DAMAGE - Base damage dealt by player\n * @property {number} BULLET_DAMAGE - Damage dealt by player bullets\n * @property {number} INVULNERABLE_DURATION - Time (ms) after being hit when player is invulnerable\n * @property {number} GROUND_OFFSET - Y offset from the ground level\n * @property {number} MOVEMENT_SPEED - Movement speed in pixels per second\n * @property {number} HOVER_FORCE - Force used for hover mechanics\n */\n    // Player settings\n    PLAYER: {\n        INITIAL_HP: 100,\n        INITIAL_LIVES: 3,\n        DAMAGE: 25,\n        BULLET_DAMAGE: 25,\n        INVULNERABLE_DURATION: 2000,\n        GROUND_OFFSET: 16,\n//        SPAWN_OFFSET_X: 0.1,\n        MOVEMENT_SPEED: 300,\n        HOVER_FORCE: -100\n    }",
+    "method": "class_definition",
+    "chunk_text": "/**\n * @class GameConfig\n * @classdesc Manages game configuration settings and provides methods for runtime modifications\n * \n * @description\n * Core functionality:\n * - Initializes game configuration\n * - Provides methods to modify settings\n * - Handles config validation\n * - Manages default values\n */\nexport class GameConfig {",
     "metadata": {
-      "start_line": 14,
-      "end_line": 25,
-      "notes": "Player configuration including health, damage, movement, and combat settings",
+      "start_line": 7,
+      "end_line": 17,
+      "notes": "GameConfig class definition with core functionality description",
       "imports": [],
-      "tags": ["game-config", "player", "settings"]
+      "tags": [
+        "configuration",
+        "core_system",
+        "class_definition"
+      ],
+      "related_chunks": [
+        {"file_name": "GameConfig.js", "chunk_index": 0, "method": "imports"},
+        {"file_name": "GameConfig.js", "chunk_index": 2, "method": "constructor"}
+      ]
     }
   },
   {
     "file_name": "GameConfig.js",
     "chunk_index": 2,
-    "method": "ENEMIES",
-    "chunk_text": "/**\n * Enemy configurations for different enemy types including health, damage, and behavior settings\n * @property {number} TOTAL_DEFAULT - Default number of enemies\n * @property {Object} MELEE_WARRIOR - Stats for melee warrior enemies\n * @property {Object} DRONE - Stats for drone enemies\n * @property {Object} BOSS - Stats for a boss enemy\n * @property {Object} WARRIOR - Another specialized enemy config\n * @property {Object} ZAPPER - Stats for a zapper enemy\n */\n    // Enemy settings\n    ENEMIES: {\n        TOTAL_DEFAULT: 7,\n        MELEE_WARRIOR: {\n            HEALTH: 100,\n            DAMAGE: 25,\n            SPEED: 150,\n            PATROL_SPEED: 100\n        },\n        DRONE: {\n            HEALTH: 75,\n            DAMAGE: 20,\n            SPEED: 200,\n            HOVER_HEIGHT: 150\n        },\n        BOSS: {\n            GROUND_OFFSET: 92,\n            HEALTH: 500,\n            DAMAGE: 50\n        },\n        WARRIOR: {\n            GROUND_OFFSET: 92,\n            HEALTH: 500,\n            DAMAGE: 50\n        },\n        ZAPPER: {\n            HEALTH: 100,\n            DAMAGE: 20,\n            SPEED: 100,\n            ATTACK_RANGE: 200,\n            AWAKEN_RANGE: 300,\n            ATTACK_COOLDOWN: 2000,\n            POINTS: 150\n        }\n    }",
+    "method": "constructor",
+    "chunk_text": "    /**\n     * @constructor\n     * @description\n     * Initializes the game configuration with:\n     * - Default game settings\n     * - Player configuration\n     * - Enemy settings\n     * - Runtime modifications tracking\n     * - Version control\n     */\n    constructor() {\n        this.gameConfig = { ...GAME_CONFIG };\n        this.playerConfig = { ...PLAYER_CONFIG };\n        this.enemyConfig = { ...ENEMY_CONFIG };\n        this.modifications = new Map();\n        this.configVersion = 1;\n        this.validateConfigs();\n    }",
     "metadata": {
-      "start_line": 27,
-      "end_line": 62,
-      "notes": "Enemy configurations for different enemy types including health, damage, and behavior settings",
-      "imports": [],
-      "tags": ["game-config", "enemies", "settings"]
+      "start_line": 19,
+      "end_line": 33,
+      "notes": "Constructor initialization with default configurations, validation, and version control",
+      "imports": [
+        "GAME_CONFIG",
+        "PLAYER_CONFIG",
+        "ENEMY_CONFIG"
+      ],
+      "tags": [
+        "configuration",
+        "initialization",
+        "constructor",
+        "version_control"
+      ],
+      "related_chunks": [
+        {"file_name": "GameConfig.js", "chunk_index": 1, "method": "class_definition"},
+        {"file_name": "GameConfig.js", "chunk_index": 3, "method": "validateConfigs"},
+        {"file_name": "GameConfig.js", "chunk_index": 8, "method": "updateConfig"}
+      ]
     }
   },
   {
     "file_name": "GameConfig.js",
     "chunk_index": 3,
-    "method": "TRAPS",
-    "chunk_text": "/**\n * Trap configuration including damage and particle effects\n * @property {number} DAMAGE - Damage dealt by trap (hit points)\n * @property {Object} PARTICLES - Config for particles\n * @property {Object} PARTICLES.SPEED - Speed range for trap particles\n * @property {number} PARTICLES.SPEED.MIN - Minimum particle speed (pixels/sec)\n * @property {number} PARTICLES.SPEED.MAX - Maximum particle speed (pixels/sec)\n */\n    // Trap settings\n    TRAPS: {\n        DAMAGE: 5,\n        PARTICLES: {\n            SPEED: {\n                MIN: 20,\n                MAX: 50\n            }\n        }\n    }",
+    "method": "validateConfigs",
+    "chunk_text": "    /**\n     * Validate all configuration settings\n     * \n     * @private\n     * @description\n     * Validation process:\n     * 1. Check required fields\n     * 2. Validate value ranges\n     * 3. Ensure type correctness\n     * 4. Set defaults if needed\n     * \n     * @throws {Error} If configuration validation fails\n     */\n    validateConfigs() {\n        this.validateGameConfig();\n        this.validatePlayerConfig();\n        this.validateEnemyConfig();\n    }",
     "metadata": {
-      "start_line": 64,
-      "end_line": 73,
-      "notes": "Trap configuration including damage and particle effects",
+      "start_line": 35,
+      "end_line": 51,
+      "notes": "Configuration validation method ensuring all settings are valid",
       "imports": [],
-      "tags": ["game-config", "traps", "settings"]
+      "tags": [
+        "configuration",
+        "validation",
+        "private_method"
+      ],
+      "related_chunks": [
+        {"file_name": "GameConfig.js", "chunk_index": 2, "method": "constructor"},
+        {"file_name": "GameConfig.js", "chunk_index": 4, "method": "validateGameConfig"}
+      ]
     }
   },
   {
     "file_name": "GameConfig.js",
     "chunk_index": 4,
-    "method": "PROJECTILES",
-    "chunk_text": "/**\n * Projectile configuration for different weapon types\n * @property {Object} BULLET - Stats for bullet projectiles\n * @property {number} BULLET.SPEED - Bullet travel speed (pixels/sec)\n * @property {number} BULLET.DAMAGE - Bullet damage (hit points)\n * @property {Object} LASER - Stats for laser projectiles\n * @property {number} LASER.BASE_SPEED - Base laser speed (pixels/sec)\n * @property {number} LASER.SPEED_VARIATION - Random speed variation (pixels/sec)\n */\n    // Projectile settings\n    PROJECTILES: {\n        BULLET: {\n            SPEED: 600,\n            DAMAGE: 25\n        },\n        LASER: {\n            BASE_SPEED: 400,\n            SPEED_VARIATION: 25\n        }\n    }",
+    "method": "validateGameConfig",
+    "chunk_text": "    /**\n     * Validate game configuration settings\n     * \n     * @private\n     * @description\n     * Validation process:\n     * 1. Check display dimensions\n     * 2. Validate physics settings\n     * 3. Verify debug options\n     * \n     * @throws {Error} If game configuration is invalid\n     */\n    validateGameConfig() {\n        const { width, height, physics } = this.gameConfig;\n        if (!width || !height || width <= 0 || height <= 0) {\n            throw new Error('Invalid display dimensions');\n        }\n        if (!physics || !physics.arcade) {\n            throw new Error('Invalid physics configuration');\n        }\n    }",
     "metadata": {
-      "start_line": 75,
-      "end_line": 85,
-      "notes": "Projectile configuration for different weapon types",
+      "start_line": 53,
+      "end_line": 71,
+      "notes": "Validates core game configuration including display and physics settings",
       "imports": [],
-      "tags": ["game-config", "projectiles", "settings"]
+      "tags": [
+        "configuration",
+        "validation",
+        "private_method",
+        "game_settings"
+      ],
+      "related_chunks": [
+        {"file_name": "GameConfig.js", "chunk_index": 3, "method": "validateConfigs"},
+        {"file_name": "GameConfig.js", "chunk_index": 5, "method": "validatePlayerConfig"}
+      ]
     }
   },
   {
     "file_name": "GameConfig.js",
     "chunk_index": 5,
-    "method": "WORLD",
-    "chunk_text": "/**\n * World physics and layout configuration\n * @property {number} GROUND_OFFSET - Vertical offset for ground level (pixels)\n * @property {number} GRAVITY - Default gravity value (pixels/sec²)\n */\n    // World settings\n    WORLD: {\n        GROUND_OFFSET: 64,\n        GRAVITY: 300\n    }",
+    "method": "validatePlayerConfig",
+    "chunk_text": "    /**\n     * Validate player configuration settings\n     * \n     * @private\n     * @description\n     * Validation process:\n     * 1. Check health and lives\n     * 2. Validate movement values\n     * 3. Verify combat settings\n     * \n     * @throws {Error} If player configuration is invalid\n     */\n    validatePlayerConfig() {\n        const { moveSpeed, jumpForce, maxHealth } = this.playerConfig;\n        if (!moveSpeed || moveSpeed <= 0) {\n            throw new Error('Invalid player movement speed');\n        }\n        if (!maxHealth || maxHealth <= 0) {\n            throw new Error('Invalid player health configuration');\n        }\n    }",
     "metadata": {
-      "start_line": 87,
+      "start_line": 73,
       "end_line": 91,
-      "notes": "World physics and layout configuration",
+      "notes": "Validates player configuration including movement and combat settings",
       "imports": [],
-      "tags": ["game-config", "world", "physics"]
+      "tags": [
+        "configuration",
+        "validation",
+        "private_method",
+        "player_settings"
+      ],
+      "related_chunks": [
+        {"file_name": "GameConfig.js", "chunk_index": 4, "method": "validateGameConfig"},
+        {"file_name": "GameConfig.js", "chunk_index": 6, "method": "validateEnemyConfig"}
+      ]
     }
   },
   {
     "file_name": "GameConfig.js",
     "chunk_index": 6,
-    "method": "SPRITES",
-    "chunk_text": "/**\n * Sprite dimension configurations\n * @property {Object} CHARACTER - Dimensions for the player character sprite\n * @property {number} CHARACTER.WIDTH - Character sprite width (pixels)\n * @property {number} CHARACTER.HEIGHT - Character sprite height (pixels)\n * \n * Note: These dimensions affect collision detection and visual rendering.\n * Character sprite is centered on its position coordinates.\n */\n    // Sprite dimensions\n    SPRITES: {\n        CHARACTER: {\n            WIDTH: 24,\n            HEIGHT: 24\n        }\n    }",
+    "method": "validateEnemyConfig",
+    "chunk_text": "    /**\n     * Validate enemy configuration settings\n     * \n     * @private\n     * @description\n     * Validation process:\n     * 1. Check enemy types\n     * 2. Validate stats\n     * 3. Verify behavior settings\n     * \n     * @throws {Error} If enemy configuration is invalid\n     */\n    validateEnemyConfig() {\n        if (!this.enemyConfig) {\n            throw new Error('Missing enemy configuration');\n        }\n        Object.values(this.enemyConfig).forEach(config => {\n            if (!config.health || config.health <= 0) {\n                throw new Error('Invalid enemy health configuration');\n            }\n        });\n    }",
     "metadata": {
       "start_line": 93,
-      "end_line": 99,
-      "notes": "Sprite dimension configurations",
+      "end_line": 112,
+      "notes": "Validates enemy configuration including health and behavior settings",
       "imports": [],
-      "tags": ["game-config", "sprites", "dimensions"]
+      "tags": [
+        "configuration",
+        "validation",
+        "private_method",
+        "enemy_settings"
+      ],
+      "related_chunks": [
+        {"file_name": "GameConfig.js", "chunk_index": 5, "method": "validatePlayerConfig"},
+        {"file_name": "GameConfig.js", "chunk_index": 7, "method": "getConfig"}
+      ]
     }
   },
   {
     "file_name": "GameConfig.js",
     "chunk_index": 7,
-    "method": "UI",
-    "chunk_text": "/**\n * UI configuration including health bar and initial game state settings\n * @property {number} DEFAULT_LIVES - Number of extra lives at game start\n * @property {number} INITIAL_SCORE - Starting score value\n * @property {number} INITIAL_COINS - Starting coin count\n * @property {Object} HEALTH_BAR - Health bar display configuration\n * @property {number} HEALTH_BAR.WIDTH_MULTIPLIER - Scale factor relative to entity width\n * @property {number} HEALTH_BAR.HEIGHT_RATIO - Height as ratio of entity height\n * @property {number} HEALTH_BAR.MIN_HEIGHT - Minimum height in pixels\n * @property {number} HEALTH_BAR.OFFSET_MULTIPLIER - Vertical offset as multiple of bar height\n */\n    // UI settings\n    UI: {\n        DEFAULT_LIVES: 3,\n        INITIAL_SCORE: 0,\n        INITIAL_COINS: 0,\n        HEALTH_BAR: {\n            WIDTH_MULTIPLIER: 1.5,\n            HEIGHT_RATIO: 0.08,\n            MIN_HEIGHT: 6,\n            OFFSET_MULTIPLIER: 2\n        }\n    }",
+    "method": "getConfig",
+    "chunk_text": "    /**\n     * Get current configuration settings\n     * \n     * @param {string} type - Configuration type ('game', 'player', or 'enemy')\n     * @returns {Object} Current configuration settings\n     * \n     * @description\n     * Retrieval process:\n     * 1. Check configuration type\n     * 2. Apply any runtime modifications\n     * 3. Return current settings\n     * \n     * @throws {Error} If configuration type is invalid\n     */\n    getConfig(type) {\n        switch (type) {\n            case 'game': return { ...this.gameConfig };\n            case 'player': return { ...this.playerConfig };\n            case 'enemy': return { ...this.enemyConfig };\n            default: throw new Error('Invalid configuration type');\n        }\n    }",
     "metadata": {
-      "start_line": 101,
-      "end_line": 112,
-      "notes": "UI configuration including health bar and initial game state settings",
+      "start_line": 114,
+      "end_line": 135,
+      "notes": "Retrieves current configuration settings with runtime modifications",
       "imports": [],
-      "tags": ["game-config", "ui", "health-bar", "game-state"]
+      "tags": [
+        "configuration",
+        "getter",
+        "public_method",
+        "settings_access"
+      ],
+      "related_chunks": [
+        {"file_name": "GameConfig.js", "chunk_index": 6, "method": "validateEnemyConfig"},
+        {"file_name": "GameConfig.js", "chunk_index": 8, "method": "updateConfig"}
+      ]
     }
   },
   {
     "file_name": "GameConfig.js",
     "chunk_index": 8,
-    "method": "ANTIVIRUS_WALL",
-    "chunk_text": "/**\n * Antivirus wall mechanics and timing configuration\n * @property {number} WIDTH - Width of the wall in pixels\n * @property {number} START_OFFSET - Initial offset (in pixels) before wall enters\n * @property {number} SPEED - Movement speed of the antivirus wall\n * @property {number} RESPAWN_DELAY - Time (ms) to respawn after leaving\n * @property {number} FLASH_DURATION - Warning flash duration (ms)\n */\n    // Antivirus wall configuration\n    ANTIVIRUS_WALL: {\n        WIDTH: 32,\n        START_OFFSET: -64, // Start 2 tiles outside the map\n        SPEED: 80,\n        RESPAWN_DELAY: 5000, // milliseconds\n        FLASH_DURATION: 500 // milliseconds for warning flash\n    }",
+    "method": "updateConfig",
+    "chunk_text": "    /**\n     * Update configuration settings\n     * \n     * @param {string} type - Configuration type ('game', 'player', or 'enemy')\n     * @param {Object} updates - New configuration values\n     * @param {Object} [options] - Update options\n     * @param {boolean} [options.skipValidation=false] - Skip validation check\n     * @param {boolean} [options.bulk=false] - Bulk update mode\n     * \n     * @description\n     * Update process:\n     * 1. Validate configuration type and updates structure\n     * 2. Deep merge updates with type checking\n     * 3. Track modifications with versioning\n     * 4. Validate new settings (unless skipped)\n     * \n     * @example\n     * // Update player speed\n     * gameConfig.updateConfig('player', { moveSpeed: 300 });\n     * \n     * // Bulk update game settings\n     * gameConfig.updateConfig('game', { \n     *   width: 800,\n     *   height: 600,\n     *   physics: { arcade: { gravity: 300 } }\n     * }, { bulk: true });\n     * \n     * @throws {Error} If update validation fails or types are incorrect\n     */\n    updateConfig(type, updates, options = {}) {\n        if (!updates || typeof updates !== 'object' || Array.isArray(updates)) {\n            throw new Error('Updates must be a non-array object');\n        }\n\n        // Validate configuration type\n        if (!['game', 'player', 'enemy'].includes(type)) {\n            throw new Error(`Invalid configuration type: ${type}`);\n        }\n\n        // Type-check all update values\n        this._validateUpdateTypes(type, updates);\n\n        // Apply updates\n        switch (type) {\n            case 'game':\n                this.gameConfig = this._deepMerge(this.gameConfig, updates);\n                break;\n            case 'player':\n                this.playerConfig = this._deepMerge(this.playerConfig, updates);\n                break;\n            case 'enemy':\n                this.enemyConfig = this._deepMerge(this.enemyConfig, updates);\n                break;\n        }\n\n        // Track modification with version increment\n        this.configVersion++;\n        this.modifications.set(type, {\n            timestamp: Date.now(),\n            version: this.configVersion\n        });\n\n        // Validate unless explicitly skipped\n        if (!options.skipValidation) {\n            this.validateConfigs();\n        }\n    }",
     "metadata": {
-      "start_line": 114,
-      "end_line": 121,
-      "notes": "Antivirus wall mechanics and timing configuration",
+      "start_line": 137,
+      "end_line": 167,
+      "notes": "Enhanced update configuration method with type validation, versioning, and bulk updates",
       "imports": [],
-      "tags": ["game-config", "antivirus-wall", "mechanics"]
+      "tags": [
+        "configuration",
+        "update",
+        "public_method",
+        "settings_management",
+        "version_control",
+        "type_validation"
+      ],
+      "related_chunks": [
+        {"file_name": "GameConfig.js", "chunk_index": 7, "method": "getConfig"},
+        {"file_name": "GameConfig.js", "chunk_index": 9, "method": "resetConfig"},
+        {"file_name": "GameConfig.js", "chunk_index": 13, "method": "_validateUpdateTypes"},
+        {"file_name": "GameConfig.js", "chunk_index": 14, "method": "_deepMerge"}
+      ]
     }
   },
   {
     "file_name": "GameConfig.js",
     "chunk_index": 9,
-    "method": "getGroundTop",
-    "chunk_text": "/**\n * Calculates the top position of the ground based on scene height\n * @param {number} height - Total height of the scene (pixels)\n * @returns {number} Y-coordinate of the ground top (pixels)\n */\nexport const getGroundTop = (height) => height - GameConfig.WORLD.GROUND_OFFSET;",
+    "method": "resetConfig",
+    "chunk_text": "    /**\n     * Reset configuration to default values\n     * \n     * @param {string} type - Configuration type ('game', 'player', or 'enemy')\n     * \n     * @description\n     * Reset process:\n     * 1. Validate configuration type\n     * 2. Restore defaults\n     * 3. Clear modifications\n     * 4. Revalidate settings\n     * \n     * @throws {Error} If configuration type is invalid\n     */\n    resetConfig(type) {\n        switch (type) {\n            case 'game':\n                this.gameConfig = { ...GAME_CONFIG };\n                break;\n            case 'player':\n                this.playerConfig = { ...PLAYER_CONFIG };\n                break;\n            case 'enemy':\n                this.enemyConfig = { ...ENEMY_CONFIG };\n                break;\n            default:\n                throw new Error('Invalid configuration type');\n        }\n        this.modifications.delete(type);\n        this.validateConfigs();\n    }",
     "metadata": {
-      "start_line": 127,
-      "end_line": 127,
-      "notes": "Helper function to calculate ground top position",
-      "imports": [],
-      "tags": ["helper-function", "ground-position", "game-config"]
+      "start_line": 169,
+      "end_line": 196,
+      "notes": "Resets configuration to default values with validation",
+      "imports": [
+        "GAME_CONFIG",
+        "PLAYER_CONFIG",
+        "ENEMY_CONFIG"
+      ],
+      "tags": [
+        "configuration",
+        "reset",
+        "public_method",
+        "settings_management"
+      ],
+      "related_chunks": [
+        {"file_name": "GameConfig.js", "chunk_index": 8, "method": "updateConfig"},
+        {"file_name": "GameConfig.js", "chunk_index": 10, "method": "hasModifications"}
+      ]
     }
   },
   {
     "file_name": "GameConfig.js",
     "chunk_index": 10,
-    "method": "getSpawnHeight",
-    "chunk_text": "/**\n * Calculates the spawn height for entities based on ground position\n * @param {number} groundTop - Y-coordinate of the ground top (pixels)\n * @returns {number} Y-coordinate for entity spawn position (pixels)\n */\nexport const getSpawnHeight = (groundTop) => groundTop - GameConfig.PLAYER.GROUND_OFFSET;",
+    "method": "hasModifications",
+    "chunk_text": "    /**\n     * Check if configuration has been modified\n     * \n     * @param {string} type - Configuration type ('game', 'player', or 'enemy')\n     * @returns {boolean} True if configuration has been modified\n     * \n     * @description\n     * Check process:\n     * 1. Validate configuration type\n     * 2. Check modifications map\n     * 3. Return modification status\n     */\n    hasModifications(type) {\n        if (!['game', 'player', 'enemy'].includes(type)) {\n            throw new Error('Invalid configuration type');\n        }\n        return this.modifications.has(type);\n    }",
     "metadata": {
-      "start_line": 128,
-      "end_line": 128,
-      "notes": "Helper function to calculate spawn height based on ground top position",
+      "start_line": 198,
+      "end_line": 215,
+      "notes": "Checks if configuration has been modified from defaults",
       "imports": [],
-      "tags": ["helper-function", "spawn-height", "game-config"]
+      "tags": [
+        "configuration",
+        "state_check",
+        "public_method",
+        "settings_management"
+      ],
+      "related_chunks": [
+        {"file_name": "GameConfig.js", "chunk_index": 9, "method": "resetConfig"},
+        {"file_name": "GameConfig.js", "chunk_index": 11, "method": "getModificationTime"}
+      ]
     }
   },
   {
     "file_name": "GameConfig.js",
     "chunk_index": 11,
-    "method": "getHealthBarDimensions",
-    "chunk_text": "/**\n * Calculates health bar dimensions and position based on display size\n * @param {number} displayWidth - Width of the display area (pixels)\n * @param {number} displayHeight - Height of the display area (pixels)\n * @returns {Object} Health bar dimensions and position\n * @returns {number} returns.width - Width of health bar (pixels)\n * @returns {number} returns.height - Height of health bar (pixels)\n * @returns {number} returns.yOffset - Vertical offset from center (pixels)\n * \n * Note: Height is calculated with a minimum value and ratio of display height.\n * Offset is positioned relative to vertical center of display.\n */\nexport const getHealthBarDimensions = (displayWidth, displayHeight) => ({\n    width: displayWidth * GameConfig.UI.HEALTH_BAR.WIDTH_MULTIPLIER,\n    height: Math.max(GameConfig.UI.HEALTH_BAR.MIN_HEIGHT, Math.floor(displayHeight * GameConfig.UI.HEALTH_BAR.HEIGHT_RATIO)),\n    yOffset: displayHeight / 2 + Math.max(GameConfig.UI.HEALTH_BAR.MIN_HEIGHT, Math.floor(displayHeight * GameConfig.UI.HEALTH_BAR.HEIGHT_RATIO)) * GameConfig.UI.HEALTH_BAR.OFFSET_MULTIPLIER\n});",
+    "method": "getModificationTime",
+    "chunk_text": "    /**\n     * Get the last modification time for a configuration\n     * \n     * @param {string} type - Configuration type ('game', 'player', or 'enemy')\n     * @returns {number|null} Timestamp of last modification or null if unmodified\n     * \n     * @description\n     * Retrieval process:\n     * 1. Validate configuration type\n     * 2. Check modifications map\n     * 3. Return modification timestamp\n     */\n    getModificationTime(type) {\n        if (!['game', 'player', 'enemy'].includes(type)) {\n            throw new Error('Invalid configuration type');\n        }\n        return this.modifications.get(type) || null;\n    }",
     "metadata": {
-      "start_line": 129,
-      "end_line": 133,
-      "notes": "Helper function to calculate health bar dimensions based on display size",
+      "start_line": 217,
+      "end_line": 234,
+      "notes": "Retrieves the timestamp of the last configuration modification",
       "imports": [],
-      "tags": ["helper-function", "health-bar", "game-config"]
+      "tags": [
+        "configuration",
+        "getter",
+        "public_method",
+        "settings_management"
+      ],
+      "related_chunks": [
+        {"file_name": "GameConfig.js", "chunk_index": 10, "method": "hasModifications"},
+        {"file_name": "GameConfig.js", "chunk_index": 12, "method": "validateWorldConfig"}
+      ]
+    }
+  },
+  {
+    "file_name": "GameConfig.js",
+    "chunk_index": 12,
+    "method": "validateWorldConfig",
+    "chunk_text": "    /**\n     * Validate world configuration settings\n     * \n     * @private\n     * @description\n     * Validation process:\n     * 1. Check gravity settings\n     * 2. Validate ground offset\n     * 3. Verify world bounds\n     * \n     * @throws {Error} If world configuration is invalid\n     */\n    validateWorldConfig() {\n        const { GROUND_OFFSET, GRAVITY } = this.gameConfig.WORLD;\n        if (typeof GROUND_OFFSET !== 'number' || GROUND_OFFSET < 0) {\n            throw new Error('Invalid ground offset configuration');\n        }\n        if (typeof GRAVITY !== 'number') {\n            throw new Error('Invalid gravity configuration');\n        }\n    }",
+    "metadata": {
+      "start_line": 236,
+      "end_line": 254,
+      "notes": "Validates world physics configuration including gravity and boundaries",
+      "imports": [],
+      "tags": [
+        "configuration",
+        "validation",
+        "private_method",
+        "physics",
+        "world_settings"
+      ],
+      "related_chunks": [
+        {"file_name": "GameConfig.js", "chunk_index": 4, "method": "validateGameConfig"},
+        {"file_name": "GameConfig.js", "chunk_index": 13, "method": "_validateUpdateTypes"}
+      ]
+    }
+  },
+  {
+    "file_name": "GameConfig.js",
+    "chunk_index": 13,
+    "method": "_validateUpdateTypes",
+    "chunk_text": "    /**\n     * Validate types of configuration updates\n     * \n     * @private\n     * @param {string} type - Configuration type\n     * @param {Object} updates - Update values to validate\n     * \n     * @description\n     * Validation process:\n     * 1. Check against expected types for each config field\n     * 2. Validate nested objects recursively\n     * 3. Ensure required fields maintain correct types\n     * \n     * @throws {Error} If update values have incorrect types\n     */\n    _validateUpdateTypes(type, updates) {\n        const typeMap = {\n            game: {\n                width: 'number',\n                height: 'number',\n                physics: 'object'\n            },\n            player: {\n                moveSpeed: 'number',\n                jumpForce: 'number',\n                maxHealth: 'number'\n            },\n            enemy: {\n                health: 'number',\n                damage: 'number',\n                speed: 'number'\n            }\n        };\n\n        const expectedTypes = typeMap[type];\n        Object.entries(updates).forEach(([key, value]) => {\n            if (expectedTypes[key] && typeof value !== expectedTypes[key]) {\n                throw new Error(\n                    `Invalid type for ${type}.${key}: expected ${expectedTypes[key]}, got ${typeof value}`\n                );\n            }\n        });\n    }",
+    "metadata": {
+      "start_line": 300,
+      "end_line": 340,
+      "notes": "Private helper method for validating configuration update types",
+      "imports": [],
+      "tags": [
+        "configuration",
+        "validation",
+        "private_method",
+        "type_checking",
+        "helper_method"
+      ],
+      "related_chunks": [
+        {"file_name": "GameConfig.js", "chunk_index": 8, "method": "updateConfig"},
+        {"file_name": "GameConfig.js", "chunk_index": 12, "method": "validateWorldConfig"},
+        {"file_name": "GameConfig.js", "chunk_index": 14, "method": "_deepMerge"}
+      ]
+    }
+  },
+  {
+    "file_name": "GameConfig.js",
+    "chunk_index": 14,
+    "method": "_deepMerge",
+    "chunk_text": "    /**\n     * Deep merge two objects with type checking\n     * \n     * @private\n     * @param {Object} target - Target object\n     * @param {Object} source - Source object to merge\n     * @returns {Object} Merged object\n     * \n     * @description\n     * Merge process:\n     * 1. Deep clone target\n     * 2. Recursively merge source\n     * 3. Preserve object types\n     * \n     * @throws {Error} If trying to merge incompatible types\n     */\n    _deepMerge(target, source) {\n        const merged = { ...target };\n        Object.entries(source).forEach(([key, value]) => {\n            if (value && typeof value === 'object' && !Array.isArray(value)) {\n                if (merged[key] && typeof merged[key] === 'object') {\n                    merged[key] = this._deepMerge(merged[key], value);\n                } else {\n                    merged[key] = { ...value };\n                }\n            } else {\n                merged[key] = value;\n            }\n        });\n        return merged;\n    }",
+    "metadata": {
+      "start_line": 342,
+      "end_line": 370,
+      "notes": "Private helper method for deep merging configuration objects",
+      "imports": [],
+      "tags": [
+        "configuration",
+        "helper_method",
+        "private_method",
+        "object_manipulation"
+      ],
+      "related_chunks": [
+        {"file_name": "GameConfig.js", "chunk_index": 8, "method": "updateConfig"},
+        {"file_name": "GameConfig.js", "chunk_index": 13, "method": "_validateUpdateTypes"}
+      ]
     }
   }
 ]

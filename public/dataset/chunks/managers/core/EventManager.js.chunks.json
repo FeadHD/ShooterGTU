@@ -2,144 +2,248 @@
   {
     "file_name": "EventManager.js",
     "chunk_index": 0,
-    "method": "class_definition",
-    "chunk_text": "/**\n * EventManager.js\n * Centralized event management system for game-wide communication\n * Provides type-safe event constants and standardized event handling\n * Extends BaseManager for dependency injection support\n *\n * @class EventManager\n * @extends BaseManager\n * @description\n * A centralized event management system that:\n * - Provides type-safe event constants\n * - Handles event registration and cleanup\n * - Integrates with Phaser's event system\n * - Supports scene-specific event handling\n *\n * @requires Phaser.Scene\n * @requires Phaser.Events.EventEmitter\n */\n\nimport { BaseManager } from './BaseManager';\n\nexport class EventManager extends BaseManager {",
+    "method": "imports",
+    "chunk_text": "import { EventEmitter } from 'events';\nimport { container } from './ServiceContainer';",
     "metadata": {
       "start_line": 1,
-      "end_line": 18,
-      "notes": "Class definition with enhanced documentation and Phaser dependencies",
-      "imports": ["./BaseManager"],
-      "tags": ["class_definition", "event_manager", "dependency_injection", "phaser3"]
+      "end_line": 2,
+      "notes": "Imports core event handling and service container dependencies",
+      "imports": [
+        "events.EventEmitter",
+        "ServiceContainer.container"
+      ],
+      "tags": [
+        "imports",
+        "core_system",
+        "event_handling",
+        "dependency_injection"
+      ],
+      "related_chunks": [
+        {"file_name": "EventManager.js", "chunk_index": 1, "method": "classDefinition"},
+        {"file_name": "EventManager.js", "chunk_index": 2, "method": "constructor"}
+      ]
     }
   },
   {
     "file_name": "EventManager.js",
     "chunk_index": 1,
-    "method": "GameEvents",
-    "chunk_text": "/**\n * Game-wide event constants\n * Organized by category for better maintainability\n * Use these instead of string literals to prevent typos\n *\n * @constant\n * @type {Object<string, string>}\n * @description\n * Defines all available game events that can be used with EventManager methods.\n * These constants ensure type safety and prevent typos in event names.\n *\n * @see {@link EventManager#on} - For registering event handlers\n * @see {@link EventManager#emit} - For triggering events\n * @see {@link EventManager#registerDefaultEvents} - For default event handling setup\n *\n * @example\n * // Using with EventManager\n * eventManager.on(GameEvents.PLAYER_DEATH, handlePlayerDeath);\n * eventManager.emit(GameEvents.SCORE_CHANGE, { score: 100 });\n */\nexport const GameEvents = {\n    // Entity lifecycle and state events\n    PLAYER_DEATH: 'player:death',          // Triggered when player dies\n    PLAYER_RESPAWN: 'player:respawn',      // Triggered on player respawn\n    ENEMY_DEATH: 'enemy:death',            // Triggered when enemy is defeated\n    ENEMY_SPAWN: 'enemy:spawn',            // Triggered when new enemy spawns\n    BOSS_SPAWN: 'boss:spawn',              // Triggered when boss appears\n    BOSS_PHASE_CHANGE: 'boss:phaseChange', // Triggered on boss phase transition\n\n    // Core gameplay state changes\n    SCORE_CHANGE: 'gameplay:scoreChange',         // Score updates\n    HEALTH_CHANGE: 'gameplay:healthChange',       // Health modifications\n    CHECKPOINT_REACHED: 'gameplay:checkpointReached', // Checkpoint activation\n    GAME_OVER: 'gameplay:gameOver',               // Game over state\n    HAZARD_COLLISION: 'hazardCollision',          // Collision with hazard\n    GAME_STATE_INITIALIZED: 'gameStateInitialized', // Game state initialization\n    GAME_STATE_CHANGED: 'stateChanged',           // Game state changes\n    PLAYER_HP_CHANGED: 'playerHPChanged',         // Player health changes\n\n    // Entity events\n    ENEMY_HEALTH_CHANGED: 'enemyHealthChanged',   // Enemy health changes\n    ENTITY_ADDED: 'entityAdded',                  // Entity added to game\n    ENTITY_REMOVED: 'entityRemoved',              // Entity removed from game\n\n    // Item and power-up events\n    ITEM_PICKUP: 'item:pickup',            // Item collection\n    ITEM_USE: 'item:use',                  // Item usage\n    POWERUP_START: 'powerup:start',        // Power-up activation\n    POWERUP_END: 'powerup:end',            // Power-up expiration\n\n    // System and resource events\n    SCENE_READY: 'system:sceneReady',          // Scene initialization complete\n    RESOURCES_LOADED: 'system:resourcesLoaded', // Asset loading complete\n    ERROR_OCCURRED: 'system:error'              // Error handling\n}",
+    "method": "classDefinition",
+    "chunk_text": "/**\n * EventManager.js\n * Centralized event management system for game-wide communication.\n * Extends Node's EventEmitter for robust event handling.\n *\n * @class EventManager\n * @extends EventEmitter\n * @description\n * Provides:\n * - Scene-specific event handling\n * - Global event bus capabilities\n * - Event lifecycle management\n * - Automatic event cleanup\n *\n * @requires EventEmitter\n * @requires ServiceContainer\n */\nexport class EventManager extends EventEmitter {",
     "metadata": {
-      "start_line": 20,
-      "end_line": 55,
-      "notes": "Game event constants with enhanced documentation and usage examples",
-      "imports": [],
-      "tags": ["game_events", "constants", "event_handling", "phaser3"]
+      "start_line": 4,
+      "end_line": 20,
+      "notes": "Defines event manager class extending EventEmitter for game-wide event handling",
+      "imports": [
+        "events.EventEmitter",
+        "ServiceContainer"
+      ],
+      "tags": [
+        "class_definition",
+        "core_system",
+        "event_handling",
+        "initialization"
+      ],
+      "related_chunks": [
+        {"file_name": "EventManager.js", "chunk_index": 0, "method": "imports"},
+        {"file_name": "EventManager.js", "chunk_index": 2, "method": "constructor"}
+      ]
     }
   },
   {
     "file_name": "EventManager.js",
     "chunk_index": 2,
     "method": "constructor",
-    "chunk_text": "    /**\n     * @param {Phaser.Scene} scene - The scene this manager belongs to\n     * \n     * @description\n     * Initializes the event manager with:\n     * - Scene reference for context\n     * - Phaser's event emitter\n     * - Event tracking system\n     * - DI container registration\n     * \n     * @requires Phaser.Events.EventEmitter\n     * @see {@link Phaser.Scene}\n     * @returns {void}\n     */\n    constructor(scene) {\n        super();\n        this.scene = scene;\n        this.events = scene.events;           // Phaser's event emitter\n        this.registeredEvents = new Set();    // Track active events\n        \n        // Register this manager in the DI container\n        this.container.register('events', this);\n    }",
+    "chunk_text": "    /**\n     * Initialize event manager for a scene\n     * @param {Phaser.Scene} scene - Scene this manager belongs to\n     * \n     * @description\n     * Sets up:\n     * - Scene reference\n     * - Event tracking maps\n     * - Scene lifecycle hooks\n     * \n     * @requires Phaser.Scene\n     */\n    constructor(scene) {\n        super();\n        \n        // Store scene reference\n        this.scene = scene;\n        \n        // Track events by type\n        this.events = new Map();\n        \n        // Track event counts\n        this.eventCounts = new Map();\n        \n        // Bind scene shutdown\n        this.scene.events.on('shutdown', this.shutdown, this);\n    }",
     "metadata": {
-      "start_line": 65,
-      "end_line": 82,
-      "notes": "Constructor with scene initialization and Phaser dependencies",
-      "imports": [],
-      "tags": ["constructor", "event_manager", "phaser3", "dependency_injection"]
+      "start_line": 22,
+      "end_line": 44,
+      "notes": "Initializes event manager with scene reference and event tracking",
+      "imports": [
+        "Phaser.Scene",
+        "Map"
+      ],
+      "tags": [
+        "initialization",
+        "core_system",
+        "event_handling",
+        "lifecycle"
+      ],
+      "related_chunks": [
+        {"file_name": "EventManager.js", "chunk_index": 1, "method": "classDefinition"},
+        {"file_name": "EventManager.js", "chunk_index": 3, "method": "initialize"}
+      ]
     }
   },
   {
     "file_name": "EventManager.js",
     "chunk_index": 3,
     "method": "initialize",
-    "chunk_text": "    /**\n     * Initialize event system and setup default handlers\n     * Called automatically when scene starts\n     * \n     * @description\n     * Performs initial setup of the event system:\n     * - Sets up core event handlers\n     * - Registers default events\n     * - Signals scene readiness\n     * \n     * @fires GameEvents.SCENE_READY\n     * @returns {void}\n     */\n    initialize() {\n        console.log('Initializing event system...');\n        \n        // Setup core event handlers\n        this.registerDefaultEvents();\n        \n        // Signal scene is ready for game logic\n        this.emit(GameEvents.SCENE_READY, { sceneName: this.scene.scene.key });\n    }",
+    "chunk_text": "    /**\n     * Initialize the event manager\n     * Sets up initial event listeners and state\n     * \n     * @description\n     * - Registers with service container\n     * - Sets up scene event hooks\n     * - Initializes tracking state\n     */\n    initialize() {\n        console.log('Initializing EventManager...');\n        \n        // Register with container\n        if (!container.services.has('events')) {\n            container.register('events', this);\n        }\n        \n        // Clear any existing events\n        this.events.clear();\n        this.eventCounts.clear();\n        \n        console.log('EventManager initialized.');\n    }",
     "metadata": {
-      "start_line": 84,
-      "end_line": 103,
-      "notes": "Event system initialization method",
-      "imports": [],
-      "tags": ["event_system", "initialization", "phaser3"]
+      "start_line": 46,
+      "end_line": 66,
+      "notes": "Initializes event system and registers with service container",
+      "imports": [
+        "ServiceContainer.container"
+      ],
+      "tags": [
+        "initialization",
+        "core_system",
+        "event_handling",
+        "service_registration"
+      ],
+      "related_chunks": [
+        {"file_name": "EventManager.js", "chunk_index": 2, "method": "constructor"},
+        {"file_name": "EventManager.js", "chunk_index": 4, "method": "on"}
+      ]
     }
   },
   {
     "file_name": "EventManager.js",
     "chunk_index": 4,
-    "method": "registerDefaultEvents",
-    "chunk_text": "    /**\n     * Register default event handlers for core game events\n     * Connects events to scene-specific handler methods\n     * \n     * @description\n     * Sets up handlers for:\n     * - Player lifecycle (death, respawn)\n     * - Enemy interactions\n     * - Item interactions\n     * - Error handling\n     * \n     * @fires Multiple game events\n     * @returns {void}\n     */\n    registerDefaultEvents() {\n        // Player lifecycle events\n        this.on(GameEvents.PLAYER_DEATH, ({ position, cause }) => {\n            console.log(`Player died at position ${position.x},${position.y} due to ${cause}`);\n            if (this.scene.handlePlayerDeath) {\n                this.scene.handlePlayerDeath();\n            }\n        });\n\n        this.on(GameEvents.PLAYER_RESPAWN, ({ position }) => {\n            console.log(`Player respawning at ${position.x},${position.y}`);\n            if (this.scene.handleRespawn) {\n                this.scene.handleRespawn();\n            }\n        });\n\n        // Enemy interaction events\n        this.on(GameEvents.ENEMY_DEATH, ({ enemy, position, killedBy }) => {\n            console.log(`Enemy ${enemy.id} died at ${position.x},${position.y}`);\n            if (this.scene.handleEnemyDeath) {\n                this.scene.handleEnemyDeath(enemy, killedBy);\n            }\n        });\n\n        // Item interaction events\n        this.on(GameEvents.ITEM_PICKUP, ({ item, player }) => {\n            console.log(`Player picked up ${item.type}`);\n            if (this.scene.handleItemPickup) {\n                this.scene.handleItemPickup(item, player);\n            }\n        });\n\n        // Error handling\n        this.on(GameEvents.ERROR_OCCURRED, ({ error, context }) => {\n            console.error(`Error in ${context}:`, error);\n            if (this.scene.errorSystem) {\n                this.scene.errorSystem.handleError(error, context);\n            }\n        });\n    }",
+    "method": "on",
+    "chunk_text": "    /**\n     * Register an event handler\n     * @param {string} eventName - Event identifier from GameEvents\n     * @param {Function} callback - Handler function\n     * \n     * @description\n     * Registers a persistent event handler that will:\n     * - Remain active until explicitly removed\n     * - Track the event in registeredEvents\n     * - Support multiple handlers per event\n     * \n     * @returns {void}\n     */\n    on(eventName, callback) {\n        if (!this.registeredEvents.has(eventName)) {\n            this.registeredEvents.add(eventName);\n        }\n        this.events.on(eventName, callback);\n    }",
     "metadata": {
       "start_line": 105,
-      "end_line": 150,
-      "notes": "Default event handler registration",
-      "imports": [],
-      "tags": ["event_registration", "core_game_events", "event_handling"]
+      "end_line": 120,
+      "notes": "Registers persistent event handler with tracking and multiple handler support",
+      "imports": [
+        "Map",
+        "EventEmitter"
+      ],
+      "tags": [
+        "core_system",
+        "event_handling",
+        "registration",
+        "helper_method"
+      ],
+      "related_chunks": [
+        {"file_name": "EventManager.js", "chunk_index": 3, "method": "initialize"},
+        {"file_name": "EventManager.js", "chunk_index": 5, "method": "once"}
+      ]
     }
   },
   {
     "file_name": "EventManager.js",
     "chunk_index": 5,
-    "method": "on",
-    "chunk_text": "    /**\n     * Register an event handler\n     * @param {string} eventName - Event identifier from GameEvents\n     * @param {Function} callback - Handler function\n     * \n     * @description\n     * Registers a persistent event handler that will:\n     * - Remain active until explicitly removed\n     * - Track the event in registeredEvents\n     * - Support multiple handlers per event\n     * \n     * @returns {void}\n     */\n    on(eventName, callback) {\n        if (!this.registeredEvents.has(eventName)) {\n            this.registeredEvents.add(eventName);\n        }\n        this.events.on(eventName, callback);\n    }",
+    "method": "once",
+    "chunk_text": "    /**\n     * Register a one-time event handler\n     * Automatically removed after first trigger\n     * @param {string} eventName - Event identifier from GameEvents\n     * @param {Function} callback - Handler function\n     * \n     * @description\n     * Registers a one-time event handler that will:\n     * - Execute only once\n     * - Auto-remove after triggering\n     * - Not be tracked in registeredEvents\n     * \n     * @returns {void}\n     */\n    once(eventName, callback) {\n        this.events.once(eventName, callback);\n    }",
     "metadata": {
-      "start_line": 152,
-      "end_line": 167,
-      "notes": "Event handler registration method",
-      "imports": [],
-      "tags": ["event_handler", "registration", "phaser3"]
+      "start_line": 122,
+      "end_line": 137,
+      "notes": "Registers one-time event handler with automatic cleanup after execution",
+      "imports": [
+        "EventEmitter"
+      ],
+      "tags": [
+        "core_system",
+        "event_handling",
+        "registration",
+        "helper_method"
+      ],
+      "related_chunks": [
+        {"file_name": "EventManager.js", "chunk_index": 4, "method": "on"},
+        {"file_name": "EventManager.js", "chunk_index": 6, "method": "emit"}
+      ]
     }
   },
   {
     "file_name": "EventManager.js",
     "chunk_index": 6,
-    "method": "once",
-    "chunk_text": "    /**\n     * Register a one-time event handler\n     * Automatically removed after first trigger\n     * @param {string} eventName - Event identifier from GameEvents\n     * @param {Function} callback - Handler function\n     * \n     * @description\n     * Registers a one-time event handler that will:\n     * - Execute only once\n     * - Auto-remove after triggering\n     * - Not be tracked in registeredEvents\n     * \n     * @returns {void}\n     */\n    once(eventName, callback) {\n        this.events.once(eventName, callback);\n    }",
+    "method": "emit",
+    "chunk_text": "    /**\n     * Emit an event with data\n     * Automatically adds timestamp and scene info\n     * @param {string} eventName - Event identifier from GameEvents\n     * @param {Object} data - Event payload\n     * \n     * @description\n     * Emits an event with enhanced data that includes:\n     * - Original payload data\n     * - Current timestamp\n     * - Scene identifier (this.scene.scene.key)\n     * - Additional context information\n     * \n     * @property {number} eventData.timestamp - Unix timestamp of event emission\n     * @property {string} eventData.scene - Current scene key from this.scene.scene.key\n     * @returns {void} - This method doesn't return a value\n     */\n    emit(eventName, data = {}) {\n        const eventData = {\n            ...data,\n            timestamp: Date.now(),\n            scene: this.scene.scene.key\n        };\n        \n        this.events.emit(eventName, eventData);\n    }",
     "metadata": {
-      "start_line": 169,
-      "end_line": 183,
-      "notes": "One-time event handler registration",
-      "imports": [],
-      "tags": ["event_handler", "one_time", "phaser3"]
+      "start_line": 139,
+      "end_line": 160,
+      "notes": "Emits event with enriched data including timestamp and scene context",
+      "imports": [
+        "EventEmitter",
+        "Phaser.Scene"
+      ],
+      "tags": [
+        "core_system",
+        "event_handling",
+        "data_enrichment",
+        "helper_method"
+      ],
+      "related_chunks": [
+        {"file_name": "EventManager.js", "chunk_index": 5, "method": "once"},
+        {"file_name": "EventManager.js", "chunk_index": 7, "method": "off"}
+      ]
     }
   },
   {
     "file_name": "EventManager.js",
     "chunk_index": 7,
-    "method": "emit",
-    "chunk_text": "    /**\n     * Emit an event with data\n     * Automatically adds timestamp and scene info\n     * @param {string} eventName - Event identifier from GameEvents\n     * @param {Object} data - Event payload\n     * \n     * @description\n     * Emits an event with enhanced data that includes:\n     * - Original payload data\n     * - Current timestamp\n     * - Scene identifier (this.scene.scene.key)\n     * - Additional context information\n     * \n     * @property {number} eventData.timestamp - Unix timestamp of event emission\n     * @property {string} eventData.scene - Current scene key from this.scene.scene.key\n     * @returns {void} - This method doesn't return a value\n     */\n    emit(eventName, data = {}) {\n        const eventData = {\n            ...data,\n            timestamp: Date.now(),\n            scene: this.scene.scene.key\n        };\n        \n        this.events.emit(eventName, eventData);\n    }",
+    "method": "off",
+    "chunk_text": "    /**\n     * Remove a specific event handler\n     * @param {string} eventName - Event identifier from GameEvents\n     * @param {Function} callback - Handler to remove\n     * \n     * @description\n     * Removes a specific event handler while:\n     * - Maintaining other handlers for same event\n     * - Preserving event in registeredEvents\n     * - Not affecting one-time handlers\n     * \n     * @returns {void} - This method doesn't return a value\n     */\n    off(eventName, callback) {\n        this.events.off(eventName, callback);\n    }",
     "metadata": {
-      "start_line": 185,
-      "end_line": 206,
-      "notes": "Event emission method with enhanced data documentation",
-      "imports": [],
-      "tags": ["event_emission", "data_enrichment", "phaser3"]
+      "start_line": 162,
+      "end_line": 175,
+      "notes": "Removes specific event handler while preserving other handlers and registration state",
+      "imports": [
+        "EventEmitter"
+      ],
+      "tags": [
+        "core_system",
+        "event_handling",
+        "cleanup",
+        "helper_method"
+      ],
+      "related_chunks": [
+        {"file_name": "EventManager.js", "chunk_index": 6, "method": "emit"},
+        {"file_name": "EventManager.js", "chunk_index": 8, "method": "destroy"}
+      ]
     }
   },
   {
     "file_name": "EventManager.js",
     "chunk_index": 8,
-    "method": "off",
-    "chunk_text": "    /**\n     * Remove a specific event handler\n     * @param {string} eventName - Event identifier from GameEvents\n     * @param {Function} callback - Handler to remove\n     * \n     * @description\n     * Removes a specific event handler while:\n     * - Maintaining other handlers for same event\n     * - Preserving event in registeredEvents\n     * - Not affecting one-time handlers\n     * \n     * @returns {void} - This method doesn't return a value\n     */\n    off(eventName, callback) {\n        this.events.off(eventName, callback);\n    }",
+    "method": "destroy",
+    "chunk_text": "    /**\n     * Clean up all event handlers\n     * Called automatically when scene is destroyed\n     * \n     * @description\n     * Performs complete cleanup by:\n     * - Removing all event handlers\n     * - Clearing registered events tracking\n     * - Preparing for garbage collection\n     * \n     * @returns {void} - This method doesn't return a value\n     */\n    destroy() {\n        this.registeredEvents.forEach(eventName => {\n            this.removeAllListeners(eventName);\n        });\n        this.registeredEvents.clear();\n    }",
     "metadata": {
-      "start_line": 208,
-      "end_line": 221,
-      "notes": "Event handler removal method",
-      "imports": [],
-      "tags": ["event_handler", "removal", "phaser3"]
+      "start_line": 192,
+      "end_line": 206,
+      "notes": "Performs complete cleanup of all event handlers and registration state",
+      "imports": [
+        "EventEmitter",
+        "Map"
+      ],
+      "tags": [
+        "core_system",
+        "event_handling",
+        "cleanup",
+        "lifecycle"
+      ],
+      "related_chunks": [
+        {"file_name": "EventManager.js", "chunk_index": 7, "method": "removeAllListeners"},
+        {"file_name": "EventManager.js", "chunk_index": 2, "method": "constructor"}
+      ]
     }
   },
   {
     "file_name": "EventManager.js",
     "chunk_index": 9,
-    "method": "removeAllListeners",
-    "chunk_text": "    /**\n     * Remove all handlers for an event\n     * @param {string} eventName - Event identifier from GameEvents\n     * \n     * @description\n     * Completely removes an event by:\n     * - Removing all registered handlers\n     * - Clearing from registeredEvents tracking\n     * - Cleaning up associated resources\n     * \n     * @returns {void} - This method doesn't return a value\n     */\n    removeAllListeners(eventName) {\n        this.events.removeAllListeners(eventName);\n        this.registeredEvents.delete(eventName);\n    }",
+    "method": "shutdown",
+    "chunk_text": "    /**\n     * Handle scene shutdown\n     * Called automatically by scene lifecycle\n     * \n     * @description\n     * Performs cleanup when scene shuts down:\n     * - Removes all event handlers\n     * - Clears registration state\n     * - Preserves instance for scene restart\n     * \n     * @returns {void} - This method doesn't return a value\n     */\n    shutdown() {\n        this.destroy();\n    }",
     "metadata": {
-      "start_line": 223,
-      "end_line": 236,
-      "notes": "Complete event cleanup method",
-      "imports": [],
-      "tags": ["event_cleanup", "event_removal", "phaser3"]
-    }
-  },
-  {
-    "file_name": "EventManager.js",
-    "chunk_index": 10,
-    "method": "destroy",
-    "chunk_text": "    /**\n     * Clean up all event handlers\n     * Called automatically when scene is destroyed\n     * \n     * @description\n     * Performs complete cleanup by:\n     * - Removing all event handlers\n     * - Clearing registered events tracking\n     * - Preparing for garbage collection\n     * \n     * @returns {void} - This method doesn't return a value\n     */\n    destroy() {\n        this.registeredEvents.forEach(eventName => {\n            this.removeAllListeners(eventName);\n        });\n        this.registeredEvents.clear();\n    }",
-    "metadata": {
-      "start_line": 238,
-      "end_line": 252,
-      "notes": "Manager cleanup and destruction method",
-      "imports": [],
-      "tags": ["event_manager", "cleanup", "phaser3"]
+      "start_line": 208,
+      "end_line": 220,
+      "notes": "Handles scene shutdown cleanup while preserving instance for restart",
+      "imports": [
+        "Phaser.Scene",
+        "EventEmitter"
+      ],
+      "tags": [
+        "core_system",
+        "event_handling",
+        "cleanup",
+        "lifecycle"
+      ],
+      "related_chunks": [
+        {"file_name": "EventManager.js", "chunk_index": 8, "method": "destroy"},
+        {"file_name": "EventManager.js", "chunk_index": 2, "method": "constructor"}
+      ]
     }
   }
 ]

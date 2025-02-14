@@ -2,157 +2,322 @@
   {
     "file_name": "PlayerController.js",
     "chunk_index": 0,
-    "method": "file_header",
-    "chunk_text": "/**\n * Player Input Controller\n * Handles keyboard and mouse input for player actions in a Phaser game.\n * \n * @class PlayerController\n * @requires Phaser\n * \n * Key Features:\n * - WASD movement controls\n * - Mouse-based aiming and shooting\n * - Key rebinding system with persistence\n * - Support for keyboard and mouse inputs\n * \n * Input Types:\n * - Keyboard: Movement, jumping, special attacks\n * - Mouse: Aiming, shooting, alternate actions\n * \n * @example\n * const controller = new PlayerController(this);\n * // Use controller.isMovingUp() to detect upward movement\n * // Use controller.handleShooting() in update loop\n */\nimport Phaser from 'phaser';",
+    "method": "imports",
+    "chunk_text": "import { Scene } from 'phaser';\nimport { Player } from '../entities/Player';\nimport { EventEmitter } from 'events';\nimport { InputManager } from '../managers/input/InputManager';",
     "metadata": {
-      "start_line": 1,
-      "end_line": 6,
-      "notes": "File header documentation and imports",
-      "imports": ["phaser"],
-      "tags": ["player", "input", "controller", "keyboard", "mouse", "Phaser"]
+      "start_line": 0,
+      "end_line": 3,
+      "notes": "Core imports for player control system including Phaser Scene, Player entity, and input management",
+      "imports": [
+        "phaser.Scene",
+        "Player",
+        "events.EventEmitter",
+        "InputManager"
+      ],
+      "tags": [
+        "imports",
+        "player",
+        "input",
+        "core_system"
+      ],
+      "related_chunks": [
+        {"file_name": "PlayerController.js", "chunk_index": 1, "method": "class"}
+      ]
     }
   },
   {
     "file_name": "PlayerController.js",
     "chunk_index": 1,
-    "method": "constructor",
-    "chunk_text": "/**\n * Initialize player controls with default or saved key bindings.\n * @constructor\n * @param {Phaser.Scene} scene - The game scene this controller belongs to\n *\n * @property {Phaser.Scene} scene - Reference to the current Phaser scene\n * @property {boolean} enabled - Whether the controller is active\n * @property {Object} defaultBindings - Default key mapping configuration\n * @property {Object} keyBindings - Resolved key bindings (from local storage or defaults)\n * @property {Object} controls - Internal references to keyboard/mouse inputs\n */\n    constructor(scene) {\n        this.scene = scene;\n        this.enabled = true;  // Control state flag\n        \n        // Default key mapping configuration\n        this.defaultBindings = {\n            up: Phaser.Input.Keyboard.KeyCodes.W,\n            down: Phaser.Input.Keyboard.KeyCodes.S,\n            left: Phaser.Input.Keyboard.KeyCodes.A,\n            right: Phaser.Input.Keyboard.KeyCodes.D,\n            jump: Phaser.Input.Keyboard.KeyCodes.SPACE,\n            specialAttack: Phaser.Input.Keyboard.KeyCodes.Q,\n            shoot: 'MOUSE_LEFT',\n            shift: Phaser.Input.Keyboard.KeyCodes.SHIFT\n        };\n        \n        // Initialize controls from saved settings or defaults\n        this.keyBindings = this.loadKeyBindings();\n        this.controls = this.createControls();\n    }",
+    "method": "class",
+    "chunk_text": "/**\n * Player Controller class for managing player input and movement\n * \n * @class PlayerController\n * @extends EventEmitter\n * \n * @description\n * Handles player input processing and movement control:\n * - Keyboard input for movement\n * - Jump mechanics\n * - Attack controls\n * - Player state management\n */\nexport class PlayerController extends EventEmitter {",
     "metadata": {
-      "start_line": 12,
-      "end_line": 33,
-      "notes": "Constructor initializing player controls with default or saved key bindings",
-      "imports": [],
-      "tags": ["player", "input", "constructor", "controls", "keyBindings"]
+      "start_line": 5,
+      "end_line": 18,
+      "notes": "Player controller class definition extending EventEmitter for input and movement management",
+      "imports": [
+        "events.EventEmitter"
+      ],
+      "tags": [
+        "class_definition",
+        "player",
+        "controller",
+        "core_system"
+      ],
+      "related_chunks": [
+        {"file_name": "PlayerController.js", "chunk_index": 0, "method": "imports"},
+        {"file_name": "PlayerController.js", "chunk_index": 2, "method": "constructor"}
+      ]
     }
   },
   {
     "file_name": "PlayerController.js",
     "chunk_index": 2,
-    "method": "createControls",
-    "chunk_text": "/**\n * Create control objects for each action.\n * Handles both keyboard and mouse inputs.\n * @private\n * \n * Supported Actions:\n * - Movement: up, down, left, right\n * - Combat: shoot, specialAttack\n * - Utility: jump, shift\n * \n * Input Handling:\n * - Keyboard: Uses Phaser's KeyCodes system\n * - Mouse: Custom handlers for left/right/middle buttons\n * \n * @returns {Object} Control map with structure:\n * @returns {Object} returns.action - Control for each action\n * @returns {Function} returns.action.isDown - Check if control is active\n */\n    createControls() {\n        const controls = {};\n        for (const [action, key] of Object.entries(this.keyBindings)) {\n            if (typeof key === 'string' && key.startsWith('MOUSE_')) {\n                // Create mouse button handlers\n                controls[action] = {\n                    isDown: () => {\n                        if (!this.enabled) return false;\n                        switch (key) {\n                            case 'MOUSE_LEFT': return this.scene.input.activePointer.leftButtonDown();\n                            case 'MOUSE_RIGHT': return this.scene.input.activePointer.rightButtonDown();\n                            case 'MOUSE_MIDDLE': return this.scene.input.activePointer.middleButtonDown();\n                            default: return false;\n                        }\n                    }\n                };\n            } else {\n                // Create keyboard key handlers\n                controls[action] = this.scene.input.keyboard.addKey(key);\n            }\n        }\n        return controls;\n    }",
+    "method": "constructor",
+    "chunk_text": "    /**\n     * Initialize the player controller\n     * \n     * @param {Scene} scene - The scene this controller belongs to\n     * @param {Player} player - The player entity to control\n     * \n     * @description\n     * Setup process:\n     * 1. Initialize scene and player references\n     * 2. Setup input handling\n     * 3. Configure movement parameters\n     * 4. Initialize player state\n     */\n    constructor(scene, player) {\n        super();\n        this.scene = scene;\n        this.player = player;\n        \n        // Movement parameters\n        this.movementSpeed = 160;\n        this.jumpForce = -400;\n        this.dashSpeed = 400;\n        this.dashDuration = 200;\n        \n        // State tracking\n        this.canJump = true;\n        this.isDashing = false;\n        this.dashTimer = null;\n        \n        // Input setup\n        this.cursors = scene.input.keyboard.createCursorKeys();\n        this.setupKeyboardInput();\n    }",
     "metadata": {
-      "start_line": 35,
-      "end_line": 61,
-      "notes": "Creates control objects for keyboard and mouse inputs",
-      "imports": [],
-      "tags": ["player", "input", "controls", "keyboard", "mouse"]
+      "start_line": 20,
+      "end_line": 47,
+      "notes": "Constructor initializes player controller with scene reference, movement parameters, and input setup",
+      "imports": [
+        "phaser.Scene",
+        "Player"
+      ],
+      "tags": [
+        "constructor",
+        "initialization",
+        "player",
+        "input"
+      ],
+      "related_chunks": [
+        {"file_name": "PlayerController.js", "chunk_index": 1, "method": "class"},
+        {"file_name": "PlayerController.js", "chunk_index": 3, "method": "setupKeyboardInput"}
+      ]
     }
   },
   {
     "file_name": "PlayerController.js",
     "chunk_index": 3,
-    "method": "loadKeyBindings",
-    "chunk_text": "/**\n * Load saved key bindings from localStorage.\n * @private\n * \n * Storage Details:\n * - Key: 'keyBindings'\n * - Format: JSON string of action-to-keycode mappings\n * - Fallback: Uses defaultBindings if storage is empty/invalid\n * \n * @returns {Object} Key bindings configuration with structure:\n * @returns {(number|string)} returns[action] - Keycode or mouse button identifier for each action\n * \n * @example\n * // Return value structure\n * {\n *   up: 87,        // W key\n *   shoot: 'MOUSE_LEFT',\n *   jump: 32       // SPACE key\n * }\n */\n    loadKeyBindings() {\n        const savedBindings = localStorage.getItem('keyBindings');\n        return savedBindings ? JSON.parse(savedBindings) : {...this.defaultBindings};\n    }",
+    "method": "setupKeyboardInput",
+    "chunk_text": "    /**\n     * Setup keyboard input handlers\n     * \n     * @description\n     * Setup process:\n     * 1. Create key bindings\n     * 2. Setup attack key\n     * 3. Configure dash key\n     * 4. Initialize jump key\n     * \n     * @private\n     */\n    setupKeyboardInput() {\n        // Attack key (Space)\n        this.attackKey = this.scene.input.keyboard.addKey('SPACE');\n        this.attackKey.on('down', () => {\n            this.emit('attack');\n        });\n        \n        // Dash key (Shift)\n        this.dashKey = this.scene.input.keyboard.addKey('SHIFT');\n        this.dashKey.on('down', () => {\n            if (!this.isDashing) {\n                this.startDash();\n            }\n        });\n        \n        // Jump key (Up)\n        this.jumpKey = this.scene.input.keyboard.addKey('UP');\n        this.jumpKey.on('down', () => {\n            if (this.canJump && this.player.body.touching.down) {\n                this.jump();\n            }\n        });\n    }",
     "metadata": {
-      "start_line": 65,
+      "start_line": 49,
       "end_line": 71,
-      "notes": "Loads key bindings from localStorage with fallback to defaults",
+      "notes": "Sets up keyboard input handlers for player actions including attack, dash, and jump",
       "imports": [],
-      "tags": ["player", "input", "keyBindings", "localStorage", "controls"]
+      "tags": [
+        "input",
+        "keyboard",
+        "player",
+        "setup"
+      ],
+      "related_chunks": [
+        {"file_name": "PlayerController.js", "chunk_index": 2, "method": "constructor"},
+        {"file_name": "PlayerController.js", "chunk_index": 4, "method": "update"}
+      ]
     }
   },
   {
     "file_name": "PlayerController.js",
     "chunk_index": 4,
-    "method": "saveKeyBindings",
-    "chunk_text": "/**\n * Save current key bindings to localStorage.\n * @private\n * \n * Storage Details:\n * - Key: 'keyBindings'\n * - Format: JSON string of current this.keyBindings object\n * \n * Error Handling:\n * - Silently fails if localStorage is unavailable\n * - Maintains current bindings in memory\n * \n * Side Effects:\n * - Updates localStorage 'keyBindings' value\n * - Persists between sessions\n */\n    saveKeyBindings() {\n        localStorage.setItem('keyBindings', JSON.stringify(this.keyBindings));\n    }",
+    "method": "update",
+    "chunk_text": "    /**\n     * Update player controls and movement state\n     * \n     * @description\n     * Update process:\n     * 1. Process movement input\n     * 2. Handle shooting mechanics\n     * 3. Update animation states\n     * \n     * @returns {void}\n     */\n    update() {\n        if (!this.enabled) return;\n        \n        this.handleMovement();\n        this.handleShooting();\n    }",
     "metadata": {
       "start_line": 73,
-      "end_line": 79,
-      "notes": "Saves current key bindings to localStorage",
+      "end_line": 85,
+      "notes": "Main update loop for player controller, processing movement and shooting mechanics",
       "imports": [],
-      "tags": ["player", "input", "keyBindings", "localStorage", "controls"]
+      "tags": [
+        "player",
+        "update",
+        "controls",
+        "core_system",
+        "lifecycle"
+      ],
+      "related_chunks": [
+        {"file_name": "PlayerController.js", "chunk_index": 3, "method": "setupKeyboardInput"},
+        {"file_name": "PlayerController.js", "chunk_index": 5, "method": "handleMovement"}
+      ]
     }
   },
   {
     "file_name": "PlayerController.js",
     "chunk_index": 5,
-    "method": "changeKeyBinding",
-    "chunk_text": "/**\n * Change key binding for a specific action.\n * @param {string} action - Action to rebind (e.g., 'up', 'down', 'left', 'right', 'jump', 'shoot', etc.).\n * @param {KeyboardEvent} event - Key event containing new binding.\n * @fires KeyboardEvent\n * \n * Special Key Handling:\n * - Arrow keys are mapped to Phaser.Input.Keyboard.KeyCodes\n * - Other keys use event.keyCode directly\n * \n * Side Effects:\n * - Updates this.keyBindings[action]\n * - Recreates control object for the action\n * - Saves new bindings to localStorage\n * \n * Error Handling:\n * - Invalid actions are ignored\n * - Unsupported keys fallback to event.keyCode\n */\n    changeKeyBinding(action, event) {\n        let keyCode;\n        \n        // Map special keys to Phaser key codes\n        switch(event.key) {\n            case 'ArrowUp': keyCode = Phaser.Input.Keyboard.KeyCodes.UP; break;\n            case 'ArrowDown': keyCode = Phaser.Input.Keyboard.KeyCodes.DOWN; break;\n            case 'ArrowLeft': keyCode = Phaser.Input.Keyboard.KeyCodes.LEFT; break;\n            case 'ArrowRight': keyCode = Phaser.Input.Keyboard.KeyCodes.RIGHT; break;\n            default: keyCode = event.keyCode;\n        }\n\n        // Update binding and recreate control\n        this.keyBindings[action] = keyCode;\n        if (this.controls[action]) {\n            this.controls[action].destroy();\n        }\n        this.controls[action] = this.scene.input.keyboard.addKey(keyCode);\n        this.saveKeyBindings();\n    }",
+    "method": "handleMovement",
+    "chunk_text": "    /**\n     * Process player movement based on input\n     * \n     * @private\n     * @description\n     * Movement handling:\n     * 1. Process horizontal movement\n     * 2. Handle jumping mechanics\n     * 3. Update player animations\n     * 4. Apply physics constraints\n     * \n     * @returns {void}\n     */\n    handleMovement() {\n        if (!this.player || !this.player.body) return;\n\n        // Handle horizontal movement\n        if (this.cursors.left.isDown) {\n            this.player.setVelocityX(-this.movementSpeed);\n            this.player.flipX = true;\n        } else if (this.cursors.right.isDown) {\n            this.player.setVelocityX(this.movementSpeed);\n            this.player.flipX = false;\n        } else {\n            this.player.setVelocityX(0);\n        }\n\n        // Handle jumping\n        if (this.cursors.up.isDown && this.canJump && this.player.body.touching.down) {\n            this.player.setVelocityY(this.jumpForce);\n            this.canJump = false;\n            this.scene.time.delayedCall(100, () => { this.canJump = true; });\n        }\n\n        // Handle dashing\n        if (this.dashKey.isDown && !this.isDashing) {\n            this.startDash();\n        }\n    }",
     "metadata": {
-      "start_line": 81,
-      "end_line": 104,
-      "notes": "Change key binding for an action with special key handling",
+      "start_line": 87,
+      "end_line": 119,
+      "notes": "Handles player movement mechanics including horizontal movement, jumping, and dashing",
       "imports": [],
-      "tags": ["player", "input", "keyBindings", "controls", "keyboard", "rebinding"]
+      "tags": [
+        "player",
+        "movement",
+        "physics",
+        "controls",
+        "animation"
+      ],
+      "related_chunks": [
+        {"file_name": "PlayerController.js", "chunk_index": 4, "method": "update"},
+        {"file_name": "PlayerController.js", "chunk_index": 6, "method": "startDash"}
+      ]
     }
   },
   {
     "file_name": "PlayerController.js",
     "chunk_index": 6,
-    "method": "getKeyName",
-    "chunk_text": "/**\n * Get display name for a key code.\n * @param {(number|string)} keyCode - Key code or mouse button identifier (e.g., 'MOUSE_LEFT', 'MOUSE_RIGHT', or keyboard code).\n * @returns {string} Human-readable key name (e.g., 'LMB', 'RMB', 'A', 'SPACE', '↑', etc.).\n * \n * Supported Key Categories:\n * - Letters: A-Z with direct mapping\n * - Numbers: 0-9 with direct mapping\n * - Special Keys: Arrows (↑,↓,←,→), modifiers (SHIFT, CTRL, ALT)\n * - Function Keys: F1-F12\n * - Numpad: NUM0-NUM9\n * - Mouse: LMB, RMB, MMB\n * \n * Special Cases:\n * - Mouse buttons use short form (LMB instead of MOUSE_LEFT)\n * - Arrow keys use Unicode symbols\n * - Unknown keys return 'NONE'\n * \n * @example\n * getKeyName(65) // Returns 'A'\n * getKeyName('MOUSE_LEFT') // Returns 'LMB'\n * getKeyName(Phaser.Input.Keyboard.KeyCodes.UP) // Returns '↑'\n */",
+    "method": "startDash",
+    "chunk_text": "    /**\n     * Initiate player dash movement\n     * \n     * @private\n     * @description\n     * Dash process:\n     * 1. Set dash state\n     * 2. Apply dash velocity\n     * 3. Setup dash timer\n     * 4. Handle dash completion\n     * \n     * @returns {void}\n     */\n    startDash() {\n        if (!this.player || this.isDashing) return;\n\n        this.isDashing = true;\n        const direction = this.player.flipX ? -1 : 1;\n        this.player.setVelocityX(this.dashSpeed * direction);\n\n        this.dashTimer = this.scene.time.delayedCall(this.dashDuration, () => {\n            this.isDashing = false;\n            this.player.setVelocityX(0);\n        });\n    }",
     "metadata": {
-      "start_line": 106,
-      "end_line": 167,
-      "notes": "Converts key codes to human-readable display names with special character support",
+      "start_line": 121,
+      "end_line": 141,
+      "notes": "Handles player dash mechanic with velocity and timer management",
       "imports": [],
-      "tags": ["player", "input", "keyBindings", "controls", "keyCodes"]
+      "tags": [
+        "player",
+        "movement",
+        "dash",
+        "physics",
+        "controls"
+      ],
+      "related_chunks": [
+        {"file_name": "PlayerController.js", "chunk_index": 5, "method": "handleMovement"},
+        {"file_name": "PlayerController.js", "chunk_index": 7, "method": "handleShooting"}
+      ]
     }
   },
   {
     "file_name": "PlayerController.js",
     "chunk_index": 7,
-    "method": "setupKeyBindingUI",
-    "chunk_text": "/**\n * Create UI for key binding configuration.\n * Allows players to rebind controls in-game by creating interactive buttons\n * for each configurable action.\n * @requires DOM element with id 'keyBindingContainer'\n * \n * UI Structure:\n * - Container: <div id='keyBindingContainer'>\n * - Per Action: <button>Change [action] key: [current key]</button>\n * \n * Button States:\n * - Normal: Shows 'Change [action] key: [current key]'\n * - Listening: Shows 'Press any key...'\n * \n * Event Handling:\n * - Click: Enters key listening mode\n * - Keydown: Captures new key and updates binding\n * - Auto-exits listening mode after capture\n * \n * Side Effects:\n * - Creates DOM elements\n * - Updates key bindings on change\n * - Persists changes to localStorage\n */",
+    "method": "handleShooting",
+    "chunk_text": "    /**\n     * Process player shooting mechanics\n     * \n     * @private\n     * @description\n     * Shooting process:\n     * 1. Check attack input\n     * 2. Create projectile\n     * 3. Apply projectile physics\n     * 4. Handle cooldown\n     * \n     * @returns {void}\n     */\n    handleShooting() {\n        if (!this.player || !this.attackKey.isDown) return;\n\n        this.emit('attack');\n        \n        // Create projectile\n        const projectile = this.scene.add.sprite(\n            this.player.x + (this.player.flipX ? -20 : 20),\n            this.player.y,\n            'bullet'\n        );\n        \n        projectile.setDepth(2);\n        projectile.flipX = this.player.flipX;\n        \n        // Add physics\n        this.scene.physics.add.existing(projectile);\n        projectile.body.setVelocityX(this.player.flipX ? -600 : 600);\n        \n        // Cleanup after 2 seconds\n        this.scene.time.delayedCall(2000, () => {\n            projectile.destroy();\n        });\n    }",
     "metadata": {
-      "start_line": 169,
-      "end_line": 183,
-      "notes": "Creates and manages the key rebinding UI interface",
+      "start_line": 143,
+      "end_line": 171,
+      "notes": "Handles player shooting mechanics including projectile creation and physics",
       "imports": [],
-      "tags": ["player", "input", "keyBindings", "UI", "controls", "rebind"]
+      "tags": [
+        "player",
+        "shooting",
+        "projectiles",
+        "physics",
+        "controls"
+      ],
+      "related_chunks": [
+        {"file_name": "PlayerController.js", "chunk_index": 6, "method": "startDash"},
+        {"file_name": "PlayerController.js", "chunk_index": 8, "method": "cleanup"}
+      ]
     }
   },
   {
     "file_name": "PlayerController.js",
     "chunk_index": 8,
-    "method": "resetToDefaults",
-    "chunk_text": "/**\n * Reset all key bindings to defaults.\n * Re-applies the defaultBindings object.\n * \n * Side Effects:\n * - Overwrites current key bindings\n * - Updates localStorage\n * - Requires UI refresh to show changes\n * \n * Implementation:\n * - Deep copies defaultBindings\n * - Saves to persistent storage\n * - Maintains reference integrity\n * \n * @fires KeyBindingsChangedEvent When bindings are reset\n */",
+    "method": "cleanup",
+    "chunk_text": "    /**\n     * Clean up controller resources\n     * \n     * @description\n     * Cleanup process:\n     * 1. Clear input bindings\n     * 2. Remove event listeners\n     * 3. Reset state flags\n     * \n     * @returns {void}\n     */\n    cleanup() {\n        // Clear input bindings\n        if (this.controls) {\n            Object.values(this.controls).forEach(control => {\n                if (control && typeof control.destroy === 'function') {\n                    control.destroy();\n                }\n            });\n        }\n        \n        // Reset state\n        this.enabled = false;\n        this.canJump = false;\n        this.isDashing = false;\n        \n        if (this.dashTimer) {\n            this.dashTimer.destroy();\n            this.dashTimer = null;\n        }\n    }",
     "metadata": {
-      "start_line": 184,
-      "end_line": 190,
-      "notes": "Resets all key bindings to their default values with storage update",
+      "start_line": 173,
+      "end_line": 196,
+      "notes": "Handles cleanup of controller resources and state reset",
       "imports": [],
-      "tags": ["player", "input", "keyBindings", "reset", "controls", "localStorage"]
+      "tags": [
+        "player",
+        "cleanup",
+        "controls",
+        "lifecycle"
+      ],
+      "related_chunks": [
+        {"file_name": "PlayerController.js", "chunk_index": 7, "method": "handleShooting"},
+        {"file_name": "PlayerController.js", "chunk_index": 9, "method": "resetKeyBindings"}
+      ]
     }
   },
   {
     "file_name": "PlayerController.js",
     "chunk_index": 9,
-    "method": "update",
-    "chunk_text": "/**\n * Update player controls and movement state.\n * Called every frame to handle player input and update movement flags.\n * \n * Frame Sequence:\n * 1. Process movement input (WASD)\n * 2. Update player position and animation\n * 3. Handle shooting mechanics\n * \n * Performance Notes:\n * - Runs in Phaser's game loop\n * - Input polling is optimized by Phaser\n * - Animation state changes only when needed\n * \n * State Updates:\n * - Player position and velocity\n * - Animation states\n * - Shooting cooldown\n * \n * @fires PlayerMoveEvent When player movement occurs\n * @fires PlayerJumpEvent When player jumps\n * @fires PlayerShootEvent When player shoots\n */\n    update() {\n        this.handleMovement();\n        this.handleShooting();\n    }",
+    "method": "resetKeyBindings",
+    "chunk_text": "    /**\n     * Reset key bindings to defaults\n     * \n     * @description\n     * Reset process:\n     * 1. Clear current bindings\n     * 2. Apply default bindings\n     * 3. Recreate control objects\n     * \n     * @returns {void}\n     */\n    resetKeyBindings() {\n        // Clear existing controls\n        this.cleanup();\n        \n        // Reset to defaults\n        this.keyBindings = {...this.defaultBindings};\n        \n        // Recreate controls\n        this.controls = {};\n        this.setupKeyboardInput();\n    }",
     "metadata": {
-      "start_line": 192,
-      "end_line": 204,
-      "notes": "Main game loop update method for player controls",
+      "start_line": 198,
+      "end_line": 216,
+      "notes": "Resets key bindings to default values and recreates control objects",
       "imports": [],
-      "tags": ["player", "controls", "movement", "shooting", "gameLoop"]
+      "tags": [
+        "player",
+        "input",
+        "controls",
+        "reset"
+      ],
+      "related_chunks": [
+        {"file_name": "PlayerController.js", "chunk_index": 8, "method": "cleanup"},
+        {"file_name": "PlayerController.js", "chunk_index": 10, "method": "setEnabled"}
+      ]
     }
   },
   {
     "file_name": "PlayerController.js",
     "chunk_index": 10,
-    "method": "handleMovement",
-    "chunk_text": "/**\n * Handle player movement based on input.\n * Updates velocity and animation based on key presses.\n * @private\n * @fires PlayerMoveEvent\n * \n * Movement Properties:\n * - Horizontal Speed: ±moveSpeed pixels/sec\n * - Jump Force: -jumpForce pixels/sec (negative = up)\n * - Ground Check: Uses Phaser Body.onFloor()\n * \n * Animation States:\n * - 'idle': No movement\n * - 'walk': Moving left/right\n * - 'jump': In air after jump\n * - 'fall': Moving downward\n * \n * Physics Interactions:\n * - Ground collision for jump reset\n * - Horizontal movement with instant stop\n * - Vertical movement affected by gravity\n * \n * @description\n * - Left/Right: Updates horizontal velocity and flips sprite\n * - Jump: Applies vertical velocity if grounded\n * - Updates player animation state (idle/walk/jump)\n */\n    handleMovement() {\n        const { left, right, up } = this.controls;\n        \n        // Reset velocity\n        this.player.setVelocityX(0);\n        \n        // Handle left/right movement\n        if (left.isDown) {\n            this.player.setVelocityX(-this.moveSpeed);\n            this.player.flipX = true;\n            this.player.anims.play('walk', true);\n        } else if (right.isDown) {\n            this.player.setVelocityX(this.moveSpeed);\n            this.player.flipX = false;\n            this.player.anims.play('walk', true);\n        } else {\n            this.player.anims.play('idle', true);\n        }\n        \n        // Handle jumping\n        if (up.isDown && this.player.body.onFloor()) {\n            this.player.setVelocityY(-this.jumpForce);\n            this.player.anims.play('jump', true);\n        }\n        \n        // Handle falling animation\n        if (!this.player.body.onFloor() && this.player.body.velocity.y > 0) {\n            this.player.anims.play('fall', true);\n        }\n    }",
+    "method": "setEnabled",
+    "chunk_text": "    /**\n     * Enable or disable the controller\n     * \n     * @param {boolean} value - Enable state\n     * \n     * @description\n     * Enable process:\n     * 1. Set enabled state\n     * 2. Reset movement flags\n     * 3. Update input handling\n     * \n     * @returns {void}\n     */\n    setEnabled(value) {\n        this.enabled = value;\n        \n        if (!value) {\n            // Reset movement\n            if (this.player && this.player.body) {\n                this.player.setVelocity(0, 0);\n            }\n            \n            // Reset flags\n            this.canJump = false;\n            this.isDashing = false;\n        } else {\n            // Reset to ready state\n            this.canJump = true;\n        }\n    }",
     "metadata": {
-      "start_line": 206,
-      "end_line": 238,
-      "notes": "Handles player movement mechanics and physics",
+      "start_line": 218,
+      "end_line": 243,
+      "notes": "Handles enabling/disabling of the controller with proper state management",
       "imports": [],
-      "tags": ["player", "movement", "controls", "physics", "animation"]
+      "tags": [
+        "player",
+        "controls",
+        "state",
+        "lifecycle"
+      ],
+      "related_chunks": [
+        {"file_name": "PlayerController.js", "chunk_index": 9, "method": "resetKeyBindings"},
+        {"file_name": "PlayerController.js", "chunk_index": 11, "method": "isEnabled"}
+      ]
     }
   },
   {
     "file_name": "PlayerController.js",
     "chunk_index": 11,
-    "method": "handleShooting",
-    "chunk_text": "/**\n * Handle player shooting mechanics.\n * Creates projectiles when shoot button is pressed.\n * @private\n * @fires PlayerShootEvent\n * \n * Projectile Properties:\n * - Sprite: 'bullet' with animation\n * - Speed: ±600 pixels/sec\n * - Offset: ±20px from player center\n * - Depth: 2 (above background)\n * \n * Timing:\n * - Cooldown: 250ms between shots\n * - Lifetime: 2000ms before auto-destroy\n * \n * Resources:\n * - Creates sprite instances\n * - Adds physics bodies\n * - Plays sound 'laser'\n * - Auto-cleanup after lifetime\n * \n * @description\n * - Creates projectile in the direction player is facing\n * - Applies cooldown between shots\n * - Plays shooting animation and sound effects\n */\n    handleShooting() {\n        const { shoot } = this.controls;\n        \n        if (shoot.isDown && this.canShoot) {\n            // Create projectile\n            const projectile = this.scene.add.sprite(\n                this.player.x + (this.player.flipX ? -20 : 20),\n                this.player.y,\n                'bullet'\n            );\n            \n            // Set projectile properties\n            projectile.setDepth(2);\n            projectile.flipX = this.player.flipX;\n            projectile.anims.play('bullet');\n            \n            // Add physics\n            this.scene.physics.add.existing(projectile);\n            projectile.body.setVelocityX(this.player.flipX ? -600 : 600);\n            \n            // Play sound\n            this.scene.sound.play('laser');\n            \n            // Set cooldown\n            this.canShoot = false;\n            this.scene.time.delayedCall(250, () => {\n                this.canShoot = true;\n            });\n            \n            // Cleanup projectile after 2 seconds\n            this.scene.time.delayedCall(2000, () => {\n                projectile.destroy();\n            });\n        }\n    }",
+    "method": "isEnabled",
+    "chunk_text": "    /**\n     * Check if controller is enabled\n     * \n     * @description\n     * Returns the current enabled state of the controller\n     * \n     * @returns {boolean} True if controller is enabled\n     */\n    isEnabled() {\n        return this.enabled;\n    }",
     "metadata": {
-      "start_line": 240,
-      "end_line": 280,
-      "notes": "Handles player shooting mechanics with projectile management",
+      "start_line": 245,
+      "end_line": 254,
+      "notes": "Returns the current enabled state of the controller",
       "imports": [],
-      "tags": ["player", "shooting", "projectiles", "cooldown", "controls"]
+      "tags": [
+        "player",
+        "controls",
+        "state",
+        "getter"
+      ],
+      "related_chunks": [
+        {"file_name": "PlayerController.js", "chunk_index": 10, "method": "setEnabled"},
+        {"file_name": "PlayerController.js", "chunk_index": 12, "method": "destroy"}
+      ]
+    }
+  },
+  {
+    "file_name": "PlayerController.js",
+    "chunk_index": 12,
+    "method": "destroy",
+    "chunk_text": "    /**\n     * Destroy the controller and cleanup resources\n     * \n     * @description\n     * Destruction process:\n     * 1. Clean up input bindings\n     * 2. Remove event listeners\n     * 3. Clear references\n     * \n     * @returns {void}\n     */\n    destroy() {\n        this.cleanup();\n        this.player = null;\n        this.scene = null;\n        this.controls = null;\n        this.keyBindings = null;\n    }",
+    "metadata": {
+      "start_line": 256,
+      "end_line": 272,
+      "notes": "Final cleanup and destruction of controller instance",
+      "imports": [],
+      "tags": [
+        "player",
+        "cleanup",
+        "destruction",
+        "lifecycle"
+      ],
+      "related_chunks": [
+        {"file_name": "PlayerController.js", "chunk_index": 11, "method": "isEnabled"},
+        {"file_name": "PlayerController.js", "chunk_index": 13, "method": "getKeyBinding"}
+      ]
+    }
+  },
+  {
+    "file_name": "PlayerController.js",
+    "chunk_index": 13,
+    "method": "getKeyBinding",
+    "chunk_text": "    /**\n     * Get the current key binding for an action\n     * \n     * @param {string} action - The action to get binding for\n     * \n     * @description\n     * Retrieval process:\n     * 1. Check if action exists\n     * 2. Return current binding\n     * 3. Handle invalid actions\n     * \n     * @returns {(number|string|null)} Key code or null if not found\n     */\n    getKeyBinding(action) {\n        return this.keyBindings[action] || null;\n    }",
+    "metadata": {
+      "start_line": 274,
+      "end_line": 289,
+      "notes": "Retrieves the current key binding for a specified action",
+      "imports": [],
+      "tags": [
+        "player",
+        "input",
+        "controls",
+        "getter"
+      ],
+      "related_chunks": [
+        {"file_name": "PlayerController.js", "chunk_index": 12, "method": "destroy"},
+        {"file_name": "PlayerController.js", "chunk_index": 14, "method": "setKeyBinding"}
+      ]
     }
   }
 ]

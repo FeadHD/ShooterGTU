@@ -7,10 +7,27 @@
       "metadata": {
         "start_line": 1,
         "end_line": 5,
-        "notes": "Class definition for managing invisible boundaries to restrict player movement within the scene",
-        "imports": [],
-        "tags": ["class_definition", "boundary_manager", "phaser3"],
-        "related_chunks": []
+        "notes": "Defines core boundary management system for game scene containment. Implements static physics boundaries to constrain player movement within game area. Utilizes Phaser's physics and scene systems for boundary implementation.",
+        "imports": [
+          "Phaser.Scene",
+          "Phaser.GameObjects.Rectangle",
+          "Phaser.Physics.Arcade",
+          "Phaser.Scale.ScaleManager"
+        ],
+        "tags": [
+          "class_definition",
+          "boundary_manager",
+          "phaser3",
+          "physics",
+          "scene_management",
+          "core_system",
+          "game_boundaries",
+          "player_containment"
+        ],
+        "related_chunks": [
+          {"file_name": "BoundaryManager.js", "chunk_index": 1, "method": "constructor"},
+          {"file_name": "BoundaryManager.js", "chunk_index": 2, "method": "createBoundaries"}
+        ]
       }
     },
     {
@@ -21,10 +38,22 @@
       "metadata": {
         "start_line": 7,
         "end_line": 11,
-        "notes": "Constructor for initializing the SceneBoundaryManager with scene reference",
-        "imports": [],
-        "tags": ["constructor", "boundary_manager", "phaser3"],
-        "related_chunks": []
+        "notes": "Initializes boundary management system with scene context. Injects scene dependency for accessing physics system, game scale, and object creation. Establishes foundation for boundary creation and physics setup.",
+        "imports": ["Phaser.Scene"],
+        "tags": [
+          "constructor",
+          "boundary_manager",
+          "phaser3",
+          "initialization",
+          "scene_setup",
+          "dependency_injection",
+          "core_initialization",
+          "scene_integration"
+        ],
+        "related_chunks": [
+          {"file_name": "BoundaryManager.js", "chunk_index": 0, "method": "class_definition"},
+          {"file_name": "BoundaryManager.js", "chunk_index": 2, "method": "createBoundaries"}
+        ]
       }
     },
     {
@@ -35,13 +64,30 @@
       "metadata": {
         "start_line": 13,
         "end_line": 32,
-        "notes": "Creates an invisible boundary on the left side of the scene and sets collision with player",
-        "imports": [],
-        "tags": ["create_boundaries", "collision", "phaser3"],
+        "notes": "Implements game boundary creation using invisible physics rectangles. Creates 10px wide static boundary at x=0 spanning full scene height. Configures physics body as static and establishes player collision detection. Uses scene scale for dynamic boundary sizing.",
+        "imports": [
+          "Phaser.GameObjects.Sprite",
+          "Phaser.GameObjects.Rectangle",
+          "Phaser.Physics.Arcade.Body",
+          "Phaser.Physics.Arcade.Collider",
+          "Phaser.Scale.ScaleManager"
+        ],
+        "tags": [
+          "create_boundaries",
+          "collision",
+          "phaser3",
+          "physics",
+          "player_bounds",
+          "static_body",
+          "scene_setup",
+          "boundary_initialization",
+          "collision_detection",
+          "game_area_constraint"
+        ],
         "related_chunks": [
+          {"file_name": "BoundaryManager.js", "chunk_index": 0, "method": "class_definition"},
           {"file_name": "BoundaryManager.js", "chunk_index": 1, "method": "constructor"}
         ]
       }
     }
-  ]
-  
+]

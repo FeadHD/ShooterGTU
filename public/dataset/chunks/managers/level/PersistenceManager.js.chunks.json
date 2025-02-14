@@ -7,10 +7,29 @@
       "metadata": {
         "start_line": 1,
         "end_line": 5,
-        "notes": "Class definition for managing game state persistence using browser's localStorage",
-        "imports": [],
-        "tags": ["class_definition", "persistence_manager", "local_storage"],
-        "related_chunks": []
+        "notes": "Defines core persistence system for game state management. Implements browser's localStorage API for data persistence. Provides interface for saving, loading, and clearing game progress data.",
+        "imports": [
+          "GameStateManager",
+          "localStorage",
+          "JSON"
+        ],
+        "tags": [
+          "class_definition",
+          "persistence_manager",
+          "local_storage",
+          "core_system",
+          "data_management",
+          "game_state",
+          "browser_storage",
+          "state_persistence",
+          "initialization"
+        ],
+        "related_chunks": [
+          {"file_name": "PersistenceManager.js", "chunk_index": 1, "method": "constructor"},
+          {"file_name": "PersistenceManager.js", "chunk_index": 2, "method": "saveToLocalStorage"},
+          {"file_name": "PersistenceManager.js", "chunk_index": 3, "method": "loadFromLocalStorage"},
+          {"file_name": "PersistenceManager.js", "chunk_index": 4, "method": "clearSavedState"}
+        ]
       }
     },
     {
@@ -21,10 +40,25 @@
       "metadata": {
         "start_line": 7,
         "end_line": 11,
-        "notes": "Initializes the PersistenceManager with a reference to the game's state manager",
-        "imports": [],
-        "tags": ["constructor", "persistence_manager", "game_state_manager"],
-        "related_chunks": []
+        "notes": "Initializes persistence management system with game state context. Injects GameStateManager dependency for accessing and modifying game state data. Establishes foundation for state persistence operations.",
+        "imports": [
+          "GameStateManager"
+        ],
+        "tags": [
+          "constructor",
+          "persistence_manager",
+          "game_state_manager",
+          "initialization",
+          "dependency_injection",
+          "core_initialization",
+          "state_management"
+        ],
+        "related_chunks": [
+          {"file_name": "PersistenceManager.js", "chunk_index": 0, "method": "class_definition"},
+          {"file_name": "PersistenceManager.js", "chunk_index": 2, "method": "saveToLocalStorage"},
+          {"file_name": "PersistenceManager.js", "chunk_index": 3, "method": "loadFromLocalStorage"},
+          {"file_name": "PersistenceManager.js", "chunk_index": 4, "method": "clearSavedState"}
+        ]
       }
     },
     {
@@ -35,12 +69,27 @@
       "metadata": {
         "start_line": 13,
         "end_line": 28,
-        "notes": "Saves the current game state to localStorage by converting registry values to JSON",
-        "imports": [],
-        "tags": ["save_to_local_storage", "game_state", "local_storage", "json"],
+        "notes": "Implements game state serialization and storage to browser's localStorage. Extracts all key-value pairs from game registry, converts to JSON format, and persists data. Handles data transformation from runtime state to persistent storage format.",
+        "imports": [
+          "GameStateManager",
+          "localStorage",
+          "JSON",
+          "GameStateManager.registry"
+        ],
+        "tags": [
+          "save_to_local_storage",
+          "game_state",
+          "local_storage",
+          "json",
+          "data_serialization",
+          "state_persistence",
+          "data_transformation",
+          "browser_storage"
+        ],
         "related_chunks": [
+          {"file_name": "PersistenceManager.js", "chunk_index": 0, "method": "class_definition"},
           {"file_name": "PersistenceManager.js", "chunk_index": 1, "method": "constructor"},
-          {"file_name": "GameStateManager.js", "chunk_index": 4, "method": "set"}
+          {"file_name": "PersistenceManager.js", "chunk_index": 3, "method": "loadFromLocalStorage"}
         ]
       }
     },
@@ -52,12 +101,27 @@
       "metadata": {
         "start_line": 30,
         "end_line": 52,
-        "notes": "Loads and restores saved game state from localStorage, returns success status",
-        "imports": [],
-        "tags": ["load_from_local_storage", "game_state", "local_storage", "json"],
+        "notes": "Retrieves and deserializes game state from browser's localStorage. Parses JSON data, restores values to game registry, and handles state restoration. Implements error handling and validation through boolean return value.",
+        "imports": [
+          "GameStateManager",
+          "localStorage",
+          "JSON",
+          "GameStateManager.registry"
+        ],
+        "tags": [
+          "load_from_local_storage",
+          "game_state",
+          "local_storage",
+          "json",
+          "data_deserialization",
+          "state_restoration",
+          "error_handling",
+          "data_validation"
+        ],
         "related_chunks": [
+          {"file_name": "PersistenceManager.js", "chunk_index": 0, "method": "class_definition"},
           {"file_name": "PersistenceManager.js", "chunk_index": 1, "method": "constructor"},
-          {"file_name": "GameStateManager.js", "chunk_index": 4, "method": "set"}
+          {"file_name": "PersistenceManager.js", "chunk_index": 2, "method": "saveToLocalStorage"}
         ]
       }
     },
@@ -69,10 +133,27 @@
       "metadata": {
         "start_line": 54,
         "end_line": 59,
-        "notes": "Removes saved game state from localStorage, typically used for game resets",
-        "imports": [],
-        "tags": ["clear_saved_state", "local_storage", "game_state", "reset"],
-        "related_chunks": []
+        "notes": "Implements game state cleanup by removing saved data from localStorage. Used during game resets or new game initialization. Provides clean slate for fresh game state.",
+        "imports": [
+          "localStorage",
+          "GameStateManager"
+        ],
+        "tags": [
+          "clear_saved_state",
+          "local_storage",
+          "game_state",
+          "reset",
+          "data_cleanup",
+          "state_management",
+          "game_initialization",
+          "browser_storage"
+        ],
+        "related_chunks": [
+          {"file_name": "PersistenceManager.js", "chunk_index": 0, "method": "class_definition"},
+          {"file_name": "PersistenceManager.js", "chunk_index": 1, "method": "constructor"},
+          {"file_name": "PersistenceManager.js", "chunk_index": 2, "method": "saveToLocalStorage"},
+          {"file_name": "PersistenceManager.js", "chunk_index": 3, "method": "loadFromLocalStorage"}
+        ]
       }
     }
 ]

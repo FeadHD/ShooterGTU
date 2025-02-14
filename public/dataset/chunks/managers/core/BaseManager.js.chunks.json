@@ -1,54 +1,121 @@
 [
-  {
-    "file_name": "BaseManager.js",
-    "chunk_index": 0,
-    "method": "class_definition",
-    "chunk_text": "/**\n * BaseManager.js\n * Base class for all game managers providing dependency injection functionality.\n * Serves as a foundation for specialized managers (Audio, UI, State, etc.)\n *\n * @class BaseManager\n * @description\n * A foundational class that provides dependency injection and service access\n * for all specialized game managers. This class enables managers to:\n * - Access the service container\n * - Retrieve the current game scene\n * - Get references to other managers\n *\n * @requires Phaser.Scene\n * @requires Phaser.Events.EventEmitter\n */\n\nimport { container } from './ServiceContainer';\n\nexport class BaseManager {",
-    "metadata": {
-      "start_line": 1,
-      "end_line": 16,
-      "notes": "Base class definition with enhanced documentation and Phaser dependencies",
-      "imports": ["./ServiceContainer"],
-      "tags": ["base_manager", "dependency_injection", "phaser3"]
+    {
+        "file_name": "BaseManager.js",
+        "chunk_index": 0,
+        "method": "imports",
+        "chunk_text": "import { container } from './ServiceContainer';",
+        "metadata": {
+            "start_line": 1,
+            "end_line": 1,
+            "notes": "Imports service container for dependency injection",
+            "imports": [
+                "ServiceContainer.container"
+            ],
+            "tags": [
+                "imports",
+                "core_system",
+                "dependency_injection"
+            ],
+            "related_chunks": [
+                {"file_name": "BaseManager.js", "chunk_index": 1, "method": "classDefinition"},
+                {"file_name": "BaseManager.js", "chunk_index": 2, "method": "constructor"}
+            ]
+        }
+    },
+    {
+        "file_name": "BaseManager.js",
+        "chunk_index": 1,
+        "method": "classDefinition",
+        "chunk_text": "/**\n * BaseManager.js\n * Abstract base class for all game managers\n * Provides common functionality and dependency injection support\n *\n * @class BaseManager\n * @abstract\n * @description\n * Base manager class that provides:\n * - Scene reference management\n * - Dependency injection support\n * - Lifecycle hooks\n * - Error handling\n *\n * @requires Phaser.Scene\n * @requires ServiceContainer\n */\nexport class BaseManager {",
+        "metadata": {
+            "start_line": 3,
+            "end_line": 19,
+            "notes": "Defines abstract base manager class with core management functionality",
+            "imports": [
+                "Phaser.Scene",
+                "ServiceContainer"
+            ],
+            "tags": [
+                "class_definition",
+                "core_system",
+                "manager_base",
+                "initialization"
+            ],
+            "related_chunks": [
+                {"file_name": "BaseManager.js", "chunk_index": 0, "method": "imports"},
+                {"file_name": "BaseManager.js", "chunk_index": 2, "method": "constructor"}
+            ]
+        }
+    },
+    {
+        "file_name": "BaseManager.js",
+        "chunk_index": 2,
+        "method": "constructor",
+        "chunk_text": "    /**\n     * Initialize base manager\n     * @param {Phaser.Scene} scene - Scene this manager belongs to\n     * \n     * @description\n     * Sets up:\n     * - Scene reference\n     * - DI container access\n     * - Error handling\n     * \n     * @throws {Error} If instantiated directly (abstract class)\n     * @requires Phaser.Scene\n     */\n    constructor(scene) {\n        if (new.target === BaseManager) {\n            throw new Error('BaseManager is abstract and cannot be instantiated directly');\n        }\n        \n        this.scene = scene;\n        this.container = container;\n        \n        // Bind lifecycle methods\n        this.scene.events.once('shutdown', this.destroy, this);\n    }",
+        "metadata": {
+            "start_line": 21,
+            "end_line": 42,
+            "notes": "Initializes base manager with scene reference and container access",
+            "imports": [
+                "Phaser.Scene",
+                "ServiceContainer.container"
+            ],
+            "tags": [
+                "initialization",
+                "core_system",
+                "manager_base",
+                "lifecycle"
+            ],
+            "related_chunks": [
+                {"file_name": "BaseManager.js", "chunk_index": 1, "method": "classDefinition"},
+                {"file_name": "BaseManager.js", "chunk_index": 3, "method": "initialize"}
+            ]
+        }
+    },
+    {
+        "file_name": "BaseManager.js",
+        "chunk_index": 3,
+        "method": "initialize",
+        "chunk_text": "    /**\n     * Initialize the manager\n     * Override in child classes\n     * \n     * @abstract\n     * @description\n     * Template method for initialization.\n     * Child classes should override to provide:\n     * - Resource setup\n     * - Event binding\n     * - State initialization\n     */\n    initialize() {\n        throw new Error('initialize() must be implemented by child class');\n    }",
+        "metadata": {
+            "start_line": 44,
+            "end_line": 57,
+            "notes": "Defines abstract initialization method for derived manager classes",
+            "imports": [],
+            "tags": [
+                "initialization",
+                "core_system",
+                "manager_base",
+                "abstract_method"
+            ],
+            "related_chunks": [
+                {"file_name": "BaseManager.js", "chunk_index": 2, "method": "constructor"},
+                {"file_name": "BaseManager.js", "chunk_index": 4, "method": "destroy"}
+            ]
+        }
+    },
+    {
+        "file_name": "BaseManager.js",
+        "chunk_index": 4,
+        "method": "destroy",
+        "chunk_text": "    /**\n     * Clean up manager resources\n     * Override in child classes\n     * \n     * @abstract\n     * @description\n     * Template method for cleanup.\n     * Child classes should override to:\n     * - Remove event listeners\n     * - Destroy game objects\n     * - Clear state\n     */\n    destroy() {\n        // Base cleanup - override in child classes\n        this.scene = null;\n    }",
+        "metadata": {
+            "start_line": 59,
+            "end_line": 73,
+            "notes": "Defines abstract cleanup method for derived manager classes",
+            "imports": [
+                "Phaser.Scene"
+            ],
+            "tags": [
+                "cleanup",
+                "core_system",
+                "manager_base",
+                "lifecycle"
+            ],
+            "related_chunks": [
+                {"file_name": "BaseManager.js", "chunk_index": 3, "method": "initialize"},
+                {"file_name": "BaseManager.js", "chunk_index": 2, "method": "constructor"}
+            ]
+        }
     }
-  },
-  {
-    "file_name": "BaseManager.js",
-    "chunk_index": 1,
-    "method": "constructor",
-    "chunk_text": "    /**\n     * Initialize manager with service container access\n     * Container holds references to all game services and managers\n     * \n     * @constructor\n     * @description\n     * Sets up access to the service container which provides:\n     * - Game service references\n     * - Manager instances\n     * - Scene access\n     * - Global state management\n     * \n     * @returns {void} - This method doesn't return a value\n     */\n    constructor() {\n        this.container = container;\n    }",
-    "metadata": {
-      "start_line": 17,
-      "end_line": 31,
-      "notes": "Constructor with container initialization",
-      "imports": [],
-      "tags": ["constructor", "service_access", "phaser3"]
-    }
-  },
-  {
-    "file_name": "BaseManager.js",
-    "chunk_index": 2,
-    "method": "getScene",
-    "chunk_text": "    /**\n     * Get the current active scene\n     * @returns {Phaser.Scene} Current game scene\n     * \n     * @description\n     * Retrieves the currently active Phaser scene from the service container.\n     * This scene can be used to access:\n     * - Game objects\n     * - Physics systems\n     * - Input handling\n     * - Scene-specific state\n     * \n     * @requires Phaser.Scene\n     * @see {@link Phaser.Scene}\n     */\n    getScene() {\n        return this.container.get('scene');\n    }",
-    "metadata": {
-      "start_line": 33,
-      "end_line": 47,
-      "notes": "Method to get current game scene with Phaser Scene type references",
-      "imports": [],
-      "tags": ["scene_access", "game_scene", "phaser3"]
-    }
-  },
-  {
-    "file_name": "BaseManager.js",
-    "chunk_index": 3,
-    "method": "getManager",
-    "chunk_text": "    /**\n     * Get a specific manager instance by key\n     * @param {string} managerKey - Identifier for the desired manager\n     * @returns {BaseManager} Instance of the requested manager\n     * \n     * @description\n     * Retrieves a specific manager instance from the service container.\n     * Common manager types include:\n     * - AudioManager\n     * - UIManager\n     * - StateManager\n     * - InputManager\n     * \n     * @throws {Error} If manager is not found in container\n     * @example\n     * // Get audio manager\n     * const audioManager = this.getManager('audio');\n     * audioManager.playSound('explosion');\n     */\n    getManager(managerKey) {\n        return this.container.get(managerKey);\n    }",
-    "metadata": {
-      "start_line": 49,
-      "end_line": 71,
-      "notes": "Method to get manager instances with examples",
-      "imports": [],
-      "tags": ["manager_access", "service_container", "dependency_injection", "phaser3"]
-    }
-  }
 ]
